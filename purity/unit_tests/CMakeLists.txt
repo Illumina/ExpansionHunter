@@ -1,0 +1,2 @@
+add_google_test(purity_test purity_test.cc)
+target_link_libraries(purity_test purity)

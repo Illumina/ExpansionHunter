@@ -1,0 +1,2 @@
+add_google_test(rep_align_test rep_align_test.cc)
+target_link_libraries(rep_align_test rep_align)
