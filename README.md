@@ -11,3 +11,8 @@ License
 -------
 
 Expansion Hunter is provided under the terms and conditions of the [GPLv3 license] (LICENSE.txt). It relies on several third party packages provided under other open source licenses, please see [COPYRIGHT.txt] (COPYRIGHT.txt) for additional details.
+
+Documentation
+-------------
+
+Installation instructions, usage guide, and description of file formats are available on [wiki] (https://github.com/Illumina/ExpansionHunter/wiki).
