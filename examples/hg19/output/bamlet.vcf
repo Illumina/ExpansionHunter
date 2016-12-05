@@ -1,0 +1,19 @@
+##fileformat=VCFv4.1
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant">
+##INFO=<ID=REF,Number=1,Type=Integer,Description="Reference copy number">
+##INFO=<ID=RL,Number=1,Type=Integer,Description="Reference length in bp">
+##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit in the reference orientation">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=SO,Number=1,Type=String,Description="Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat">
+##FORMAT=<ID=SP,Number=1,Type=String,Description="Number of reads supporting the allele">
+##FORMAT=<ID=CN,Number=1,Type=String,Description="Allele copy number">
+##FORMAT=<ID=CI,Number=1,Type=String,Description="Confidence interval for CN">
+##ALT=<ID=STR6,Description="Allele comprised of 6 repeat units">
+##ALT=<ID=STR17,Description="Allele comprised of 17 repeat units">
+##ALT=<ID=STR58,Description="Allele comprised of 58 repeat units">
+##ALT=<ID=STR502,Description="Allele comprised of 502 repeat units">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	bamlet
+chr4	3076603	HD	CCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAGCAG	<STR17>	.	PASS	SVTYPE=STR;END=3076660;REF=19;RL=57;RU=CAG	GT:SO:SP:CN:CI	0/1:SPANNING/SPANNING:8/4:19/17:./.
+chr9	27573526	ALS	CGGCCCCGGCCCCGGCCCC	<STR6>,<STR502>	.	PASS	SVTYPE=STR;END=27573544;REF=3;RL=18;RU=GGCCCC	GT:SO:SP:CN:CI	1/2:SPANNING/INREPEAT:8/583:6/502:./466-538
+chrX	146993568	FMR1	GCGGCGGCGGCGGCGGCGGCGGCGGCGGCGGAGGCGGCGGCGGCGGCGGCGGCGGCGGCGG	<STR58>	.	PASS	SVTYPE=STR;END=146993628;REF=20;RL=60;RU=CGG	GT:SO:SP:CN:CI	1:INREPEAT:15:58:46-70
