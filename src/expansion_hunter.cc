@@ -91,7 +91,7 @@ size_t CalcReadLen(const string& bam_path) {
   bam_destroy1(align_ptr);
   bam_hdr_destroy(header_ptr);
   sam_close(file_ptr);
-  
+
   return read_len;
 }
 
@@ -192,13 +192,13 @@ void CacheAligns(BamFile* bam_file, const RepeatSpec& repeat_spec,
   }
 
   // Filling-in missing mates by jumping around the BAM.
-  // cerr << "\t[Filling in mates]" << endl;
-  // if ((*bam_file).format() == BamFile::kBamFile) {
-  //   FillinMates(*bam_file, align_pairs);
-  // } else {
-  //   cerr << "\t[Skipping filling in mates]" << endl;
-  // }
-  // cerr << "\t[Done filling in mates]" << endl;
+  cerr << "\t[Filling in mates]" << endl;
+  if ((*bam_file).format() == BamFile::kBamFile) {
+    FillinMates(*bam_file, align_pairs);
+  } else {
+    cerr << "\t[Skipping filling in mates]" << endl;
+  }
+  cerr << "\t[Done filling in mates]" << endl;
 }
 
 /*****************************************************************************/
