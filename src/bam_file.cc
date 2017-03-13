@@ -422,9 +422,20 @@ double BamFile::CalcMedianDepth(Parameters& parameters, size_t read_len) {
   for (size_t chrom_ind = 0; chrom_ind < chrom_count; ++chrom_ind) {
     const string& chrom_name = chrom_names[chrom_ind];
 
+    bool skip_cur_chrom = false;
     if (chrom_name == "chrX" || chrom_name == "X" || chrom_name == "chrY" ||
         chrom_name == "Y" || chrom_name == "chrM" || chrom_name == "M" ||
         chrom_name == "*" || chrom_name == "MT") {
+      skip_cur_chrom = true;
+    }
+
+    size_t gl_pos = chrom_name.find("GL000");
+    if (gl_pos != std::string::npos) {
+      skip_cur_chrom = true;
+    }
+
+    if (skip_cur_chrom) {
+      cerr << "[Skipping " << chrom_name << " during depth calculation]" << endl;
       continue;
     }
 
