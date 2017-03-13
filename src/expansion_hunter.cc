@@ -68,19 +68,30 @@ size_t CalcReadLen(const string& bam_path) {
     throw std::runtime_error("BamFile::Init: Failed to read BAM header: '" +
                              bam_path + "'");
   }
+
+  enum { kSupplimentaryAlign = 0x800, kSecondaryAlign = 0x100 };
+
+  size_t read_len = 99;
   bam1_t* align_ptr = bam_init1();
-  int ret = sam_read1(file_ptr, header_ptr, align_ptr);
+  int ret;
+  while ((ret = sam_read1(file_ptr, header_ptr, align_ptr)) >= 0) {
+    const bool is_supplimentary = align_ptr->core.flag & kSupplimentaryAlign;
+    const bool is_secondary = align_ptr->core.flag & kSecondaryAlign;
+    const bool is_primary_align = (!is_supplimentary) && (!is_secondary);
+    if (is_primary_align) {
+      read_len = align_ptr->core.l_qseq;
+      break;
+    }
+  }
+
   if (ret < 0) {
     throw std::runtime_error("Failed to extract a read from BAM file");
   }
 
-  const size_t read_len = align_ptr->core.l_qseq;
-
   bam_destroy1(align_ptr);
   bam_hdr_destroy(header_ptr);
-
   sam_close(file_ptr);
-
+  
   return read_len;
 }
 
