@@ -42,6 +42,7 @@ using std::unordered_set;
 #include <stdexcept>
 #include <utility>
 using std::pair;
+#include "include/genotype.h"
 
 #include "include/version.h"
 #include "include/allele.h"
@@ -342,6 +343,73 @@ void EstimateRepeatSizes(const Parameters& parameters,
     FindLongRepeats(parameters, repeat_spec, *bam_file, alleles, num_irrs,
                     num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
                     ontarget_frag_names, align_pairs, &flanking_repaligns);
+
+
+    // Genotyping
+    //const map<ReadType, string> read_type_to_string = {{kSpanning, "kSpanning"}, {kFlanking, "kFlanking"},
+    //                                                   {kAnchored, "kAnchored"}, {kAlignedIrrPair, "kAlignedIrrPair"},
+    //                                                   {kUnalignedIrrPair, "kUnalignedIrrPair"},
+    //                                                   {kUnalignedIrrSingleton, "kUnalignedIrrSingleton"}};
+
+    map<int, int> flanking_size_counts;
+    map<int, int> spanning_size_counts;
+
+    for (const auto& align : flanking_repaligns) {
+      // cerr << read_type_to_string.at(align.type) << endl;
+      if (align.left_flank_len) {
+        flanking_size_counts[align.size] += 1;
+        // cerr << align.left_flank_len << "\t" << align.right_flank_len << "\t" << align.size << endl;
+      }
+    }
+
+    vector<int> haplotype_candidates;
+    // Add count of in-repeat reads to flanking.
+    for (const auto& allele : alleles) {
+      if (allele.type == kSpanningAllele) {
+        spanning_size_counts[allele.size] += allele.num_supporting_reads;
+        haplotype_candidates.push_back(allele.size);
+      } else if (allele.type == kInRepeatAllele) {
+        const int num_units_in_read =
+            (int) (std::ceil(parameters.read_len() / (double) repeat_spec.units[0].length()));
+        const int bounded_num_irrs = allele.num_supporting_reads <= 5 ? allele.num_supporting_reads : 5;
+        flanking_size_counts[num_units_in_read] += bounded_num_irrs;
+        haplotype_candidates.push_back(num_units_in_read);
+      } else {
+        throw std::logic_error("Do not know how to deal with " + allele.readtypeToStr.at(allele.type) + " alleles");
+      }
+      // Distinct logic for spanning and flanking alleles.
+      // cerr << allele.readtypeToStr.at(allele.type) << endl;
+    }
+
+    // cerr << "Flanking:" << endl;
+    // for (const auto& kv : flanking_size_counts) {
+    //  cerr << "\t" << kv.first << " -- " << kv.second << endl;
+    // }
+
+    // cerr << "Spanning:" << endl;
+    // for (const auto& kv : spanning_size_counts) {
+    //  cerr << "\t" << kv.first << " -- " << kv.second << endl;
+    // }
+
+    const int unit_len = repeat_spec.units[0].length();
+    const double kPropCorrectMolecules = 0.97;
+    const double hap_depth = parameters.depth() / 2;
+    const int max_num_units_in_read =
+        (int) (std::ceil(parameters.read_len() / (double) unit_len));
+
+    std::pair<int, int> genotype = genotypeOneUnitStr(max_num_units_in_read,
+                                                      kPropCorrectMolecules,
+                                                      hap_depth,
+                                                      parameters.read_len(),
+                                                      haplotype_candidates,
+                                                      flanking_size_counts,
+                                                      spanning_size_counts);
+
+    cerr << "[Genotype of " << repeat_spec.units[0] << " STR is " << genotype.first
+         << "/" << genotype.second << "]" << endl;
+
+
+    // End genotyping
 
     boost::property_tree::ptree region_node;
     AsPtree(region_node, alleles, repeat_spec, num_irrs, num_unaligned_irrs,
