@@ -27,24 +27,22 @@
 using std::string;
 #include <stdexcept>
 
-/*****************************************************************************/
-
 RefGenome::RefGenome(const string& genome_path) : genome_path_(genome_path) {
   fai_ptr_ = fai_load(genome_path_.c_str());
 }
-
-/*****************************************************************************/
 
 RefGenome::~RefGenome() { fai_destroy(fai_ptr_); }
 
 // Load reference sequence specified by region.
 void RefGenome::ExtractSeq(const string& region, string* sequence) const {
   int len;  // throwaway...
-  char* ref_tmp(fai_fetch(fai_ptr_, region.c_str(), &len));
 
-  if (!ref_tmp) {
-    std::runtime_error("Can't find sequence region '" + region +
-                       "' in reference file: '" + genome_path_ + "'");
+  char* ref_tmp = fai_fetch(fai_ptr_, region.c_str(), &len);
+
+  if (!ref_tmp || len == -1 || len == -2) {
+    throw std::runtime_error("ERROR: can't extract " + region + " from "
+        + genome_path_ + "; in particular, chromosome names must match "
+        "exactly (e.g. \"chr1\" and \"1\" are distinct names)");
   }
 
   sequence->assign(ref_tmp);
@@ -53,5 +51,3 @@ void RefGenome::ExtractSeq(const string& region, string* sequence) const {
   std::transform(sequence->begin(), sequence->end(), sequence->begin(),
                  ::toupper);
 }
-
-/*****************************************************************************/
