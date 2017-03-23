@@ -246,6 +246,7 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       numUnalignedIRRs += 2;
 
       RepeatAlign rep_align;
+      rep_align.name = it->first;
       rep_align.bases = frag[0].bases;
       rep_align.quals = frag[0].quals;
       rep_align.left_flank_len = 0;
@@ -262,6 +263,7 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       const Align& mate = is_irr1 ? frag[1] : frag[0];
 
       RepeatAlign rep_align;
+      rep_align.name = it->first;
       rep_align.bases = irr.bases;
       rep_align.quals = irr.quals;
       rep_align.left_flank_len = 0;
