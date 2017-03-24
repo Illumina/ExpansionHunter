@@ -356,10 +356,10 @@ void EstimateRepeatSizes(const Parameters& parameters,
 
     for (const auto& align : flanking_repaligns) {
       // cerr << read_type_to_string.at(align.type) << endl;
-      if (align.left_flank_len) {
-        flanking_size_counts[align.size] += 1;
+      //if (align.left_flank_len) {
+      flanking_size_counts[align.size] += 1;
         // cerr << align.left_flank_len << "\t" << align.right_flank_len << "\t" << align.size << endl;
-      }
+      //}
     }
 
     vector<int> haplotype_candidates;
@@ -378,9 +378,9 @@ void EstimateRepeatSizes(const Parameters& parameters,
       } else if (allele.type == kFlankingAllele) {
         haplotype_candidates.push_back(allele.size);
         for (const auto& align : allele.rep_aligns) {
-          if (align.left_flank_len) {
-            flanking_size_counts[align.size] += 1;
-          }
+          // if (align.left_flank_len) {
+          flanking_size_counts[align.size] += 1;
+          //}
         }
       } else {
         throw std::logic_error("Do not know how to deal with " + allele.readtypeToStr.at(allele.type) + " alleles");
@@ -389,15 +389,15 @@ void EstimateRepeatSizes(const Parameters& parameters,
       // cerr << allele.readtypeToStr.at(allele.type) << endl;
     }
 
-    // cerr << "Flanking:" << endl;
-    // for (const auto& kv : flanking_size_counts) {
-    //  cerr << "\t" << kv.first << " -- " << kv.second << endl;
-    // }
+    cerr << "Flanking:" << endl;
+    for (const auto& kv : flanking_size_counts) {
+      cerr << "\t" << kv.first << " -- " << kv.second << endl;
+    }
 
-    // cerr << "Spanning:" << endl;
-    // for (const auto& kv : spanning_size_counts) {
-    //  cerr << "\t" << kv.first << " -- " << kv.second << endl;
-    // }
+    cerr << "Spanning:" << endl;
+    for (const auto& kv : spanning_size_counts) {
+      cerr << "\t" << kv.first << " -- " << kv.second << endl;
+    }
 
     const int unit_len = repeat_spec.units[0].length();
     const double kPropCorrectMolecules = 0.97;
