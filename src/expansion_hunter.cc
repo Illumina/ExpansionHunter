@@ -365,6 +365,7 @@ void EstimateRepeatSizes(const Parameters& parameters,
     vector<int> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
     for (const auto& allele : alleles) {
+      cerr << allele.readtypeToStr.at(allele.type) << endl;
       if (allele.type == kSpanningAllele) {
         spanning_size_counts[allele.size] += allele.num_supporting_reads;
         haplotype_candidates.push_back(allele.size);
@@ -374,6 +375,13 @@ void EstimateRepeatSizes(const Parameters& parameters,
         const int bounded_num_irrs = allele.num_supporting_reads <= 5 ? allele.num_supporting_reads : 5;
         flanking_size_counts[num_units_in_read] += bounded_num_irrs;
         haplotype_candidates.push_back(num_units_in_read);
+      } else if (allele.type == kFlankingAllele) {
+        haplotype_candidates.push_back(allele.size);
+        for (const auto& align : allele.rep_aligns) {
+          if (align.left_flank_len) {
+            flanking_size_counts[align.size] += 1;
+          }
+        }
       } else {
         throw std::logic_error("Do not know how to deal with " + allele.readtypeToStr.at(allele.type) + " alleles");
       }
