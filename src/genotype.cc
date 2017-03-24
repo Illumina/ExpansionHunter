@@ -110,6 +110,7 @@ pair<int, int> genotypeOneUnitStr(int max_num_units_in_read, double prop_correct
                                   int read_len, const std::vector<int>& haplotype_candidates,
                                   const map<int, int>& flanking_size_count, const map<int, int>& spanning_size_count)
 {
+  bool is_first_pass = true;
   double max_loglik = std::numeric_limits<double>::lowest();
   pair<int, int> most_likely_genotype {0, 0};
 
@@ -121,8 +122,9 @@ pair<int, int> genotypeOneUnitStr(int max_num_units_in_read, double prop_correct
       StrGenotype genotype(max_num_units_in_read, prop_correct_molecules, hap_depth, read_len, num_units_hap1,
                            num_units_hap2);
       const double cur_loglik = genotype.calcLogLik(flanking_size_count, spanning_size_count);
-      if (max_loglik < cur_loglik) {
+      if (max_loglik < cur_loglik || is_first_pass) {
         max_loglik = cur_loglik;
+        is_first_pass = false;
         most_likely_genotype.first = num_units_hap1;
         most_likely_genotype.second = num_units_hap2;
       }

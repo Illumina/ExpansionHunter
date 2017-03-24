@@ -348,11 +348,8 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
       }
 
-      assert(!piece_bases.empty());
-
       if (0.7 > flank_wp || flank_wp > 1.0) {
-        cerr << "[flank_wp = " << flank_wp << "]" << endl;
-        assert(0);
+        cerr << "[WARNING: flank_wp = " << flank_wp << "]" << endl;
       }
 
       piece_wp_score /= piece_bases.length();

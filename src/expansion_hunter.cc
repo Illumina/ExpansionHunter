@@ -399,6 +399,12 @@ void EstimateRepeatSizes(const Parameters& parameters,
       cerr << "\t" << kv.first << " -- " << kv.second << endl;
     }
 
+    cerr << "Haplotype candidates: ";
+    for (const auto& size : haplotype_candidates) {
+      cerr << size << " ";
+    }
+    cerr << endl;
+
     const int unit_len = repeat_spec.units[0].length();
     const double kPropCorrectMolecules = 0.97;
     const double hap_depth = parameters.depth() / 2;
