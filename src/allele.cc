@@ -286,6 +286,8 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
   cerr << "\t[There are " << flanking_repaligns->size() << " flanking reads]"
        << endl;
 
+  vector<RepeatAlign> good_flanking_repaligns;
+
   for (const auto& rep_align : *flanking_repaligns) {
     if (rep_align.size > longest_spanning) {
       ++num_reads_from_unseen_allele;
@@ -355,13 +357,21 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
       piece_wp_score /= piece_bases.length();
 
       if (piece_wp_score >= min_wp_score && flank_wp >= min_wp_score) {
+        good_flanking_repaligns.push_back(rep_align);
         good_repeat_exists = true;
         if (rep_align.size > longest_flanking) {
           longest_flanking = rep_align.size;
         }
+      } else {
+        cerr << "\t[Discarding flanking read " << rep_align.name << " "
+             << rep_align.bases << "]" << endl;
       }
+    } else {
+      good_flanking_repaligns.push_back(rep_align);
     }
   }
+
+  *flanking_repaligns = good_flanking_repaligns;
 
   if (good_repeat_exists) {
     vector<RepeatAlign> short_aligns;
