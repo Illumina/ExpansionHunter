@@ -344,7 +344,7 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
         piece_quals =
             rep_align.quals.substr(0, rep_align.bases.length() - piece_end);
         const size_t unit_length = units_shifts[0][0].length();
-        const size_t offset = piece_bases.length() % unit_length;
+        const size_t offset = (unit_length - piece_bases.length() % unit_length) % unit_length;
         const vector<string>& units = units_shifts[offset];
         piece_wp_score =
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);

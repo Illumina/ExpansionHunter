@@ -34,11 +34,13 @@ class StrHaplotype
   double propMolecules(int num_units_upper_bound);
   double propMoleculesShorterThan(int num_units_upper_bound);
   double propMoleculesAtLeast(int num_units_lower_bound);
+  int num_units() const {return num_units_haplotype_;}
  private:
   int num_units_haplotype_;
   int max_num_units_in_read_;
   double prop_correct_molecules_;
   double norm_factor_;
+  int max_deviation_;
 };
 
 class StrGenotype

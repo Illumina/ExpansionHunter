@@ -40,22 +40,38 @@ using std::vector;
 
 StrHaplotype::StrHaplotype(int num_units_haplotype, int max_num_units_in_read, double prop_correct_molecules)
     : num_units_haplotype_(num_units_haplotype), max_num_units_in_read_(max_num_units_in_read),
-      prop_correct_molecules_(prop_correct_molecules)
+      prop_correct_molecules_(prop_correct_molecules), max_deviation_(5)
 {
   const double p = prop_correct_molecules_;
   norm_factor_ = 0;
   for (int num_units = 0; num_units <= max_num_units_in_read_; ++num_units) {
     const double deviation = std::abs(num_units - num_units_haplotype_);
-    norm_factor_ += p * pow(1 - p, deviation);
+
+    double prop = 0;
+    if (deviation < max_deviation_) {
+      norm_factor_ += p * pow(1 - p, deviation);
+    } else {
+      norm_factor_ += p * pow(1 - p, max_deviation_);
+    }
   }
 }
 
 double StrHaplotype::propMolecules(int num_units)
 {
+  if (num_units < 0 || max_num_units_in_read_ < num_units) {
+    cerr << "ERROR: num_units = " << num_units << endl;
+  }
   const double p = prop_correct_molecules_;
   const double deviation = std::abs(num_units - num_units_haplotype_);
-  const double prop = p * pow(1 - p, deviation) / norm_factor_;
-  return prop;
+
+  double prop = 0;
+  if (deviation < max_deviation_) {
+    prop = p * pow(1 - p, deviation);
+  } else {
+    prop = p * pow(1 - p, max_deviation_);
+  }
+
+  return prop / norm_factor_;
 }
 
 double StrHaplotype::propMoleculesShorterThan(int num_units_upper_bound)
@@ -64,10 +80,12 @@ double StrHaplotype::propMoleculesShorterThan(int num_units_upper_bound)
   for (int num_units = 0; num_units != num_units_upper_bound; ++num_units) {
     total_prop += propMolecules(num_units);
   }
+
   return total_prop;
 }
 
 double StrHaplotype::propMoleculesAtLeast(int num_units_lower_bound) {
+
   return 1.0 - propMoleculesShorterThan(num_units_lower_bound);
 }
 
