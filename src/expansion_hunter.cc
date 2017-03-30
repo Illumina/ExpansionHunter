@@ -42,7 +42,7 @@ using std::unordered_set;
 #include <stdexcept>
 #include <utility>
 using std::pair;
-#include "include/genotype.h"
+#include "genotyping/genotyping.h"
 
 #include "include/version.h"
 #include "include/allele.h"

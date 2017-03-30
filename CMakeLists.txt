@@ -7,10 +7,28 @@ enable_testing()
 
 include(ExternalProject)
 
-option(BUILD_TESTS "Controls if unit tests are build" OFF)
-if(BUILD_TESTS)
-  include(google_test)
+######################### Google Test ############################
+# Download and unpack googletest at configure time
+configure_file(cmake/google_test.cmake googletest-download/CMakeLists.txt)
+execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
+		RESULT_VARIABLE result
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+if(result)
+	message(FATAL_ERROR "CMake step for googletest failed: ${result}")
 endif()
+execute_process(COMMAND ${CMAKE_COMMAND} --build .
+		RESULT_VARIABLE result
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
+if(result)
+	message(FATAL_ERROR "Build step for googletest failed: ${result}")
+endif()
+
+# Add googletest directly to our build. This defines
+# the gtest and gtest_main targets.
+add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
+		${CMAKE_BINARY_DIR}/googletest-build)
+##################################################################
+
 
 ExternalProject_Add(zlib
 	PREFIX ${CMAKE_BINARY_DIR}/thirdparty/zlib
@@ -49,6 +67,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
 
+add_subdirectory(genotyping)
 add_subdirectory(purity)
 add_subdirectory(rep_align)
 
@@ -60,4 +79,4 @@ target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 add_dependencies(htslib zlib)
 add_dependencies(ExpansionHunter htslib)
 
-target_link_libraries(ExpansionHunter purity rep_align pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
+target_link_libraries(ExpansionHunter genotyping purity rep_align pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})

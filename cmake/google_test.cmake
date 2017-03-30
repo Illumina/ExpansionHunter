@@ -1,10 +1,15 @@
-set(GTEST_DIR "../../software/googletest/" CACHE PATH "Google Test path.")
+cmake_minimum_required(VERSION 2.8.2)
 
-add_subdirectory(${GTEST_DIR} ${CMAKE_BINARY_DIR}/gtest)
-include_directories(SYSTEM ${GTEST_DIR}/googlemock/include/ ${GTEST_DIR}/googletest/include/)
+project(googletest-download NONE)
 
-function(add_google_test target)
-  add_executable(${target} ${ARGN})
-  target_link_libraries(${target} gmock_main)
-  add_test(${target} ${target})
-endfunction()
+include(ExternalProject)
+ExternalProject_Add(googletest
+        GIT_REPOSITORY    https://github.com/google/googletest.git
+        GIT_TAG           master
+        SOURCE_DIR        "${CMAKE_BINARY_DIR}/googletest-src"
+        BINARY_DIR        "${CMAKE_BINARY_DIR}/googletest-build"
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND     ""
+        INSTALL_COMMAND   ""
+        TEST_COMMAND      ""
+        )
