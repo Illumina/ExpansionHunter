@@ -140,6 +140,9 @@ pair<int, int> genotypeOneUnitStr(int max_num_units_in_read, double prop_correct
       StrGenotype genotype(max_num_units_in_read, prop_correct_molecules, hap_depth, read_len, num_units_hap1,
                            num_units_hap2);
       const double cur_loglik = genotype.calcLogLik(flanking_size_count, spanning_size_count);
+
+      cerr << num_units_hap1 << "/" << num_units_hap2 << "\t" << cur_loglik << endl;
+
       if (max_loglik < cur_loglik || is_first_pass) {
         max_loglik = cur_loglik;
         is_first_pass = false;

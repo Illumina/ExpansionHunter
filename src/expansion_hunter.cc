@@ -406,7 +406,10 @@ void EstimateRepeatSizes(const Parameters& parameters,
     cerr << endl;
 
     const int unit_len = repeat_spec.units[0].length();
-    const double kPropCorrectMolecules = 0.97;
+    double kPropCorrectMolecules = 0.97;
+    if (unit_len <= 2) {
+        kPropCorrectMolecules = 0.70;
+    }
     const double hap_depth = parameters.depth() / 2;
     const int max_num_units_in_read =
         (int) (std::ceil(parameters.read_len() / (double) unit_len));
@@ -419,8 +422,8 @@ void EstimateRepeatSizes(const Parameters& parameters,
                                                       flanking_size_counts,
                                                       spanning_size_counts);
 
-    cerr << "[Genotype of " << repeat_spec.units[0] << " STR is " << genotype.first
-         << "/" << genotype.second << "]" << endl;
+    cerr << "Genotype\t" << repeat_header << "\t" << repeat_spec.units[0] << "\t" << genotype.first
+         << "/" << genotype.second << endl;
 
 
     // End genotyping
@@ -470,6 +473,8 @@ int main(int argc, char* argv[]) {
 
     BamFile bam_file;
     bam_file.Init(parameters.bam_path(), parameters.genome_path());
+
+    cerr << "[Sample " << parameters.sample_name() << "]" << endl;
 
     if (!parameters.depth_is_set()) {
       cerr << "[Calculating depth]" << endl;
