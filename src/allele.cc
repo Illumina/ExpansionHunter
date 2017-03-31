@@ -98,6 +98,8 @@ void AsPtree(ptree& region_node, vector<Allele> alleles,
              const size_t num_unaligned_irrs, const size_t num_anchored_irrs,
              const vector<size_t>& off_target_irr_counts) {
   region_node.put<string>("RepeatId", region_info.repeat_id);
+  const string unit_encoding = boost::algorithm::join(region_info.units, "/");
+  region_node.put<string>("RepeatUnit", unit_encoding);
   region_node.put<string>("TargetRegion", region_info.target_region.AsString());
   region_node.put<size_t>("AnchoredIrrCount", num_anchored_irrs);
 
