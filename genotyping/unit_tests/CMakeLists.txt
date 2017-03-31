@@ -1,0 +1,3 @@
+add_executable(genotyping_test genotyping_test.cc)
+target_link_libraries(genotyping_test genotyping gtest_main)
+add_test(NAME genotyping_test COMMAND genotyping_test)
