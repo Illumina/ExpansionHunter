@@ -29,8 +29,7 @@
 
 #include "include/genomic_region.h"
 #include "include/repeat_spec.h"
-
-/*****************************************************************************/
+#include "genotyping/genotyping.h"
 
 class Outputs {
  public:
@@ -81,6 +80,7 @@ class Parameters {
   size_t min_anchor_mapq_;
   size_t read_len_;
   double depth_;
+  Sex sex_;
   bool skip_unaligned_;
   std::string repeat_specs_path_;
   std::string sample_name_;
@@ -88,7 +88,5 @@ class Parameters {
   std::string json_path_;
   std::string log_path_;
 };
-
-/*****************************************************************************/
 
 #endif  // INCLUDE_PARAMETERS_H_

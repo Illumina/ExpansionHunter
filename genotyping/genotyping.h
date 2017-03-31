@@ -28,6 +28,8 @@
 #include <string>
 #include <vector>
 
+enum class Sex {kMale, kFemale};
+
 class StrHaplotype
 {
  public:

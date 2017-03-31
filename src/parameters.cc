@@ -29,8 +29,8 @@ namespace po = boost::program_options;
 using boost::lexical_cast;
 #include <boost/format.hpp>
 using boost::format;
-#include <boost/filesystem.hpp>
 #include <boost/assign.hpp>
+#include <boost/filesystem.hpp>
 using boost::assign::list_of;
 
 #include <string>
@@ -44,14 +44,10 @@ using std::endl;
 #include <vector>
 using std::vector;
 
-/*****************************************************************************/
-
 const size_t def_region_extension_len = 1000;
 const float def_min_wp = 0.90;
 const size_t def_min_baseq = 20;
 const size_t def_min_anchor_mapq = 60;
-
-/*****************************************************************************/
 
 Outputs::Outputs(const string vcf_path, const string json_path,
                  const string log_path) {
@@ -83,12 +79,10 @@ Outputs::Outputs(const string vcf_path, const string json_path,
   }
 }
 
-/*****************************************************************************/
-
-bool CheckIndexFile(const string& bam_path) {
+bool CheckIndexFile(const string &bam_path) {
   vector<string> indexExtStrVec = list_of(".bai")(".csi")(".crai");
 
-  for (const string& indexExtStr : indexExtStrVec) {
+  for (const string &indexExtStr : indexExtStrVec) {
     if (boost::filesystem::exists(bam_path + indexExtStr)) {
       return true;
     }
@@ -97,9 +91,7 @@ bool CheckIndexFile(const string& bam_path) {
   return false;
 }
 
-/*****************************************************************************/
-
-void DieNotOutputFilePath(const string& output_path_str) {
+void DieNotOutputFilePath(const string &output_path_str) {
   const boost::filesystem::path output_path(output_path_str);
   const boost::filesystem::path output_dir(output_path.parent_path());
 
@@ -116,50 +108,33 @@ void DieNotOutputFilePath(const string& output_path_str) {
   throw std::invalid_argument(error_msg);
 }
 
-/*****************************************************************************/
-
 Parameters::Parameters()
-    : region_extension_len_(def_region_extension_len),
-      min_wp_(def_min_wp),
-      min_baseq_(def_min_baseq),
-      min_anchor_mapq_(def_min_anchor_mapq),
-      skip_unaligned_(false),
-      depth_(0.0) {}
+    : region_extension_len_(def_region_extension_len), min_wp_(def_min_wp),
+      min_baseq_(def_min_baseq), min_anchor_mapq_(def_min_anchor_mapq),
+      skip_unaligned_(false), depth_(0.0), sex_(Sex::kFemale) {}
 
-/*****************************************************************************/
-
-bool Parameters::Load(int numArgs, char* argPtrArr[]) {
+bool Parameters::Load(int numArgs, char *argPtrArr[]) {
+  // clang-format off
   po::options_description usage("Allowed options");
-  usage.add_options()("help", "Print help message")(
-      "version", "Print version number")("bam", po::value<string>(),
-                                         "BAM file path")(
-      "ref-fasta", po::value<string>(), "Reference genome file (FASTA) path")(
-      "repeat-specs", po::value<string>(),
-      "Directory containing JSON files specifying "
-      "target repeat regions")("vcf", po::value<string>(),
-                               "Output VCF file path")(
-      "json", po::value<string>(), "Output JSON file path")(
-      "log", po::value<string>(), "Output read alignment file path")(
-      "region-extension-length", po::value<size_t>(),
-      ("[Optional] How far from on/off-target regions to search for "
-       "informative reads [Default " +
-       lexical_cast<string>(def_region_extension_len) + "]")
-          .c_str())("min-score", po::value<float>(),
-                    ("[Optional] Minimum weighted matching score (0 <= x "
-                     "<= 1) [Default " +
-                     boost::str(format("%.3f") % def_min_wp) + "]")
-                        .c_str())(
-      "min-baseq", po::value<size_t>(),
-      ("[Optional] Minimum quality of a high-confidence base call "
-       "[Default " +
-       lexical_cast<string>(def_min_baseq) + "]")
-          .c_str())("min-anchor-mapq", po::value<size_t>(),
-                    ("[Optional] Minimum MAPQ of a read anchor [Default " +
-                     lexical_cast<string>(def_min_anchor_mapq) + "]")
-                        .c_str())(
-      "skip-unaligned", "[Optional] Do not search for IRRs in unaligned reads")(
-      "read-depth", po::value<float>(), "[Optional] Read depth");
-
+  usage.add_options()
+      ("help", "Print help message")
+      ("version", "Print version number")
+      ("bam", po::value<string>(), "BAM file path")
+      ("ref-fasta", po::value<string>(), "Reference genome file (FASTA) path")
+      ("repeat-specs", po::value<string>(), "Directory containing JSON files specifying target repeat regions")
+      ("vcf", po::value<string>(), "Output VCF file path")
+      ("json", po::value<string>(), "Output JSON file path")
+      ("log", po::value<string>(), "Output read alignment file path")
+      ("region-extension-length", po::value<size_t>(),
+          ("[Optional] How far from on/off-target regions to search for informative reads [Default " + std::to_string(def_region_extension_len) + "]").c_str())
+      ("min-score", po::value<float>(),
+          ("[Optional] Minimum weighted matching score (0 <= x <= 1) [Default " + boost::str(format("%.3f") % def_min_wp) + "]").c_str())
+      ("min-baseq", po::value<size_t>(), ("[Optional] Minimum quality of a high-confidence base call [Default " + std::to_string(def_min_baseq) + "]").c_str())
+      ("min-anchor-mapq", po::value<size_t>(), ("[Optional] Minimum MAPQ of a read anchor [Default " + std::to_string(def_min_anchor_mapq) + "]").c_str())
+      ("skip-unaligned", "[Optional] Do not search for IRRs in unaligned reads")
+      ("read-depth", po::value<float>(), "[Optional] Read depth")
+      ("sex", po::value<string>(), "[Optional] Sex of the sample; can be either male or female [Default female]");
+  // clang-format on
   po::variables_map argMap;
   po::store(po::parse_command_line(numArgs, argPtrArr, usage), argMap);
   po::notify(argMap);
@@ -260,6 +235,17 @@ bool Parameters::Load(int numArgs, char* argPtrArr[]) {
     if (depth_ < kSmallestPossibleDepth) {
       throw std::invalid_argument("read-depth must be >= " +
                                   lexical_cast<string>(kSmallestPossibleDepth));
+    }
+  }
+
+  if (argMap.count("sex")) {
+    const string sex_encoding = argMap["sex"].as<string>();
+    if (sex_encoding == "male") {
+      sex_ = Sex::kMale;
+    } else if (sex_encoding != "female") {
+      throw std::invalid_argument(
+          sex_encoding +
+          " is an invalid value for sex; it must be either male or female");
     }
   }
 
