@@ -344,22 +344,11 @@ void EstimateRepeatSizes(const Parameters& parameters,
                     num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
                     ontarget_frag_names, align_pairs, &flanking_repaligns);
 
-
-    // Genotyping
-    //const map<ReadType, string> read_type_to_string = {{kSpanning, "kSpanning"}, {kFlanking, "kFlanking"},
-    //                                                   {kAnchored, "kAnchored"}, {kAlignedIrrPair, "kAlignedIrrPair"},
-    //                                                   {kUnalignedIrrPair, "kUnalignedIrrPair"},
-    //                                                   {kUnalignedIrrSingleton, "kUnalignedIrrSingleton"}};
-
     map<int, int> flanking_size_counts;
     map<int, int> spanning_size_counts;
 
     for (const auto& align : flanking_repaligns) {
-      // cerr << read_type_to_string.at(align.type) << endl;
-      //if (align.left_flank_len) {
       flanking_size_counts[align.size] += 1;
-        // cerr << align.left_flank_len << "\t" << align.right_flank_len << "\t" << align.size << endl;
-      //}
     }
 
     vector<int> haplotype_candidates;
@@ -378,15 +367,11 @@ void EstimateRepeatSizes(const Parameters& parameters,
       } else if (allele.type == kFlankingAllele) {
         haplotype_candidates.push_back(allele.size);
         for (const auto& align : allele.rep_aligns) {
-          // if (align.left_flank_len) {
           flanking_size_counts[align.size] += 1;
-          //}
         }
       } else {
         throw std::logic_error("Do not know how to deal with " + allele.readtypeToStr.at(allele.type) + " alleles");
       }
-      // Distinct logic for spanning and flanking alleles.
-      // cerr << allele.readtypeToStr.at(allele.type) << endl;
     }
 
     cerr << "Flanking:" << endl;
@@ -422,15 +407,15 @@ void EstimateRepeatSizes(const Parameters& parameters,
                                                       flanking_size_counts,
                                                       spanning_size_counts);
 
-    cerr << "Genotype\t" << repeat_header << "\t" << repeat_spec.units[0] << "\t" << genotype.first
-         << "/" << genotype.second << endl;
+    cerr << "Genotype\t" << repeat_header << "\t" << repeat_spec.units[0]
+         << "\t" << genotype.first << "/" << genotype.second << endl;
 
 
     // End genotyping
 
     boost::property_tree::ptree region_node;
     AsPtree(region_node, alleles, repeat_spec, num_irrs, num_unaligned_irrs,
-            num_anchored_irrs, offtarget_irr_counts);
+            num_anchored_irrs, offtarget_irr_counts, genotype);
     ptree_root.put_child(repeat_spec.repeat_id, region_node);
 
     OutputRepeatAligns(parameters, repeat_spec, alleles, flanking_repaligns,

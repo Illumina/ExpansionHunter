@@ -61,7 +61,8 @@ void AsPtree(boost::property_tree::ptree& region_node,
              std::vector<Allele> alleles, const RepeatSpec& region_info,
              const size_t num_irrs, const size_t num_unaligned_irrs,
              const size_t num_anchored_irrs,
-             const std::vector<size_t>& off_target_irr_counts);
+             const std::vector<size_t>& off_target_irr_counts,
+             const std::pair<int, int> genotype);
 
 void DumpVcf(const Parameters& parameters,
              const std::map<std::string, RepeatSpec> repeat_specs,

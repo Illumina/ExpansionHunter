@@ -96,11 +96,14 @@ static bool CompareBySize(const Allele& a1, const Allele& a2) {
 void AsPtree(ptree& region_node, vector<Allele> alleles,
              const RepeatSpec& region_info, const size_t num_irrs,
              const size_t num_unaligned_irrs, const size_t num_anchored_irrs,
-             const vector<size_t>& off_target_irr_counts) {
+             const vector<size_t>& off_target_irr_counts,
+             const std::pair<int, int> genotype) {
   region_node.put<string>("RepeatId", region_info.repeat_id);
   const string unit_encoding = boost::algorithm::join(region_info.units, "/");
   region_node.put<string>("RepeatUnit", unit_encoding);
   region_node.put<string>("TargetRegion", region_info.target_region.AsString());
+  region_node.put<string>("Genotype", std::to_string(genotype.first) + "," +
+      std::to_string(genotype.second));
   region_node.put<size_t>("AnchoredIrrCount", num_anchored_irrs);
 
   AddConfusionCountsNode("OffTargetRegionIrrCounts", region_node,
@@ -346,7 +349,8 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
         piece_quals =
             rep_align.quals.substr(0, rep_align.bases.length() - piece_end);
         const size_t unit_length = units_shifts[0][0].length();
-        const size_t offset = (unit_length - piece_bases.length() % unit_length) % unit_length;
+        const size_t offset =
+            (unit_length - piece_bases.length() % unit_length) % unit_length;
         const vector<string>& units = units_shifts[offset];
         piece_wp_score =
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
@@ -440,8 +444,6 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
     alleles.push_back(allele);
   }
 }
-
-/*****************************************************************************/
 
 struct PlotColumn {
   PlotColumn(char t, char m, char b) {
