@@ -20,7 +20,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-// Defines classes and methods for genotype and haplotype likelihood calculations.
+// Defines classes and methods for genotype and haplotype likelihood
+// calculations.
 
 #pragma once
 
@@ -28,18 +29,19 @@
 #include <string>
 #include <vector>
 
-enum class Sex {kMale, kFemale};
+enum class Sex { kMale, kFemale };
+enum class GenotypeType {kHaploid, kDiploid};
 
-class StrHaplotype
-{
- public:
+class StrHaplotype {
+public:
   StrHaplotype(int num_units_haplotype, int max_num_units_in_read,
                double prop_correct_molecules);
-  double propMolecules(int num_units_upper_bound);
-  double propMoleculesShorterThan(int num_units_upper_bound);
-  double propMoleculesAtLeast(int num_units_lower_bound);
-  int num_units() const {return num_units_haplotype_;}
- private:
+  double propMolecules(int num_units_upper_bound) const;
+  double propMoleculesShorterThan(int num_units_upper_bound) const;
+  double propMoleculesAtLeast(int num_units_lower_bound) const;
+  int num_units() const { return num_units_haplotype_; }
+
+private:
   int num_units_haplotype_;
   int max_num_units_in_read_;
   double prop_correct_molecules_;
@@ -47,29 +49,38 @@ class StrHaplotype
   int max_deviation_;
 };
 
-class StrGenotype
-{
- public:
+class StrGenotype {
+public:
   StrGenotype(int max_num_units_in_read, double prop_correct_molecules,
               double hap_depth, int read_len, int num_units_hap1,
               int num_units_hap2)
-      : hap_depth_(hap_depth),
-        read_len_(read_len),
-        hap1_(num_units_hap1, max_num_units_in_read, prop_correct_molecules),
-        hap2_(num_units_hap2, max_num_units_in_read, prop_correct_molecules) {}
-  double calcFlankingLoglik(int num_units_in_read);
-  double calcSpanningLoglik(int num_units_in_read);
-  double calcLogLik(const std::map<int, int>& flanking_size_counts,
-                    const std::map<int, int>& spanning_size_counts);
- private:
+      : hap_depth_(hap_depth), read_len_(read_len) {
+    haplotypes.push_back(StrHaplotype(num_units_hap1, max_num_units_in_read,
+                                      prop_correct_molecules));
+    haplotypes.push_back(StrHaplotype(num_units_hap2, max_num_units_in_read,
+                                      prop_correct_molecules));
+  }
+  StrGenotype(int max_num_units_in_read, double prop_correct_molecules,
+              double hap_depth, int read_len, int num_units_hap)
+      : hap_depth_(hap_depth), read_len_(read_len) {
+    haplotypes.push_back(StrHaplotype(num_units_hap, max_num_units_in_read,
+                                      prop_correct_molecules));
+  }
+  double calcFlankingLoglik(int num_units_in_read) const;
+  double calcSpanningLoglik(int num_units_in_read) const;
+  double calcLogLik(const std::map<int, int> &flanking_size_counts,
+                    const std::map<int, int> &spanning_size_counts) const;
+
+private:
   double hap_depth_;
   int read_len_;
-  StrHaplotype hap1_;
-  StrHaplotype hap2_;
+  std::vector<StrHaplotype> haplotypes;
 };
 
-std::pair<int, int> genotypeOneUnitStr(
-    int max_num_units_in_read, double prop_correct_molecules, double hap_depth,
-    int read_len, const std::vector<int>& haplotype_candidates,
-    const std::map<int, int>& flanking_size_count,
-    const std::map<int, int>& spanning_size_count);
+std::vector<int>
+genotypeOneUnitStr(int max_num_units_in_read, double prop_correct_molecules,
+                   double hap_depth, int read_len,
+                   const std::vector<int> &haplotype_candidates,
+                   const std::map<int, int> &flanking_size_count,
+                   const std::map<int, int> &spanning_size_count,
+                   GenotypeType genotype_type);

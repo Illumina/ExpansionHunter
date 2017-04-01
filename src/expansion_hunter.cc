@@ -20,9 +20,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 using boost::lexical_cast;
 #include <boost/algorithm/string/join.hpp>
 
@@ -44,27 +44,25 @@ using std::unordered_set;
 using std::pair;
 #include "genotyping/genotyping.h"
 
-#include "include/version.h"
 #include "include/allele.h"
-#include "include/parameters.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
+#include "include/irr_counting.h"
+#include "include/parameters.h"
 #include "include/ref_genome.h"
 #include "include/repeat_length.h"
-#include "include/irr_counting.h"
+#include "include/version.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
 
-/*****************************************************************************/
-
 // Returns the length of the first read in a BAM file.
-size_t CalcReadLen(const string& bam_path) {
+size_t CalcReadLen(const string &bam_path) {
   // Open a BAM file for reading.
-  samFile* file_ptr = sam_open(bam_path.c_str(), "r");
+  samFile *file_ptr = sam_open(bam_path.c_str(), "r");
   if (!file_ptr) {
     throw std::runtime_error("Failed to read BAM file '" + bam_path + "'");
   }
-  bam_hdr_t* header_ptr = sam_hdr_read(file_ptr);
+  bam_hdr_t *header_ptr = sam_hdr_read(file_ptr);
   if (!header_ptr) {
     throw std::runtime_error("BamFile::Init: Failed to read BAM header: '" +
                              bam_path + "'");
@@ -73,7 +71,7 @@ size_t CalcReadLen(const string& bam_path) {
   enum { kSupplimentaryAlign = 0x800, kSecondaryAlign = 0x100 };
 
   size_t read_len = 99;
-  bam1_t* align_ptr = bam_init1();
+  bam1_t *align_ptr = bam_init1();
   int ret;
   while ((ret = sam_read1(file_ptr, header_ptr, align_ptr)) >= 0) {
     const bool is_supplimentary = align_ptr->core.flag & kSupplimentaryAlign;
@@ -96,23 +94,21 @@ size_t CalcReadLen(const string& bam_path) {
   return read_len;
 }
 
-/*****************************************************************************/
-
 // Search for reads spanning the entire repeat sequence.
-void FindShortRepeats(const Parameters& parameters, BamFile& bam_file,
-                      const RepeatSpec& repeat_spec, AlignPairs& align_pairs,
-                      vector<Allele>& alleles,
-                      vector<RepeatAlign>* flanking_repaligns) {
+void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
+                      const RepeatSpec &repeat_spec, AlignPairs &align_pairs,
+                      vector<Allele> &alleles,
+                      vector<RepeatAlign> *flanking_repaligns) {
   const size_t unit_len = repeat_spec.units_shifts[0][0].length();
 
   map<size_t, vector<RepeatAlign>> size_spanning_repaligns;
   flanking_repaligns->clear();
 
   // Align each read to the repeat.
-  for (auto& kv : align_pairs) {
-    AlignPair& frag = kv.second;
+  for (auto &kv : align_pairs) {
+    AlignPair &frag = kv.second;
 
-    for (Align& align : frag) {
+    for (Align &align : frag) {
       RepeatAlign rep_align;
       const bool aligns = AlignRead(
           parameters.min_baseq(), parameters.min_wp(), repeat_spec.units_shifts,
@@ -136,7 +132,7 @@ void FindShortRepeats(const Parameters& parameters, BamFile& bam_file,
     }
   }
 
-  for (const auto& size_repaligns : size_spanning_repaligns) {
+  for (const auto &size_repaligns : size_spanning_repaligns) {
     Allele allele;
     allele.type = kSpanningAllele;
     allele.size = size_repaligns.first;
@@ -159,9 +155,9 @@ void FindShortRepeats(const Parameters& parameters, BamFile& bam_file,
 
 // Caches alignments from extended target and off-target regions. For BAM files,
 // mates of reads in the relevant regions are cached too.
-void CacheAligns(BamFile* bam_file, const RepeatSpec& repeat_spec,
-                 AlignPairs& align_pairs,
-                 unordered_set<string>& ontarget_frag_names,
+void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
+                 AlignPairs &align_pairs,
+                 unordered_set<string> &ontarget_frag_names,
                  size_t extension_len) {
   align_pairs.clear();
   Region extended_target_region =
@@ -175,8 +171,8 @@ void CacheAligns(BamFile* bam_file, const RepeatSpec& repeat_spec,
   // Save names of fragments that overlap target locus before caching reads
   // from confusion regions.
   ontarget_frag_names.clear();
-  for (const auto& kv : align_pairs) {
-    const AlignPair& frag = kv.second;
+  for (const auto &kv : align_pairs) {
+    const AlignPair &frag = kv.second;
     const string name = !frag[0].name.empty() ? frag[0].name : frag[1].name;
     ontarget_frag_names.insert(name);
   }
@@ -185,7 +181,7 @@ void CacheAligns(BamFile* bam_file, const RepeatSpec& repeat_spec,
        << endl;
 
   // Cache aligned off-target reads.
-  for (const Region& confusion_region : repeat_spec.offtarget_regions) {
+  for (const Region &confusion_region : repeat_spec.offtarget_regions) {
     Region extended_confusion_region = confusion_region.Extend(extension_len);
     CacheReadsFromRegion(extended_confusion_region, kCacheAll,
                          repeat_spec.units_shifts, 0.9, &(*bam_file),
@@ -202,22 +198,18 @@ void CacheAligns(BamFile* bam_file, const RepeatSpec& repeat_spec,
   cerr << "\t[Done filling in mates]" << endl;
 }
 
-/*****************************************************************************/
-
-bool is_flannking_allele(const Allele& allele) {
+bool is_flannking_allele(const Allele &allele) {
   return allele.type == kFlankingAllele;
 }
 
-/*****************************************************************************/
-
-bool FindLongRepeats(const Parameters& parameters,
-                     const RepeatSpec& repeat_spec, BamFile& bam_file,
-                     vector<Allele>& alleles, size_t& num_irrs,
-                     size_t& num_unaligned_irrs, size_t& num_anchored_irrs,
-                     vector<size_t>& off_target_irr_counts,
-                     unordered_set<string>& ontarget_frag_names,
-                     AlignPairs& align_pairs,
-                     vector<RepeatAlign>* flanking_repaligns) {
+bool FindLongRepeats(const Parameters &parameters,
+                     const RepeatSpec &repeat_spec, BamFile &bam_file,
+                     vector<Allele> &alleles, size_t &num_irrs,
+                     size_t &num_unaligned_irrs, size_t &num_anchored_irrs,
+                     vector<size_t> &off_target_irr_counts,
+                     unordered_set<string> &ontarget_frag_names,
+                     AlignPairs &align_pairs,
+                     vector<RepeatAlign> *flanking_repaligns) {
   // Count the number of anchored IRRs.
   num_anchored_irrs = 0;
   const size_t extension_len = parameters.region_extension_len();
@@ -246,7 +238,7 @@ bool FindLongRepeats(const Parameters& parameters,
 
       // Record paired IRR counts from each confusion region.
       off_target_irr_counts.clear();
-      for (const Region& confusionRegion : repeat_spec.offtarget_regions) {
+      for (const Region &confusionRegion : repeat_spec.offtarget_regions) {
         Region confusionNhood = confusionRegion.Extend(extension_len);
         off_target_irr_counts.push_back(
             numIrrConfRegion[confusionNhood.AsString()]);
@@ -305,14 +297,14 @@ bool FindLongRepeats(const Parameters& parameters,
 // (b) longer than the read length; reconsile alleles and output results to
 // appropriate files.
 
-void EstimateRepeatSizes(const Parameters& parameters,
-                         const map<string, RepeatSpec>& repeat_specs,
-                         BamFile* bam_file, Outputs* outputs) {
+void EstimateRepeatSizes(const Parameters &parameters,
+                         const map<string, RepeatSpec> &repeat_specs,
+                         BamFile *bam_file, Outputs *outputs) {
   boost::property_tree::ptree ptree_root;
 
   // Analyze repeats one by one.
-  for (auto& kv : repeat_specs) {
-    const RepeatSpec& repeat_spec = kv.second;
+  for (auto &kv : repeat_specs) {
+    const RepeatSpec &repeat_spec = kv.second;
 
     string repeat_header = repeat_spec.target_region.AsString();
     repeat_header += " " + boost::algorithm::join(repeat_spec.units, "/");
@@ -347,45 +339,48 @@ void EstimateRepeatSizes(const Parameters& parameters,
     map<int, int> flanking_size_counts;
     map<int, int> spanning_size_counts;
 
-    for (const auto& align : flanking_repaligns) {
+    for (const auto &align : flanking_repaligns) {
       flanking_size_counts[align.size] += 1;
     }
 
     vector<int> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
-    for (const auto& allele : alleles) {
+    for (const auto &allele : alleles) {
       cerr << allele.readtypeToStr.at(allele.type) << endl;
       if (allele.type == kSpanningAllele) {
         spanning_size_counts[allele.size] += allele.num_supporting_reads;
         haplotype_candidates.push_back(allele.size);
       } else if (allele.type == kInRepeatAllele) {
-        const int num_units_in_read =
-            (int) (std::ceil(parameters.read_len() / (double) repeat_spec.units[0].length()));
-        const int bounded_num_irrs = allele.num_supporting_reads <= 5 ? allele.num_supporting_reads : 5;
+        const int num_units_in_read = (int)(std::ceil(
+            parameters.read_len() / (double)repeat_spec.units[0].length()));
+        const int bounded_num_irrs =
+            allele.num_supporting_reads <= 5 ? allele.num_supporting_reads : 5;
         flanking_size_counts[num_units_in_read] += bounded_num_irrs;
         haplotype_candidates.push_back(num_units_in_read);
       } else if (allele.type == kFlankingAllele) {
         haplotype_candidates.push_back(allele.size);
-        for (const auto& align : allele.rep_aligns) {
+        for (const auto &align : allele.rep_aligns) {
           flanking_size_counts[align.size] += 1;
         }
       } else {
-        throw std::logic_error("Do not know how to deal with " + allele.readtypeToStr.at(allele.type) + " alleles");
+        throw std::logic_error("Do not know how to deal with " +
+                               allele.readtypeToStr.at(allele.type) +
+                               " alleles");
       }
     }
 
     cerr << "Flanking:" << endl;
-    for (const auto& kv : flanking_size_counts) {
+    for (const auto &kv : flanking_size_counts) {
       cerr << "\t" << kv.first << " -- " << kv.second << endl;
     }
 
     cerr << "Spanning:" << endl;
-    for (const auto& kv : spanning_size_counts) {
+    for (const auto &kv : spanning_size_counts) {
       cerr << "\t" << kv.first << " -- " << kv.second << endl;
     }
 
     cerr << "Haplotype candidates: ";
-    for (const auto& size : haplotype_candidates) {
+    for (const auto &size : haplotype_candidates) {
       cerr << size << " ";
     }
     cerr << endl;
@@ -393,23 +388,22 @@ void EstimateRepeatSizes(const Parameters& parameters,
     const int unit_len = repeat_spec.units[0].length();
     double kPropCorrectMolecules = 0.97;
     if (unit_len <= 2) {
-        kPropCorrectMolecules = 0.70;
+      kPropCorrectMolecules = 0.70;
     }
     const double hap_depth = parameters.depth() / 2;
     const int max_num_units_in_read =
-        (int) (std::ceil(parameters.read_len() / (double) unit_len));
+        (int)(std::ceil(parameters.read_len() / (double)unit_len));
 
-    std::pair<int, int> genotype = genotypeOneUnitStr(max_num_units_in_read,
-                                                      kPropCorrectMolecules,
-                                                      hap_depth,
-                                                      parameters.read_len(),
-                                                      haplotype_candidates,
-                                                      flanking_size_counts,
-                                                      spanning_size_counts);
+    GenotypeType genotype_type = GenotypeType::kDiploid;
+    const string chrom = repeat_spec.target_region.chrom();
+    if (parameters.sex() == Sex::kMale && (chrom == "chrX" || chrom == "X")) {
+      genotype_type = GenotypeType::kHaploid;
+    }
 
-    cerr << "Genotype\t" << repeat_header << "\t" << repeat_spec.units[0]
-         << "\t" << genotype.first << "/" << genotype.second << endl;
-
+    vector<int> genotype = genotypeOneUnitStr(
+        max_num_units_in_read, kPropCorrectMolecules, hap_depth,
+        parameters.read_len(), haplotype_candidates, flanking_size_counts,
+        spanning_size_counts, genotype_type);
 
     // End genotyping
 
@@ -432,7 +426,7 @@ void EstimateRepeatSizes(const Parameters& parameters,
   cerr << "[All done]" << endl;
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   try {
     Parameters parameters;
     cerr << kProgramVersion << endl;
@@ -479,7 +473,7 @@ int main(int argc, char* argv[]) {
     }
 
     EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
-  } catch (const std::exception& e) {
+  } catch (const std::exception &e) {
     cerr << e.what() << endl;
     return 1;
   }

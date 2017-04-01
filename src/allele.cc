@@ -45,16 +45,16 @@ using std::pair;
 #include <map>
 using std::map;
 #include <algorithm>
+#include <cctype>
 #include <set>
 #include <sstream>
-#include <cctype>
 
-#include "include/repeat_spec.h"
 #include "include/genomic_region.h"
 #include "include/repeat_length.h"
+#include "include/repeat_spec.h"
 #include "purity/purity.h"
 
-void Allele::AsPtree(ptree& allele_node) const {
+void Allele::AsPtree(ptree &allele_node) const {
   allele_node.put<string>("Size", lexical_cast<string>(size));
 
   if (type == kInRepeatAllele || type == kFlankingAllele) {
@@ -67,10 +67,11 @@ void Allele::AsPtree(ptree& allele_node) const {
   allele_node.put<size_t>("NumSupportingReads", num_supporting_reads);
 }
 
-static bool AddConfusionCountsNode(
-    const std::string& labelStr, boost::property_tree::ptree& hunterEleNode,
-    const vector<Region>& confusionRegionTable,
-    const vector<size_t>& confusionRegionInRepeatCountVec) {
+static bool
+AddConfusionCountsNode(const std::string &labelStr,
+                       boost::property_tree::ptree &hunterEleNode,
+                       const vector<Region> &confusionRegionTable,
+                       const vector<size_t> &confusionRegionInRepeatCountVec) {
   boost::property_tree::ptree confusionCountsNode;
   size_t countInd(0);
   const bool countVecEmpty(confusionRegionInRepeatCountVec.empty());
@@ -78,7 +79,7 @@ static bool AddConfusionCountsNode(
   assert(countVecEmpty || (confusionRegionInRepeatCountVec.size() ==
                            confusionRegionTable.size()));
 
-  for (const Region& confusionRegion : confusionRegionTable) {
+  for (const Region &confusionRegion : confusionRegionTable) {
     const size_t count(
         countVecEmpty ? 0 : confusionRegionInRepeatCountVec[countInd++]);
     confusionCountsNode.put<size_t>(confusionRegion.AsString(), count);
@@ -89,21 +90,26 @@ static bool AddConfusionCountsNode(
   return true;
 }
 
-static bool CompareBySize(const Allele& a1, const Allele& a2) {
+static bool CompareBySize(const Allele &a1, const Allele &a2) {
   return a1.size < a2.size;
 }
 
-void AsPtree(ptree& region_node, vector<Allele> alleles,
-             const RepeatSpec& region_info, const size_t num_irrs,
+void AsPtree(ptree &region_node, vector<Allele> alleles,
+             const RepeatSpec &region_info, const size_t num_irrs,
              const size_t num_unaligned_irrs, const size_t num_anchored_irrs,
-             const vector<size_t>& off_target_irr_counts,
-             const std::pair<int, int> genotype) {
+             const vector<size_t> &off_target_irr_counts,
+             const vector<int> genotype) {
   region_node.put<string>("RepeatId", region_info.repeat_id);
   const string unit_encoding = boost::algorithm::join(region_info.units, "/");
   region_node.put<string>("RepeatUnit", unit_encoding);
   region_node.put<string>("TargetRegion", region_info.target_region.AsString());
-  region_node.put<string>("Genotype", std::to_string(genotype.first) + "," +
-      std::to_string(genotype.second));
+  vector<string> genotype_encoding_vec;
+  for (const int size : genotype) {
+    genotype_encoding_vec.push_back(std::to_string(size));
+  }
+  const string genotype_encoding =
+      boost::algorithm::join(genotype_encoding_vec, ",");
+  region_node.put<string>("Genotype", genotype_encoding);
   region_node.put<size_t>("AnchoredIrrCount", num_anchored_irrs);
 
   AddConfusionCountsNode("OffTargetRegionIrrCounts", region_node,
@@ -116,7 +122,7 @@ void AsPtree(ptree& region_node, vector<Allele> alleles,
   ptree repeat_sizes_node;
 
   std::sort(alleles.begin(), alleles.end(), CompareBySize);
-  for (const Allele& allele : alleles) {
+  for (const Allele &allele : alleles) {
     const string name = "Allele" + lexical_cast<string>(num_allele);
     ptree allele_node;
     allele.AsPtree(allele_node);
@@ -127,9 +133,9 @@ void AsPtree(ptree& region_node, vector<Allele> alleles,
   region_node.put_child("RepeatSizes", repeat_sizes_node);
 }
 
-void DumpVcf(const Parameters& options,
-             const map<string, RepeatSpec> repeat_specs, const ptree& root_node,
-             Outputs& outputs) {
+void DumpVcf(const Parameters &options,
+             const map<string, RepeatSpec> repeat_specs, const ptree &root_node,
+             Outputs &outputs) {
   std::stringstream vcf_header, vcf_body;
 
   vcf_header
@@ -160,9 +166,9 @@ void DumpVcf(const Parameters& options,
          " interval for CN\">\n";
 
   std::set<size_t> alt_sizes;
-  for (const ptree::value_type& name_region : root_node) {
+  for (const ptree::value_type &name_region : root_node) {
     const string region_id = name_region.first;
-    const ptree& region_node = name_region.second;
+    const ptree &region_node = name_region.second;
 
     if (region_id == "BamStats") {
       continue;
@@ -170,20 +176,20 @@ void DumpVcf(const Parameters& options,
 
     const string region_encoding = region_node.get<string>("TargetRegion");
     const Region region(region_encoding);
-    const RepeatSpec& region_info = repeat_specs.at(region_encoding);
+    const RepeatSpec &region_info = repeat_specs.at(region_encoding);
     const string ref = region_info.LeftFlankBase() + region_info.ref_seq;
     const size_t unit_len = region_info.units[0].length();
     const size_t reference_size = region_info.ref_seq.length() / unit_len;
 
-    const ptree& alleles_node = region_node.get_child("RepeatSizes");
+    const ptree &alleles_node = region_node.get_child("RepeatSizes");
     const string motif = boost::algorithm::join(region_info.units, "/");
 
     string alt;
     size_t genotype_num = 0;
     string format_gt, format_sp, format_so, format_cn, format_ci;
 
-    for (const ptree::value_type& name_allele : alleles_node) {
-      const ptree& allele_node = name_allele.second;
+    for (const ptree::value_type &name_allele : alleles_node) {
+      const ptree &allele_node = name_allele.second;
       const size_t allele_size = allele_node.get<size_t>("Size");
       const size_t allele_len = allele_size * unit_len;
 
@@ -233,12 +239,12 @@ void DumpVcf(const Parameters& options,
       }
     }
 
-    const string info =
-        "SVTYPE=STR;"
-        "END=" +
-        lexical_cast<string>(region.end()) + ";REF=" +
-        lexical_cast<string>(reference_size) + ";RL=" +
-        lexical_cast<string>(reference_size * unit_len) + ";RU=" + motif;
+    const string info = "SVTYPE=STR;"
+                        "END=" +
+                        lexical_cast<string>(region.end()) + ";REF=" +
+                        lexical_cast<string>(reference_size) + ";RL=" +
+                        lexical_cast<string>(reference_size * unit_len) +
+                        ";RU=" + motif;
     if (alt.empty()) {
       alt = ".";
     }
@@ -261,18 +267,18 @@ void DumpVcf(const Parameters& options,
   outputs.vcf() << vcf_header.str() << vcf_body.str();
 }
 
-void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
-                           vector<Allele>& alleles,
-                           vector<RepeatAlign>* flanking_repaligns,
+void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
+                           vector<Allele> &alleles,
+                           vector<RepeatAlign> *flanking_repaligns,
                            const size_t read_len, const double hap_depth,
                            size_t motif_len,
-                           const vector<vector<string>>& units_shifts,
+                           const vector<vector<string>> &units_shifts,
                            size_t min_baseq, double min_wp_score) {
-  const string& left_flank = repeat_spec.left_flank;
-  const string& right_flank = repeat_spec.right_flank;
+  const string &left_flank = repeat_spec.left_flank;
+  const string &right_flank = repeat_spec.right_flank;
 
   size_t longest_spanning = 0;
-  for (const Allele& allele : alleles) {
+  for (const Allele &allele : alleles) {
     if (allele.type == kSpanningAllele) {
       if (allele.size > longest_spanning) {
         longest_spanning = allele.size;
@@ -292,7 +298,7 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
 
   vector<RepeatAlign> good_flanking_repaligns;
 
-  for (const auto& rep_align : *flanking_repaligns) {
+  for (const auto &rep_align : *flanking_repaligns) {
     if (rep_align.size > longest_spanning) {
       ++num_reads_from_unseen_allele;
 
@@ -322,7 +328,7 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
             piece_start, rep_align.bases.length() - piece_start);
         piece_quals = rep_align.quals.substr(
             piece_start, rep_align.bases.length() - piece_start);
-        const vector<string>& units = units_shifts[0];
+        const vector<string> &units = units_shifts[0];
         piece_wp_score =
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
       } else {
@@ -350,7 +356,7 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
         const size_t unit_length = units_shifts[0][0].length();
         const size_t offset =
             (unit_length - piece_bases.length() % unit_length) % unit_length;
-        const vector<string>& units = units_shifts[offset];
+        const vector<string> &units = units_shifts[offset];
         piece_wp_score =
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
       }
@@ -381,7 +387,7 @@ void CoalesceFlankingReads(const RepeatSpec& repeat_spec,
   if (good_repeat_exists) {
     vector<RepeatAlign> short_aligns;
     vector<RepeatAlign> supporting_aligns;
-    for (const RepeatAlign& rep_align : *flanking_repaligns) {
+    for (const RepeatAlign &rep_align : *flanking_repaligns) {
       if (rep_align.size > longest_spanning) {
         supporting_aligns.push_back(rep_align);
       } else {
@@ -457,7 +463,7 @@ struct PlotColumn {
 
 typedef vector<PlotColumn> Plot;
 
-static void PlotGaplessAlign(Plot& plot, const string& top, const string& bot,
+static void PlotGaplessAlign(Plot &plot, const string &top, const string &bot,
                              const bool add_bars = true) {
   assert(top.length() == bot.length());
   for (size_t i = 0; i < top.length(); ++i) {
@@ -467,7 +473,7 @@ static void PlotGaplessAlign(Plot& plot, const string& top, const string& bot,
   }
 }
 
-static void PlotToStream(std::ostream& ostrm, Plot& plot) {
+static void PlotToStream(std::ostream &ostrm, Plot &plot) {
   // Write the rows one by one.
   for (size_t i = 0; i < plot.size(); ++i) {
     ostrm << plot[i].top;
@@ -483,8 +489,8 @@ static void PlotToStream(std::ostream& ostrm, Plot& plot) {
   ostrm << std::endl;
 }
 
-static void PlotSpanningAlign(Plot& plot, const string& read_seq,
-                              const string& refPrefix, const string& refSuffix,
+static void PlotSpanningAlign(Plot &plot, const string &read_seq,
+                              const string &refPrefix, const string &refSuffix,
                               const size_t prefLen, const size_t suffLen) {
   const string ref_pref =
       refPrefix.substr(refPrefix.length() - prefLen, prefLen);
@@ -494,7 +500,7 @@ static void PlotSpanningAlign(Plot& plot, const string& read_seq,
   PlotGaplessAlign(plot, read_seq, ref_pref + ref_mid + ref_suff);
 }
 
-static string LowerLowqualBases(const string& bases, const string& quals,
+static string LowerLowqualBases(const string &bases, const string &quals,
                                 size_t lowqual_cutoff) {
   assert(bases.length() == quals.length());
   string cased_bases;
@@ -508,20 +514,20 @@ static string LowerLowqualBases(const string& bases, const string& quals,
   return cased_bases;
 }
 
-void OutputRepeatAligns(const Parameters& parameters,
-                        const RepeatSpec& repeat_spec,
-                        const vector<Allele>& alleles,
-                        const vector<RepeatAlign>& flanking_repaligns,
-                        ostream* out) {
-  const string& left_flank = repeat_spec.left_flank;
-  const string& right_flank = repeat_spec.right_flank;
+void OutputRepeatAligns(const Parameters &parameters,
+                        const RepeatSpec &repeat_spec,
+                        const vector<Allele> &alleles,
+                        const vector<RepeatAlign> &flanking_repaligns,
+                        ostream *out) {
+  const string &left_flank = repeat_spec.left_flank;
+  const string &right_flank = repeat_spec.right_flank;
 
   *out << repeat_spec.repeat_id << ":" << endl;
 
-  for (const Allele& allele : alleles) {
+  for (const Allele &allele : alleles) {
     *out << "  " << allele.readtypeToStr.at(allele.type) << "_" << allele.size
          << ":" << endl;
-    for (const RepeatAlign& rep_align : allele.rep_aligns) {
+    for (const RepeatAlign &rep_align : allele.rep_aligns) {
       *out << "    -\n      name: \"" << rep_align.name << "\"" << endl;
 
       if (allele.type == kSpanningAllele || allele.type == kFlankingAllele) {
@@ -560,7 +566,7 @@ void OutputRepeatAligns(const Parameters& parameters,
 
   if (!flanking_repaligns.empty()) {
     *out << "  FLANKING:" << endl;
-    for (const RepeatAlign& rep_align : flanking_repaligns) {
+    for (const RepeatAlign &rep_align : flanking_repaligns) {
       *out << "    -\n      name: \"" << rep_align.name << "\"" << endl;
       *out << "      align: |" << endl;
       Plot plot;
@@ -576,21 +582,21 @@ void OutputRepeatAligns(const Parameters& parameters,
 }
 
 // Attempt to reclassify flanking reads as spanning.
-void DistributeFlankingReads(const Parameters& parameters,
-                             const RepeatSpec& repeat_spec,
-                             vector<Allele>* alleles,
-                             vector<RepeatAlign>* flanking_repaligns) {
+void DistributeFlankingReads(const Parameters &parameters,
+                             const RepeatSpec &repeat_spec,
+                             vector<Allele> *alleles,
+                             vector<RepeatAlign> *flanking_repaligns) {
   const size_t unit_len = repeat_spec.units_shifts[0][0].length();
   std::sort(alleles->rbegin(), alleles->rend(), CompareBySize);
-  const string& left_flank = repeat_spec.left_flank;
-  const string& right_flank = repeat_spec.right_flank;
+  const string &left_flank = repeat_spec.left_flank;
+  const string &right_flank = repeat_spec.right_flank;
   const double kWpCutoff = 0.8;
 
   vector<RepeatAlign> filtered_flanking_repaligns;
 
-  for (RepeatAlign& rep_align : *flanking_repaligns) {
-    const string& bases = rep_align.bases;
-    const string& quals = rep_align.quals;
+  for (RepeatAlign &rep_align : *flanking_repaligns) {
+    const string &bases = rep_align.bases;
+    const string &quals = rep_align.quals;
     const size_t non_rep_len =
         rep_align.left_flank_len + rep_align.right_flank_len;
     assert(bases.length() >= non_rep_len);
@@ -598,7 +604,7 @@ void DistributeFlankingReads(const Parameters& parameters,
 
     bool found_align = false;
 
-    for (Allele& allele : *alleles) {
+    for (Allele &allele : *alleles) {
       const size_t allele_len = allele.size * unit_len;
       if (repeat_len > allele_len) {
         if (rep_align.left_flank_len) {

@@ -68,6 +68,7 @@ class Parameters {
   const std::string& json_path() const { return json_path_; }
   const std::string& log_path() const { return log_path_; }
   bool depth_is_set() const { return depth_ >= kSmallestPossibleDepth; }
+  Sex sex() const { return sex_; }
 
  private:
   std::string bam_path_;
