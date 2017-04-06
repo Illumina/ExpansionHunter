@@ -70,6 +70,7 @@ include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
 add_subdirectory(genotyping)
 add_subdirectory(purity)
 add_subdirectory(rep_align)
+add_subdirectory(common)
 
 file(GLOB SOURCES "src/*.cc")
 
@@ -79,4 +80,4 @@ target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 add_dependencies(htslib zlib)
 add_dependencies(ExpansionHunter htslib)
 
-target_link_libraries(ExpansionHunter genotyping purity rep_align pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
+target_link_libraries(ExpansionHunter common genotyping purity rep_align pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})

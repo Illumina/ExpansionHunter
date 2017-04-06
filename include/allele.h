@@ -31,8 +31,8 @@
 #include <map>
 #include <string>
 
-#include "include/repeat_spec.h"
-#include "include/parameters.h"
+#include "common/repeat_spec.h"
+#include "common/parameters.h"
 #include "rep_align/rep_align.h"
 
 enum AlleleType {

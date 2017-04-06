@@ -33,7 +33,7 @@ using boost::lexical_cast;
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 
-#include "include/genomic_region.h"
+#include "common/genomic_region.h"
 
 enum ReadStatus { kNoCheck, kFlankingRead };
 

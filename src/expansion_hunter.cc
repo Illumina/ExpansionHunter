@@ -44,12 +44,12 @@ using std::unordered_set;
 using std::pair;
 #include "genotyping/genotyping.h"
 
+#include "common/parameters.h"
+#include "common/ref_genome.h"
 #include "include/allele.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
-#include "include/parameters.h"
-#include "include/ref_genome.h"
 #include "include/repeat_length.h"
 #include "include/version.h"
 #include "purity/purity.h"
@@ -110,11 +110,9 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
 
     for (Align &align : frag) {
       RepeatAlign rep_align;
-      const bool aligns = AlignRead(
-          parameters.min_baseq(), parameters.min_wp(), repeat_spec.units_shifts,
-          repeat_spec.left_flank, repeat_spec.right_flank, align.bases,
-          align.quals, &rep_align);
-      rep_align.name = align.name;
+      const bool aligns = AlignRead(parameters, repeat_spec, align.bases,
+                                    align.quals, &rep_align);
+      rep_align.read.name = align.name;
 
       if (!aligns) {
         continue;
@@ -123,10 +121,10 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
       // Not pretty, but lets downstream code know that this is not an IRR.
       align.status = kFlankingRead;
 
-      if (rep_align.type == kSpanning) {
+      if (rep_align.type == RepeatAlign::Type::kSpanning) {
         size_spanning_repaligns[rep_align.size].push_back(rep_align);
       } else {
-        assert(rep_align.type == kFlanking);
+        assert(rep_align.type == RepeatAlign::Type::kFlanking);
         flanking_repaligns->push_back(rep_align);
       }
     }

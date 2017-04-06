@@ -20,7 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "include/parameters.h"
+#include "common/parameters.h"
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
@@ -43,11 +43,6 @@ using std::endl;
 #include <stdexcept>
 #include <vector>
 using std::vector;
-
-const size_t def_region_extension_len = 1000;
-const float def_min_wp = 0.90;
-const size_t def_min_baseq = 20;
-const size_t def_min_anchor_mapq = 60;
 
 Outputs::Outputs(const string vcf_path, const string json_path,
                  const string log_path) {
@@ -108,11 +103,6 @@ void DieNotOutputFilePath(const string &output_path_str) {
   throw std::invalid_argument(error_msg);
 }
 
-Parameters::Parameters()
-    : region_extension_len_(def_region_extension_len), min_wp_(def_min_wp),
-      min_baseq_(def_min_baseq), min_anchor_mapq_(def_min_anchor_mapq),
-      skip_unaligned_(false), depth_(0.0), sex_(Sex::kFemale) {}
-
 bool Parameters::Load(int numArgs, char *argPtrArr[]) {
   // clang-format off
   po::options_description usage("Allowed options");
@@ -126,11 +116,11 @@ bool Parameters::Load(int numArgs, char *argPtrArr[]) {
       ("json", po::value<string>(), "Output JSON file path")
       ("log", po::value<string>(), "Output read alignment file path")
       ("region-extension-length", po::value<size_t>(),
-          ("[Optional] How far from on/off-target regions to search for informative reads [Default " + std::to_string(def_region_extension_len) + "]").c_str())
+          ("[Optional] How far from on/off-target regions to search for informative reads [Default " + std::to_string(region_extension_len_) + "]").c_str())
       ("min-score", po::value<float>(),
-          ("[Optional] Minimum weighted matching score (0 <= x <= 1) [Default " + boost::str(format("%.3f") % def_min_wp) + "]").c_str())
-      ("min-baseq", po::value<size_t>(), ("[Optional] Minimum quality of a high-confidence base call [Default " + std::to_string(def_min_baseq) + "]").c_str())
-      ("min-anchor-mapq", po::value<size_t>(), ("[Optional] Minimum MAPQ of a read anchor [Default " + std::to_string(def_min_anchor_mapq) + "]").c_str())
+          ("[Optional] Minimum weighted matching score (0 <= x <= 1) [Default " + boost::str(format("%.3f") % min_wp_) + "]").c_str())
+      ("min-baseq", po::value<size_t>(), ("[Optional] Minimum quality of a high-confidence base call [Default " + std::to_string(min_baseq_) + "]").c_str())
+      ("min-anchor-mapq", po::value<size_t>(), ("[Optional] Minimum MAPQ of a read anchor [Default " + std::to_string(min_anchor_mapq_) + "]").c_str())
       ("skip-unaligned", "[Optional] Do not search for IRRs in unaligned reads")
       ("read-depth", po::value<float>(), "[Optional] Read depth")
       ("sex", po::value<string>(), "[Optional] Sex of the sample; can be either male or female [Default female]");

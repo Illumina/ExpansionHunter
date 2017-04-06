@@ -246,16 +246,16 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       numUnalignedIRRs += 2;
 
       RepeatAlign rep_align;
-      rep_align.name = it->first;
-      rep_align.bases = frag[0].bases;
-      rep_align.quals = frag[0].quals;
+      rep_align.read.name = it->first;
+      rep_align.read.bases = frag[0].bases;
+      rep_align.read.quals = frag[0].quals;
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
-      rep_align.type = kUnalignedIrrPair;
+      rep_align.type = RepeatAlign::Type::kUnalignedIrrPair;
       const size_t unit_len = units_shifts[0][0].length();
-      rep_align.size = rep_align.bases.length() / unit_len;
-      rep_align.bases_mate = frag[1].bases;
-      rep_align.quals_mate = frag[1].quals;
+      rep_align.size = rep_align.read.bases.length() / unit_len;
+      rep_align.mate.bases = frag[1].bases;
+      rep_align.mate.quals = frag[1].quals;
       irr_rep_aligns->push_back(rep_align);
     } else if (is_irr1 || is_irr2) {
       ++numUnalignedIRRs;
@@ -263,16 +263,16 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       const Align& mate = is_irr1 ? frag[1] : frag[0];
 
       RepeatAlign rep_align;
-      rep_align.name = it->first;
-      rep_align.bases = irr.bases;
-      rep_align.quals = irr.quals;
+      rep_align.read.name = it->first;
+      rep_align.read.bases = irr.bases;
+      rep_align.read.quals = irr.quals;
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
-      rep_align.type = kUnalignedIrrSingleton;
+      rep_align.type = RepeatAlign::Type::kUnalignedIrrSingleton;
       const size_t unit_len = units_shifts[0][0].length();
-      rep_align.size = rep_align.bases.length() / unit_len;
-      rep_align.bases_mate = mate.bases;
-      rep_align.quals_mate = mate.quals;
+      rep_align.size = rep_align.read.bases.length() / unit_len;
+      rep_align.mate.bases = mate.bases;
+      rep_align.mate.quals = mate.quals;
       irr_rep_aligns->push_back(rep_align);
     }
   }
@@ -311,16 +311,16 @@ size_t CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
       numIrrConfRegion[frag[1].region] += 1;
 
       RepeatAlign rep_align;
-      rep_align.name = it->first;
-      rep_align.bases = frag[0].bases;
-      rep_align.quals = frag[0].quals;
+      rep_align.read.name = it->first;
+      rep_align.read.bases = frag[0].bases;
+      rep_align.read.quals = frag[0].quals;
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
-      rep_align.type = kAlignedIrrPair;
+      rep_align.type = RepeatAlign::Type::kAlignedIrrPair;
       const size_t unit_len = units_shifts[0][0].length();
-      rep_align.size = rep_align.bases.length() / unit_len;
-      rep_align.bases_mate = frag[1].bases;
-      rep_align.quals_mate = frag[1].quals;
+      rep_align.size = rep_align.read.bases.length() / unit_len;
+      rep_align.mate.bases = frag[1].bases;
+      rep_align.mate.quals = frag[1].quals;
       irr_rep_aligns->push_back(rep_align);
     }
   }
@@ -363,16 +363,16 @@ void CountAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
 
         ++numAnchoredIrrs;
         RepeatAlign rep_align;
-        rep_align.name = irr.name;
-        rep_align.bases = irr.bases;
-        rep_align.quals = irr.quals;
+        rep_align.read.name = irr.name;
+        rep_align.read.bases = irr.bases;
+        rep_align.read.quals = irr.quals;
         rep_align.left_flank_len = 0;
         rep_align.right_flank_len = 0;
-        rep_align.type = kAnchored;
+        rep_align.type = RepeatAlign::Type::kAnchored;
         const size_t unit_len = units_shifts[0][0].length();
-        rep_align.size = rep_align.bases.length() / unit_len;
-        rep_align.bases_mate = anchor.bases;
-        rep_align.quals_mate = anchor.quals;
+        rep_align.size = rep_align.read.bases.length() / unit_len;
+        rep_align.mate.bases = anchor.bases;
+        rep_align.mate.quals = anchor.quals;
         anchored_irrs->push_back(rep_align);
       }
     }

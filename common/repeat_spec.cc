@@ -46,15 +46,11 @@ using std::vector;
 #include <map>
 using std::map;
 
-#include "include/ref_genome.h"
+#include "common/ref_genome.h"
+#include "common/repeat_spec.h"
 #include "purity/purity.h"
-#include "include/repeat_spec.h"
-
-/*****************************************************************************/
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
-
-/*****************************************************************************/
 
 const char RepeatSpec::LeftFlankBase() const {
   if (left_flank.empty()) {
@@ -63,8 +59,6 @@ const char RepeatSpec::LeftFlankBase() const {
 
   return left_flank[left_flank.size() - 1];
 }
-
-/*****************************************************************************/
 
 RepeatSpec::RepeatSpec(const string& json_path) {
   std::ifstream istrm(json_path.c_str());
@@ -115,8 +109,6 @@ RepeatSpec::RepeatSpec(const string& json_path) {
   }
 }
 
-/*****************************************************************************/
-
 // Fill out prefix and suffix sequences.
 bool LoadFlanks(const string& genome_path, double min_wp,
                 RepeatSpec* repeat_spec) {
@@ -160,8 +152,6 @@ bool LoadFlanks(const string& genome_path, double min_wp,
 
   return true;
 }
-
-/*****************************************************************************/
 
 bool LoadRepeatSpecs(const string& specs_path, const string& genome_path,
                      double min_wp, map<string, RepeatSpec>* repeat_specs) {

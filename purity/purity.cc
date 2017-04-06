@@ -32,7 +32,7 @@ using std::vector;
 #include <limits>
 #include <algorithm>
 
-#include "include/parameters.h"
+#include "common/parameters.h"
 
 static const string Rc(const string& seqStr) {
   std::string revComplStr(seqStr);

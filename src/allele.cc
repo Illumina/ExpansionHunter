@@ -49,9 +49,9 @@ using std::map;
 #include <set>
 #include <sstream>
 
-#include "include/genomic_region.h"
+#include "common/genomic_region.h"
+#include "common/repeat_spec.h"
 #include "include/repeat_length.h"
-#include "include/repeat_spec.h"
 #include "purity/purity.h"
 
 void Allele::AsPtree(ptree &allele_node) const {
@@ -138,32 +138,20 @@ void DumpVcf(const Parameters &options,
              Outputs &outputs) {
   std::stringstream vcf_header, vcf_body;
 
+  // clang-format off
   vcf_header
       << "##fileformat=VCFv4.1\n"
-         "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of "
-         "structural"
-         " variant\">\n"
-         "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of "
-         "the variant\">\n"
-         "##INFO=<ID=REF,Number=1,Type=Integer,Description=\"Reference copy "
-         "number"
-         "\">\n"
-         "##INFO=<ID=RL,Number=1,Type=Integer,Description=\"Reference length "
-         "in bp"
-         "\">\n"
-         "##INFO=<ID=RU,Number=1,Type=String,Description=\"Repeat unit in the"
-         " reference orientation\">\n"
+         "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n"
+         "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant\">\n"
+         "##INFO=<ID=REF,Number=1,Type=Integer,Description=\"Reference copy number\">\n"
+         "##INFO=<ID=RL,Number=1,Type=Integer,Description=\"Reference length in bp\">\n"
+         "##INFO=<ID=RU,Number=1,Type=String,Description=\"Repeat unit in the reference orientation\">\n"
          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
-         "##FORMAT=<ID=SO,Number=1,Type=String,Description=\"Type of reads that"
-         " support the allele; can be SPANNING, FLANKING, or INREPEAT meaning"
-         " that the reads span, flank, or are fully contained in the "
-         "repeat\">\n"
-         "##FORMAT=<ID=SP,Number=1,Type=String,Description=\"Number of reads"
-         " supporting the allele\">\n"
-         "##FORMAT=<ID=CN,Number=1,Type=String,Description=\"Allele copy number"
-         "\">\n"
-         "##FORMAT=<ID=CI,Number=1,Type=String,Description=\"Confidence"
-         " interval for CN\">\n";
+         "##FORMAT=<ID=SO,Number=1,Type=String,Description=\"Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat\">\n"
+         "##FORMAT=<ID=SP,Number=1,Type=String,Description=\"Number of reads supporting the allele\">\n"
+         "##FORMAT=<ID=CN,Number=1,Type=String,Description=\"Allele copy number\">\n"
+         "##FORMAT=<ID=CI,Number=1,Type=String,Description=\"Confidence interval for CN\">\n";
+  // clang-format on
 
   std::set<size_t> alt_sizes;
   for (const ptree::value_type &name_region : root_node) {
@@ -309,9 +297,9 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
 
       if (rep_align.left_flank_len) {
         const string bases_prefix =
-            rep_align.bases.substr(0, rep_align.left_flank_len);
+            rep_align.read.bases.substr(0, rep_align.left_flank_len);
         const string quals_prefix =
-            rep_align.quals.substr(0, rep_align.left_flank_len);
+            rep_align.read.quals.substr(0, rep_align.left_flank_len);
         const string left_flank_pref =
             left_flank.substr(left_flank.length() - rep_align.left_flank_len,
                               rep_align.left_flank_len);
@@ -323,21 +311,21 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
 
         const size_t piece_start =
             rep_align.left_flank_len + longest_spanning * motif_len;
-        assert(piece_start < rep_align.bases.length());
-        piece_bases = rep_align.bases.substr(
-            piece_start, rep_align.bases.length() - piece_start);
-        piece_quals = rep_align.quals.substr(
-            piece_start, rep_align.bases.length() - piece_start);
+        assert(piece_start < rep_align.read.bases.length());
+        piece_bases = rep_align.read.bases.substr(
+            piece_start, rep_align.read.bases.length() - piece_start);
+        piece_quals = rep_align.read.quals.substr(
+            piece_start, rep_align.read.bases.length() - piece_start);
         const vector<string> &units = units_shifts[0];
         piece_wp_score =
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
       } else {
         assert(rep_align.right_flank_len);
-        const string bases_suffix = rep_align.bases.substr(
-            rep_align.bases.length() - rep_align.right_flank_len,
+        const string bases_suffix = rep_align.read.bases.substr(
+            rep_align.read.bases.length() - rep_align.right_flank_len,
             rep_align.right_flank_len);
-        const string quals_suffix = rep_align.quals.substr(
-            rep_align.quals.length() - rep_align.right_flank_len,
+        const string quals_suffix = rep_align.read.quals.substr(
+            rep_align.read.quals.length() - rep_align.right_flank_len,
             rep_align.right_flank_len);
         const string right_flank_pref =
             right_flank.substr(0, rep_align.right_flank_len);
@@ -349,10 +337,10 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
 
         const size_t piece_end =
             rep_align.right_flank_len + longest_spanning * motif_len;
-        piece_bases =
-            rep_align.bases.substr(0, rep_align.bases.length() - piece_end);
-        piece_quals =
-            rep_align.quals.substr(0, rep_align.bases.length() - piece_end);
+        piece_bases = rep_align.read.bases.substr(
+            0, rep_align.read.bases.length() - piece_end);
+        piece_quals = rep_align.read.quals.substr(
+            0, rep_align.read.bases.length() - piece_end);
         const size_t unit_length = units_shifts[0][0].length();
         const size_t offset =
             (unit_length - piece_bases.length() % unit_length) % unit_length;
@@ -374,8 +362,8 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
           longest_flanking = rep_align.size;
         }
       } else {
-        cerr << "\t[Discarding flanking read " << rep_align.name << " "
-             << rep_align.bases << "]" << endl;
+        cerr << "\t[Discarding flanking read " << rep_align.read.name << " "
+             << rep_align.read.bases << "]" << endl;
       }
     } else {
       good_flanking_repaligns.push_back(rep_align);
@@ -528,33 +516,34 @@ void OutputRepeatAligns(const Parameters &parameters,
     *out << "  " << allele.readtypeToStr.at(allele.type) << "_" << allele.size
          << ":" << endl;
     for (const RepeatAlign &rep_align : allele.rep_aligns) {
-      *out << "    -\n      name: \"" << rep_align.name << "\"" << endl;
+      *out << "    -\n      name: \"" << rep_align.read.name << "\"" << endl;
 
       if (allele.type == kSpanningAllele || allele.type == kFlankingAllele) {
         *out << "      align: |" << endl;
         Plot plot;
         const string cased_based = LowerLowqualBases(
-            rep_align.bases, rep_align.quals, parameters.min_baseq());
+            rep_align.read.bases, rep_align.read.quals, parameters.min_baseq());
         PlotGaplessAlign(plot, "        ", "        ", false);
         PlotSpanningAlign(plot, cased_based, left_flank, right_flank,
                           rep_align.left_flank_len, rep_align.right_flank_len);
         PlotToStream(*out, plot);
       } else if (allele.type == kInRepeatAllele) {
         const string read_bases = LowerLowqualBases(
-            rep_align.bases, rep_align.quals, parameters.min_baseq());
+            rep_align.read.bases, rep_align.read.quals, parameters.min_baseq());
         const string mate_bases = LowerLowqualBases(
-            rep_align.bases_mate, rep_align.quals_mate, parameters.min_baseq());
+            rep_align.mate.bases, rep_align.mate.quals, parameters.min_baseq());
 
-        if (rep_align.type == kAnchored) {
+        if (rep_align.type == RepeatAlign::Type::kAnchored) {
           *out << "      irr: " << read_bases << endl;
           *out << "      anc: " << mate_bases << endl;
-        } else if (rep_align.type == kAlignedIrrPair) {
+        } else if (rep_align.type == RepeatAlign::Type::kAlignedIrrPair) {
           *out << "      al_ir1: " << read_bases << endl;
           *out << "      al_ir2: " << mate_bases << endl;
-        } else if (rep_align.type == kUnalignedIrrPair) {
+        } else if (rep_align.type == RepeatAlign::Type::kUnalignedIrrPair) {
           *out << "      un_ir1: " << read_bases << endl;
           *out << "      un_ir2: " << mate_bases << endl;
-        } else if (rep_align.type == kUnalignedIrrSingleton) {
+        } else if (rep_align.type ==
+                   RepeatAlign::Type::kUnalignedIrrSingleton) {
           *out << "      un_ir: " << read_bases << endl;
           *out << "      un_ma: " << mate_bases << endl;
         }
@@ -567,11 +556,11 @@ void OutputRepeatAligns(const Parameters &parameters,
   if (!flanking_repaligns.empty()) {
     *out << "  FLANKING:" << endl;
     for (const RepeatAlign &rep_align : flanking_repaligns) {
-      *out << "    -\n      name: \"" << rep_align.name << "\"" << endl;
+      *out << "    -\n      name: \"" << rep_align.read.name << "\"" << endl;
       *out << "      align: |" << endl;
       Plot plot;
       const string cased_based = LowerLowqualBases(
-          rep_align.bases, rep_align.quals, parameters.min_baseq());
+          rep_align.read.bases, rep_align.read.quals, parameters.min_baseq());
       PlotGaplessAlign(plot, "        ", "        ", false);
       PlotSpanningAlign(plot, cased_based, left_flank, right_flank,
                         rep_align.left_flank_len, rep_align.right_flank_len);
@@ -595,8 +584,8 @@ void DistributeFlankingReads(const Parameters &parameters,
   vector<RepeatAlign> filtered_flanking_repaligns;
 
   for (RepeatAlign &rep_align : *flanking_repaligns) {
-    const string &bases = rep_align.bases;
-    const string &quals = rep_align.quals;
+    const string &bases = rep_align.read.bases;
+    const string &quals = rep_align.read.quals;
     const size_t non_rep_len =
         rep_align.left_flank_len + rep_align.right_flank_len;
     assert(bases.length() >= non_rep_len);
@@ -665,7 +654,7 @@ void DistributeFlankingReads(const Parameters &parameters,
           }
         }
         if (found_align) {
-          rep_align.type = kSpanning;
+          rep_align.type = RepeatAlign::Type::kSpanning;
           rep_align.size = allele.size;
           allele.rep_aligns.push_back(rep_align);
           break;

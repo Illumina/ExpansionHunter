@@ -29,10 +29,10 @@
 #include <string>
 #include <vector>
 
+#include "common/genomic_region.h"
+#include "common/parameters.h"
+#include "common/repeat_spec.h"
 #include "include/bam_file.h"
-#include "include/genomic_region.h"
-#include "include/parameters.h"
-#include "include/repeat_spec.h"
 #include "include/read_alignment.h"
 #include "rep_align/rep_align.h"
 

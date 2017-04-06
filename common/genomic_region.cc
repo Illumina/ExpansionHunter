@@ -20,7 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "include/genomic_region.h"
+#include "common/genomic_region.h"
 
 #include <boost/algorithm/string/split.hpp>
 using boost::algorithm::split;

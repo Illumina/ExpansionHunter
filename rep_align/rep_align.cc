@@ -29,17 +29,17 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
-#include "purity/purity.h"
 #include "include/allele.h"
+#include "purity/purity.h"
 #include "rep_align/rep_align.h"
 
-size_t CountUnitsAtOffset(const vector<string>& units, const string& bases,
+size_t CountUnitsAtOffset(const vector<string> &units, const string &bases,
                           size_t offset) {
   const size_t unit_len = units[0].length();
   size_t num_units = 0;
 
   while (offset + unit_len <= bases.length()) {
-    for (const string& unit : units) {
+    for (const string &unit : units) {
       if (std::equal(bases.begin() + offset, bases.begin() + offset + unit_len,
                      unit.begin())) {
         ++num_units;
@@ -52,8 +52,8 @@ size_t CountUnitsAtOffset(const vector<string>& units, const string& bases,
   return num_units;
 }
 
-size_t GetOffsetMostUnits(const vector<string>& units, const string& bases,
-                          size_t* max_unit_count) {
+size_t GetOffsetMostUnits(const vector<string> &units, const string &bases,
+                          size_t *max_unit_count) {
   const size_t unit_len = units[0].length();
   size_t offset_with_most_occurances = 0;
   *max_unit_count = 0;
@@ -68,30 +68,30 @@ size_t GetOffsetMostUnits(const vector<string>& units, const string& bases,
   return offset_with_most_occurances;
 }
 
-static const string RevComp(const string& bases) {
+static const string RevComp(const string &bases) {
   string bases_rc = bases;
   string::reverse_iterator rev_iter = bases_rc.rbegin();
   char complement_base(' ');
 
   for (const char base : bases) {
     switch (base) {
-      case 'A':
-        complement_base = 'T';
-        break;
-      case 'C':
-        complement_base = 'G';
-        break;
-      case 'G':
-        complement_base = 'C';
-        break;
-      case 'T':
-        complement_base = 'A';
-        break;
-      case '/':
-        complement_base = '/';
-        break;
-      default:
-        complement_base = 'N';
+    case 'A':
+      complement_base = 'T';
+      break;
+    case 'C':
+      complement_base = 'G';
+      break;
+    case 'G':
+      complement_base = 'C';
+      break;
+    case 'T':
+      complement_base = 'A';
+      break;
+    case '/':
+      complement_base = '/';
+      break;
+    default:
+      complement_base = 'N';
     }
 
     *rev_iter++ = complement_base;
@@ -100,11 +100,11 @@ static const string RevComp(const string& bases) {
   return bases_rc;
 }
 
-static bool PerfectMatch(const string& target_kmer,
-                         const vector<string>& units) {
+static bool PerfectMatch(const string &target_kmer,
+                         const vector<string> &units) {
   assert(target_kmer.length() == units[0].length());
 
-  for (const string& unit : units) {
+  for (const string &unit : units) {
     if (unit == target_kmer) {
       return true;
     }
@@ -112,11 +112,11 @@ static bool PerfectMatch(const string& target_kmer,
   return false;
 }
 
-bool AlignLeftFlank(const vector<string>& units, const string& left_flank,
-                    const string& bases, const string& quals,
+bool AlignLeftFlank(const vector<string> &units, const string &left_flank,
+                    const string &bases, const string &quals,
                     size_t offset_most_units, size_t min_baseq,
-                    double min_wp_score, size_t* left_flank_len,
-                    double* left_flank_score) {
+                    double min_wp_score, size_t *left_flank_len,
+                    double *left_flank_score) {
   const size_t unit_len = units[0].length();
 
   *left_flank_len = 0;
@@ -137,7 +137,7 @@ bool AlignLeftFlank(const vector<string>& units, const string& left_flank,
         const string quals_pref_rc(quals_pref.rbegin(), quals_pref.rend());
 
         vector<string> units_rc;
-        for (const string& unit : units) {
+        for (const string &unit : units) {
           units_rc.push_back(RevComp(unit));
         }
         float prefix_repeat_score =
@@ -154,13 +154,13 @@ bool AlignLeftFlank(const vector<string>& units, const string& left_flank,
   return false;
 }
 
-bool AlignRightFlank(const vector<string>& units, const string& right_flank,
-                     const string& bases, const string& quals,
+bool AlignRightFlank(const vector<string> &units, const string &right_flank,
+                     const string &bases, const string &quals,
                      size_t offset_most_units, size_t min_baseq,
-                     double min_wp_score, size_t* right_flank_len,
-                     double* right_flank_score) {
+                     double min_wp_score, size_t *right_flank_len,
+                     double *right_flank_score) {
   vector<string> units_rc;
-  for (const string& unit : units) {
+  for (const string &unit : units) {
     units_rc.push_back(RevComp(unit));
   }
   const string left_flank = RevComp(right_flank);
@@ -175,12 +175,11 @@ bool AlignRightFlank(const vector<string>& units, const string& right_flank,
   return is_found;
 }
 
-bool IsSpanningOrFlankingRead(const vector<vector<string>>& units_shifts,
-                              size_t min_baseq, double min_wp_score,
-                              const string& left_flank,
-                              const string& right_flank, const string& bases,
-                              const string& quals, RepeatAlign* rep_align) {
-  const vector<string> units = units_shifts[0];
+bool IsSpanningOrFlankingRead(const Parameters &params,
+                              const RepeatSpec &repeat_spec,
+                              const string &bases, const string &quals,
+                              RepeatAlign *rep_align) {
+  const vector<string> &units = repeat_spec.units_shifts[0];
   size_t max_unit_count = 0;
   size_t offset_most_units = GetOffsetMostUnits(units, bases, &max_unit_count);
 
@@ -189,13 +188,15 @@ bool IsSpanningOrFlankingRead(const vector<vector<string>>& units_shifts,
 
   const double kFlankMinWpScore = 0.7;
 
-  const bool matches_left_flank = AlignLeftFlank(
-      units, left_flank, bases, quals, offset_most_units, min_baseq,
-      kFlankMinWpScore, &rep_align->left_flank_len, &left_flank_score);
+  const bool matches_left_flank =
+      AlignLeftFlank(units, repeat_spec.left_flank, bases, quals,
+                     offset_most_units, params.min_baseq(), kFlankMinWpScore,
+                     &rep_align->left_flank_len, &left_flank_score);
 
-  const bool matches_right_flank = AlignRightFlank(
-      units, right_flank, bases, quals, offset_most_units, min_baseq,
-      kFlankMinWpScore, &rep_align->right_flank_len, &right_flank_score);
+  const bool matches_right_flank =
+      AlignRightFlank(units, repeat_spec.right_flank, bases, quals,
+                      offset_most_units, params.min_baseq(), kFlankMinWpScore,
+                      &rep_align->right_flank_len, &right_flank_score);
 
   if (bases.length() < rep_align->left_flank_len + rep_align->right_flank_len) {
     return false;
@@ -217,24 +218,24 @@ bool IsSpanningOrFlankingRead(const vector<vector<string>>& units_shifts,
   const string quals_suffix = quals.substr(
       bases.length() - rep_align->right_flank_len, rep_align->right_flank_len);
 
-  float repeat_score =
-      MatchRepeat(units_shifts, bases_middle, quals_middle, min_baseq);
+  double repeat_score =
+      MatchRepeat(units, bases_middle, quals_middle, params.min_baseq());
 
   const size_t non_repeat_len =
       rep_align->left_flank_len + rep_align->right_flank_len;
   rep_align->size = (bases.length() - non_repeat_len) / units[0].length();
-  rep_align->bases = bases;
-  rep_align->quals = quals;
+  rep_align->read.bases = bases;
+  rep_align->read.quals = quals;
 
   const double read_wp =
       (left_flank_score + repeat_score + right_flank_score) / bases.length();
 
-  if (read_wp >= min_wp_score) {
+  if (read_wp >= params.min_wp()) {
     if (matches_left_flank && matches_right_flank) {
-      rep_align->type = kSpanning;
+      rep_align->type = RepeatAlign::Type::kSpanning;
       return true;
     } else if (matches_left_flank || matches_right_flank) {
-      rep_align->type = kFlanking;
+      rep_align->type = RepeatAlign::Type::kFlanking;
       return true;
     }
   }
@@ -243,14 +244,12 @@ bool IsSpanningOrFlankingRead(const vector<vector<string>>& units_shifts,
   return false;
 }
 
-bool IsSpanningOrFlankingReadRc(const vector<vector<string>>& units_shifts,
-                                size_t min_baseq, double min_wp_score,
-                                const string& left_flank,
-                                const string& right_flank, const string& bases,
-                                const string& quals, RepeatAlign* rep_align) {
+bool IsSpanningOrFlankingReadRc(const Parameters &params,
+                                const RepeatSpec &repeat_spec,
+                                const string &bases, const string &quals,
+                                RepeatAlign *rep_align) {
   const bool forward_match = IsSpanningOrFlankingRead(
-      units_shifts, min_baseq, min_wp_score, left_flank, right_flank, bases,
-      quals, &(*rep_align));
+      params, repeat_spec, bases, quals, &(*rep_align));
   if (forward_match) {
     return true;
   }
@@ -259,17 +258,16 @@ bool IsSpanningOrFlankingReadRc(const vector<vector<string>>& units_shifts,
   const string quals_rc(quals.rbegin(), quals.rend());
 
   const bool reverse_match = IsSpanningOrFlankingRead(
-      units_shifts, min_baseq, min_wp_score, left_flank, right_flank, bases_rc,
-      quals_rc, &(*rep_align));
+      params, repeat_spec, bases_rc, quals_rc, &(*rep_align));
 
   return reverse_match;
 }
 
 static float ScoreSpanningAlign(size_t min_baseq, double min_wp,
-                                const vector<string>& units,
-                                const string& left_flank,
-                                const string& right_flank, const string& bases,
-                                const string& quals, size_t left_flank_len,
+                                const vector<string> &units,
+                                const string &left_flank,
+                                const string &right_flank, const string &bases,
+                                const string &quals, size_t left_flank_len,
                                 size_t right_flank_len) {
   const double kFlankMinWpScore = 0.7;
   const string bases_prefix = bases.substr(0, left_flank_len);
@@ -306,10 +304,10 @@ static float ScoreSpanningAlign(size_t min_baseq, double min_wp,
 }
 
 static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
-                                   const vector<string>& units,
-                                   const string& left_flank,
-                                   const string& right_flank,
-                                   const string& bases, const string& quals,
+                                   const vector<string> &units,
+                                   const string &left_flank,
+                                   const string &right_flank,
+                                   const string &bases, const string &quals,
                                    size_t cur_size, size_t cur_left_len) {
   size_t unit_len = units[0].length();
   double top_wp = 0;
@@ -335,10 +333,10 @@ static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
 }
 
 static size_t FindTopLeftFlankLen(size_t min_baseq, double min_wp,
-                                  const vector<string>& units,
-                                  const string& left_flank,
-                                  const string& right_flank,
-                                  const string& bases, const string& quals,
+                                  const vector<string> &units,
+                                  const string &left_flank,
+                                  const string &right_flank,
+                                  const string &bases, const string &quals,
                                   size_t cur_size, size_t cur_right_len) {
   size_t unit_len = units[0].length();
   double top_wp = 0;
@@ -362,29 +360,27 @@ static size_t FindTopLeftFlankLen(size_t min_baseq, double min_wp,
   return top_left_len;
 }
 
-bool AlignRead(size_t min_baseq, double min_wp,
-               const vector<vector<string>>& units_shifts,
-               const string& left_flank, const string& right_flank,
-               const string& bases, const string& quals,
-               RepeatAlign* rep_align) {
-  const bool aligns =
-      IsSpanningOrFlankingReadRc(units_shifts, min_baseq, min_wp, left_flank,
-                                 right_flank, bases, quals, &(*rep_align));
+bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
+               const string &bases, const string &quals,
+               RepeatAlign *rep_align) {
+  const bool aligns = IsSpanningOrFlankingReadRc(params, repeat_spec, bases,
+                                                 quals, &(*rep_align));
 
-  if (!aligns || rep_align->type != kSpanning) {
+  if (!aligns || rep_align->type != RepeatAlign::Type::kSpanning) {
     return aligns;
   }
 
-  const string& oriented_bases = rep_align->bases;
-  const string& oriented_quals = rep_align->quals;
+  const string &oriented_bases = rep_align->read.bases;
+  const string &oriented_quals = rep_align->read.quals;
 
   // Search for a better alignment.
-  const vector<string>& units = units_shifts[0];
+  const vector<string> &units = repeat_spec.units_shifts[0];
   const size_t unit_len = units[0].length();
 
   const size_t top_left_len = FindTopLeftFlankLen(
-      min_baseq, min_wp, units, left_flank, right_flank, oriented_bases,
-      oriented_quals, rep_align->size, rep_align->right_flank_len);
+      params.min_baseq(), params.min_wp(), units, repeat_spec.left_flank,
+      repeat_spec.right_flank, oriented_bases, oriented_quals, rep_align->size,
+      rep_align->right_flank_len);
 
   assert(oriented_bases.length() >= top_left_len + rep_align->right_flank_len);
   size_t cur_size =
@@ -392,8 +388,9 @@ bool AlignRead(size_t min_baseq, double min_wp,
       unit_len;
 
   const size_t top_right_len = FindTopRightFlankLen(
-      min_baseq, min_wp, units, left_flank, right_flank, oriented_bases,
-      oriented_quals, cur_size, top_left_len);
+      params.min_baseq(), params.min_wp(), units, repeat_spec.left_flank,
+      repeat_spec.right_flank, oriented_bases, oriented_quals, cur_size,
+      top_left_len);
 
   cur_size =
       (oriented_bases.length() - top_left_len - top_right_len) / unit_len;

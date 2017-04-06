@@ -46,8 +46,8 @@ using std::sort;
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 
-#include "include/ref_genome.h"
-#include "include/parameters.h"
+#include "common/ref_genome.h"
+#include "common/parameters.h"
 #include "include/bam_index.h"
 
 BamFile::BamFile()

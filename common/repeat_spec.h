@@ -20,31 +20,37 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_REF_FASTA_H_
-#define INCLUDE_REF_FASTA_H_
-
-/*****************************************************************************/
+#pragma once
 
 #include <string>
 #include <iostream>
+#include <vector>
+#include <map>
+#include <fstream>
 
-// Include the fai class from samtools
-#include "htslib/faidx.h"
+#include "common/genomic_region.h"
 
-/*****************************************************************************/
-
-class RefGenome {
+class RepeatSpec {
  public:
-  explicit RefGenome(const std::string& genome_path);
-  ~RefGenome();
+  RepeatSpec() {}
+  explicit RepeatSpec(const std::string& json_path);
+  const char LeftFlankBase() const;
+  bool is_common_unit() const { return is_common_unit_; }
 
-  void ExtractSeq(const std::string& region, std::string* sequence) const;
+  std::string repeat_id;
+  Region target_region;
+  std::string left_flank;
+  std::string right_flank;
+  std::string ref_seq;
+  std::vector<std::string> units;
+  std::vector<std::vector<std::string>> units_shifts;
+  std::vector<Region> offtarget_regions;
 
  private:
-  std::string genome_path_;
-  faidx_t* fai_ptr_;
+  bool is_common_unit_;
 };
 
-/*****************************************************************************/
+bool LoadRepeatSpecs(const std::string& specs_path,
+                     const std::string& genome_path, double min_wp,
+                     std::map<std::string, RepeatSpec>* repeat_specs);
 
-#endif  // INCLUDE_REF_FASTA_H_

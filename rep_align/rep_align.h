@@ -26,70 +26,67 @@
 #include <string>
 #include <vector>
 
-enum ReadType {
-  kSpanning,
-  kFlanking,
-  kAnchored,
-  kAlignedIrrPair,
-  kUnalignedIrrPair,
-  kUnalignedIrrSingleton
-};
+#include "common/common.h"
+#include "common/parameters.h"
+#include "common/repeat_spec.h"
 
 struct RepeatAlign {
-  std::string name;
-  std::string bases;
-  std::string quals;
-  std::string bases_mate;
-  std::string quals_mate;
+  enum class Type {
+    kSpanning,
+    kFlanking,
+    kAnchored,
+    kAlignedIrrPair,
+    kUnalignedIrrPair,
+    kUnalignedIrrSingleton
+  };
+  Read read;
+  Read mate;
   size_t left_flank_len;
   size_t right_flank_len;
-  ReadType type;
+  Type type;
   size_t size;
 };
 
-size_t CountUnitsAtOffset(const std::vector<std::string>& units,
-                          const std::string& bases, size_t offset);
+size_t CountUnitsAtOffset(const std::vector<std::string> &units,
+                          const std::string &bases, size_t offset);
 
-size_t GetOffsetMostUnits(const std::vector<std::string>& units,
-                          const std::string& bases, size_t* max_unit_count);
+size_t GetOffsetMostUnits(const std::vector<std::string> &units,
+                          const std::string &bases, size_t *max_unit_count);
 
 // Aligns read to left flank of the repeat; the alignment is considered valid
 // if the raw wp score is 2 greater than the alignment of the same piece of the
 // read against the repeat.
-bool AlignLeftFlank(const std::vector<std::string>& units,
-                    const std::string& left_flank, const std::string& bases,
-                    const std::string& quals, size_t offset_most_units,
+bool AlignLeftFlank(const std::vector<std::string> &units,
+                    const std::string &left_flank, const std::string &bases,
+                    const std::string &quals, size_t offset_most_units,
                     size_t min_baseq, double min_wp_score,
-                    size_t* left_flank_len, double* left_flank_score);
+                    size_t *left_flank_len, double *left_flank_score);
 
 // Counterpart of AlignLeftFlank for the right flank of the repeat.
-bool AlignRightFlank(const std::vector<std::string>& units,
-                     const std::string& right_flank, const std::string& bases,
-                     const std::string& quals, size_t offset_most_units,
+bool AlignRightFlank(const std::vector<std::string> &units,
+                     const std::string &right_flank, const std::string &bases,
+                     const std::string &quals, size_t offset_most_units,
                      size_t min_baseq, double min_wp_score,
-                     size_t* right_flank_len, double* right_flank_score);
+                     size_t *right_flank_len, double *right_flank_score);
 
 // Tries to align the read to the repeat in forward orientation. Returns true if
 // an alignment was found and populates rep_align with the alignment info.
-bool IsSpanningOrFlankingRead(
-    const std::vector<std::vector<std::string>>& units_shifts, size_t min_baseq,
-    double min_wp_score, const std::string& left_flank,
-    const std::string& right_flank, const std::string& bases,
-    const std::string& quals, RepeatAlign* rep_align);
+bool IsSpanningOrFlankingRead(const Parameters &params,
+                              const RepeatSpec &repeat_spec,
+                              const std::string &bases,
+                              const std::string &quals, RepeatAlign *rep_align);
 
 // Tries to align the read in forward and reverse orientations.
-bool IsSpanningOrFlankingReadRc(
-    const std::vector<std::vector<std::string>>& units_shifts, size_t min_baseq,
-    double min_wp_score, const std::string& left_flank,
-    const std::string& right_flank, const std::string& bases,
-    const std::string& quals, RepeatAlign* rep_align);
+bool IsSpanningOrFlankingReadRc(const Parameters &params,
+                                const RepeatSpec &repeat_spec,
+                                const std::string &bases,
+                                const std::string &quals,
+                                RepeatAlign *rep_align);
 
 // Returns true if a flanking or a spanning read alignment was found; rep_align
 // holds the actual repeat alignment info.
-bool AlignRead(size_t min_baseq, double min_wp,
-               const std::vector<std::vector<std::string>>& units_shifts,
-               const std::string& left_flank, const std::string& right_flank,
-               const std::string& bases, const std::string& quals,
-               RepeatAlign* rep_align);
+bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
+               const std::string &bases, const std::string &quals,
+               RepeatAlign *rep_align);
 
-#endif  // REP_ALIGN_H
+#endif // REP_ALIGN_H

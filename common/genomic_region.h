@@ -20,15 +20,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_GENOMIC_REGION_H_
-#define INCLUDE_GENOMIC_REGION_H_
-
-/*****************************************************************************/
+#pragma once
 
 #include <string>
 #include <iostream>
-
-/*****************************************************************************/
 
 class Region {
  public:
@@ -66,11 +61,5 @@ class Region {
   std::string label_;
 };
 
-/*****************************************************************************/
-
 std::istream& operator>>(std::istream& istrm, Region& region);
 std::ostream& operator<<(std::ostream& ostrm, const Region& region);
-
-/*****************************************************************************/
-
-#endif  // INCLUDE_GENOMIC_REGION_H_

@@ -35,9 +35,9 @@
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 
-#include "include/genomic_region.h"
+#include "common/genomic_region.h"
+#include "common/parameters.h"
 #include "include/read_alignment.h"
-#include "include/parameters.h"
 
 class CramFile {
  public:

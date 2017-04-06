@@ -20,34 +20,22 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "include/ref_genome.h"
+#pragma once
 
-#include <algorithm>
 #include <string>
-using std::string;
-#include <stdexcept>
+#include <iostream>
 
-RefGenome::RefGenome(const string& genome_path) : genome_path_(genome_path) {
-  fai_ptr_ = fai_load(genome_path_.c_str());
-}
+// Include the fai class from samtools
+#include "htslib/faidx.h"
 
-RefGenome::~RefGenome() { fai_destroy(fai_ptr_); }
+class RefGenome {
+ public:
+  explicit RefGenome(const std::string& genome_path);
+  ~RefGenome();
 
-// Load reference sequence specified by region.
-void RefGenome::ExtractSeq(const string& region, string* sequence) const {
-  int len;  // throwaway...
+  void ExtractSeq(const std::string& region, std::string* sequence) const;
 
-  char* ref_tmp = fai_fetch(fai_ptr_, region.c_str(), &len);
-
-  if (!ref_tmp || len == -1 || len == -2) {
-    throw std::runtime_error("ERROR: can't extract " + region + " from "
-        + genome_path_ + "; in particular, chromosome names must match "
-        "exactly (e.g. \"chr1\" and \"1\" are distinct names)");
-  }
-
-  sequence->assign(ref_tmp);
-  free(ref_tmp);
-
-  std::transform(sequence->begin(), sequence->end(), sequence->begin(),
-                 ::toupper);
-}
+ private:
+  std::string genome_path_;
+  faidx_t* fai_ptr_;
+};
