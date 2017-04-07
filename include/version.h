@@ -25,6 +25,6 @@
 
 #include <string>
 
-const std::string kProgramVersion = "Expansion Hunter v2.0.8";
+const std::string kProgramVersion = "Expansion Hunter v2.0.9";
 
 #endif  // VERSION_H_
