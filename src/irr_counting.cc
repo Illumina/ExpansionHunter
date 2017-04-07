@@ -35,6 +35,7 @@ using std::vector;
 using std::map;
 #include <algorithm>
 using std::array;
+#include <cstdlib>
 
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
@@ -42,15 +43,15 @@ using std::array;
 /*****************************************************************************/
 
 // Check if two alignments are same.
-static bool SameAlign(Align& al1, Align& al2) {
+static bool SameAlign(Align &al1, Align &al2) {
   return (al1.name == al2.name && al1.mate_pos == al2.mate_pos &&
           al1.flag == al2.flag && al1.bases == al2.bases);
 }
 
-void CacheReadsFromRegion(const Region& region, const WhatToCache whatToCache,
-                          const vector<vector<string>>& units_shifts,
-                          double min_wp_score, BamFile* bam_file,
-                          AlignPairs* align_pairs) {
+void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
+                          const vector<vector<string>> &units_shifts,
+                          double min_wp_score, BamFile *bam_file,
+                          AlignPairs *align_pairs) {
   // Jump to the target region or the unaligned reads if the chromosome name
   // is "*" then jump to unaligned reads.
   if (region.chrom() == "*") {
@@ -84,7 +85,7 @@ void CacheReadsFromRegion(const Region& region, const WhatToCache whatToCache,
       // permitted.
 
       align.region = region.AsString();
-      AlignPair& frag = (*align_pairs)[align.name];
+      AlignPair &frag = (*align_pairs)[align.name];
 
       if (align.IsFirstMate()) {
         if (frag[0].name.empty()) {
@@ -126,11 +127,11 @@ void CacheReadsFromRegion(const Region& region, const WhatToCache whatToCache,
   }
 }
 
-bool CheckAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
-                       const Region& target_neighborhood,
-                       const RepeatSpec& repeat_spec, const Align& read_align,
-                       const Align& mate_align,
-                       const vector<vector<string>>& units_shifts) {
+bool CheckAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
+                       const Region &target_neighborhood,
+                       const RepeatSpec &repeat_spec, const Align &read_align,
+                       const Align &mate_align,
+                       const vector<vector<string>> &units_shifts) {
   const size_t min_mapq = parameters.min_anchor_mapq();
   // Check if the read has low mapping quality and it is an off-target
   // anchor; such reads are reported but not included into the calculation.
@@ -172,10 +173,10 @@ bool CheckAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
 
 /*****************************************************************************/
 
-void FillinMates(BamFile& bam_file, AlignPairs& align_pairs) {
+void FillinMates(BamFile &bam_file, AlignPairs &align_pairs) {
   for (AlignPairs::iterator it = align_pairs.begin(); it != align_pairs.end();
        ++it) {
-    AlignPair& frag = it->second;
+    AlignPair &frag = it->second;
 
     // At least one read must always be filled out.
     assert(!frag[0].name.empty() || !frag[1].name.empty());
@@ -184,14 +185,20 @@ void FillinMates(BamFile& bam_file, AlignPairs& align_pairs) {
       // Get references for exisitng Align and the one that
       // needs to be filled in and then process them below. This
       // is done to avoid code duplication.
-      Align& existing_al = frag[0].name.empty() ? frag[1] : frag[0];
-      Align& missing_al = frag[0].name.empty() ? frag[0] : frag[1];
+      Align &existing_al = frag[0].name.empty() ? frag[1] : frag[0];
+      Align &missing_al = frag[0].name.empty() ? frag[0] : frag[1];
+
+      // Do not recover nearby mates.
+      if ((existing_al.chrom_id == existing_al.mate_chrom_id) &&
+          (std::abs(existing_al.pos - existing_al.mate_pos) < 1000)) {
+        continue;
+      }
 
       if (bam_file.GetAlignedMate(existing_al, missing_al)) {
         // region typically stores the position of the region from
         // which a read was cached. Since this read was not cached
         // from anywhere, we store its position in the region field.
-        const vector<string>& refVec = bam_file.ref_vec();
+        const vector<string> &refVec = bam_file.ref_vec();
         assert(missing_al.chrom_id < refVec.size());
         missing_al.region = Region(refVec[missing_al.chrom_id],
                                    missing_al.pos + 1, missing_al.pos + 2)
@@ -205,10 +212,10 @@ void FillinMates(BamFile& bam_file, AlignPairs& align_pairs) {
 }
 
 // TODO(edolzhenko): Move cache creation out of the function.
-bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
-                        size_t& numUnalignedIRRs,
-                        const vector<vector<string>>& units_shifts,
-                        vector<RepeatAlign>* irr_rep_aligns) {
+bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
+                        size_t &numUnalignedIRRs,
+                        const vector<vector<string>> &units_shifts,
+                        vector<RepeatAlign> *irr_rep_aligns) {
   numUnalignedIRRs = 0;
 
   AlignPairs align_pairs;
@@ -223,7 +230,7 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
 
   for (AlignPairs::const_iterator it = align_pairs.begin();
        it != align_pairs.end(); ++it) {
-    const AlignPair& frag = it->second;
+    const AlignPair &frag = it->second;
 
     double topScore1 =
         MatchRepeatRc(units_shifts, frag[0].bases, frag[0].quals);
@@ -259,8 +266,8 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       irr_rep_aligns->push_back(rep_align);
     } else if (is_irr1 || is_irr2) {
       ++numUnalignedIRRs;
-      const Align& irr = is_irr1 ? frag[0] : frag[1];
-      const Align& mate = is_irr1 ? frag[1] : frag[0];
+      const Align &irr = is_irr1 ? frag[0] : frag[1];
+      const Align &mate = is_irr1 ? frag[1] : frag[0];
 
       RepeatAlign rep_align;
       rep_align.name = it->first;
@@ -278,16 +285,16 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
   }
 }
 
-size_t CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
-                       const AlignPairs& align_pairs,
-                       map<string, size_t>& numIrrConfRegion,
-                       const vector<vector<string>>& units_shifts,
-                       vector<RepeatAlign>* irr_rep_aligns) {
+size_t CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
+                       const AlignPairs &align_pairs,
+                       map<string, size_t> &numIrrConfRegion,
+                       const vector<vector<string>> &units_shifts,
+                       vector<RepeatAlign> *irr_rep_aligns) {
   size_t irr_count = 0;
   bool isFwdKmer = false;
   for (AlignPairs::const_iterator it = align_pairs.begin();
        it != align_pairs.end(); ++it) {
-    const AlignPair& frag = it->second;
+    const AlignPair &frag = it->second;
     double first_top_score =
         MatchRepeatRc(units_shifts, frag[0].bases, frag[0].quals);
     if (!frag[0].bases.empty()) {
@@ -328,20 +335,20 @@ size_t CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
   return irr_count;
 }
 
-void CountAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
-                       const Region& targetNhood, const RepeatSpec& repeat_spec,
-                       const unordered_set<string>& ontarget_frag_names,
-                       AlignPairs& align_pairs, size_t& numAnchoredIrrs,
-                       const vector<vector<string>>& units_shifts,
-                       vector<RepeatAlign>* anchored_irrs) {
+void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
+                       const Region &targetNhood, const RepeatSpec &repeat_spec,
+                       const unordered_set<string> &ontarget_frag_names,
+                       AlignPairs &align_pairs, size_t &numAnchoredIrrs,
+                       const vector<vector<string>> &units_shifts,
+                       vector<RepeatAlign> *anchored_irrs) {
   numAnchoredIrrs = 0;
 
   // Check fragments from the target locus.
   for (unordered_set<string>::const_iterator it = ontarget_frag_names.begin();
        it != ontarget_frag_names.end(); ++it) {
     const AlignPair frag = align_pairs[*it];
-    const Align& al1 = frag[0];
-    const Align& al2 = frag[1];
+    const Align &al1 = frag[0];
+    const Align &al2 = frag[1];
 
     // Counts fragments for which both mates are present.
     if (!al1.name.empty() && !al2.name.empty()) {
@@ -358,8 +365,8 @@ void CountAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
                             al1, units_shifts);
 
       if (is_mate1_anchored_irr || is_mate2_anchored_irr) {
-        const Align& irr = is_mate1_anchored_irr ? al1 : al2;
-        const Align& anchor = is_mate1_anchored_irr ? al2 : al1;
+        const Align &irr = is_mate1_anchored_irr ? al1 : al2;
+        const Align &anchor = is_mate1_anchored_irr ? al2 : al1;
 
         ++numAnchoredIrrs;
         RepeatAlign rep_align;
