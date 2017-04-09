@@ -36,13 +36,13 @@ bool GetAlignFromHtsAlign(bam1_t* hts_align_ptr, Align& align,
   align.name = bam_get_qname(hts_align_ptr);
   align.flag = hts_align_ptr->core.flag;
 
+  align.status = kNoCheck;
   if (assumeUnaligned) {
     align.chrom_id = -1;       // since unaligned
     align.pos = -1;            // since unaligned
     align.mapq = 0;            // since unaligned
     align.mate_chrom_id = -1;  // since unaligned
     align.mate_pos = -1;       // since unaligned
-    align.status = kNoCheck;
   } else {
     align.chrom_id = hts_align_ptr->core.tid;
     align.pos = hts_align_ptr->core.pos;
