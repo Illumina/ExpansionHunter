@@ -25,12 +25,13 @@
 
 #pragma once
 
+#include <array>
 #include <map>
 #include <string>
 #include <vector>
 
 enum class Sex { kMale, kFemale };
-enum class GenotypeType {kHaploid, kDiploid};
+enum class GenotypeType { kHaploid, kDiploid };
 
 class StrHaplotype {
 public:
@@ -54,7 +55,8 @@ public:
   StrGenotype(int max_num_units_in_read, double prop_correct_molecules,
               double hap_depth, int read_len, int num_units_hap1,
               int num_units_hap2)
-      : hap_depth_(hap_depth), read_len_(read_len) {
+      : max_num_units_in_read_(max_num_units_in_read), hap_depth_(hap_depth),
+        read_len_(read_len) {
     haplotypes.push_back(StrHaplotype(num_units_hap1, max_num_units_in_read,
                                       prop_correct_molecules));
     haplotypes.push_back(StrHaplotype(num_units_hap2, max_num_units_in_read,
@@ -69,18 +71,18 @@ public:
   double calcFlankingLoglik(int num_units_in_read) const;
   double calcSpanningLoglik(int num_units_in_read) const;
   double calcLogLik(const std::map<int, int> &flanking_size_counts,
-                    const std::map<int, int> &spanning_size_counts) const;
+                    const std::map<int, int> &spanning_size_counts,
+                    std::vector<std::array<int, 3>> &support) const;
 
 private:
+  int max_num_units_in_read_;
   double hap_depth_;
   int read_len_;
   std::vector<StrHaplotype> haplotypes;
 };
 
-std::vector<int>
-genotypeOneUnitStr(int max_num_units_in_read, double prop_correct_molecules,
-                   double hap_depth, int read_len,
-                   const std::vector<int> &haplotype_candidates,
-                   const std::map<int, int> &flanking_size_count,
-                   const std::map<int, int> &spanning_size_count,
-                   GenotypeType genotype_type);
+std::vector<int> genotypeOneUnitStr(
+    int max_num_units_in_read, double prop_correct_molecules, double hap_depth,
+    int read_len, const std::vector<int> &haplotype_candidates,
+    const std::map<int, int> &flanking_size_count,
+    const std::map<int, int> &spanning_size_count, GenotypeType genotype_type);

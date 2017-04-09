@@ -29,7 +29,7 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
-#include "include/allele.h"
+#include "include/repeat.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
 

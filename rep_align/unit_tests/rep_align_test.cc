@@ -26,7 +26,7 @@
 
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
-#include "include/allele.h"
+#include "include/repeat.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
 #include "gtest/gtest.h"

@@ -20,8 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_ALLELE_H_
-#define INCLUDE_ALLELE_H_
+#pragma once
 
 #include <boost/property_tree/ptree.hpp>
 
@@ -35,30 +34,29 @@
 #include "common/parameters.h"
 #include "rep_align/rep_align.h"
 
-enum AlleleType {
-  kInRepeatAllele,
-  kSpanningAllele,
-  kFlankingAllele,
-  kOtherAllele
-};
-
-struct Allele {
-  std::map<AlleleType, std::string> readtypeToStr = {
-      {kInRepeatAllele, "INREPEAT"},
-      {kSpanningAllele, "SPANNING"},
-      {kFlankingAllele, "FLANKING"},
-      {kOtherAllele, "OTHER"}};
+struct Repeat {
+  enum class SupportType {
+    kInrepeat,
+    kSpanning,
+    kFlanking,
+    kOther
+  };
+  std::map<SupportType, std::string> readtypeToStr = {
+      {SupportType::kInrepeat, "INREPEAT"},
+      {SupportType::kSpanning, "SPANNING"},
+      {SupportType::kFlanking, "FLANKING"},
+      {SupportType::kOther, "OTHER"}};
   std::vector<RepeatAlign> rep_aligns;
   size_t size;
   size_t size_ci_lower;
   size_t size_ci_upper;
   size_t num_supporting_reads;
-  AlleleType type;
+  SupportType supported_by;
   void AsPtree(boost::property_tree::ptree& allele_node) const;
 };
 
 void AsPtree(boost::property_tree::ptree& region_node,
-             std::vector<Allele> alleles, const RepeatSpec& region_info,
+             std::vector<Repeat> alleles, const RepeatSpec& region_info,
              const size_t num_irrs, const size_t num_unaligned_irrs,
              const size_t num_anchored_irrs,
              const std::vector<size_t>& off_target_irr_counts,
@@ -69,7 +67,7 @@ void DumpVcf(const Parameters& parameters,
              const boost::property_tree::ptree& root_node, Outputs& outputs);
 
 void CoalesceFlankingReads(
-    const RepeatSpec& repeat_spec, std::vector<Allele>& alleles,
+    const RepeatSpec& repeat_spec, std::vector<Repeat>& alleles,
     std::vector<RepeatAlign>* flanking_repaligns, const size_t read_len,
     const double hap_depth, size_t motif_len,
     const std::vector<std::vector<std::string>>& units_shifts, size_t min_baseq,
@@ -77,14 +75,12 @@ void CoalesceFlankingReads(
 
 void OutputRepeatAligns(const Parameters& parameters,
                         const RepeatSpec& repeat_spec,
-                        const std::vector<Allele>& alleles,
+                        const std::vector<Repeat>& alleles,
                         const std::vector<RepeatAlign>& flanking_repaligns,
                         std::ostream* out);
 
 // Realign flanking reads to existing repeats.
 void DistributeFlankingReads(const Parameters& parameters,
                              const RepeatSpec& repeat_spec,
-                             std::vector<Allele>* alleles,
+                             std::vector<Repeat>* alleles,
                              std::vector<RepeatAlign>* flanking_repaligns);
-
-#endif  // INCLUDE_ALLELE_H_

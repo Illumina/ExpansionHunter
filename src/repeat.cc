@@ -20,50 +20,51 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "include/allele.h"
+#include "include/repeat.h"
 
-#include <boost/property_tree/ptree.hpp>
-using boost::property_tree::ptree;
-#include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
-#include <boost/algorithm/string/split.hpp>
-using boost::algorithm::split;
-#include <boost/algorithm/string/classification.hpp>
-using boost::algorithm::is_any_of;
-#include <boost/algorithm/string/join.hpp>
-
-#include <iostream>
-using std::cerr;
-using std::endl;
-using std::ostream;
-#include <string>
-using std::string;
-#include <vector>
-using std::vector;
-#include <utility>
-using std::pair;
-#include <map>
-using std::map;
 #include <algorithm>
 #include <cctype>
+#include <iostream>
+#include <map>
 #include <set>
 #include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/property_tree/ptree.hpp>
 
 #include "common/genomic_region.h"
 #include "common/repeat_spec.h"
 #include "include/repeat_length.h"
 #include "purity/purity.h"
 
-void Allele::AsPtree(ptree &allele_node) const {
-  allele_node.put<string>("Size", lexical_cast<string>(size));
+using std::cerr;
+using std::endl;
+using std::ostream;
+using std::string;
+using std::vector;
+using std::pair;
+using std::map;
 
-  if (type == kInRepeatAllele || type == kFlankingAllele) {
-    const string ci_encoding = lexical_cast<string>(size_ci_lower) + "," +
-                               lexical_cast<string>(size_ci_upper);
+using boost::property_tree::ptree;
+using boost::algorithm::split;
+using boost::algorithm::is_any_of;
+
+void Repeat::AsPtree(ptree &allele_node) const {
+  allele_node.put<string>("Size", std::to_string(size));
+
+  if (supported_by == SupportType::kInrepeat ||
+      supported_by == SupportType::kFlanking) {
+    const string ci_encoding =
+        std::to_string(size_ci_lower) + "," + std::to_string(size_ci_upper);
     allele_node.put<string>("CI", ci_encoding);
   }
 
-  allele_node.put<string>("Source", readtypeToStr.at(type));
+  allele_node.put<string>("Source", readtypeToStr.at(supported_by));
   allele_node.put<size_t>("NumSupportingReads", num_supporting_reads);
 }
 
@@ -90,11 +91,11 @@ AddConfusionCountsNode(const std::string &labelStr,
   return true;
 }
 
-static bool CompareBySize(const Allele &a1, const Allele &a2) {
+static bool CompareBySize(const Repeat &a1, const Repeat &a2) {
   return a1.size < a2.size;
 }
 
-void AsPtree(ptree &region_node, vector<Allele> alleles,
+void AsPtree(ptree &region_node, vector<Repeat> alleles,
              const RepeatSpec &region_info, const size_t num_irrs,
              const size_t num_unaligned_irrs, const size_t num_anchored_irrs,
              const vector<size_t> &off_target_irr_counts,
@@ -122,10 +123,10 @@ void AsPtree(ptree &region_node, vector<Allele> alleles,
   ptree repeat_sizes_node;
 
   std::sort(alleles.begin(), alleles.end(), CompareBySize);
-  for (const Allele &allele : alleles) {
-    const string name = "Allele" + lexical_cast<string>(num_allele);
+  for (const Repeat &repeat : alleles) {
+    const string name = "Allele" + std::to_string(num_allele);
     ptree allele_node;
-    allele.AsPtree(allele_node);
+    repeat.AsPtree(allele_node);
     repeat_sizes_node.put_child(name, allele_node);
     ++num_allele;
   }
@@ -204,12 +205,12 @@ void DumpVcf(const Parameters &options,
           format_cn += "/";
           format_ci += "/";
         }
-        alt += "<STR" + lexical_cast<string>(allele_size) + ">";
+        alt += "<STR" + std::to_string(allele_size) + ">";
         ++genotype_num;
-        format_gt += lexical_cast<string>(genotype_num);
+        format_gt += std::to_string(genotype_num);
         format_so += source;
         format_sp += support;
-        format_cn += lexical_cast<string>(allele_size);
+        format_cn += std::to_string(allele_size);
         format_ci += size_ci;
       } else {
         if (!format_gt.empty()) {
@@ -222,17 +223,17 @@ void DumpVcf(const Parameters &options,
         format_gt = "0" + format_gt;
         format_so = source + format_so;
         format_sp = support + format_sp;
-        format_cn = lexical_cast<string>(allele_size) + format_cn;
+        format_cn = std::to_string(allele_size) + format_cn;
         format_ci = size_ci + format_ci;
       }
     }
 
     const string info = "SVTYPE=STR;"
                         "END=" +
-                        lexical_cast<string>(region.end()) + ";REF=" +
-                        lexical_cast<string>(reference_size) + ";RL=" +
-                        lexical_cast<string>(reference_size * unit_len) +
-                        ";RU=" + motif;
+                        std::to_string(region.end()) + ";REF=" +
+                        std::to_string(reference_size) + ";RL=" +
+                        std::to_string(reference_size * unit_len) + ";RU=" +
+                        motif;
     if (alt.empty()) {
       alt = ".";
     }
@@ -256,7 +257,7 @@ void DumpVcf(const Parameters &options,
 }
 
 void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
-                           vector<Allele> &alleles,
+                           vector<Repeat> &repeats,
                            vector<RepeatAlign> *flanking_repaligns,
                            const size_t read_len, const double hap_depth,
                            size_t motif_len,
@@ -266,10 +267,10 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
   const string &right_flank = repeat_spec.right_flank;
 
   size_t longest_spanning = 0;
-  for (const Allele &allele : alleles) {
-    if (allele.type == kSpanningAllele) {
-      if (allele.size > longest_spanning) {
-        longest_spanning = allele.size;
+  for (const Repeat &repeat : repeats) {
+    if (repeat.supported_by == Repeat::SupportType::kSpanning) {
+      if (repeat.size > longest_spanning) {
+        longest_spanning = repeat.size;
       }
     }
   }
@@ -426,15 +427,15 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
            << " UB=" << upper_bound << ")]" << endl;
     }
 
-    Allele allele;
-    allele.type = kFlankingAllele;
-    allele.size = len_estimate;
-    allele.size_ci_lower = lower_bound;
-    allele.size_ci_upper = upper_bound;
-    allele.num_supporting_reads = num_reads_from_unseen_allele;
-    allele.rep_aligns = supporting_aligns;
+    Repeat repeat;
+    repeat.supported_by = Repeat::SupportType::kFlanking;
+    repeat.size = len_estimate;
+    repeat.size_ci_lower = lower_bound;
+    repeat.size_ci_upper = upper_bound;
+    repeat.num_supporting_reads = num_reads_from_unseen_allele;
+    repeat.rep_aligns = supporting_aligns;
 
-    alleles.push_back(allele);
+    repeats.push_back(repeat);
   }
 }
 
@@ -504,7 +505,7 @@ static string LowerLowqualBases(const string &bases, const string &quals,
 
 void OutputRepeatAligns(const Parameters &parameters,
                         const RepeatSpec &repeat_spec,
-                        const vector<Allele> &alleles,
+                        const vector<Repeat> &repeats,
                         const vector<RepeatAlign> &flanking_repaligns,
                         ostream *out) {
   const string &left_flank = repeat_spec.left_flank;
@@ -512,13 +513,14 @@ void OutputRepeatAligns(const Parameters &parameters,
 
   *out << repeat_spec.repeat_id << ":" << endl;
 
-  for (const Allele &allele : alleles) {
-    *out << "  " << allele.readtypeToStr.at(allele.type) << "_" << allele.size
-         << ":" << endl;
+  for (const Repeat &allele : repeats) {
+    *out << "  " << allele.readtypeToStr.at(allele.supported_by) << "_"
+         << allele.size << ":" << endl;
     for (const RepeatAlign &rep_align : allele.rep_aligns) {
       *out << "    -\n      name: \"" << rep_align.read.name << "\"" << endl;
 
-      if (allele.type == kSpanningAllele || allele.type == kFlankingAllele) {
+      if (allele.supported_by == Repeat::SupportType::kSpanning ||
+          allele.supported_by == Repeat::SupportType::kFlanking) {
         *out << "      align: |" << endl;
         Plot plot;
         const string cased_based = LowerLowqualBases(
@@ -527,7 +529,7 @@ void OutputRepeatAligns(const Parameters &parameters,
         PlotSpanningAlign(plot, cased_based, left_flank, right_flank,
                           rep_align.left_flank_len, rep_align.right_flank_len);
         PlotToStream(*out, plot);
-      } else if (allele.type == kInRepeatAllele) {
+      } else if (allele.supported_by == Repeat::SupportType::kInrepeat) {
         const string read_bases = LowerLowqualBases(
             rep_align.read.bases, rep_align.read.quals, parameters.min_baseq());
         const string mate_bases = LowerLowqualBases(
@@ -573,10 +575,10 @@ void OutputRepeatAligns(const Parameters &parameters,
 // Attempt to reclassify flanking reads as spanning.
 void DistributeFlankingReads(const Parameters &parameters,
                              const RepeatSpec &repeat_spec,
-                             vector<Allele> *alleles,
+                             vector<Repeat> *repeats,
                              vector<RepeatAlign> *flanking_repaligns) {
   const size_t unit_len = repeat_spec.units_shifts[0][0].length();
-  std::sort(alleles->rbegin(), alleles->rend(), CompareBySize);
+  std::sort(repeats->rbegin(), repeats->rend(), CompareBySize);
   const string &left_flank = repeat_spec.left_flank;
   const string &right_flank = repeat_spec.right_flank;
   const double kWpCutoff = 0.8;
@@ -593,8 +595,8 @@ void DistributeFlankingReads(const Parameters &parameters,
 
     bool found_align = false;
 
-    for (Allele &allele : *alleles) {
-      const size_t allele_len = allele.size * unit_len;
+    for (Repeat &repeat : *repeats) {
+      const size_t allele_len = repeat.size * unit_len;
       if (repeat_len > allele_len) {
         if (rep_align.left_flank_len) {
           assert(!rep_align.right_flank_len);
@@ -655,8 +657,8 @@ void DistributeFlankingReads(const Parameters &parameters,
         }
         if (found_align) {
           rep_align.type = RepeatAlign::Type::kSpanning;
-          rep_align.size = allele.size;
-          allele.rep_aligns.push_back(rep_align);
+          rep_align.size = repeat.size;
+          repeat.rep_aligns.push_back(rep_align);
           break;
         }
       }

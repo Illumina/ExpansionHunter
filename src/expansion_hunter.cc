@@ -20,10 +20,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <boost/lexical_cast.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-using boost::lexical_cast;
 #include <boost/algorithm/string/join.hpp>
 
 #include <cassert>
@@ -46,7 +44,7 @@ using std::pair;
 
 #include "common/parameters.h"
 #include "common/ref_genome.h"
-#include "include/allele.h"
+#include "include/repeat.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
@@ -97,7 +95,7 @@ size_t CalcReadLen(const string &bam_path) {
 // Search for reads spanning the entire repeat sequence.
 void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
                       const RepeatSpec &repeat_spec, AlignPairs &align_pairs,
-                      vector<Allele> &alleles,
+                      vector<Repeat> &alleles,
                       vector<RepeatAlign> *flanking_repaligns) {
   const size_t unit_len = repeat_spec.units_shifts[0][0].length();
 
@@ -131,14 +129,14 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
   }
 
   for (const auto &size_repaligns : size_spanning_repaligns) {
-    Allele allele;
-    allele.type = kSpanningAllele;
-    allele.size = size_repaligns.first;
-    allele.size_ci_lower = size_repaligns.first;
-    allele.size_ci_upper = size_repaligns.first;
-    allele.num_supporting_reads = size_repaligns.second.size();
-    allele.rep_aligns = size_repaligns.second;
-    alleles.push_back(allele);
+    Repeat repeat;
+    repeat.supported_by = Repeat::SupportType::kSpanning;
+    repeat.size = size_repaligns.first;
+    repeat.size_ci_lower = size_repaligns.first;
+    repeat.size_ci_upper = size_repaligns.first;
+    repeat.num_supporting_reads = size_repaligns.second.size();
+    repeat.rep_aligns = size_repaligns.second;
+    alleles.push_back(repeat);
   }
 
   DistributeFlankingReads(parameters, repeat_spec, &alleles,
@@ -196,13 +194,13 @@ void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
   cerr << "\t[Done filling in mates]" << endl;
 }
 
-bool is_flannking_allele(const Allele &allele) {
-  return allele.type == kFlankingAllele;
+bool is_flannking_allele(const Repeat &repeat) {
+  return repeat.supported_by == Repeat::SupportType::kFlanking;
 }
 
 bool FindLongRepeats(const Parameters &parameters,
                      const RepeatSpec &repeat_spec, BamFile &bam_file,
-                     vector<Allele> &alleles, size_t &num_irrs,
+                     vector<Repeat> &alleles, size_t &num_irrs,
                      size_t &num_unaligned_irrs, size_t &num_anchored_irrs,
                      vector<size_t> &off_target_irr_counts,
                      unordered_set<string> &ontarget_frag_names,
@@ -257,26 +255,26 @@ bool FindLongRepeats(const Parameters &parameters,
     const size_t unit_len = repeat_spec.units[0].length();
 
     cerr << "\t[Estimating repeat length from IRRs]" << endl;
-    Allele allele;
-    allele.type = kInRepeatAllele;
+    Repeat repeat;
+    repeat.supported_by = Repeat::SupportType::kInrepeat;
 
     const double haplotype_depth = parameters.depth() / 2;
     EstimateRepeatLen(num_irrs, parameters.read_len(), haplotype_depth,
-                      allele.size, allele.size_ci_lower, allele.size_ci_upper);
+                      repeat.size, repeat.size_ci_lower, repeat.size_ci_upper);
 
-    allele.size /= unit_len;
-    allele.size_ci_lower /= unit_len;
-    allele.size_ci_upper /= unit_len;
-    allele.num_supporting_reads = num_irrs;
-    allele.rep_aligns = irr_rep_aligns;
+    repeat.size /= unit_len;
+    repeat.size_ci_lower /= unit_len;
+    repeat.size_ci_upper /= unit_len;
+    repeat.num_supporting_reads = num_irrs;
+    repeat.rep_aligns = irr_rep_aligns;
 
-    alleles.push_back(allele);
+    alleles.push_back(repeat);
 
     // If there is evidence for a long repeat allele we assume that flanking
     // reads came from and so any previously-found alleles whose size was
     // estimated from flanking reads are no longer valid.
 
-    vector<Allele>::const_iterator flanking_allele_it =
+    vector<Repeat>::const_iterator flanking_allele_it =
         std::find_if(alleles.begin(), alleles.end(), is_flannking_allele);
 
     if (flanking_allele_it != alleles.end()) {
@@ -319,9 +317,9 @@ void EstimateRepeatSizes(const Parameters &parameters,
     }
 
     cerr << "\t[Estimating short repeat sizes]" << endl;
-    vector<Allele> alleles;
+    vector<Repeat> repeats;
     vector<RepeatAlign> flanking_repaligns;
-    FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs, alleles,
+    FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs, repeats,
                      &flanking_repaligns);
 
     cerr << "\t[Estimating long repeat sizes]" << endl;
@@ -330,7 +328,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
     size_t num_unaligned_irrs = 0;
     size_t num_irrs = 0;
 
-    FindLongRepeats(parameters, repeat_spec, *bam_file, alleles, num_irrs,
+    FindLongRepeats(parameters, repeat_spec, *bam_file, repeats, num_irrs,
                     num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
                     ontarget_frag_names, align_pairs, &flanking_repaligns);
 
@@ -343,26 +341,26 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     vector<int> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
-    for (const auto &allele : alleles) {
-      cerr << allele.readtypeToStr.at(allele.type) << endl;
-      if (allele.type == kSpanningAllele) {
-        spanning_size_counts[allele.size] += allele.num_supporting_reads;
-        haplotype_candidates.push_back(allele.size);
-      } else if (allele.type == kInRepeatAllele) {
+    for (const auto &repeat : repeats) {
+      cerr << repeat.readtypeToStr.at(repeat.supported_by) << endl;
+      if (repeat.supported_by == Repeat::SupportType::kSpanning) {
+        spanning_size_counts[repeat.size] += repeat.num_supporting_reads;
+        haplotype_candidates.push_back(repeat.size);
+      } else if (repeat.supported_by == Repeat::SupportType::kInrepeat) {
         const int num_units_in_read = (int)(std::ceil(
             parameters.read_len() / (double)repeat_spec.units[0].length()));
         const int bounded_num_irrs =
-            allele.num_supporting_reads <= 5 ? allele.num_supporting_reads : 5;
+            repeat.num_supporting_reads <= 5 ? repeat.num_supporting_reads : 5;
         flanking_size_counts[num_units_in_read] += bounded_num_irrs;
         haplotype_candidates.push_back(num_units_in_read);
-      } else if (allele.type == kFlankingAllele) {
-        haplotype_candidates.push_back(allele.size);
-        for (const auto &align : allele.rep_aligns) {
+      } else if (repeat.supported_by == Repeat::SupportType::kFlanking) {
+        haplotype_candidates.push_back(repeat.size);
+        for (const auto &align : repeat.rep_aligns) {
           flanking_size_counts[align.size] += 1;
         }
       } else {
         throw std::logic_error("Do not know how to deal with " +
-                               allele.readtypeToStr.at(allele.type) +
+            repeat.readtypeToStr.at(repeat.supported_by) +
                                " alleles");
       }
     }
@@ -406,11 +404,11 @@ void EstimateRepeatSizes(const Parameters &parameters,
     // End genotyping
 
     boost::property_tree::ptree region_node;
-    AsPtree(region_node, alleles, repeat_spec, num_irrs, num_unaligned_irrs,
+    AsPtree(region_node, repeats, repeat_spec, num_irrs, num_unaligned_irrs,
             num_anchored_irrs, offtarget_irr_counts, genotype);
     ptree_root.put_child(repeat_spec.repeat_id, region_node);
 
-    OutputRepeatAligns(parameters, repeat_spec, alleles, flanking_repaligns,
+    OutputRepeatAligns(parameters, repeat_spec, repeats, flanking_repaligns,
                        &(*outputs).log());
   }
 
