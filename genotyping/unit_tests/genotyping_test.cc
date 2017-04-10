@@ -61,12 +61,12 @@ TEST(CalcSpanningLoglik, TypicalSpanningReadsLoglikelihoodsCalcualted) {
   EXPECT_DOUBLE_EQ(-6.2450661678773223, genotype.calcSpanningLoglik(4));
 }
 
-TEST(CalcGenotypeLoglik, TypicalGenotypesLoglikelihoodsCalculated) {
+TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
   const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {10, 1}};
   const map<int, int> spanning_size_counts = {{3, 4}, {5, 5}};
   typedef vector<array<int, 3>> Support;
-
   Support genotype_support;
+
   StrGenotype genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
   EXPECT_DOUBLE_EQ(-48.468337669679954,
                    genotype_3_5.calcLogLik(flanking_size_counts,
@@ -81,25 +81,45 @@ TEST(CalcGenotypeLoglik, TypicalGenotypesLoglikelihoodsCalculated) {
                    genotype_3_10.calcLogLik(flanking_size_counts,
                                             spanning_size_counts,
                                             genotype_support));
+  const Support expected_3_10_support = {{0, 4, 5}, {0, 0, 6}};
+  EXPECT_EQ(expected_3_10_support, genotype_support);
 
   StrGenotype genotype_10_10(25, 0.97, 25.0, 150, 10, 10);
   EXPECT_DOUBLE_EQ(-185.24122167420646,
                    genotype_10_10.calcLogLik(flanking_size_counts,
                                              spanning_size_counts,
                                              genotype_support));
+  const Support expected_10_10_support = {{0, 0, 6}, {0, 0, 6}};
+  EXPECT_EQ(expected_10_10_support, genotype_support);
 }
 
-TEST(CalcHaploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
+TEST(CalcGenotypeLoglik, LongGenotypesLoglikelihoodsCalculated) {
   const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {10, 1}};
+  const map<int, int> spanning_size_counts = {{3, 4}, {5, 5}};
+  typedef vector<array<int, 3>> Support;
+  Support genotype_support;
+
+  StrGenotype genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
+  EXPECT_DOUBLE_EQ(-48.468337669679954,
+                   genotype_3_5.calcLogLik(flanking_size_counts,
+                                           spanning_size_counts,
+                                           genotype_support));
+}
+
+TEST(CalcDiploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
+  const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {25, 10}};
   const map<int, int> spanning_size_counts = {{5, 5}};
   typedef vector<array<int, 3>> Support;
   Support genotype_support;
 
-  StrGenotype haploid_genotype(25, 0.97, 25.0, 150, 5);
-  EXPECT_DOUBLE_EQ(-34.829667436074644,
-                   haploid_genotype.calcLogLik(flanking_size_counts,
+  StrGenotype diploid_genotype(25, 0.97, 25.0, 150, 5, 25);
+  EXPECT_DOUBLE_EQ(-46.837086567255447,
+                   diploid_genotype.calcLogLik(flanking_size_counts,
                                                spanning_size_counts,
                                                genotype_support));
+
+  const Support expected_5_25_support = {{0, 5, 5}, {10, 0, 5}};
+  EXPECT_EQ(expected_5_25_support, genotype_support);
 }
 
 TEST(GenotypeStr, TypicalDiploidStrReturnsGenotype) {
