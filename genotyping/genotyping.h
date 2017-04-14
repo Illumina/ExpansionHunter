@@ -81,8 +81,11 @@ private:
   std::vector<StrHaplotype> haplotypes;
 };
 
-std::vector<int> genotypeOneUnitStr(
-    int max_num_units_in_read, double prop_correct_molecules, double hap_depth,
-    int read_len, const std::vector<int> &haplotype_candidates,
-    const std::map<int, int> &flanking_size_count,
-    const std::map<int, int> &spanning_size_count, GenotypeType genotype_type);
+void genotypeOneUnitStr(int max_num_units_in_read,
+                        double prop_correct_molecules, double hap_depth,
+                        int read_len,
+                        const std::vector<int> &haplotype_candidates,
+                        const std::map<int, int> &flanking_size_count,
+                        const std::map<int, int> &spanning_size_count,
+                        GenotypeType genotype_type, std::vector<int> &genotype,
+                        std::vector<std::array<int, 3>> &support);

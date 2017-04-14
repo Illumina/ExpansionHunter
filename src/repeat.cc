@@ -23,6 +23,7 @@
 #include "include/repeat.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <iostream>
 #include <map>
@@ -38,6 +39,7 @@
 #include <boost/property_tree/ptree.hpp>
 
 #include "common/genomic_region.h"
+#include "common/parameters.h"
 #include "common/repeat_spec.h"
 #include "include/repeat_length.h"
 #include "purity/purity.h"
@@ -49,10 +51,11 @@ using std::string;
 using std::vector;
 using std::pair;
 using std::map;
+using std::array;
 
 using boost::property_tree::ptree;
-using boost::algorithm::split;
-using boost::algorithm::is_any_of;
+// using boost::algorithm::split;
+// using boost::algorithm::is_any_of;
 
 void Repeat::AsPtree(ptree &allele_node) const {
   allele_node.put<string>("Size", std::to_string(size));
@@ -95,22 +98,115 @@ static bool CompareBySize(const Repeat &a1, const Repeat &a2) {
   return a1.size < a2.size;
 }
 
-void AsPtree(ptree &region_node, vector<Repeat> alleles,
-             const RepeatSpec &region_info, const size_t num_irrs,
-             const size_t num_unaligned_irrs, const size_t num_anchored_irrs,
-             const vector<size_t> &off_target_irr_counts,
-             const vector<int> genotype) {
+void AsPtree(const Parameters &parameters, ptree &region_node,
+             vector<Repeat> repeats, const RepeatSpec &region_info,
+             const size_t num_irrs, const size_t num_unaligned_irrs,
+             const size_t num_anchored_irrs,
+             const vector<size_t> &off_target_irr_counts, vector<int> &genotype,
+             const vector<array<int, 3>> &genotype_support) {
   region_node.put<string>("RepeatId", region_info.repeat_id);
   const string unit_encoding = boost::algorithm::join(region_info.units, "/");
   region_node.put<string>("RepeatUnit", unit_encoding);
   region_node.put<string>("TargetRegion", region_info.target_region.AsString());
   vector<string> genotype_encoding_vec;
-  for (const int size : genotype) {
+  vector<string> genotype_ci_encoding_vec;
+
+  vector<Repeat> genotype_repeats;
+
+  for (int size : genotype) {
     genotype_encoding_vec.push_back(std::to_string(size));
+    bool repeat_found = false;
+    for (const Repeat &repeat : repeats) {
+      if (repeat.size == size) {
+        genotype_repeats.push_back(repeat);
+        string ci = ".";
+        if (repeat.supported_by == Repeat::SupportType::kFlanking ||
+            repeat.supported_by == Repeat::SupportType::kInrepeat) {
+          ci = std::to_string(repeat.size_ci_lower) + "-" +
+               std::to_string(repeat.size_ci_upper);
+        }
+        genotype_ci_encoding_vec.push_back(ci);
+        repeat_found = true;
+        break;
+      }
+    }
+    if (!repeat_found) {
+      throw std::runtime_error("ERROR: Could not find " + std::to_string(size) +
+                               " among repeats of " + region_info.repeat_id);
+    }
   }
+
+  if (genotype_repeats.size() == 2 &&
+      genotype_repeats[0].supported_by == genotype_repeats[1].supported_by) {
+    const Repeat &repeat = genotype_repeats[0];
+
+    if (repeat.supported_by == Repeat::SupportType::kInrepeat) {
+
+      const size_t unit_len = region_info.units[0].length();
+      const double haplotype_depth = parameters.depth() / 2;
+
+      // Calculate CI for the short allele.
+      size_t short_allele_size, short_allele_size_ci_lower,
+          short_allele_size_ci_upper;
+
+      EstimateRepeatLen(num_irrs / 2, parameters.read_len(), haplotype_depth,
+                        short_allele_size, short_allele_size_ci_lower,
+                        short_allele_size_ci_upper);
+
+      short_allele_size /= unit_len;
+      short_allele_size_ci_lower /= unit_len;
+      short_allele_size_ci_upper /= unit_len;
+
+      // Calculate CI for the long allele.
+      size_t long_allele_size, long_allele_size_ci_lower,
+          long_allele_size_ci_upper;
+
+      EstimateRepeatLen(num_irrs, parameters.read_len(), haplotype_depth,
+                        long_allele_size, long_allele_size_ci_lower,
+                        long_allele_size_ci_upper);
+
+      long_allele_size /= unit_len;
+      long_allele_size_ci_lower /= unit_len;
+      long_allele_size_ci_upper /= unit_len;
+
+      genotype_encoding_vec = {std::to_string(short_allele_size),
+                               std::to_string(long_allele_size)};
+
+      const string short_allele_size_ci =
+          std::to_string(parameters.read_len()) + "-" +
+          std::to_string(short_allele_size_ci_upper);
+      const string long_allele_size_ci =
+          std::to_string(short_allele_size_ci_lower) + "-" +
+          std::to_string(long_allele_size_ci_upper);
+      genotype_ci_encoding_vec = {short_allele_size_ci, long_allele_size_ci};
+
+    } else if (repeat.supported_by == Repeat::SupportType::kFlanking) {
+      throw std::logic_error("Hom flanking logic is not implemented");
+    }
+  }
+
   const string genotype_encoding =
       boost::algorithm::join(genotype_encoding_vec, ",");
   region_node.put<string>("Genotype", genotype_encoding);
+  const string genotype_ci_encoding =
+      boost::algorithm::join(genotype_ci_encoding_vec, ",");
+  region_node.put<string>("GenotypeCi", genotype_ci_encoding);
+
+  cerr << genotype_encoding << "\t" << genotype_ci_encoding << endl;
+
+  vector<string> haplotype_support_encodings;
+  for (const auto &haplotype_support : genotype_support) {
+    std::stringstream stream;
+    std::copy(haplotype_support.begin(), haplotype_support.end(),
+              std::ostream_iterator<int>(stream, "-"));
+    string haplotype_support_encoding = stream.str();
+    haplotype_support_encoding = haplotype_support_encoding.substr(
+        0, haplotype_support_encoding.length() - 1);
+    haplotype_support_encodings.push_back(haplotype_support_encoding);
+  }
+  const string genotype_support_encoding =
+      boost::algorithm::join(haplotype_support_encodings, ",");
+  region_node.put<string>("GenotypeSupport", genotype_support_encoding);
   region_node.put<size_t>("AnchoredIrrCount", num_anchored_irrs);
 
   AddConfusionCountsNode("OffTargetRegionIrrCounts", region_node,
@@ -122,8 +218,8 @@ void AsPtree(ptree &region_node, vector<Repeat> alleles,
   size_t num_allele = 1;
   ptree repeat_sizes_node;
 
-  std::sort(alleles.begin(), alleles.end(), CompareBySize);
-  for (const Repeat &repeat : alleles) {
+  std::sort(repeats.begin(), repeats.end(), CompareBySize);
+  for (const Repeat &repeat : repeats) {
     const string name = "Allele" + std::to_string(num_allele);
     ptree allele_node;
     repeat.AsPtree(allele_node);
@@ -147,11 +243,14 @@ void DumpVcf(const Parameters &options,
          "##INFO=<ID=REF,Number=1,Type=Integer,Description=\"Reference copy number\">\n"
          "##INFO=<ID=RL,Number=1,Type=Integer,Description=\"Reference length in bp\">\n"
          "##INFO=<ID=RU,Number=1,Type=String,Description=\"Repeat unit in the reference orientation\">\n"
+         "##INFO=<ID=REPID,Number=1,Type=String,Description=\"Repeat identifier from the input specification file\">\n"
          "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
          "##FORMAT=<ID=SO,Number=1,Type=String,Description=\"Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat\">\n"
-         "##FORMAT=<ID=SP,Number=1,Type=String,Description=\"Number of reads supporting the allele\">\n"
          "##FORMAT=<ID=CN,Number=1,Type=String,Description=\"Allele copy number\">\n"
-         "##FORMAT=<ID=CI,Number=1,Type=String,Description=\"Confidence interval for CN\">\n";
+         "##FORMAT=<ID=CI,Number=1,Type=String,Description=\"Confidence interval for CN\">\n"
+         "##FORMAT=<ID=AD_FL,Number=1,Type=String,Description=\"Number of flanking reads consistent with the allele\">\n"
+         "##FORMAT=<ID=AD_SP,Number=1,Type=String,Description=\"Number of spanning reads consistent with the allele\">\n"
+         "##FORMAT=<ID=AD_IR,Number=1,Type=String,Description=\"Number of in-repeat reads consistent with the allele\">\n";
   // clang-format on
 
   std::set<size_t> alt_sizes;
@@ -166,7 +265,7 @@ void DumpVcf(const Parameters &options,
     const string region_encoding = region_node.get<string>("TargetRegion");
     const Region region(region_encoding);
     const RepeatSpec &region_info = repeat_specs.at(region_encoding);
-    const string ref = region_info.LeftFlankBase() + region_info.ref_seq;
+    const string ref(1, region_info.LeftFlankBase());
     const size_t unit_len = region_info.units[0].length();
     const size_t reference_size = region_info.ref_seq.length() / unit_len;
 
@@ -175,22 +274,69 @@ void DumpVcf(const Parameters &options,
 
     string alt;
     size_t genotype_num = 0;
-    string format_gt, format_sp, format_so, format_cn, format_ci;
 
-    for (const ptree::value_type &name_allele : alleles_node) {
-      const ptree &allele_node = name_allele.second;
-      const size_t allele_size = allele_node.get<size_t>("Size");
+    const string genotype_encoding = region_node.get<string>("Genotype");
+    vector<string> genotype;
+    boost::split(genotype, genotype_encoding, boost::is_any_of(","));
+
+    const string genotype_ci_encoding = region_node.get<string>("GenotypeCi");
+    vector<string> genotype_ci;
+    boost::split(genotype_ci, genotype_ci_encoding, boost::is_any_of(","));
+
+    const string genotype_support_encoding =
+        region_node.get<string>("GenotypeSupport");
+    vector<string> genotype_support;
+    boost::split(genotype_support, genotype_support_encoding,
+                 boost::is_any_of(","));
+
+    if (genotype.size() != genotype_ci.size() ||
+        genotype_ci.size() != genotype_support.size()) {
+      throw std::runtime_error("ERROR: Inconsistent number of elements in "
+                               "Genotype, GenotypeCi, and GenotypeSupport");
+    }
+
+    string format_gt, format_so, format_cn, format_ci, format_ad_sp,
+        format_ad_fl, format_ad_ir;
+
+    for (int i = 0; i != genotype.size(); ++i) {
+      const int allele_size = std::stoi(genotype[i]);
+      const string allele_ci = genotype_ci[i];
+      const string allele_support_enc = genotype_support[i];
+
+      vector<string> allele_support;
+      boost::split(allele_support, allele_support_enc, boost::is_any_of("-"));
+      assert(allele_support.size() == 3);
+
+      ptree const *repeat_node = nullptr;
+
+      // Only homozygous in-repeat and flanking alleles would two "-" in CI
+      // encoding.
+      long num_dashes = std::count(genotype_ci_encoding.begin(),
+                                   genotype_ci_encoding.end(), '-');
+      if (num_dashes == 2) { // homozygous in-repeat or flanking repeat.
+        for (const ptree::value_type &name_repeat : alleles_node) {
+          if (name_repeat.second.get<string>("Source") == "INREPEAT") {
+            repeat_node = &name_repeat.second;
+            break;
+          }
+        }
+      } else {
+        for (const ptree::value_type &name_repeat : alleles_node) {
+          const size_t repeat_size = name_repeat.second.get<size_t>("Size");
+          if (allele_size == repeat_size) {
+            repeat_node = &name_repeat.second;
+            break;
+          }
+        }
+      }
+      if (!repeat_node) {
+        throw std::runtime_error("ERROR: Can't find repeat of size " +
+                                 std::to_string(allele_size));
+      }
+
       const size_t allele_len = allele_size * unit_len;
 
-      string source = allele_node.get<string>("Source");
-      string support = allele_node.get<string>("NumSupportingReads");
-
-      string size_ci = ".";
-      if (source == "INREPEAT" || source == "FLANKING") {
-        vector<string> bounds;
-        size_ci = allele_node.get<string>("CI");
-        std::replace(size_ci.begin(), size_ci.end(), ',', '-');
-      }
+      string source = repeat_node->get<string>("Source");
 
       if (allele_size != reference_size) {
         alt_sizes.insert(allele_size);
@@ -200,56 +346,59 @@ void DumpVcf(const Parameters &options,
 
         if (!format_gt.empty()) {
           format_gt += "/";
-          format_sp += "/";
           format_so += "/";
           format_cn += "/";
           format_ci += "/";
+          format_ad_sp += "/";
+          format_ad_fl += "/";
+          format_ad_ir += "/";
         }
         alt += "<STR" + std::to_string(allele_size) + ">";
         ++genotype_num;
         format_gt += std::to_string(genotype_num);
         format_so += source;
-        format_sp += support;
         format_cn += std::to_string(allele_size);
-        format_ci += size_ci;
+        format_ci += allele_ci;
+        format_ad_sp += allele_support[0];
+        format_ad_fl += allele_support[1];
+        format_ad_ir += allele_support[2];
       } else {
         if (!format_gt.empty()) {
           format_gt = "/" + format_gt;
           format_so = "/" + format_so;
-          format_sp = "/" + format_sp;
           format_cn = "/" + format_cn;
           format_ci = "/" + format_ci;
+          format_ad_sp = "/" + format_ad_sp;
+          format_ad_fl = "/" + format_ad_fl;
+          format_ad_ir = "/" + format_ad_ir;
         }
         format_gt = "0" + format_gt;
         format_so = source + format_so;
-        format_sp = support + format_sp;
         format_cn = std::to_string(allele_size) + format_cn;
-        format_ci = size_ci + format_ci;
+        format_ci = allele_ci + format_ci;
       }
     }
 
-    const string info = "SVTYPE=STR;"
-                        "END=" +
-                        std::to_string(region.end()) + ";REF=" +
-                        std::to_string(reference_size) + ";RL=" +
+    const string info = "SVTYPE=STR;END=" + std::to_string(region.end()) +
+                        ";REF=" + std::to_string(reference_size) + ";RL=" +
                         std::to_string(reference_size * unit_len) + ";RU=" +
-                        motif;
+                        motif + ";REPID=" + region_id;
     if (alt.empty()) {
       alt = ".";
     }
 
-    vcf_body << region.chrom() << "\t" << region.start() - 1 << "\t"
-             << region_id << "\t" << ref << "\t" << alt << "\t"
-             << "."
-             << "\tPASS\t" << info << "\tGT:SO:SP:CN:CI\t" << format_gt << ":"
-             << format_so << ":" << format_sp << ":" << format_cn << ":"
-             << format_ci << endl;
+    vcf_body << region.chrom() << "\t" << region.start() - 1 << "\t.\t" << ref
+             << "\t" << alt << "\t.\tPASS\t" << info
+             << "\tGT:SO:CN:CI:AD_FL:AD_SP:AD_FL:AD_IR\t" << format_gt << ":"
+             << format_so << ":" << format_cn << ":" << format_ci << ":"
+             << format_ad_sp << ":" << format_ad_fl << ":" << format_ad_ir
+             << endl;
   }
 
   for (size_t size : alt_sizes) {
-    vcf_header << "##ALT=<ID=STR" << size << ",Description=\"Allele comprised"
-                                             " of "
-               << size << " repeat units\">\n";
+    vcf_header << "##ALT=<ID=STR" << size
+               << ",Description=\"Allele comprised of " << size
+               << " repeat units\">\n";
   }
   vcf_header << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t"
              << options.sample_name() << endl;

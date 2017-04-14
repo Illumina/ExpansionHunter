@@ -20,38 +20,42 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
-#include <boost/algorithm/string/join.hpp>
 
+#include <algorithm>
+#include <array>
 #include <cassert>
 #include <iostream>
-using std::cerr;
-using std::endl;
-#include <string>
-using std::string;
-#include <vector>
-using std::vector;
 #include <map>
-using std::map;
-#include <unordered_set>
-using std::unordered_set;
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <unordered_set>
 #include <utility>
-using std::pair;
-#include "genotyping/genotyping.h"
+#include <vector>
 
 #include "common/parameters.h"
 #include "common/ref_genome.h"
-#include "include/repeat.h"
+#include "genotyping/genotyping.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
+#include "include/repeat.h"
 #include "include/repeat_length.h"
 #include "include/version.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
+
+using std::unordered_set;
+using std::map;
+using std::vector;
+using std::string;
+using std::cerr;
+using std::endl;
+using std::pair;
+using std::array;
 
 // Returns the length of the first read in a BAM file.
 size_t CalcReadLen(const string &bam_path) {
@@ -339,6 +343,11 @@ void EstimateRepeatSizes(const Parameters &parameters,
       flanking_size_counts[align.size] += 1;
     }
 
+    const int num_units_in_read = (int)(std::ceil(
+        parameters.read_len() / (double)repeat_spec.units[0].length()));
+    int long_repeat_size = -1;
+    int num_supporting_irr_reads = -1;
+
     vector<int> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
     for (const auto &repeat : repeats) {
@@ -347,10 +356,11 @@ void EstimateRepeatSizes(const Parameters &parameters,
         spanning_size_counts[repeat.size] += repeat.num_supporting_reads;
         haplotype_candidates.push_back(repeat.size);
       } else if (repeat.supported_by == Repeat::SupportType::kInrepeat) {
-        const int num_units_in_read = (int)(std::ceil(
-            parameters.read_len() / (double)repeat_spec.units[0].length()));
+        assert(long_repeat_size == -1);
+        long_repeat_size = repeat.size;
         const int bounded_num_irrs =
-            repeat.num_supporting_reads <= 5 ? repeat.num_supporting_reads : 5;
+            std::min<size_t>(repeat.num_supporting_reads, 5);
+        num_supporting_irr_reads = repeat.num_supporting_reads;
         flanking_size_counts[num_units_in_read] += bounded_num_irrs;
         haplotype_candidates.push_back(num_units_in_read);
       } else if (repeat.supported_by == Repeat::SupportType::kFlanking) {
@@ -360,7 +370,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
         }
       } else {
         throw std::logic_error("Do not know how to deal with " +
-            repeat.readtypeToStr.at(repeat.supported_by) +
+                               repeat.readtypeToStr.at(repeat.supported_by) +
                                " alleles");
       }
     }
@@ -396,16 +406,28 @@ void EstimateRepeatSizes(const Parameters &parameters,
       genotype_type = GenotypeType::kHaploid;
     }
 
-    vector<int> genotype = genotypeOneUnitStr(
-        max_num_units_in_read, kPropCorrectMolecules, hap_depth,
-        parameters.read_len(), haplotype_candidates, flanking_size_counts,
-        spanning_size_counts, genotype_type);
+    vector<int> genotype;
+    vector<array<int, 3>> genotype_support;
+    genotypeOneUnitStr(max_num_units_in_read, kPropCorrectMolecules, hap_depth,
+                       parameters.read_len(), haplotype_candidates,
+                       flanking_size_counts, spanning_size_counts,
+                       genotype_type, genotype, genotype_support);
+
+    for (int i = 0; i < genotype.size(); ++i) {
+      if (genotype[i] == num_units_in_read) {
+        assert(long_repeat_size != -1);
+        assert(num_supporting_irr_reads != -1);
+        genotype[i] = long_repeat_size;
+        genotype_support[i][2] = num_supporting_irr_reads;
+      }
+    }
 
     // End genotyping
 
     boost::property_tree::ptree region_node;
-    AsPtree(region_node, repeats, repeat_spec, num_irrs, num_unaligned_irrs,
-            num_anchored_irrs, offtarget_irr_counts, genotype);
+    AsPtree(parameters, region_node, repeats, repeat_spec, num_irrs,
+            num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
+            genotype, genotype_support);
     ptree_root.put_child(repeat_spec.repeat_id, region_node);
 
     OutputRepeatAligns(parameters, repeat_spec, repeats, flanking_repaligns,
