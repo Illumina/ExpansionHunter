@@ -181,7 +181,8 @@ void AsPtree(const Parameters &parameters, ptree &region_node,
       genotype_ci_encoding_vec = {short_allele_size_ci, long_allele_size_ci};
 
     } else if (repeat.supported_by == Repeat::SupportType::kFlanking) {
-      throw std::logic_error("Hom flanking logic is not implemented");
+      // If both alleles are flanking, they are assumed to have the same
+      // lengths and CIs.
     }
   }
 
@@ -315,7 +316,8 @@ void DumpVcf(const Parameters &options,
                                    genotype_ci_encoding.end(), '-');
       if (num_dashes == 2) { // homozygous in-repeat or flanking repeat.
         for (const ptree::value_type &name_repeat : alleles_node) {
-          if (name_repeat.second.get<string>("Source") == "INREPEAT") {
+          const string source = name_repeat.second.get<string>("Source");
+          if (source == "INREPEAT" || source == "FLANKING") {
             repeat_node = &name_repeat.second;
             break;
           }
