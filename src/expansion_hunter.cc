@@ -209,7 +209,7 @@ bool FindLongRepeats(const Parameters &parameters,
                      AlignPairs &align_pairs, RegionFindings &region_findings) {
   // Count the number of anchored IRRs.
   region_findings.num_anchored_irrs = 0;
-  const size_t extension_len = parameters.region_extension_len();
+  const int extension_len = parameters.region_extension_len();
   Region target_nhood = repeat_spec.target_region.Extend(extension_len);
 
   // Anchored IRRs and IRR pairs will be stored here.
@@ -313,7 +313,27 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     string repeat_header = repeat_spec.target_region.AsString();
     repeat_header += " " + boost::algorithm::join(repeat_spec.units, "/");
+
+    GenotypeType genotype_type = GenotypeType::kDiploid;
+    const string chrom = repeat_spec.target_region.chrom();
+
+    const bool is_female_chrom_y =
+        parameters.sex() == Sex::kFemale && (chrom == "chrY" || chrom == "Y");
+
+    if (is_female_chrom_y) {
+      cerr << "[Skipping " << repeat_header << " because the sample is female]"
+           << endl;
+      continue;
+    }
+
     cerr << "[Analyzing " << repeat_header << "]" << endl;
+
+    const bool is_sex_chrom =
+        chrom == "chrX" || chrom == "X" || chrom == "chrY" || chrom == "Y";
+
+    if (parameters.sex() == Sex::kMale && is_sex_chrom) {
+      genotype_type = GenotypeType::kHaploid;
+    }
 
     RegionFindings region_findings;
 
@@ -406,12 +426,6 @@ void EstimateRepeatSizes(const Parameters &parameters,
     const double hap_depth = parameters.depth() / 2;
     const int max_num_units_in_read =
         (int)(std::ceil(parameters.read_len() / (double)unit_len));
-
-    GenotypeType genotype_type = GenotypeType::kDiploid;
-    const string chrom = repeat_spec.target_region.chrom();
-    if (parameters.sex() == Sex::kMale && (chrom == "chrX" || chrom == "X")) {
-      genotype_type = GenotypeType::kHaploid;
-    }
 
     // vector<int> genotype;
     vector<array<int, 3>> genotype_support;
