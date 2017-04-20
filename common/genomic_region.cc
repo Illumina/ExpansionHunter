@@ -41,19 +41,13 @@ using std::ostream;
 using std::istream;
 #include <stdexcept>
 
-/*****************************************************************************/
-
 Region::Region() : chrom_("chr0"), start_(0), end_(0) {}
 
-/*****************************************************************************/
-
-Region::Region(const string& chrom, size_t start, size_t end,
-               const string& label)
+Region::Region(const string &chrom, int64_t start, int64_t end,
+               const string &label)
     : chrom_(chrom), start_(start), end_(end), label_(label) {}
 
-/*****************************************************************************/
-
-Region::Region(const string& encoding, const string& label) : label_(label) {
+Region::Region(const string &encoding, const string &label) : label_(label) {
   vector<string> components;
   split(components, encoding, is_any_of(":-"));
 
@@ -62,13 +56,11 @@ Region::Region(const string& encoding, const string& label) : label_(label) {
   }
 
   chrom_ = components[0];
-  start_ = lexical_cast<size_t>(components[1]);
-  end_ = lexical_cast<size_t>(components[2]);
+  start_ = lexical_cast<int64_t>(components[1]);
+  end_ = lexical_cast<int64_t>(components[2]);
 }
 
-/*****************************************************************************/
-
-bool Region::operator<(const Region& other_region) const {
+bool Region::operator<(const Region &other_region) const {
   if (chrom_ != other_region.chrom_) {
     return chrom_ < other_region.chrom_;
   }
@@ -80,34 +72,28 @@ bool Region::operator<(const Region& other_region) const {
   return end_ < other_region.end_;
 }
 
-/*****************************************************************************/
-
-bool Region::Overlaps(const Region& other_region) const {
+bool Region::Overlaps(const Region &other_region) const {
   if (chrom_ != other_region.chrom_) {
     return false;
   }
 
-  const size_t left_bound =
+  const int64_t left_bound =
       start_ > other_region.start_ ? start_ : other_region.start_;
-  const size_t right_bound =
+  const int64_t right_bound =
       end_ < other_region.end_ ? end_ : other_region.end_;
 
   return left_bound <= right_bound;
 }
 
-/*****************************************************************************/
-
 // Returns the range extended by flankSize upstream and downstream.
 // NOTE: The right boundary of the extended region may stick past chromosome
 // end.
-Region Region::Extend(size_t extension_len) const {
-  const size_t new_start =
+Region Region::Extend(int extension_len) const {
+  const int64_t new_start =
       start_ > extension_len ? (start_ - extension_len) : 1;
-  const size_t new_end = end_ + extension_len;
+  const int64_t new_end = end_ + extension_len;
   return Region(chrom_, new_start, new_end);
 }
-
-/*****************************************************************************/
 
 const string Region::AsString() const {
   std::ostringstream ostrm;
@@ -115,9 +101,7 @@ const string Region::AsString() const {
   return ostrm.str();
 }
 
-/*****************************************************************************/
-
-istream& operator>>(istream& istrm, Region& region) {
+istream &operator>>(istream &istrm, Region &region) {
   string encoding;
   istrm >> encoding;
   region = Region(encoding);
@@ -125,9 +109,7 @@ istream& operator>>(istream& istrm, Region& region) {
   return istrm;
 }
 
-/*****************************************************************************/
-
-ostream& operator<<(ostream& ostrm, const Region& region) {
+ostream &operator<<(ostream &ostrm, const Region &region) {
   ostrm << region.chrom_ << ':' << region.start_;
 
   if (region.end_ != region.start_) {

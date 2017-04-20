@@ -55,7 +55,7 @@ void CountAnchoredIrrs(
     const BamFile& bam_file, const Parameters& parameters,
     const Region& target_neighborhood, const RepeatSpec& repeat_spec,
     const std::unordered_set<std::string>& ontarget_frag_names,
-    AlignPairs& align_pairs, size_t& num_anchored_irrs,
+    AlignPairs& align_pairs, int& num_anchored_irrs,
     const std::vector<std::vector<std::string>>& units_shifts,
     std::vector<RepeatAlign>* anchored_irrs);
 
@@ -65,14 +65,14 @@ void FillinMates(BamFile& bam_file, AlignPairs& align_pairs);
 // A fragment is in-repeat if both of the reads fuzzy match to the repeat
 // sequence.
 bool CountUnalignedIrrs(
-    BamFile& bam_file, const Parameters& parameters, size_t& numInRepeatReads,
+    BamFile& bam_file, const Parameters& parameters, int& numInRepeatReads,
     const std::vector<std::vector<std::string>>& units_shifts,
     std::vector<RepeatAlign>* irr_rep_aligns);
 
-size_t CountAlignedIrr(
+int CountAlignedIrr(
     const BamFile& bam_file, const Parameters& parameters,
     const AlignPairs& align_pairs,
-    std::map<std::string, size_t>& num_irrs_per_offtarget_region,
+    std::map<std::string, int>& num_irrs_per_offtarget_region,
     const std::vector<std::vector<std::string>>& units_shifts,
     std::vector<RepeatAlign>* irr_rep_aligns);
 #endif  // INCLUDE_IRR_COUNTING_H_

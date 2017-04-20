@@ -40,9 +40,9 @@ using std::vector;
 // Given the observed IRR number, haplotype depth, and read length
 // estimate repeat length (in nt) and the associated confidence
 // interval.
-void EstimateRepeatLen(const size_t num_irrs, const size_t read_len,
-                       const double hap_depth, size_t& len_estimate,
-                       size_t& lower_bound, size_t& upper_bound) {
+void EstimateRepeatLen(const int num_irrs, const int read_len,
+                       const double hap_depth, int& len_estimate,
+                       int& lower_bound, int& upper_bound) {
   const double prob_read_start = hap_depth / read_len;
   const int ml_estimate =
       static_cast<int>(std::round(num_irrs / prob_read_start));
@@ -54,9 +54,9 @@ void EstimateRepeatLen(const size_t num_irrs, const size_t read_len,
   std::binomial_distribution<> binom(ml_estimate, prob_read_start);
 
   vector<int> bootstrap_samples;
-  const size_t NUM_SAMPLES = 10000;
-  for (size_t n = 0; n < NUM_SAMPLES; ++n) {
-    const size_t sampled_num_irrs = binom(gen);
+  const int NUM_SAMPLES = 10000;
+  for (int n = 0; n < NUM_SAMPLES; ++n) {
+    const int sampled_num_irrs = binom(gen);
     const int bootstrap_sample =
         static_cast<int>(std::round(sampled_num_irrs / prob_read_start)) -
         ml_estimate;
@@ -77,10 +77,10 @@ void EstimateRepeatLen(const size_t num_irrs, const size_t read_len,
 
   lower_bound = 0;
   if (ml_estimate - upper_quantile > 0) {
-    lower_bound = (size_t)(ml_estimate - upper_quantile);
+    lower_bound = (int)(ml_estimate - upper_quantile);
   }
   lower_bound += read_len;
 
   assert(ml_estimate - lower_quantile + read_len >= 0);
-  upper_bound = (size_t)(ml_estimate - lower_quantile + read_len);
+  upper_bound = (int)(ml_estimate - lower_quantile + read_len);
 }

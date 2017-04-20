@@ -115,12 +115,12 @@ bool Parameters::Load(int numArgs, char *argPtrArr[]) {
       ("vcf", po::value<string>(), "Output VCF file path")
       ("json", po::value<string>(), "Output JSON file path")
       ("log", po::value<string>(), "Output read alignment file path")
-      ("region-extension-length", po::value<size_t>(),
+      ("region-extension-length", po::value<int>(),
           ("[Optional] How far from on/off-target regions to search for informative reads [Default " + std::to_string(region_extension_len_) + "]").c_str())
       ("min-score", po::value<float>(),
           ("[Optional] Minimum weighted matching score (0 <= x <= 1) [Default " + boost::str(format("%.3f") % min_wp_) + "]").c_str())
-      ("min-baseq", po::value<size_t>(), ("[Optional] Minimum quality of a high-confidence base call [Default " + std::to_string(min_baseq_) + "]").c_str())
-      ("min-anchor-mapq", po::value<size_t>(), ("[Optional] Minimum MAPQ of a read anchor [Default " + std::to_string(min_anchor_mapq_) + "]").c_str())
+      ("min-baseq", po::value<int>(), ("[Optional] Minimum quality of a high-confidence base call [Default " + std::to_string(min_baseq_) + "]").c_str())
+      ("min-anchor-mapq", po::value<int>(), ("[Optional] Minimum MAPQ of a read anchor [Default " + std::to_string(min_anchor_mapq_) + "]").c_str())
       ("skip-unaligned", "[Optional] Do not search for IRRs in unaligned reads")
       ("read-depth", po::value<float>(), "[Optional] Read depth")
       ("sex", po::value<string>(), "[Optional] Sex of the sample; can be either male or female [Default female]");
@@ -197,7 +197,7 @@ bool Parameters::Load(int numArgs, char *argPtrArr[]) {
   DieNotOutputFilePath(log_path_);
 
   if (argMap.count("region-extension-length")) {
-    region_extension_len_ = argMap["region-extension-length"].as<size_t>();
+    region_extension_len_ = argMap["region-extension-length"].as<int>();
   }
 
   if (argMap.count("min-score")) {
@@ -208,11 +208,11 @@ bool Parameters::Load(int numArgs, char *argPtrArr[]) {
   }
 
   if (argMap.count("min-baseq")) {
-    min_baseq_ = argMap["min-baseq"].as<size_t>();
+    min_baseq_ = argMap["min-baseq"].as<int>();
   }
 
   if (argMap.count("min-anchor-mapq")) {
-    min_anchor_mapq_ = argMap["min-anchor-mapq"].as<size_t>();
+    min_anchor_mapq_ = argMap["min-anchor-mapq"].as<int>();
   }
 
   if (argMap.count("skip-unaligned")) {

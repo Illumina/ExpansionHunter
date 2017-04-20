@@ -22,44 +22,44 @@
 
 #pragma once
 
-#include <string>
 #include <iostream>
+#include <string>
 
 class Region {
- public:
-  friend std::istream& operator>>(std::istream& istrm, Region& region);
-  friend std::ostream& operator<<(std::ostream& ostrm, const Region& region);
+public:
+  friend std::istream &operator>>(std::istream &istrm, Region &region);
+  friend std::ostream &operator<<(std::ostream &ostrm, const Region &region);
 
   Region();
-  Region(const std::string& chrom, size_t start, size_t end,
-         const std::string& labelStr = std::string());
-  Region(const std::string& rangeStr,
-         const std::string& labelStr = std::string());
+  Region(const std::string &chrom, int64_t start, int64_t end,
+         const std::string &labelStr = std::string());
+  Region(const std::string &rangeStr,
+         const std::string &labelStr = std::string());
 
   bool is_set() const { return (chrom_ != "chr0"); }
-  bool operator<(const Region& other_region) const;
+  bool operator<(const Region &other_region) const;
 
-  bool Overlaps(const Region& other_region) const;
+  bool Overlaps(const Region &other_region) const;
 
-  Region Extend(size_t extension_len) const;
+  Region Extend(int extension_len) const;
 
-  const std::string& chrom() const { return chrom_; }
-  const size_t start() const { return start_; }
-  const size_t end() const { return end_; }
-  const std::string& label() const { return label_; }
+  const std::string &chrom() const { return chrom_; }
+  const int64_t start() const { return start_; }
+  const int64_t end() const { return end_; }
+  const std::string &label() const { return label_; }
 
-  void set_start(size_t start) { start_ = start; }
-  void set_end(size_t end) { end_ = end; }
-  void set_label(const std::string& label) { label_ = label; }
+  void set_start(int64_t start) { start_ = start; }
+  void set_end(int64_t end) { end_ = end; }
+  void set_label(const std::string &label) { label_ = label; }
 
   const std::string AsString() const;
 
- private:
+private:
   std::string chrom_;
-  size_t start_;
-  size_t end_;
+  int64_t start_;
+  int64_t end_;
   std::string label_;
 };
 
-std::istream& operator>>(std::istream& istrm, Region& region);
-std::ostream& operator<<(std::ostream& ostrm, const Region& region);
+std::istream &operator>>(std::istream &istrm, Region &region);
+std::ostream &operator<<(std::ostream &ostrm, const Region &region);

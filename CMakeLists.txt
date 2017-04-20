@@ -78,6 +78,6 @@ add_executable(ExpansionHunter ${SOURCES})
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 
 add_dependencies(htslib zlib)
-add_dependencies(ExpansionHunter htslib)
+add_dependencies(common htslib)
 
 target_link_libraries(ExpansionHunter common genotyping purity rep_align pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})

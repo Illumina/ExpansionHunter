@@ -114,14 +114,14 @@ bool LoadFlanks(const string& genome_path, double min_wp,
                 RepeatSpec* repeat_spec) {
   RefGenome ref_genome(genome_path);
   // Reference repeat flanks should be at least as long as reads.
-  const size_t kFlankLen = 250;
+  const int kFlankLen = 250;
 
   const Region& repeat_region = repeat_spec->target_region;
 
-  const size_t left_flank_begin = repeat_region.start() - kFlankLen;
-  const size_t left_flank_end = repeat_region.start() - 1;
-  const size_t right_flank_begin = repeat_region.end() + 1;
-  const size_t right_flank_end = repeat_region.end() + kFlankLen;
+  const int64_t left_flank_begin = repeat_region.start() - kFlankLen;
+  const int64_t left_flank_end = repeat_region.start() - 1;
+  const int64_t right_flank_begin = repeat_region.end() + 1;
+  const int64_t right_flank_end = repeat_region.end() + kFlankLen;
 
   const string left_flank_coords = repeat_region.chrom() + ":" +
                                    lexical_cast<string>(left_flank_begin) +

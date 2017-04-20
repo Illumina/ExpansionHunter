@@ -60,9 +60,9 @@ BamIndex::~BamIndex() {
 /*****************************************************************************/
 
 bool BamIndex::GetChrReadCounts(vector<string>& chrom_names,
-                                vector<size_t>& chrom_lens,
-                                vector<size_t>& mapped_read_counts,
-                                vector<size_t>& unmapped_read_counts) const {
+                                vector<int64_t>& chrom_lens,
+                                vector<int64_t>& mapped_read_counts,
+                                vector<int64_t>& unmapped_read_counts) const {
   chrom_names.clear();
   chrom_lens.clear();
   mapped_read_counts.clear();

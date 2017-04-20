@@ -26,9 +26,9 @@
 #include <sstream>
 #include <string>
 
-#include "genotyping/genotyping.h"
 #include "common/genomic_region.h"
 #include "common/repeat_spec.h"
+#include "genotyping/genotyping.h"
 
 class Outputs {
 public:
@@ -48,22 +48,22 @@ class Parameters {
 public:
   const double kSmallestPossibleDepth = 0.00001;
   Parameters()
-      : region_extension_len_(1000), min_wp_(0.90),
-        min_baseq_(20), min_anchor_mapq_(60),
-        skip_unaligned_(false), depth_(0.0), sex_(Sex::kFemale) {}
+      : region_extension_len_(1000), min_wp_(0.90), min_baseq_(20),
+        min_anchor_mapq_(60), skip_unaligned_(false), depth_(0.0),
+        sex_(Sex::kFemale) {}
   bool Load(int numArgs, char *argPtrArr[]);
   std::string bam_path() const { return bam_path_; }
   std::string genome_path() const { return genome_path_; }
-  size_t region_extension_len() const { return region_extension_len_; }
+  int region_extension_len() const { return region_extension_len_; }
   double min_wp() const { return min_wp_; }
   void set_min_wp(double min_wp) { min_wp_ = min_wp; }
-  size_t min_baseq() const { return min_baseq_; }
+  int min_baseq() const { return min_baseq_; }
   void set_min_baseq(int min_baseq) { min_baseq_ = min_baseq; }
-  size_t min_anchor_mapq() const { return min_anchor_mapq_; }
+  int min_anchor_mapq() const { return min_anchor_mapq_; }
   bool onlyUnaligned() const;
   bool skip_unaligned() const { return skip_unaligned_; }
-  size_t read_len() const { return read_len_; };
-  void set_read_len(size_t read_len) { read_len_ = read_len; }
+  int read_len() const { return read_len_; };
+  void set_read_len(int read_len) { read_len_ = read_len; }
   double depth() const { return depth_; }
   void set_depth(double depth) { depth_ = depth; }
   std::string sample_name() const { return sample_name_; }
@@ -79,11 +79,11 @@ private:
   std::string genome_path_;
   // Specifies maximum distance from a target locus where
   // interesting reads may be.
-  size_t region_extension_len_;
+  int region_extension_len_;
   double min_wp_;
-  size_t min_baseq_;
-  size_t min_anchor_mapq_;
-  size_t read_len_;
+  int min_baseq_;
+  int min_anchor_mapq_;
+  int read_len_;
   double depth_;
   Sex sex_;
   bool skip_unaligned_;

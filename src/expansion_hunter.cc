@@ -42,6 +42,7 @@
 #include "include/bam_file.h"
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
+#include "include/region_findings.h"
 #include "include/repeat.h"
 #include "include/repeat_length.h"
 #include "include/version.h"
@@ -101,9 +102,9 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
                       const RepeatSpec &repeat_spec, AlignPairs &align_pairs,
                       vector<Repeat> &alleles,
                       vector<RepeatAlign> *flanking_repaligns) {
-  const size_t unit_len = repeat_spec.units_shifts[0][0].length();
+  const int unit_len = repeat_spec.units_shifts[0][0].length();
 
-  map<size_t, vector<RepeatAlign>> size_spanning_repaligns;
+  map<int, vector<RepeatAlign>> size_spanning_repaligns;
   flanking_repaligns->clear();
 
   // Align each read to the repeat.
@@ -158,7 +159,7 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
 void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
                  AlignPairs &align_pairs,
                  unordered_set<string> &ontarget_frag_names,
-                 size_t extension_len) {
+                 int extension_len) {
   align_pairs.clear();
   Region extended_target_region =
       repeat_spec.target_region.Extend(extension_len);
@@ -204,53 +205,52 @@ bool is_flannking_allele(const Repeat &repeat) {
 
 bool FindLongRepeats(const Parameters &parameters,
                      const RepeatSpec &repeat_spec, BamFile &bam_file,
-                     vector<Repeat> &alleles, size_t &num_irrs,
-                     size_t &num_unaligned_irrs, size_t &num_anchored_irrs,
-                     vector<size_t> &off_target_irr_counts,
                      unordered_set<string> &ontarget_frag_names,
-                     AlignPairs &align_pairs,
-                     vector<RepeatAlign> *flanking_repaligns) {
+                     AlignPairs &align_pairs, RegionFindings &region_findings) {
   // Count the number of anchored IRRs.
-  num_anchored_irrs = 0;
+  region_findings.num_anchored_irrs = 0;
   const size_t extension_len = parameters.region_extension_len();
   Region target_nhood = repeat_spec.target_region.Extend(extension_len);
 
   // Anchored IRRs and IRR pairs will be stored here.
   vector<RepeatAlign> irr_rep_aligns;
   CountAnchoredIrrs(bam_file, parameters, target_nhood, repeat_spec,
-                    ontarget_frag_names, align_pairs, num_anchored_irrs,
-                    repeat_spec.units_shifts, &irr_rep_aligns);
+                    ontarget_frag_names, align_pairs,
+                    region_findings.num_anchored_irrs, repeat_spec.units_shifts,
+                    &irr_rep_aligns);
 
-  cerr << "\t[Found " << num_anchored_irrs << " anchored IRRs]" << endl
+  cerr << "\t[Found " << region_findings.num_anchored_irrs << " anchored IRRs]"
+       << endl
        << "\t[Cached " << align_pairs.size() << " reads]" << endl;
 
   // Stores the total IRR count.
-  num_irrs = num_anchored_irrs;
+  region_findings.num_irrs = region_findings.num_anchored_irrs;
 
   // Look for IRR pairs only if anchored IRRs are found.
-  if (num_anchored_irrs) {
+  if (region_findings.num_anchored_irrs) {
     if (!repeat_spec.is_common_unit()) {
       cerr << "\t[Counting aligned IRR pairs]" << endl;
-      map<string, size_t> numIrrConfRegion;
-      num_irrs +=
+      map<string, int> numIrrConfRegion;
+      region_findings.num_irrs +=
           CountAlignedIrr(bam_file, parameters, align_pairs, numIrrConfRegion,
                           repeat_spec.units_shifts, &irr_rep_aligns);
 
       // Record paired IRR counts from each confusion region.
-      off_target_irr_counts.clear();
+      region_findings.offtarget_irr_counts.clear();
       for (const Region &confusionRegion : repeat_spec.offtarget_regions) {
         Region confusionNhood = confusionRegion.Extend(extension_len);
-        off_target_irr_counts.push_back(
+        region_findings.offtarget_irr_counts.push_back(
             numIrrConfRegion[confusionNhood.AsString()]);
       }
 
-      num_unaligned_irrs = 0;
+      region_findings.num_unaligned_irrs = 0;
 
       if (!parameters.skip_unaligned()) {
         cerr << "\t[Counting unaligned IRRs]" << endl;
-        CountUnalignedIrrs(bam_file, parameters, num_unaligned_irrs,
+        CountUnalignedIrrs(bam_file, parameters,
+                           region_findings.num_unaligned_irrs,
                            repeat_spec.units_shifts, &irr_rep_aligns);
-        num_irrs += num_unaligned_irrs;
+        region_findings.num_irrs += region_findings.num_unaligned_irrs;
       } else {
         cerr << "\t[Skipping unaligned IRRs]" << endl;
       }
@@ -263,33 +263,37 @@ bool FindLongRepeats(const Parameters &parameters,
     repeat.supported_by = Repeat::SupportType::kInrepeat;
 
     const double haplotype_depth = parameters.depth() / 2;
-    EstimateRepeatLen(num_irrs, parameters.read_len(), haplotype_depth,
-                      repeat.size, repeat.size_ci_lower, repeat.size_ci_upper);
+    EstimateRepeatLen(region_findings.num_irrs, parameters.read_len(),
+                      haplotype_depth, repeat.size, repeat.size_ci_lower,
+                      repeat.size_ci_upper);
 
     repeat.size /= unit_len;
     repeat.size_ci_lower /= unit_len;
     repeat.size_ci_upper /= unit_len;
-    repeat.num_supporting_reads = num_irrs;
+    repeat.num_supporting_reads = region_findings.num_irrs;
     repeat.rep_aligns = irr_rep_aligns;
 
-    alleles.push_back(repeat);
+    region_findings.repeats.push_back(repeat);
 
     // If there is evidence for a long repeat allele we assume that flanking
     // reads came from and so any previously-found alleles whose size was
     // estimated from flanking reads are no longer valid.
 
     vector<Repeat>::const_iterator flanking_allele_it =
-        std::find_if(alleles.begin(), alleles.end(), is_flannking_allele);
+        std::find_if(region_findings.repeats.begin(),
+                     region_findings.repeats.end(), is_flannking_allele);
 
-    if (flanking_allele_it != alleles.end()) {
-      flanking_repaligns->insert(flanking_repaligns->end(),
-                                 flanking_allele_it->rep_aligns.begin(),
-                                 flanking_allele_it->rep_aligns.end());
+    if (flanking_allele_it != region_findings.repeats.end()) {
+      region_findings.flanking_repaligns.insert(
+          region_findings.flanking_repaligns.end(),
+          flanking_allele_it->rep_aligns.begin(),
+          flanking_allele_it->rep_aligns.end());
     }
 
-    alleles.erase(
-        std::remove_if(alleles.begin(), alleles.end(), is_flannking_allele),
-        alleles.end());
+    region_findings.repeats.erase(
+        std::remove_if(region_findings.repeats.begin(),
+                       region_findings.repeats.end(), is_flannking_allele),
+        region_findings.repeats.end());
   }
 }
 
@@ -300,7 +304,8 @@ bool FindLongRepeats(const Parameters &parameters,
 void EstimateRepeatSizes(const Parameters &parameters,
                          const map<string, RepeatSpec> &repeat_specs,
                          BamFile *bam_file, Outputs *outputs) {
-  boost::property_tree::ptree ptree_root;
+  // boost::property_tree::ptree ptree_root;
+  vector<RegionFindings> sample_findings;
 
   // Analyze repeats one by one.
   for (auto &kv : repeat_specs) {
@@ -309,6 +314,8 @@ void EstimateRepeatSizes(const Parameters &parameters,
     string repeat_header = repeat_spec.target_region.AsString();
     repeat_header += " " + boost::algorithm::join(repeat_spec.units, "/");
     cerr << "[Analyzing " << repeat_header << "]" << endl;
+
+    RegionFindings region_findings;
 
     cerr << "\t[Caching reads]" << endl;
     AlignPairs align_pairs;
@@ -321,25 +328,25 @@ void EstimateRepeatSizes(const Parameters &parameters,
     }
 
     cerr << "\t[Estimating short repeat sizes]" << endl;
-    vector<Repeat> repeats;
-    vector<RepeatAlign> flanking_repaligns;
-    FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs, repeats,
-                     &flanking_repaligns);
+    // vector<Repeat> repeats;
+    // vector<RepeatAlign> flanking_repaligns;
+    FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs,
+                     region_findings.repeats,
+                     &region_findings.flanking_repaligns);
 
     cerr << "\t[Estimating long repeat sizes]" << endl;
-    vector<size_t> offtarget_irr_counts;
-    size_t num_anchored_irrs = 0;
-    size_t num_unaligned_irrs = 0;
-    size_t num_irrs = 0;
+    // vector<size_t> offtarget_irr_counts;
+    region_findings.num_anchored_irrs = 0;
+    region_findings.num_unaligned_irrs = 0;
+    region_findings.num_irrs = 0;
 
-    FindLongRepeats(parameters, repeat_spec, *bam_file, repeats, num_irrs,
-                    num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
-                    ontarget_frag_names, align_pairs, &flanking_repaligns);
+    FindLongRepeats(parameters, repeat_spec, *bam_file, ontarget_frag_names,
+                    align_pairs, region_findings);
 
     map<int, int> flanking_size_counts;
     map<int, int> spanning_size_counts;
 
-    for (const auto &align : flanking_repaligns) {
+    for (const auto &align : region_findings.flanking_repaligns) {
       flanking_size_counts[align.size] += 1;
     }
 
@@ -350,7 +357,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     vector<int> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
-    for (const auto &repeat : repeats) {
+    for (const auto &repeat : region_findings.repeats) {
       cerr << repeat.readtypeToStr.at(repeat.supported_by) << endl;
       if (repeat.supported_by == Repeat::SupportType::kSpanning) {
         spanning_size_counts[repeat.size] += repeat.num_supporting_reads;
@@ -359,7 +366,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
         assert(long_repeat_size == -1);
         long_repeat_size = repeat.size;
         const int bounded_num_irrs =
-            std::min<size_t>(repeat.num_supporting_reads, 5);
+            std::min<int>(repeat.num_supporting_reads, 5);
         num_supporting_irr_reads = repeat.num_supporting_reads;
         flanking_size_counts[num_units_in_read] += bounded_num_irrs;
         haplotype_candidates.push_back(num_units_in_read);
@@ -406,41 +413,44 @@ void EstimateRepeatSizes(const Parameters &parameters,
       genotype_type = GenotypeType::kHaploid;
     }
 
-    vector<int> genotype;
+    // vector<int> genotype;
     vector<array<int, 3>> genotype_support;
     genotypeOneUnitStr(max_num_units_in_read, kPropCorrectMolecules, hap_depth,
                        parameters.read_len(), haplotype_candidates,
                        flanking_size_counts, spanning_size_counts,
-                       genotype_type, genotype, genotype_support);
+                       genotype_type, region_findings.genotype,
+                       genotype_support);
 
-    for (int i = 0; i < genotype.size(); ++i) {
-      if (genotype[i] == num_units_in_read) {
+    for (int i = 0; i < region_findings.genotype.size(); ++i) {
+      if (region_findings.genotype[i] == num_units_in_read) {
         assert(long_repeat_size != -1);
         assert(num_supporting_irr_reads != -1);
-        genotype[i] = long_repeat_size;
+        region_findings.genotype[i] = long_repeat_size;
         genotype_support[i][2] = num_supporting_irr_reads;
       }
     }
 
     // End genotyping
+    sample_findings.push_back(region_findings);
 
-    boost::property_tree::ptree region_node;
-    AsPtree(parameters, region_node, repeats, repeat_spec, num_irrs,
-            num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
-            genotype, genotype_support);
-    ptree_root.put_child(repeat_spec.repeat_id, region_node);
+    // boost::property_tree::ptree region_node;
+    // AsPtree(parameters, region_node, repeats, repeat_spec, num_irrs,
+    //        num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
+    //        genotype, genotype_support);
+    // ptree_root.put_child(repeat_spec.repeat_id, region_node);
 
-    OutputRepeatAligns(parameters, repeat_spec, repeats, flanking_repaligns,
-                       &(*outputs).log());
+    // OutputRepeatAligns(parameters, repeat_spec, repeats, flanking_repaligns,
+    //                   &(*outputs).log());
   }
 
-  boost::property_tree::ptree bam_stats_node;
-  bam_stats_node.put<size_t>("ReadLength", parameters.read_len());
-  bam_stats_node.put<float>("MedianDepth", parameters.depth());
-  ptree_root.put_child("BamStats", bam_stats_node);
+  // boost::property_tree::ptree bam_stats_node;
+  // bam_stats_node.put<size_t>("ReadLength", parameters.read_len());
+  // bam_stats_node.put<float>("MedianDepth", parameters.depth());
+  // ptree_root.put_child("BamStats", bam_stats_node);
 
-  boost::property_tree::json_parser::write_json((*outputs).json(), ptree_root);
-  DumpVcf(parameters, repeat_specs, ptree_root, *outputs);
+  // boost::property_tree::json_parser::write_json((*outputs).json(),
+  // ptree_root);
+  // DumpVcf(parameters, repeat_specs, ptree_root, *outputs);
   cerr << "[All done]" << endl;
 }
 
@@ -465,7 +475,7 @@ int main(int argc, char *argv[]) {
           parameters.repeat_specs_path() + "'");
     }
 
-    const size_t read_len = CalcReadLen(parameters.bam_path());
+    const int read_len = CalcReadLen(parameters.bam_path());
     parameters.set_read_len(read_len);
 
     BamFile bam_file;

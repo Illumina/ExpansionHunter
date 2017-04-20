@@ -68,25 +68,25 @@ void Repeat::AsPtree(ptree &allele_node) const {
   }
 
   allele_node.put<string>("Source", readtypeToStr.at(supported_by));
-  allele_node.put<size_t>("NumSupportingReads", num_supporting_reads);
+  allele_node.put<int>("NumSupportingReads", num_supporting_reads);
 }
 
 static bool
 AddConfusionCountsNode(const std::string &labelStr,
                        boost::property_tree::ptree &hunterEleNode,
                        const vector<Region> &confusionRegionTable,
-                       const vector<size_t> &confusionRegionInRepeatCountVec) {
+                       const vector<int> &confusionRegionInRepeatCountVec) {
   boost::property_tree::ptree confusionCountsNode;
-  size_t countInd(0);
+  int countInd(0);
   const bool countVecEmpty(confusionRegionInRepeatCountVec.empty());
 
   assert(countVecEmpty || (confusionRegionInRepeatCountVec.size() ==
                            confusionRegionTable.size()));
 
   for (const Region &confusionRegion : confusionRegionTable) {
-    const size_t count(
+    const int count(
         countVecEmpty ? 0 : confusionRegionInRepeatCountVec[countInd++]);
-    confusionCountsNode.put<size_t>(confusionRegion.AsString(), count);
+    confusionCountsNode.put<int>(confusionRegion.AsString(), count);
   }
 
   hunterEleNode.put_child(labelStr, confusionCountsNode);
@@ -100,9 +100,9 @@ static bool CompareBySize(const Repeat &a1, const Repeat &a2) {
 
 void AsPtree(const Parameters &parameters, ptree &region_node,
              vector<Repeat> repeats, const RepeatSpec &region_info,
-             const size_t num_irrs, const size_t num_unaligned_irrs,
-             const size_t num_anchored_irrs,
-             const vector<size_t> &off_target_irr_counts, vector<int> &genotype,
+             const int num_irrs, const int num_unaligned_irrs,
+             const int num_anchored_irrs,
+             const vector<int> &off_target_irr_counts, vector<int> &genotype,
              const vector<array<int, 3>> &genotype_support) {
   region_node.put<string>("RepeatId", region_info.repeat_id);
   const string unit_encoding = boost::algorithm::join(region_info.units, "/");
@@ -142,11 +142,11 @@ void AsPtree(const Parameters &parameters, ptree &region_node,
 
     if (repeat.supported_by == Repeat::SupportType::kInrepeat) {
 
-      const size_t unit_len = region_info.units[0].length();
+      const int unit_len = region_info.units[0].length();
       const double haplotype_depth = parameters.depth() / 2;
 
       // Calculate CI for the short allele.
-      size_t short_allele_size, short_allele_size_ci_lower,
+      int short_allele_size, short_allele_size_ci_lower,
           short_allele_size_ci_upper;
 
       EstimateRepeatLen(num_irrs / 2, parameters.read_len(), haplotype_depth,
@@ -158,7 +158,7 @@ void AsPtree(const Parameters &parameters, ptree &region_node,
       short_allele_size_ci_upper /= unit_len;
 
       // Calculate CI for the long allele.
-      size_t long_allele_size, long_allele_size_ci_lower,
+      int long_allele_size, long_allele_size_ci_lower,
           long_allele_size_ci_upper;
 
       EstimateRepeatLen(num_irrs, parameters.read_len(), haplotype_depth,
@@ -208,15 +208,15 @@ void AsPtree(const Parameters &parameters, ptree &region_node,
   const string genotype_support_encoding =
       boost::algorithm::join(haplotype_support_encodings, ",");
   region_node.put<string>("GenotypeSupport", genotype_support_encoding);
-  region_node.put<size_t>("AnchoredIrrCount", num_anchored_irrs);
+  region_node.put<int>("AnchoredIrrCount", num_anchored_irrs);
 
   AddConfusionCountsNode("OffTargetRegionIrrCounts", region_node,
                          region_info.offtarget_regions, off_target_irr_counts);
 
-  region_node.put<size_t>("UnalignedIrrCount", num_unaligned_irrs);
-  region_node.put<size_t>("IrrCount", num_irrs);
+  region_node.put<int>("UnalignedIrrCount", num_unaligned_irrs);
+  region_node.put<int>("IrrCount", num_irrs);
 
-  size_t num_allele = 1;
+  int num_allele = 1;
   ptree repeat_sizes_node;
 
   std::sort(repeats.begin(), repeats.end(), CompareBySize);
@@ -254,7 +254,7 @@ void DumpVcf(const Parameters &options,
          "##FORMAT=<ID=AD_IR,Number=1,Type=String,Description=\"Number of in-repeat reads consistent with the allele\">\n";
   // clang-format on
 
-  std::set<size_t> alt_sizes;
+  std::set<int> alt_sizes;
   for (const ptree::value_type &name_region : root_node) {
     const string region_id = name_region.first;
     const ptree &region_node = name_region.second;
@@ -267,14 +267,14 @@ void DumpVcf(const Parameters &options,
     const Region region(region_encoding);
     const RepeatSpec &region_info = repeat_specs.at(region_encoding);
     const string ref(1, region_info.LeftFlankBase());
-    const size_t unit_len = region_info.units[0].length();
-    const size_t reference_size = region_info.ref_seq.length() / unit_len;
+    const int unit_len = region_info.units[0].length();
+    const int reference_size = region_info.ref_seq.length() / unit_len;
 
     const ptree &alleles_node = region_node.get_child("RepeatSizes");
     const string motif = boost::algorithm::join(region_info.units, "/");
 
     string alt;
-    size_t genotype_num = 0;
+    int genotype_num = 0;
 
     const string genotype_encoding = region_node.get<string>("Genotype");
     vector<string> genotype;
@@ -324,7 +324,7 @@ void DumpVcf(const Parameters &options,
         }
       } else {
         for (const ptree::value_type &name_repeat : alleles_node) {
-          const size_t repeat_size = name_repeat.second.get<size_t>("Size");
+          const int repeat_size = name_repeat.second.get<int>("Size");
           if (allele_size == repeat_size) {
             repeat_node = &name_repeat.second;
             break;
@@ -336,7 +336,7 @@ void DumpVcf(const Parameters &options,
                                  std::to_string(allele_size));
       }
 
-      const size_t allele_len = allele_size * unit_len;
+      const int allele_len = allele_size * unit_len;
 
       string source = repeat_node->get<string>("Source");
 
@@ -397,7 +397,7 @@ void DumpVcf(const Parameters &options,
              << endl;
   }
 
-  for (size_t size : alt_sizes) {
+  for (int size : alt_sizes) {
     vcf_header << "##ALT=<ID=STR" << size
                << ",Description=\"Allele comprised of " << size
                << " repeat units\">\n";
@@ -410,14 +410,14 @@ void DumpVcf(const Parameters &options,
 void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
                            vector<Repeat> &repeats,
                            vector<RepeatAlign> *flanking_repaligns,
-                           const size_t read_len, const double hap_depth,
-                           size_t motif_len,
+                           const int read_len, const double hap_depth,
+                           int motif_len,
                            const vector<vector<string>> &units_shifts,
-                           size_t min_baseq, double min_wp_score) {
+                           int min_baseq, double min_wp_score) {
   const string &left_flank = repeat_spec.left_flank;
   const string &right_flank = repeat_spec.right_flank;
 
-  size_t longest_spanning = 0;
+  int longest_spanning = 0;
   for (const Repeat &repeat : repeats) {
     if (repeat.supported_by == Repeat::SupportType::kSpanning) {
       if (repeat.size > longest_spanning) {
@@ -430,8 +430,8 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
        << endl;
 
   bool good_repeat_exists = false;
-  size_t num_reads_from_unseen_allele = 0;
-  size_t longest_flanking = 0;
+  int num_reads_from_unseen_allele = 0;
+  int longest_flanking = 0;
 
   cerr << "\t[There are " << flanking_repaligns->size() << " flanking reads]"
        << endl;
@@ -461,7 +461,7 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
             quals_prefix.begin(), quals_prefix.end(), min_baseq);
         flank_wp = flank_score / rep_align.left_flank_len;
 
-        const size_t piece_start =
+        const int piece_start =
             rep_align.left_flank_len + longest_spanning * motif_len;
         assert(piece_start < rep_align.read.bases.length());
         piece_bases = rep_align.read.bases.substr(
@@ -487,14 +487,14 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
             quals_suffix.begin(), quals_suffix.end(), min_baseq);
         flank_wp = flank_score / rep_align.right_flank_len;
 
-        const size_t piece_end =
+        const int piece_end =
             rep_align.right_flank_len + longest_spanning * motif_len;
         piece_bases = rep_align.read.bases.substr(
             0, rep_align.read.bases.length() - piece_end);
         piece_quals = rep_align.read.quals.substr(
             0, rep_align.read.bases.length() - piece_end);
-        const size_t unit_length = units_shifts[0][0].length();
-        const size_t offset =
+        const int unit_length = units_shifts[0][0].length();
+        const int offset =
             (unit_length - piece_bases.length() % unit_length) % unit_length;
         const vector<string> &units = units_shifts[offset];
         piece_wp_score =
@@ -540,9 +540,9 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
          << " flanking reads longer with long repeat]" << endl;
     cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
 
-    size_t len_estimate = 0;
-    size_t lower_bound = 0;
-    size_t upper_bound = 0;
+    int len_estimate = 0;
+    int lower_bound = 0;
+    int upper_bound = 0;
 
     // Haplotype depth should be twice as high because flanking reads
     // are coming from both flanks.
@@ -566,7 +566,7 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
 
     // Repeat estimated from flanking reads cannot be longer than the read
     // length.
-    const size_t num_rep_in_read = read_len / motif_len;
+    const int num_rep_in_read = read_len / motif_len;
     lower_bound = std::min(lower_bound, num_rep_in_read);
     len_estimate = std::min(len_estimate, num_rep_in_read);
     upper_bound = std::min(upper_bound, num_rep_in_read);
@@ -606,7 +606,7 @@ typedef vector<PlotColumn> Plot;
 static void PlotGaplessAlign(Plot &plot, const string &top, const string &bot,
                              const bool add_bars = true) {
   assert(top.length() == bot.length());
-  for (size_t i = 0; i < top.length(); ++i) {
+  for (int i = 0; i < top.length(); ++i) {
     plot.push_back(PlotColumn(
         top[i], add_bars && std::toupper(top[i]) == bot[i] ? '|' : ' ',
         bot[i]));
@@ -615,15 +615,15 @@ static void PlotGaplessAlign(Plot &plot, const string &top, const string &bot,
 
 static void PlotToStream(std::ostream &ostrm, Plot &plot) {
   // Write the rows one by one.
-  for (size_t i = 0; i < plot.size(); ++i) {
+  for (int i = 0; i < plot.size(); ++i) {
     ostrm << plot[i].top;
   }
   ostrm << std::endl;
-  for (size_t i = 0; i < plot.size(); ++i) {
+  for (int i = 0; i < plot.size(); ++i) {
     ostrm << plot[i].mid;
   }
   ostrm << std::endl;
-  for (size_t i = 0; i < plot.size(); ++i) {
+  for (int i = 0; i < plot.size(); ++i) {
     ostrm << plot[i].bot;
   }
   ostrm << std::endl;
@@ -631,7 +631,7 @@ static void PlotToStream(std::ostream &ostrm, Plot &plot) {
 
 static void PlotSpanningAlign(Plot &plot, const string &read_seq,
                               const string &refPrefix, const string &refSuffix,
-                              const size_t prefLen, const size_t suffLen) {
+                              const int prefLen, const int suffLen) {
   const string ref_pref =
       refPrefix.substr(refPrefix.length() - prefLen, prefLen);
   const string ref_mid = string(read_seq.length() - suffLen - prefLen, 'R');
@@ -641,10 +641,10 @@ static void PlotSpanningAlign(Plot &plot, const string &read_seq,
 }
 
 static string LowerLowqualBases(const string &bases, const string &quals,
-                                size_t lowqual_cutoff) {
+                                int lowqual_cutoff) {
   assert(bases.length() == quals.length());
   string cased_bases;
-  for (size_t i = 0; i != bases.length(); ++i) {
+  for (int i = 0; i != bases.length(); ++i) {
     if (quals[i] - 33 < lowqual_cutoff) {
       cased_bases += std::tolower(bases[i]);
     } else {
@@ -728,7 +728,7 @@ void DistributeFlankingReads(const Parameters &parameters,
                              const RepeatSpec &repeat_spec,
                              vector<Repeat> *repeats,
                              vector<RepeatAlign> *flanking_repaligns) {
-  const size_t unit_len = repeat_spec.units_shifts[0][0].length();
+  const int unit_len = repeat_spec.units_shifts[0][0].length();
   std::sort(repeats->rbegin(), repeats->rend(), CompareBySize);
   const string &left_flank = repeat_spec.left_flank;
   const string &right_flank = repeat_spec.right_flank;
@@ -739,19 +739,19 @@ void DistributeFlankingReads(const Parameters &parameters,
   for (RepeatAlign &rep_align : *flanking_repaligns) {
     const string &bases = rep_align.read.bases;
     const string &quals = rep_align.read.quals;
-    const size_t non_rep_len =
+    const int non_rep_len =
         rep_align.left_flank_len + rep_align.right_flank_len;
     assert(bases.length() >= non_rep_len);
-    const size_t repeat_len = bases.length() - non_rep_len;
+    const int repeat_len = bases.length() - non_rep_len;
 
     bool found_align = false;
 
     for (Repeat &repeat : *repeats) {
-      const size_t allele_len = repeat.size * unit_len;
+      const int allele_len = repeat.size * unit_len;
       if (repeat_len > allele_len) {
         if (rep_align.left_flank_len) {
           assert(!rep_align.right_flank_len);
-          const size_t prefix_len = rep_align.left_flank_len + allele_len;
+          const int prefix_len = rep_align.left_flank_len + allele_len;
           const string bases_suffix =
               bases.substr(prefix_len, bases.length() - prefix_len);
           const string quals_suffix =
@@ -778,7 +778,7 @@ void DistributeFlankingReads(const Parameters &parameters,
           }
         } else if (rep_align.right_flank_len) {
           assert(!rep_align.left_flank_len);
-          const size_t suffix_len = rep_align.right_flank_len + allele_len;
+          const int suffix_len = rep_align.right_flank_len + allele_len;
           const string bases_prefix =
               bases.substr(0, bases.length() - suffix_len);
           const string quals_prefix =

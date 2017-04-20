@@ -22,8 +22,19 @@
 
 #pragma once
 
-#include <cstddef>
+#include <map>
+#include <vector>
 
-void EstimateRepeatLen(const int num_irrs, const int read_len,
-                       const double hap_depth, int& len_estimate,
-                       int& lower_bound, int& upper_bound);
+#include "include/repeat.h"
+
+class RegionFindings {
+ public:
+  int num_anchored_irrs;
+  int num_unaligned_irrs;
+  int num_irrs;
+  std::vector<Repeat> repeats;
+  std::vector<RepeatAlign> rep_aligns;
+  std::vector<RepeatAlign> flanking_repaligns;
+  std::vector<int> offtarget_irr_counts;
+  std::vector<int> genotype;
+};

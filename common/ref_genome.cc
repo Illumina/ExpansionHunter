@@ -24,8 +24,9 @@
 
 #include <algorithm>
 #include <string>
-using std::string;
 #include <stdexcept>
+
+using std::string;
 
 RefGenome::RefGenome(const string& genome_path) : genome_path_(genome_path) {
   fai_ptr_ = fai_load(genome_path_.c_str());

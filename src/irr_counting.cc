@@ -131,7 +131,7 @@ bool CheckAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
                        const RepeatSpec& repeat_spec, const Align& read_align,
                        const Align& mate_align,
                        const vector<vector<string>>& units_shifts) {
-  const size_t min_mapq = parameters.min_anchor_mapq();
+  const int min_mapq = parameters.min_anchor_mapq();
   // Check if the read has low mapping quality and it is an off-target
   // anchor; such reads are reported but not included into the calculation.
   if (read_align.mapq < min_mapq) {
@@ -206,7 +206,7 @@ void FillinMates(BamFile& bam_file, AlignPairs& align_pairs) {
 
 // TODO(edolzhenko): Move cache creation out of the function.
 bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
-                        size_t& numUnalignedIRRs,
+                        int& numUnalignedIRRs,
                         const vector<vector<string>>& units_shifts,
                         vector<RepeatAlign>* irr_rep_aligns) {
   numUnalignedIRRs = 0;
@@ -252,7 +252,7 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
       rep_align.type = RepeatAlign::Type::kUnalignedIrrPair;
-      const size_t unit_len = units_shifts[0][0].length();
+      const int unit_len = units_shifts[0][0].length();
       rep_align.size = rep_align.read.bases.length() / unit_len;
       rep_align.mate.bases = frag[1].bases;
       rep_align.mate.quals = frag[1].quals;
@@ -269,7 +269,7 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
       rep_align.type = RepeatAlign::Type::kUnalignedIrrSingleton;
-      const size_t unit_len = units_shifts[0][0].length();
+      const int unit_len = units_shifts[0][0].length();
       rep_align.size = rep_align.read.bases.length() / unit_len;
       rep_align.mate.bases = mate.bases;
       rep_align.mate.quals = mate.quals;
@@ -278,12 +278,12 @@ bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
   }
 }
 
-size_t CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
+int CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
                        const AlignPairs& align_pairs,
-                       map<string, size_t>& numIrrConfRegion,
+                       map<string, int>& numIrrConfRegion,
                        const vector<vector<string>>& units_shifts,
                        vector<RepeatAlign>* irr_rep_aligns) {
-  size_t irr_count = 0;
+  int irr_count = 0;
   bool isFwdKmer = false;
   for (AlignPairs::const_iterator it = align_pairs.begin();
        it != align_pairs.end(); ++it) {
@@ -317,7 +317,7 @@ size_t CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
       rep_align.type = RepeatAlign::Type::kAlignedIrrPair;
-      const size_t unit_len = units_shifts[0][0].length();
+      const int unit_len = units_shifts[0][0].length();
       rep_align.size = rep_align.read.bases.length() / unit_len;
       rep_align.mate.bases = frag[1].bases;
       rep_align.mate.quals = frag[1].quals;
@@ -331,7 +331,7 @@ size_t CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
 void CountAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
                        const Region& targetNhood, const RepeatSpec& repeat_spec,
                        const unordered_set<string>& ontarget_frag_names,
-                       AlignPairs& align_pairs, size_t& numAnchoredIrrs,
+                       AlignPairs& align_pairs, int& numAnchoredIrrs,
                        const vector<vector<string>>& units_shifts,
                        vector<RepeatAlign>* anchored_irrs) {
   numAnchoredIrrs = 0;
@@ -369,7 +369,7 @@ void CountAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
         rep_align.left_flank_len = 0;
         rep_align.right_flank_len = 0;
         rep_align.type = RepeatAlign::Type::kAnchored;
-        const size_t unit_len = units_shifts[0][0].length();
+        const int unit_len = units_shifts[0][0].length();
         rep_align.size = rep_align.read.bases.length() / unit_len;
         rep_align.mate.bases = anchor.bases;
         rep_align.mate.quals = anchor.quals;

@@ -43,10 +43,10 @@ struct Repeat {
       {SupportType::kFlanking, "FLANKING"},
       {SupportType::kOther, "OTHER"}};
   std::vector<RepeatAlign> rep_aligns;
-  size_t size;
-  size_t size_ci_lower;
-  size_t size_ci_upper;
-  size_t num_supporting_reads;
+  int size;
+  int size_ci_lower;
+  int size_ci_upper;
+  int num_supporting_reads;
   SupportType supported_by;
   void AsPtree(boost::property_tree::ptree &allele_node) const;
 };
@@ -54,9 +54,9 @@ struct Repeat {
 void AsPtree(const Parameters &parameters,
              boost::property_tree::ptree &region_node,
              std::vector<Repeat> alleles, const RepeatSpec &region_info,
-             const size_t num_irrs, const size_t num_unaligned_irrs,
-             const size_t num_anchored_irrs,
-             const std::vector<size_t> &off_target_irr_counts,
+             const int num_irrs, const int num_unaligned_irrs,
+             const int num_anchored_irrs,
+             const std::vector<int> &off_target_irr_counts,
              std::vector<int> &genotype,
              const std::vector<std::array<int, 3>> &genotype_support);
 
@@ -66,9 +66,9 @@ void DumpVcf(const Parameters &parameters,
 
 void CoalesceFlankingReads(
     const RepeatSpec &repeat_spec, std::vector<Repeat> &alleles,
-    std::vector<RepeatAlign> *flanking_repaligns, const size_t read_len,
-    const double hap_depth, size_t motif_len,
-    const std::vector<std::vector<std::string>> &units_shifts, size_t min_baseq,
+    std::vector<RepeatAlign> *flanking_repaligns, const int read_len,
+    const double hap_depth, int motif_len,
+    const std::vector<std::vector<std::string>> &units_shifts, int min_baseq,
     double min_wp_score);
 
 void OutputRepeatAligns(const Parameters &parameters,
