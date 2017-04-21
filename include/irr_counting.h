@@ -20,8 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_IRR_COUNTING_H_
-#define INCLUDE_IRR_COUNTING_H_
+#pragma once
 
 #include <unordered_map>
 #include <unordered_set>
@@ -75,4 +74,3 @@ int CountAlignedIrr(
     std::map<std::string, int>& num_irrs_per_offtarget_region,
     const std::vector<std::vector<std::string>>& units_shifts,
     std::vector<RepeatAlign>* irr_rep_aligns);
-#endif  // INCLUDE_IRR_COUNTING_H_

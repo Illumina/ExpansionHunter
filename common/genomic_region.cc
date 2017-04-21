@@ -23,23 +23,25 @@
 #include "common/genomic_region.h"
 
 #include <boost/algorithm/string/split.hpp>
-using boost::algorithm::split;
 #include <boost/algorithm/string/classification.hpp>
-using boost::algorithm::is_any_of;
 #include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
 
 #include <vector>
-using std::vector;
 #include <string>
-using std::string;
 #include <iostream>
-using std::endl;
-using std::cerr;
 #include <sstream>
+#include <stdexcept>
+
+using boost::algorithm::split;
+using boost::algorithm::is_any_of;
+using boost::lexical_cast;
+
+using std::vector;
 using std::ostream;
 using std::istream;
-#include <stdexcept>
+using std::endl;
+using std::cerr;
+using std::string;
 
 Region::Region() : chrom_("chr0"), start_(0), end_(0) {}
 

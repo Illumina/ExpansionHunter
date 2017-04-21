@@ -20,8 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef REP_ALIGN_H
-#define REP_ALIGN_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -88,5 +87,3 @@ bool IsSpanningOrFlankingReadRc(const Parameters &params,
 bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
                const std::string &bases, const std::string &quals,
                RepeatAlign *rep_align);
-
-#endif // REP_ALIGN_H

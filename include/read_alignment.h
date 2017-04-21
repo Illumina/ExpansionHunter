@@ -20,8 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_READ_ALIGNMENT_H_
-#define INCLUDE_READ_ALIGNMENT_H_
+#pragma once
 
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
@@ -101,5 +100,3 @@ bool GetAlignFromHtsAlign(bam1_t* hts_align_ptr, Align& align,
 
 bool GetQualsFromHtsAlign(bam1_t* hts_align_ptr, std::string& quals);
 bool GetBasesFromHtsAlign(bam1_t* hts_align_ptr, std::string& bases);
-
-#endif  // INCLUDE_READ_ALIGNMENT_H_

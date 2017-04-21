@@ -21,17 +21,18 @@
 //
 
 #include <string>
-using std::string;
 #include <vector>
-using std::vector;
 #include <cassert>
 #include <iostream>
-using std::cerr;
-using std::endl;
 
 #include "include/repeat.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
+
+using std::string;
+using std::vector;
+using std::cerr;
+using std::endl;
 
 size_t CountUnitsAtOffset(const vector<string> &units, const string &bases,
                           size_t offset) {

@@ -38,8 +38,6 @@ using std::string;
 
 #include "htslib/sam.h"
 
-/*****************************************************************************/
-
 BamIndex::BamIndex(const string& bam_path) : bam_path_(bam_path) {
   // Set up hts_file_ptr_ (BAM/CRAM file pointer)
   hts_file_ptr_ = sam_open(bam_path_.c_str(), "r");
@@ -50,14 +48,10 @@ BamIndex::BamIndex(const string& bam_path) : bam_path_(bam_path) {
   }
 }
 
-/*****************************************************************************/
-
 BamIndex::~BamIndex() {
   sam_close(hts_file_ptr_);
   hts_file_ptr_ = 0;
 }
-
-/*****************************************************************************/
 
 bool BamIndex::GetChrReadCounts(vector<string>& chrom_names,
                                 vector<int64_t>& chrom_lens,
@@ -110,5 +104,3 @@ bool BamIndex::GetChrReadCounts(vector<string>& chrom_names,
 
   return true;
 }
-
-/*****************************************************************************/

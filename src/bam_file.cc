@@ -25,20 +25,13 @@
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 #include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
 
 #include <string>
-using std::string;
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <vector>
-using std::vector;
 #include <algorithm>
 #include <cassert>
-using std::sort;
 #include <cstring>
 #include <stdexcept>
 
@@ -49,6 +42,15 @@ using std::sort;
 #include "common/parameters.h"
 #include "common/ref_genome.h"
 #include "include/bam_index.h"
+
+typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
+using boost::lexical_cast;
+
+using std::string;
+using std::cerr;
+using std::endl;
+using std::vector;
+using std::sort;
 
 BamFile::BamFile()
     : hts_file_ptr_(0), hts_bam_hdr_ptr_(0), hts_idx_ptr_(0), hts_itr_ptr_(0),
