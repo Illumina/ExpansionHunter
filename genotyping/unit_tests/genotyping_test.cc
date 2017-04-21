@@ -30,14 +30,14 @@
 
 #include "gtest/gtest.h"
 
+#include "common/common.h"
+
 using std::vector;
 using std::string;
 using std::map;
 using std::cerr;
 using std::endl;
 using std::array;
-
-typedef vector<array<int, 3>> Support;
 
 TEST(CalculateMoleculeProportions, TypicalHaplotypeProportionsCalculated) {
   const int num_units_haplotype = 2;
@@ -66,7 +66,7 @@ TEST(CalcSpanningLoglik, TypicalSpanningReadsLoglikelihoodsCalcualted) {
 TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
   const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {10, 1}};
   const map<int, int> spanning_size_counts = {{3, 4}, {5, 5}};
-  Support genotype_support;
+  vector<HaplotypeSupport> genotype_support;
 
   StrGenotype genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
   EXPECT_DOUBLE_EQ(-48.468337669679954,
@@ -74,7 +74,7 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
                                            spanning_size_counts,
                                            genotype_support));
 
-  const Support expected_3_5_support = {{4, 5, 0}, {5, 5, 0}};
+  const vector<HaplotypeSupport> expected_3_5_support = {{4, 5, 0}, {5, 5, 0}};
   EXPECT_EQ(expected_3_5_support, genotype_support);
 
   StrGenotype genotype_3_10(25, 0.97, 25.0, 150, 3, 10);
@@ -82,7 +82,7 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
                    genotype_3_10.calcLogLik(flanking_size_counts,
                                             spanning_size_counts,
                                             genotype_support));
-  const Support expected_3_10_support = {{4, 5, 0}, {0, 6, 0}};
+  const vector<HaplotypeSupport> expected_3_10_support = {{4, 5, 0}, {0, 6, 0}};
   EXPECT_EQ(expected_3_10_support, genotype_support);
 
   StrGenotype genotype_10_10(25, 0.97, 25.0, 150, 10, 10);
@@ -90,14 +90,15 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
                    genotype_10_10.calcLogLik(flanking_size_counts,
                                              spanning_size_counts,
                                              genotype_support));
-  const Support expected_10_10_support = {{0, 6, 0}, {0, 6, 0}};
+  const vector<HaplotypeSupport> expected_10_10_support = {{0, 6, 0},
+                                                           {0, 6, 0}};
   EXPECT_EQ(expected_10_10_support, genotype_support);
 }
 
 TEST(CalcGenotypeLoglik, LongGenotypesLoglikelihoodsCalculated) {
   const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {10, 1}};
   const map<int, int> spanning_size_counts = {{3, 4}, {5, 5}};
-  Support genotype_support;
+  vector<HaplotypeSupport> genotype_support;
 
   StrGenotype genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
   EXPECT_DOUBLE_EQ(-48.468337669679954,
@@ -109,7 +110,7 @@ TEST(CalcGenotypeLoglik, LongGenotypesLoglikelihoodsCalculated) {
 TEST(CalcDiploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
   const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {25, 10}};
   const map<int, int> spanning_size_counts = {{5, 5}};
-  Support genotype_support;
+  vector<HaplotypeSupport> genotype_support;
 
   StrGenotype diploid_genotype(25, 0.97, 25.0, 150, 5, 25);
   EXPECT_DOUBLE_EQ(-46.837086567255447,
@@ -117,7 +118,8 @@ TEST(CalcDiploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
                                                spanning_size_counts,
                                                genotype_support));
 
-  const Support expected_5_25_support = {{5, 5, 0}, {0, 5, 10}};
+  const vector<HaplotypeSupport> expected_5_25_support = {{5, 5, 0},
+                                                          {0, 5, 10}};
   EXPECT_EQ(expected_5_25_support, genotype_support);
 }
 
@@ -133,7 +135,7 @@ TEST(GenotypeStr, TypicalDiploidStrReturnsGenotype) {
                                             9,  10, 11, 12, 13, 14, 15, 16, 17,
                                             18, 19, 20, 21, 22, 23, 24, 25};
 
-  Support support;
+  vector<HaplotypeSupport> support;
   vector<int> genotype;
 
   genotypeOneUnitStr(max_num_units_in_read, prop_correct_molecules, hap_depth,
@@ -143,7 +145,7 @@ TEST(GenotypeStr, TypicalDiploidStrReturnsGenotype) {
 
   const vector<int> expected_genotype = {3, 5};
   EXPECT_EQ(expected_genotype, genotype);
-  const Support expected_support = {{4, 5, 0}, {5, 5, 0}};
+  const vector<HaplotypeSupport> expected_support = {{4, 5, 0}, {5, 5, 0}};
   EXPECT_EQ(expected_support, support);
 }
 
@@ -159,7 +161,7 @@ TEST(GenotypeStr, TypicalHaploidStrReturnsGenotype) {
                                             9,  10, 11, 12, 13, 14, 15, 16, 17,
                                             18, 19, 20, 21, 22, 23, 24, 25};
 
-  Support support;
+  vector<HaplotypeSupport> support;
   vector<int> genotype;
   genotypeOneUnitStr(max_num_units_in_read, prop_correct_molecules, hap_depth,
                      read_len, haplotype_candidates, flanking_size_counts,

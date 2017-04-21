@@ -23,7 +23,6 @@
 #include "genotyping/genotyping.h"
 
 #include <algorithm>
-#include <array>
 #include <cctype>
 #include <cmath>
 #include <iostream>
@@ -32,13 +31,14 @@
 #include <string>
 #include <vector>
 
+#include "common/common.h"
+
 using std::string;
 using std::map;
 using std::cerr;
 using std::endl;
 using std::pair;
 using std::vector;
-using std::array;
 
 StrHaplotype::StrHaplotype(int num_units_haplotype, int max_num_units_in_read,
                            double prop_correct_molecules)
@@ -113,8 +113,7 @@ double StrGenotype::calcSpanningLoglik(int num_units_in_read) const {
 
 double StrGenotype::calcLogLik(const map<int, int> &flanking_size_counts,
                                const map<int, int> &spanning_size_counts,
-                               std::vector<std::array<int, 3>> &support) const {
-  enum { kSpanning = 0, kFlanking = 1, kInrepeat = 2 };
+                               std::vector<HaplotypeSupport> &support) const {
   double genotype_loglik = 0;
   support.resize(haplotypes.size());
   for (int i = 0; i != support.size(); ++i) {
@@ -130,11 +129,11 @@ double StrGenotype::calcLogLik(const map<int, int> &flanking_size_counts,
       const int hap_num_units = haplotypes[i].num_units();
       if (num_units == max_num_units_in_read_) {
         if (hap_num_units == max_num_units_in_read_) {
-          support[i][kInrepeat] += read_count;
+          support[i].set_num_inrepeat(support[i].num_inrepeat() + read_count);
         }
       } else {
         if (num_units <= hap_num_units) {
-          support[i][kFlanking] += read_count;
+          support[i].set_num_flanking(support[i].num_flanking() + read_count);
         }
       }
     }
@@ -148,7 +147,7 @@ double StrGenotype::calcLogLik(const map<int, int> &flanking_size_counts,
     for (int i = 0; i != haplotypes.size(); ++i) {
       const int hap_num_units = haplotypes[i].num_units();
       if (num_units == hap_num_units) {
-        support[i][kSpanning] += read_count;
+        support[i].set_num_spanning(support[i].num_spanning() + read_count);
       }
     }
   }
@@ -163,11 +162,11 @@ void genotypeOneUnitStr(int max_num_units_in_read,
                         const map<int, int> &flanking_size_count,
                         const map<int, int> &spanning_size_count,
                         GenotypeType genotype_type, std::vector<int> &genotype,
-                        std::vector<std::array<int, 3>> &support) {
+                        std::vector<HaplotypeSupport> &support) {
   bool is_first_pass = true;
   double max_loglik = std::numeric_limits<double>::lowest();
   vector<int> most_likely_genotype;
-  vector<array<int, 3>> most_likely_genotype_support;
+  vector<HaplotypeSupport> most_likely_genotype_support;
 
   if (genotype_type == GenotypeType::kDiploid) {
     for (int num_units_hap1 : haplotype_candidates) {
@@ -178,7 +177,7 @@ void genotypeOneUnitStr(int max_num_units_in_read,
         StrGenotype genotype(max_num_units_in_read, prop_correct_molecules,
                              hap_depth, read_len, num_units_hap1,
                              num_units_hap2);
-        vector<array<int, 3>> genotype_support;
+        vector<HaplotypeSupport> genotype_support;
         const double cur_loglik = genotype.calcLogLik(
             flanking_size_count, spanning_size_count, genotype_support);
 
@@ -194,7 +193,7 @@ void genotypeOneUnitStr(int max_num_units_in_read,
     for (int num_units : haplotype_candidates) {
       StrGenotype genotype(max_num_units_in_read, prop_correct_molecules,
                            hap_depth, read_len, num_units);
-      vector<array<int, 3>> genotype_support;
+      vector<HaplotypeSupport> genotype_support;
       const double cur_loglik = genotype.calcLogLik(
           flanking_size_count, spanning_size_count, genotype_support);
 

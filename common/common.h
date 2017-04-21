@@ -29,3 +29,35 @@ struct Read {
   std::string bases;
   std::string quals;
 };
+
+class HaplotypeSupport {
+public:
+  HaplotypeSupport() : num_spanning_(0), num_flanking_(0), num_inrepeat_(0) {}
+  HaplotypeSupport(int num_spanning, int num_flanking, int num_inrepeat)
+      : num_spanning_(num_spanning), num_flanking_(num_flanking),
+        num_inrepeat_(num_inrepeat) {}
+
+  int num_spanning() const { return num_spanning_; }
+  int num_flanking() const { return num_flanking_; }
+  int num_inrepeat() const { return num_inrepeat_; }
+
+  void set_num_spanning(int num_spanning) { num_spanning_ = num_spanning; }
+  void set_num_flanking(int num_flanking) { num_flanking_ = num_flanking; }
+  void set_num_inrepeat(int num_inrepeat) { num_inrepeat_ = num_inrepeat; }
+
+  std::string ToString() const {
+    return std::to_string(num_spanning_) + "-" + std::to_string(num_flanking_) +
+           "-" + std::to_string(num_inrepeat_);
+  }
+
+  bool operator==(const HaplotypeSupport &rhs) const {
+    return num_spanning_ == rhs.num_spanning_ &&
+           num_flanking_ == rhs.num_flanking_ &&
+           num_inrepeat_ == rhs.num_inrepeat_;
+  }
+
+private:
+  int num_spanning_;
+  int num_flanking_;
+  int num_inrepeat_;
+};

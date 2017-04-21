@@ -59,7 +59,7 @@ void CacheReadsFromRegion(const Region& region, const WhatToCache whatToCache,
     }
   } else {
     if (!(*bam_file).SetRegionToRange(region)) {
-      throw std::runtime_error("Failed to jump to " + region.AsString());
+      throw std::runtime_error("Failed to jump to " + region.ToString());
     }
   }
 
@@ -71,7 +71,7 @@ void CacheReadsFromRegion(const Region& region, const WhatToCache whatToCache,
     if (it == (*align_pairs).end()) {
       Align dummy_align;
 
-      align.region = region.AsString();
+      align.region = region.ToString();
       array<Align, 2> pair = {align, dummy_align};
       if (!align.IsFirstMate()) {
         std::reverse(pair.begin(), pair.end());
@@ -83,7 +83,7 @@ void CacheReadsFromRegion(const Region& region, const WhatToCache whatToCache,
       // with a warning. Two alignments for the same mate, however, are not
       // permitted.
 
-      align.region = region.AsString();
+      align.region = region.ToString();
       AlignPair& frag = (*align_pairs)[align.name];
 
       if (align.IsFirstMate()) {
@@ -195,10 +195,10 @@ void FillinMates(BamFile& bam_file, AlignPairs& align_pairs) {
         assert(missing_al.chrom_id < refVec.size());
         missing_al.region = Region(refVec[missing_al.chrom_id],
                                    missing_al.pos + 1, missing_al.pos + 2)
-                                .AsString();
+                                .ToString();
       } else {
         missing_al = Align();
-        missing_al.region = Region("chr-1", 0, 0).AsString();
+        missing_al.region = Region("chr-1", 0, 0).ToString();
       }
     }
   }

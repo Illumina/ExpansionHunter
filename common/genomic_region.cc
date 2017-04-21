@@ -97,7 +97,7 @@ Region Region::Extend(int extension_len) const {
   return Region(chrom_, new_start, new_end);
 }
 
-const string Region::AsString() const {
+const string Region::ToString() const {
   std::ostringstream ostrm;
   ostrm << *this;
   return ostrm.str();

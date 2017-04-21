@@ -20,35 +20,37 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <string>
+#include <fstream>
+#include <cassert>
+#include <set>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <map>
+
 #include <boost/property_tree/ptree.hpp>
-using boost::property_tree::ptree;
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
 #include <boost/optional/optional.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/join.hpp>
-using boost::algorithm::join;
-
-#include <string>
-using std::string;
-#include <fstream>
-#include <cassert>
-#include <set>
-#include <iostream>
-using std::cerr;
-using std::endl;
-#include <sstream>
-#include <vector>
-using std::vector;
-#include <map>
-using std::map;
 
 #include "common/ref_genome.h"
 #include "common/repeat_spec.h"
 #include "purity/purity.h"
+
+using std::string;
+using std::cerr;
+using std::endl;
+using std::vector;
+using std::map;
+
+using boost::property_tree::ptree;
+using boost::lexical_cast;
+using boost::algorithm::join;
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 
@@ -172,7 +174,7 @@ bool LoadRepeatSpecs(const string& specs_path, const string& genome_path,
         const string json_path = itr->path().string();
         RepeatSpec repeat_spec(json_path);
         LoadFlanks(genome_path, min_wp, &repeat_spec);
-        (*repeat_specs)[repeat_spec.target_region.AsString()] = repeat_spec;
+        (*repeat_specs)[repeat_spec.repeat_id] = repeat_spec;
       }
     }
   }

@@ -156,11 +156,11 @@ bool BamFile::SetRegionToRange(const Region &gRange) {
   }
 
   hts_itr_ptr_ =
-      sam_itr_querys(hts_idx_ptr_, hts_bam_hdr_ptr_, gRange.AsString().c_str());
+      sam_itr_querys(hts_idx_ptr_, hts_bam_hdr_ptr_, gRange.ToString().c_str());
 
   if (hts_itr_ptr_ == 0) {
     throw std::runtime_error("Failed to set target region: '" +
-                             gRange.AsString() + "'");
+                             gRange.ToString() + "'");
     return false;
   }
 
@@ -279,7 +279,7 @@ bool BamFile::GetAlignedMate(const Align &align, Align &mate_align) {
   hts_itr_t *iter;
   iter = sam_itr_queryi(hts_idx_ptr_, tid, beg, end);
   if (!iter) {
-    cerr << "[Failed to parse " + mateRegion.AsString() << endl;
+    cerr << "[Failed to parse " + mateRegion.ToString() << endl;
     return false;
   }
   while (sam_itr_next(hts_file_ptr_, iter, hts_bam_align_ptr_) >= 0) {

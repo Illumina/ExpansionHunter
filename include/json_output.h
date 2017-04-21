@@ -22,23 +22,14 @@
 
 #pragma once
 
-#include <map>
+#include <ostream>
 #include <vector>
 #include <string>
+#include <map>
 
-#include "include/repeat.h"
+#include "include/region_findings.h"
+#include "common/repeat_spec.h"
 
-class RegionFindings {
- public:
-  std::string region_id;
-  int num_anchored_irrs;
-  int num_unaligned_irrs;
-  int num_irrs;
-  std::vector<Repeat> repeats;
-  std::vector<RepeatAlign> rep_aligns;
-  std::vector<RepeatAlign> flanking_repaligns;
-  std::vector<int> offtarget_irr_counts;
-  std::vector<int> genotype;
-  std::vector<std::string> genotype_ci;
-  std::vector<HaplotypeSupport> genotype_support;
-};
+void WriteJson(const std::map<std::string, RepeatSpec> &repeat_specs,
+               const std::vector<RegionFindings> &sample_findings,
+               std::ostream &out);

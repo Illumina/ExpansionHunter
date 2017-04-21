@@ -51,17 +51,21 @@ struct Repeat {
   void AsPtree(boost::property_tree::ptree &allele_node) const;
 };
 
-void AsPtree(const Parameters &parameters,
-             boost::property_tree::ptree &region_node,
-             std::vector<Repeat> alleles, const RepeatSpec &region_info,
-             const int num_irrs, const int num_unaligned_irrs,
-             const int num_anchored_irrs,
-             const std::vector<int> &off_target_irr_counts,
-             std::vector<int> &genotype,
-             const std::vector<std::array<int, 3>> &genotype_support);
+static bool CompareRepeatBySize(const Repeat &a1, const Repeat &a2) {
+  return a1.size < a2.size;
+}
+
+// void AsPtree(const Parameters &parameters,
+//             boost::property_tree::ptree &region_node,
+//             std::vector<Repeat> alleles, const RepeatSpec &region_info,
+//             const int num_irrs, const int num_unaligned_irrs,
+//             const int num_anchored_irrs,
+//             const std::vector<int> &off_target_irr_counts,
+//             std::vector<int> &genotype,
+//             const std::vector<std::array<int, 3>> &genotype_support);
 
 void DumpVcf(const Parameters &parameters,
-             const std::map<std::string, RepeatSpec> repeat_specs,
+             const std::map<std::string, RepeatSpec> repeat_spec,
              const boost::property_tree::ptree &root_node, Outputs &outputs);
 
 void CoalesceFlankingReads(

@@ -52,7 +52,7 @@ public:
   void set_end(int64_t end) { end_ = end; }
   void set_label(const std::string &label) { label_ = label; }
 
-  const std::string AsString() const;
+  const std::string ToString() const;
 
 private:
   std::string chrom_;

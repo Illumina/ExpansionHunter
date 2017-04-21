@@ -42,6 +42,7 @@
 #include "include/bam_file.h"
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
+#include "include/json_output.h"
 #include "include/region_findings.h"
 #include "include/repeat.h"
 #include "include/repeat_length.h"
@@ -240,7 +241,7 @@ bool FindLongRepeats(const Parameters &parameters,
       for (const Region &confusionRegion : repeat_spec.offtarget_regions) {
         Region confusionNhood = confusionRegion.Extend(extension_len);
         region_findings.offtarget_irr_counts.push_back(
-            numIrrConfRegion[confusionNhood.AsString()]);
+            numIrrConfRegion[confusionNhood.ToString()]);
       }
 
       region_findings.num_unaligned_irrs = 0;
@@ -311,7 +312,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
   for (auto &kv : repeat_specs) {
     const RepeatSpec &repeat_spec = kv.second;
 
-    string repeat_header = repeat_spec.target_region.AsString();
+    string repeat_header = repeat_spec.target_region.ToString();
     repeat_header += " " + boost::algorithm::join(repeat_spec.units, "/");
 
     GenotypeType genotype_type = GenotypeType::kDiploid;
@@ -336,6 +337,9 @@ void EstimateRepeatSizes(const Parameters &parameters,
     }
 
     RegionFindings region_findings;
+    region_findings.region_id = repeat_spec.repeat_id;
+    region_findings.offtarget_irr_counts =
+        vector<int>(repeat_spec.offtarget_regions.size(), 0);
 
     cerr << "\t[Caching reads]" << endl;
     AlignPairs align_pairs;
@@ -428,19 +432,20 @@ void EstimateRepeatSizes(const Parameters &parameters,
         (int)(std::ceil(parameters.read_len() / (double)unit_len));
 
     // vector<int> genotype;
-    vector<array<int, 3>> genotype_support;
+
     genotypeOneUnitStr(max_num_units_in_read, kPropCorrectMolecules, hap_depth,
                        parameters.read_len(), haplotype_candidates,
                        flanking_size_counts, spanning_size_counts,
                        genotype_type, region_findings.genotype,
-                       genotype_support);
+                       region_findings.genotype_support);
 
     for (int i = 0; i < region_findings.genotype.size(); ++i) {
       if (region_findings.genotype[i] == num_units_in_read) {
         assert(long_repeat_size != -1);
         assert(num_supporting_irr_reads != -1);
         region_findings.genotype[i] = long_repeat_size;
-        genotype_support[i][2] = num_supporting_irr_reads;
+        region_findings.genotype_support[i].set_num_inrepeat(
+            num_supporting_irr_reads);
       }
     }
 
@@ -456,6 +461,8 @@ void EstimateRepeatSizes(const Parameters &parameters,
     // OutputRepeatAligns(parameters, repeat_spec, repeats, flanking_repaligns,
     //                   &(*outputs).log());
   }
+
+  WriteJson(repeat_specs, sample_findings, outputs->json());
 
   // boost::property_tree::ptree bam_stats_node;
   // bam_stats_node.put<size_t>("ReadLength", parameters.read_len());

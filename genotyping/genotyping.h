@@ -25,10 +25,11 @@
 
 #pragma once
 
-#include <array>
 #include <map>
 #include <string>
 #include <vector>
+
+#include "common/common.h"
 
 enum class Sex { kMale, kFemale };
 enum class GenotypeType { kHaploid, kDiploid };
@@ -72,7 +73,7 @@ public:
   double calcSpanningLoglik(int num_units_in_read) const;
   double calcLogLik(const std::map<int, int> &flanking_size_counts,
                     const std::map<int, int> &spanning_size_counts,
-                    std::vector<std::array<int, 3>> &support) const;
+                    std::vector<HaplotypeSupport> &support) const;
 
 private:
   int max_num_units_in_read_;
@@ -88,4 +89,4 @@ void genotypeOneUnitStr(int max_num_units_in_read,
                         const std::map<int, int> &flanking_size_count,
                         const std::map<int, int> &spanning_size_count,
                         GenotypeType genotype_type, std::vector<int> &genotype,
-                        std::vector<std::array<int, 3>> &support);
+                        std::vector<HaplotypeSupport> &support);
