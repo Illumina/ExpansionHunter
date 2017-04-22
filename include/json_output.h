@@ -22,14 +22,16 @@
 
 #pragma once
 
-#include <ostream>
-#include <vector>
-#include <string>
 #include <map>
+#include <ostream>
+#include <string>
+#include <vector>
 
-#include "include/region_findings.h"
+#include "common/parameters.h"
 #include "common/repeat_spec.h"
+#include "include/region_findings.h"
 
-void WriteJson(const std::map<std::string, RepeatSpec> &repeat_specs,
+void WriteJson(const Parameters &parameters,
+               const std::map<std::string, RepeatSpec> &repeat_specs,
                const std::vector<RegionFindings> &sample_findings,
                std::ostream &out);

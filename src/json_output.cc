@@ -31,6 +31,7 @@
 #include "third_party/json/json.hpp"
 #include <boost/algorithm/string/join.hpp>
 
+#include "common/parameters.h"
 #include "common/repeat_spec.h"
 
 using std::vector;
@@ -42,7 +43,8 @@ using std::endl;
 
 using json = nlohmann::json;
 
-void WriteJson(const map<string, RepeatSpec> &repeat_specs,
+void WriteJson(const Parameters &parameters,
+               const map<string, RepeatSpec> &repeat_specs,
                const vector<RegionFindings> &sample_findings, ostream &out) {
   json results_json = json({});
 
@@ -111,6 +113,9 @@ void WriteJson(const map<string, RepeatSpec> &repeat_specs,
       }
     }
   }
+
+  results_json["BamStats"]["ReadLength"] = parameters.read_len();
+  results_json["BamStats"]["MedianDepth"] = parameters.depth();
 
   out << results_json.dump(4);
 }

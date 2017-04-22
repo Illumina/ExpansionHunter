@@ -352,14 +352,11 @@ void EstimateRepeatSizes(const Parameters &parameters,
     }
 
     cerr << "\t[Estimating short repeat sizes]" << endl;
-    // vector<Repeat> repeats;
-    // vector<RepeatAlign> flanking_repaligns;
     FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs,
                      region_findings.repeats,
                      &region_findings.flanking_repaligns);
 
     cerr << "\t[Estimating long repeat sizes]" << endl;
-    // vector<size_t> offtarget_irr_counts;
     region_findings.num_anchored_irrs = 0;
     region_findings.num_unaligned_irrs = 0;
     region_findings.num_irrs = 0;
@@ -452,25 +449,12 @@ void EstimateRepeatSizes(const Parameters &parameters,
     // End genotyping
     sample_findings.push_back(region_findings);
 
-    // boost::property_tree::ptree region_node;
-    // AsPtree(parameters, region_node, repeats, repeat_spec, num_irrs,
-    //        num_unaligned_irrs, num_anchored_irrs, offtarget_irr_counts,
-    //        genotype, genotype_support);
-    // ptree_root.put_child(repeat_spec.repeat_id, region_node);
-
-    // OutputRepeatAligns(parameters, repeat_spec, repeats, flanking_repaligns,
-    //                   &(*outputs).log());
+    OutputRepeatAligns(parameters, repeat_spec, region_findings.repeats,
+                       region_findings.flanking_repaligns, &(*outputs).log());
   }
 
-  WriteJson(repeat_specs, sample_findings, outputs->json());
+  WriteJson(parameters, repeat_specs, sample_findings, outputs->json());
 
-  // boost::property_tree::ptree bam_stats_node;
-  // bam_stats_node.put<size_t>("ReadLength", parameters.read_len());
-  // bam_stats_node.put<float>("MedianDepth", parameters.depth());
-  // ptree_root.put_child("BamStats", bam_stats_node);
-
-  // boost::property_tree::json_parser::write_json((*outputs).json(),
-  // ptree_root);
   // DumpVcf(parameters, repeat_specs, ptree_root, *outputs);
   cerr << "[All done]" << endl;
 }
