@@ -89,4 +89,5 @@ void genotypeOneUnitStr(int max_num_units_in_read,
                         const std::map<int, int> &flanking_size_count,
                         const std::map<int, int> &spanning_size_count,
                         GenotypeType genotype_type, std::vector<int> &genotype,
+                        std::vector<std::string> &genotype_ci,
                         std::vector<HaplotypeSupport> &support);

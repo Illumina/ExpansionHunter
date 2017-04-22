@@ -162,7 +162,8 @@ void genotypeOneUnitStr(int max_num_units_in_read,
                         const map<int, int> &flanking_size_count,
                         const map<int, int> &spanning_size_count,
                         GenotypeType genotype_type, std::vector<int> &genotype,
-                        std::vector<HaplotypeSupport> &support) {
+                        vector<string> &genotype_ci,
+                        vector<HaplotypeSupport> &support) {
   bool is_first_pass = true;
   double max_loglik = std::numeric_limits<double>::lowest();
   vector<int> most_likely_genotype;
@@ -208,5 +209,9 @@ void genotypeOneUnitStr(int max_num_units_in_read,
     throw std::logic_error("ERROR: Unknown genotype type");
   }
   genotype = most_likely_genotype;
+  genotype_ci.clear();
+  for (int size : genotype) {
+    genotype_ci.push_back(".");
+  }
   support = most_likely_genotype_support;
 };

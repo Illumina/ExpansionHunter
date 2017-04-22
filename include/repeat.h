@@ -55,10 +55,6 @@ static bool CompareRepeatBySize(const Repeat &a1, const Repeat &a2) {
   return a1.size < a2.size;
 }
 
-void DumpVcf(const Parameters &parameters,
-             const std::map<std::string, RepeatSpec> repeat_spec,
-             const boost::property_tree::ptree &root_node, Outputs &outputs);
-
 void CoalesceFlankingReads(
     const RepeatSpec &repeat_spec, std::vector<Repeat> &alleles,
     std::vector<RepeatAlign> *flanking_repaligns, const int read_len,

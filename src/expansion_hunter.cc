@@ -43,6 +43,7 @@
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
 #include "include/json_output.h"
+#include "include/vcf_output.h"
 #include "include/region_findings.h"
 #include "include/repeat.h"
 #include "include/repeat_length.h"
@@ -434,6 +435,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
                        parameters.read_len(), haplotype_candidates,
                        flanking_size_counts, spanning_size_counts,
                        genotype_type, region_findings.genotype,
+                       region_findings.genotype_ci,
                        region_findings.genotype_support);
 
     for (int i = 0; i < region_findings.genotype.size(); ++i) {
@@ -454,8 +456,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
   }
 
   WriteJson(parameters, repeat_specs, sample_findings, outputs->json());
-
-  // DumpVcf(parameters, repeat_specs, ptree_root, *outputs);
+  WriteVcf(parameters, repeat_specs, sample_findings, outputs->vcf());
   cerr << "[All done]" << endl;
 }
 

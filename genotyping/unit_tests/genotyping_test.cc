@@ -137,16 +137,19 @@ TEST(GenotypeStr, TypicalDiploidStrReturnsGenotype) {
 
   vector<HaplotypeSupport> support;
   vector<int> genotype;
+  vector<string> genotype_ci;
 
   genotypeOneUnitStr(max_num_units_in_read, prop_correct_molecules, hap_depth,
                      read_len, haplotype_candidates, flanking_size_counts,
                      spanning_size_counts, GenotypeType::kDiploid, genotype,
-                     support);
+                     genotype_ci, support);
 
   const vector<int> expected_genotype = {3, 5};
   EXPECT_EQ(expected_genotype, genotype);
   const vector<HaplotypeSupport> expected_support = {{4, 5, 0}, {5, 5, 0}};
   EXPECT_EQ(expected_support, support);
+  const vector<string> expected_genotype_ci = {".", "."};
+  EXPECT_EQ(expected_genotype_ci, genotype_ci);
 }
 
 TEST(GenotypeStr, TypicalHaploidStrReturnsGenotype) {
@@ -163,11 +166,14 @@ TEST(GenotypeStr, TypicalHaploidStrReturnsGenotype) {
 
   vector<HaplotypeSupport> support;
   vector<int> genotype;
+  vector<string> genotype_ci;
   genotypeOneUnitStr(max_num_units_in_read, prop_correct_molecules, hap_depth,
                      read_len, haplotype_candidates, flanking_size_counts,
                      spanning_size_counts, GenotypeType::kHaploid, genotype,
-                     support);
+                     genotype_ci, support);
 
   const vector<int> expected_genotype = {5};
   EXPECT_EQ(expected_genotype, genotype);
+  const vector<string> expected_genotype_ci = {"."};
+  EXPECT_EQ(expected_genotype_ci, genotype_ci);
 }
