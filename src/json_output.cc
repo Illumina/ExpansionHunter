@@ -52,13 +52,13 @@ void WriteJson(const Parameters &parameters,
     const RepeatSpec &repeat_spec = repeat_specs.at(region_findings.region_id);
     const string unit_encoding = boost::algorithm::join(repeat_spec.units, "/");
 
-    // Encode genotype.
+    // Encode GenotypeRepeat.
     vector<string> genotype_encoding_vec;
-    for (int size : region_findings.genotype) {
+    for (int size : region_findings.genotype.ExtractAlleleSizes()) {
       genotype_encoding_vec.push_back(std::to_string(size));
     }
 
-    // Encode genotype CI.
+    // Encode GenotypeRepeat CI.
     const string genotype_ci_encoding =
         boost::algorithm::join(region_findings.genotype_ci, "/");
     const string genotype_encoding =
@@ -96,13 +96,14 @@ void WriteJson(const Parameters &parameters,
     }
 
     // Add detected repeats.
-    if (!region_findings.repeats.empty()) {
+    if (!region_findings.read_groups.empty()) {
       auto &repeat_section =
           results_json[region_findings.region_id]["RepeatSizes"];
       int num_repeat = 1;
-      vector<Repeat> repeats = region_findings.repeats;
-      std::sort(repeats.begin(), repeats.end(), CompareRepeatBySize);
-      for (const Repeat &repeat : repeats) {
+      vector<RepeatReadGroup> read_groups = region_findings.read_groups;
+      std::sort(read_groups.begin(), read_groups.end(),
+                CompareReadGroupsBySize);
+      for (const RepeatReadGroup &repeat : read_groups) {
         const string repeat_id = "Repeat" + std::to_string(num_repeat);
         repeat_section[repeat_id] = {
             {"Size", repeat.size},
@@ -122,7 +123,7 @@ void WriteJson(const Parameters &parameters,
 
 /*
 
-  for (int size : genotype) {
+  for (int size : GenotypeRepeat) {
     genotype_encoding_vec.push_back(std::to_string(size));
     bool repeat_found = false;
     for (const Repeat &repeat : repeats) {

@@ -25,7 +25,7 @@
 #include <cassert>
 #include <iostream>
 
-#include "include/repeat.h"
+#include "include/read_group.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
 

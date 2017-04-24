@@ -20,7 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-// Defines classes and methods for genotype and haplotype likelihood
+// Defines classes and methods for GenotypeRepeat and haplotype likelihood
 // calculations.
 
 #pragma once
@@ -34,10 +34,10 @@
 enum class Sex { kMale, kFemale };
 enum class GenotypeType { kHaploid, kDiploid };
 
-class StrHaplotype {
+class Allele {
 public:
-  StrHaplotype(int num_units_haplotype, int max_num_units_in_read,
-               double prop_correct_molecules);
+  Allele(int num_units_haplotype, int max_num_units_in_read,
+         double prop_correct_molecules);
   double propMolecules(int num_units_upper_bound) const;
   double propMoleculesShorterThan(int num_units_upper_bound) const;
   double propMoleculesAtLeast(int num_units_lower_bound) const;
@@ -51,43 +51,45 @@ private:
   int max_deviation_;
 };
 
-class StrGenotype {
+class Genotype {
 public:
-  StrGenotype(int max_num_units_in_read, double prop_correct_molecules,
-              double hap_depth, int read_len, int num_units_hap1,
-              int num_units_hap2)
+  Genotype() {}
+  Genotype(int max_num_units_in_read, double prop_correct_molecules,
+           double hap_depth, int read_len, int num_units_hap1,
+           int num_units_hap2)
       : max_num_units_in_read_(max_num_units_in_read), hap_depth_(hap_depth),
         read_len_(read_len) {
-    haplotypes.push_back(StrHaplotype(num_units_hap1, max_num_units_in_read,
-                                      prop_correct_molecules));
-    haplotypes.push_back(StrHaplotype(num_units_hap2, max_num_units_in_read,
-                                      prop_correct_molecules));
+    alleles.push_back(
+        Allele(num_units_hap1, max_num_units_in_read, prop_correct_molecules));
+    alleles.push_back(
+        Allele(num_units_hap2, max_num_units_in_read, prop_correct_molecules));
   }
-  StrGenotype(int max_num_units_in_read, double prop_correct_molecules,
-              double hap_depth, int read_len, int num_units_hap)
+  Genotype(int max_num_units_in_read, double prop_correct_molecules,
+           double hap_depth, int read_len, int num_units_hap)
       : hap_depth_(hap_depth), read_len_(read_len) {
-    haplotypes.push_back(StrHaplotype(num_units_hap, max_num_units_in_read,
-                                      prop_correct_molecules));
+    alleles.push_back(
+        Allele(num_units_hap, max_num_units_in_read, prop_correct_molecules));
   }
-  double calcFlankingLoglik(int num_units_in_read) const;
-  double calcSpanningLoglik(int num_units_in_read) const;
-  double calcLogLik(const std::map<int, int> &flanking_size_counts,
+  double CalcFlankingLoglik(int num_units_in_read) const;
+  double CalcSpanningLoglik(int num_units_in_read) const;
+  double CalcLogLik(const std::map<int, int> &flanking_size_counts,
                     const std::map<int, int> &spanning_size_counts,
-                    std::vector<HaplotypeSupport> &support) const;
+                    std::vector<AlleleSupport> &support) const;
+  std::vector<int> ExtractAlleleSizes() const;
+  int NumAlleles() const { return alleles.size(); }
 
 private:
   int max_num_units_in_read_;
   double hap_depth_;
   int read_len_;
-  std::vector<StrHaplotype> haplotypes;
+  std::vector<Allele> alleles;
 };
 
-void genotypeOneUnitStr(int max_num_units_in_read,
-                        double prop_correct_molecules, double hap_depth,
-                        int read_len,
-                        const std::vector<int> &haplotype_candidates,
-                        const std::map<int, int> &flanking_size_count,
-                        const std::map<int, int> &spanning_size_count,
-                        GenotypeType genotype_type, std::vector<int> &genotype,
-                        std::vector<std::string> &genotype_ci,
-                        std::vector<HaplotypeSupport> &support);
+void GenotypeRepeat(int max_num_units_in_read, double prop_correct_molecules,
+                    double hap_depth, int read_len,
+                    const std::vector<int> &haplotype_candidates,
+                    const std::map<int, int> &flanking_size_count,
+                    const std::map<int, int> &spanning_size_count,
+                    GenotypeType genotype_type, Genotype &genotype,
+                    std::vector<std::string> &genotype_ci,
+                    std::vector<AlleleSupport> &support);

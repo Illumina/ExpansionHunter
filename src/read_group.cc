@@ -20,7 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "include/repeat.h"
+#include "include/read_group.h"
 
 #include <algorithm>
 #include <array>
@@ -41,7 +41,6 @@
 #include "common/genomic_region.h"
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
-#include "include/repeat_length.h"
 #include "purity/purity.h"
 
 using std::cerr;
@@ -58,7 +57,7 @@ using boost::property_tree::ptree;
 // using boost::algorithm::is_any_of;
 
 void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
-                           vector<Repeat> &repeats,
+                           vector<RepeatReadGroup> &repeats,
                            vector<RepeatAlign> *flanking_repaligns,
                            const int read_len, const double hap_depth,
                            int motif_len,
@@ -68,10 +67,10 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
   const string &right_flank = repeat_spec.right_flank;
 
   int longest_spanning = 0;
-  for (const Repeat &repeat : repeats) {
-    if (repeat.supported_by == Repeat::SupportType::kSpanning) {
-      if (repeat.size > longest_spanning) {
-        longest_spanning = repeat.size;
+  for (const RepeatReadGroup &read_group : repeats) {
+    if (read_group.supported_by == RepeatReadGroup::SupportType::kSpanning) {
+      if (read_group.size > longest_spanning) {
+        longest_spanning = read_group.size;
       }
     }
   }
@@ -190,53 +189,13 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
          << " flanking reads longer with long repeat]" << endl;
     cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
 
-    int len_estimate = 0;
-    int lower_bound = 0;
-    int upper_bound = 0;
+    RepeatReadGroup read_group;
+    read_group.supported_by = RepeatReadGroup::SupportType::kFlanking;
+    read_group.size = longest_flanking;
+    read_group.num_supporting_reads = num_reads_from_unseen_allele;
+    read_group.rep_aligns = supporting_aligns;
 
-    // Haplotype depth should be twice as high because flanking reads
-    // are coming from both flanks.
-    EstimateRepeatLen(num_reads_from_unseen_allele, read_len, 2 * hap_depth,
-                      len_estimate, lower_bound, upper_bound);
-
-    // estimateRepeatLen adds read_len to size estimates so
-    // we need to subtract it.
-    len_estimate -= read_len;
-    lower_bound -= read_len;
-    upper_bound -= read_len;
-
-    len_estimate = len_estimate / motif_len + longest_spanning + 1;
-    lower_bound = lower_bound / motif_len + longest_spanning + 1;
-    upper_bound = upper_bound / motif_len + longest_spanning + 1;
-
-    // Repeat must be at least at long as the longest flanking read.
-    lower_bound = std::max(lower_bound, longest_flanking);
-    len_estimate = std::max(len_estimate, longest_flanking);
-    upper_bound = std::max(upper_bound, longest_flanking);
-
-    // Repeat estimated from flanking reads cannot be longer than the read
-    // length.
-    const int num_rep_in_read = read_len / motif_len;
-    lower_bound = std::min(lower_bound, num_rep_in_read);
-    len_estimate = std::min(len_estimate, num_rep_in_read);
-    upper_bound = std::min(upper_bound, num_rep_in_read);
-
-    // Make sure that size estimates have expected properties.
-    if (!(lower_bound <= len_estimate && len_estimate <= upper_bound)) {
-      cerr << "\t[Warning CoalesceFlankingReads: Unexpected size estimates. "
-           << "Repeat size is " << len_estimate << " (LB=" << lower_bound
-           << " UB=" << upper_bound << ")]" << endl;
-    }
-
-    Repeat repeat;
-    repeat.supported_by = Repeat::SupportType::kFlanking;
-    repeat.size = len_estimate;
-    repeat.size_ci_lower = lower_bound;
-    repeat.size_ci_upper = upper_bound;
-    repeat.num_supporting_reads = num_reads_from_unseen_allele;
-    repeat.rep_aligns = supporting_aligns;
-
-    repeats.push_back(repeat);
+    repeats.push_back(read_group);
   }
 }
 
@@ -306,7 +265,7 @@ static string LowerLowqualBases(const string &bases, const string &quals,
 
 void OutputRepeatAligns(const Parameters &parameters,
                         const RepeatSpec &repeat_spec,
-                        const vector<Repeat> &repeats,
+                        const vector<RepeatReadGroup> &read_groups,
                         const vector<RepeatAlign> &flanking_repaligns,
                         ostream *out) {
   const string &left_flank = repeat_spec.left_flank;
@@ -314,14 +273,14 @@ void OutputRepeatAligns(const Parameters &parameters,
 
   *out << repeat_spec.repeat_id << ":" << endl;
 
-  for (const Repeat &allele : repeats) {
-    *out << "  " << allele.readtypeToStr.at(allele.supported_by) << "_"
-         << allele.size << ":" << endl;
-    for (const RepeatAlign &rep_align : allele.rep_aligns) {
+  for (const RepeatReadGroup &read_group : read_groups) {
+    *out << "  " << read_group.readtypeToStr.at(read_group.supported_by) << "_"
+         << read_group.size << ":" << endl;
+    for (const RepeatAlign &rep_align : read_group.rep_aligns) {
       *out << "    -\n      name: \"" << rep_align.read.name << "\"" << endl;
 
-      if (allele.supported_by == Repeat::SupportType::kSpanning ||
-          allele.supported_by == Repeat::SupportType::kFlanking) {
+      if (read_group.supported_by == RepeatReadGroup::SupportType::kSpanning ||
+          read_group.supported_by == RepeatReadGroup::SupportType::kFlanking) {
         *out << "      align: |" << endl;
         Plot plot;
         const string cased_based = LowerLowqualBases(
@@ -330,7 +289,8 @@ void OutputRepeatAligns(const Parameters &parameters,
         PlotSpanningAlign(plot, cased_based, left_flank, right_flank,
                           rep_align.left_flank_len, rep_align.right_flank_len);
         PlotToStream(*out, plot);
-      } else if (allele.supported_by == Repeat::SupportType::kInrepeat) {
+      } else if (read_group.supported_by ==
+                 RepeatReadGroup::SupportType::kInrepeat) {
         const string read_bases = LowerLowqualBases(
             rep_align.read.bases, rep_align.read.quals, parameters.min_baseq());
         const string mate_bases = LowerLowqualBases(
@@ -376,10 +336,11 @@ void OutputRepeatAligns(const Parameters &parameters,
 // Attempt to reclassify flanking reads as spanning.
 void DistributeFlankingReads(const Parameters &parameters,
                              const RepeatSpec &repeat_spec,
-                             vector<Repeat> *repeats,
+                             vector<RepeatReadGroup> *read_groups,
                              vector<RepeatAlign> *flanking_repaligns) {
   const int unit_len = repeat_spec.units_shifts[0][0].length();
-  std::sort(repeats->rbegin(), repeats->rend(), CompareRepeatBySize);
+  std::sort(read_groups->rbegin(), read_groups->rend(),
+            CompareReadGroupsBySize);
   const string &left_flank = repeat_spec.left_flank;
   const string &right_flank = repeat_spec.right_flank;
   const double kWpCutoff = 0.8;
@@ -396,8 +357,8 @@ void DistributeFlankingReads(const Parameters &parameters,
 
     bool found_align = false;
 
-    for (Repeat &repeat : *repeats) {
-      const int allele_len = repeat.size * unit_len;
+    for (RepeatReadGroup &read_group : *read_groups) {
+      const int allele_len = read_group.size * unit_len;
       if (repeat_len > allele_len) {
         if (rep_align.left_flank_len) {
           assert(!rep_align.right_flank_len);
@@ -458,8 +419,8 @@ void DistributeFlankingReads(const Parameters &parameters,
         }
         if (found_align) {
           rep_align.type = RepeatAlign::Type::kSpanning;
-          rep_align.size = repeat.size;
-          repeat.rep_aligns.push_back(rep_align);
+          rep_align.size = read_group.size;
+          read_group.rep_aligns.push_back(rep_align);
           break;
         }
       }

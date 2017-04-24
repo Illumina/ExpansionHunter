@@ -24,16 +24,18 @@
 
 #include <string>
 
+enum class ReadType { kSpanning, kFlanking, kInrepeat, kOther };
+
 struct Read {
   std::string name;
   std::string bases;
   std::string quals;
 };
 
-class HaplotypeSupport {
+class AlleleSupport {
 public:
-  HaplotypeSupport() : num_spanning_(0), num_flanking_(0), num_inrepeat_(0) {}
-  HaplotypeSupport(int num_spanning, int num_flanking, int num_inrepeat)
+  AlleleSupport() : num_spanning_(0), num_flanking_(0), num_inrepeat_(0) {}
+  AlleleSupport(int num_spanning, int num_flanking, int num_inrepeat)
       : num_spanning_(num_spanning), num_flanking_(num_flanking),
         num_inrepeat_(num_inrepeat) {}
 
@@ -50,7 +52,7 @@ public:
            "-" + std::to_string(num_inrepeat_);
   }
 
-  bool operator==(const HaplotypeSupport &rhs) const {
+  bool operator==(const AlleleSupport &rhs) const {
     return num_spanning_ == rhs.num_spanning_ &&
            num_flanking_ == rhs.num_flanking_ &&
            num_inrepeat_ == rhs.num_inrepeat_;

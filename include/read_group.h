@@ -35,7 +35,7 @@
 #include "common/repeat_spec.h"
 #include "rep_align/rep_align.h"
 
-struct Repeat {
+struct RepeatReadGroup {
   enum class SupportType { kInrepeat, kSpanning, kFlanking, kOther };
   std::map<SupportType, std::string> readtypeToStr = {
       {SupportType::kInrepeat, "INREPEAT"},
@@ -44,19 +44,18 @@ struct Repeat {
       {SupportType::kOther, "OTHER"}};
   std::vector<RepeatAlign> rep_aligns;
   int size;
-  int size_ci_lower;
-  int size_ci_upper;
   int num_supporting_reads;
   SupportType supported_by;
   void AsPtree(boost::property_tree::ptree &allele_node) const;
 };
 
-static bool CompareRepeatBySize(const Repeat &a1, const Repeat &a2) {
+static bool CompareReadGroupsBySize(const RepeatReadGroup &a1,
+                                    const RepeatReadGroup &a2) {
   return a1.size < a2.size;
 }
 
 void CoalesceFlankingReads(
-    const RepeatSpec &repeat_spec, std::vector<Repeat> &alleles,
+    const RepeatSpec &repeat_spec, std::vector<RepeatReadGroup> &read_groups,
     std::vector<RepeatAlign> *flanking_repaligns, const int read_len,
     const double hap_depth, int motif_len,
     const std::vector<std::vector<std::string>> &units_shifts, int min_baseq,
@@ -64,12 +63,12 @@ void CoalesceFlankingReads(
 
 void OutputRepeatAligns(const Parameters &parameters,
                         const RepeatSpec &repeat_spec,
-                        const std::vector<Repeat> &alleles,
+                        const std::vector<RepeatReadGroup> &read_groups,
                         const std::vector<RepeatAlign> &flanking_repaligns,
                         std::ostream *out);
 
 // Realign flanking reads to existing repeats.
 void DistributeFlankingReads(const Parameters &parameters,
                              const RepeatSpec &repeat_spec,
-                             std::vector<Repeat> *alleles,
+                             std::vector<RepeatReadGroup> *read_groups,
                              std::vector<RepeatAlign> *flanking_repaligns);

@@ -43,10 +43,9 @@
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
 #include "include/json_output.h"
-#include "include/vcf_output.h"
+#include "include/read_group.h"
 #include "include/region_findings.h"
-#include "include/repeat.h"
-#include "include/repeat_length.h"
+#include "include/vcf_output.h"
 #include "include/version.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
@@ -102,7 +101,7 @@ size_t CalcReadLen(const string &bam_path) {
 // Search for reads spanning the entire repeat sequence.
 void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
                       const RepeatSpec &repeat_spec, AlignPairs &align_pairs,
-                      vector<Repeat> &alleles,
+                      vector<RepeatReadGroup> &read_groups,
                       vector<RepeatAlign> *flanking_repaligns) {
   const int unit_len = repeat_spec.units_shifts[0][0].length();
 
@@ -136,21 +135,19 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
   }
 
   for (const auto &size_repaligns : size_spanning_repaligns) {
-    Repeat repeat;
-    repeat.supported_by = Repeat::SupportType::kSpanning;
-    repeat.size = size_repaligns.first;
-    repeat.size_ci_lower = size_repaligns.first;
-    repeat.size_ci_upper = size_repaligns.first;
-    repeat.num_supporting_reads = size_repaligns.second.size();
-    repeat.rep_aligns = size_repaligns.second;
-    alleles.push_back(repeat);
+    RepeatReadGroup read_group;
+    read_group.supported_by = RepeatReadGroup::SupportType::kSpanning;
+    read_group.size = size_repaligns.first;
+    read_group.num_supporting_reads = size_repaligns.second.size();
+    read_group.rep_aligns = size_repaligns.second;
+    read_groups.push_back(read_group);
   }
 
-  DistributeFlankingReads(parameters, repeat_spec, &alleles,
+  DistributeFlankingReads(parameters, repeat_spec, &read_groups,
                           flanking_repaligns);
 
   const double haplotype_depth = parameters.depth() / 2;
-  CoalesceFlankingReads(repeat_spec, alleles, flanking_repaligns,
+  CoalesceFlankingReads(repeat_spec, read_groups, flanking_repaligns,
                         parameters.read_len(), haplotype_depth,
                         repeat_spec.units[0].length(), repeat_spec.units_shifts,
                         parameters.min_baseq(), parameters.min_wp());
@@ -201,8 +198,8 @@ void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
   cerr << "\t[Done filling in mates]" << endl;
 }
 
-bool is_flannking_allele(const Repeat &repeat) {
-  return repeat.supported_by == Repeat::SupportType::kFlanking;
+bool is_flannking_allele(const RepeatReadGroup &repeat) {
+  return repeat.supported_by == RepeatReadGroup::SupportType::kFlanking;
 }
 
 bool FindLongRepeats(const Parameters &parameters,
@@ -260,42 +257,35 @@ bool FindLongRepeats(const Parameters &parameters,
 
     const size_t unit_len = repeat_spec.units[0].length();
 
-    cerr << "\t[Estimating repeat length from IRRs]" << endl;
-    Repeat repeat;
-    repeat.supported_by = Repeat::SupportType::kInrepeat;
+    RepeatReadGroup read_group;
+    read_group.supported_by = RepeatReadGroup::SupportType::kInrepeat;
 
-    const double haplotype_depth = parameters.depth() / 2;
-    EstimateRepeatLen(region_findings.num_irrs, parameters.read_len(),
-                      haplotype_depth, repeat.size, repeat.size_ci_lower,
-                      repeat.size_ci_upper);
+    read_group.size =
+        (int)(std::ceil(parameters.read_len() / (double)unit_len));
+    read_group.num_supporting_reads = region_findings.num_irrs;
+    read_group.rep_aligns = irr_rep_aligns;
 
-    repeat.size /= unit_len;
-    repeat.size_ci_lower /= unit_len;
-    repeat.size_ci_upper /= unit_len;
-    repeat.num_supporting_reads = region_findings.num_irrs;
-    repeat.rep_aligns = irr_rep_aligns;
-
-    region_findings.repeats.push_back(repeat);
+    region_findings.read_groups.push_back(read_group);
 
     // If there is evidence for a long repeat allele we assume that flanking
     // reads came from and so any previously-found alleles whose size was
     // estimated from flanking reads are no longer valid.
 
-    vector<Repeat>::const_iterator flanking_allele_it =
-        std::find_if(region_findings.repeats.begin(),
-                     region_findings.repeats.end(), is_flannking_allele);
+    vector<RepeatReadGroup>::const_iterator flanking_allele_it =
+        std::find_if(region_findings.read_groups.begin(),
+                     region_findings.read_groups.end(), is_flannking_allele);
 
-    if (flanking_allele_it != region_findings.repeats.end()) {
+    if (flanking_allele_it != region_findings.read_groups.end()) {
       region_findings.flanking_repaligns.insert(
           region_findings.flanking_repaligns.end(),
           flanking_allele_it->rep_aligns.begin(),
           flanking_allele_it->rep_aligns.end());
     }
 
-    region_findings.repeats.erase(
-        std::remove_if(region_findings.repeats.begin(),
-                       region_findings.repeats.end(), is_flannking_allele),
-        region_findings.repeats.end());
+    region_findings.read_groups.erase(
+        std::remove_if(region_findings.read_groups.begin(),
+                       region_findings.read_groups.end(), is_flannking_allele),
+        region_findings.read_groups.end());
   }
 }
 
@@ -354,7 +344,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     cerr << "\t[Estimating short repeat sizes]" << endl;
     FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs,
-                     region_findings.repeats,
+                     region_findings.read_groups,
                      &region_findings.flanking_repaligns);
 
     cerr << "\t[Estimating long repeat sizes]" << endl;
@@ -374,25 +364,22 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     const int num_units_in_read = (int)(std::ceil(
         parameters.read_len() / (double)repeat_spec.units[0].length()));
-    int long_repeat_size = -1;
+    // int long_repeat_size = -1;
     int num_supporting_irr_reads = -1;
 
     vector<int> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
-    for (const auto &repeat : region_findings.repeats) {
+    for (const auto &repeat : region_findings.read_groups) {
       cerr << repeat.readtypeToStr.at(repeat.supported_by) << endl;
-      if (repeat.supported_by == Repeat::SupportType::kSpanning) {
+      if (repeat.supported_by == RepeatReadGroup::SupportType::kSpanning) {
         spanning_size_counts[repeat.size] += repeat.num_supporting_reads;
         haplotype_candidates.push_back(repeat.size);
-      } else if (repeat.supported_by == Repeat::SupportType::kInrepeat) {
-        assert(long_repeat_size == -1);
-        long_repeat_size = repeat.size;
-        const int bounded_num_irrs =
-            std::min<int>(repeat.num_supporting_reads, 5);
-        num_supporting_irr_reads = repeat.num_supporting_reads;
-        flanking_size_counts[num_units_in_read] += bounded_num_irrs;
+      } else if (repeat.supported_by ==
+                 RepeatReadGroup::SupportType::kInrepeat) {
+        flanking_size_counts[num_units_in_read] += repeat.num_supporting_reads;
         haplotype_candidates.push_back(num_units_in_read);
-      } else if (repeat.supported_by == Repeat::SupportType::kFlanking) {
+      } else if (repeat.supported_by ==
+                 RepeatReadGroup::SupportType::kFlanking) {
         haplotype_candidates.push_back(repeat.size);
         for (const auto &align : repeat.rep_aligns) {
           flanking_size_counts[align.size] += 1;
@@ -429,29 +416,29 @@ void EstimateRepeatSizes(const Parameters &parameters,
     const int max_num_units_in_read =
         (int)(std::ceil(parameters.read_len() / (double)unit_len));
 
-    // vector<int> genotype;
+    GenotypeRepeat(max_num_units_in_read, kPropCorrectMolecules, hap_depth,
+                   parameters.read_len(), haplotype_candidates,
+                   flanking_size_counts, spanning_size_counts, genotype_type,
+                   region_findings.genotype, region_findings.genotype_ci,
+                   region_findings.genotype_support);
 
-    genotypeOneUnitStr(max_num_units_in_read, kPropCorrectMolecules, hap_depth,
-                       parameters.read_len(), haplotype_candidates,
-                       flanking_size_counts, spanning_size_counts,
-                       genotype_type, region_findings.genotype,
-                       region_findings.genotype_ci,
-                       region_findings.genotype_support);
-
-    for (int i = 0; i < region_findings.genotype.size(); ++i) {
-      if (region_findings.genotype[i] == num_units_in_read) {
-        assert(long_repeat_size != -1);
-        assert(num_supporting_irr_reads != -1);
-        region_findings.genotype[i] = long_repeat_size;
-        region_findings.genotype_support[i].set_num_inrepeat(
-            num_supporting_irr_reads);
-      }
-    }
+    //
+    // vector<int> allele_sizes = region_findings.genotype.ExtractAlleleSizes();
+    // for (int i = 0; i < allele_sizes.size(); ++i) {
+    //  if (allele_sizes[i] == num_units_in_read) {
+    // assert(long_repeat_size != -1);
+    // assert(num_supporting_irr_reads != -1);
+    // region_findings.genotype[i] = long_repeat_size;
+    // region_findings.genotype_support[i].set_num_inrepeat(
+    //    num_supporting_irr_reads);
+    //}
+    //}
+    //
 
     // End genotyping
     sample_findings.push_back(region_findings);
 
-    OutputRepeatAligns(parameters, repeat_spec, region_findings.repeats,
+    OutputRepeatAligns(parameters, repeat_spec, region_findings.read_groups,
                        region_findings.flanking_repaligns, &(*outputs).log());
   }
 

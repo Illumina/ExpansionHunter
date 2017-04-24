@@ -26,7 +26,8 @@
 #include <vector>
 #include <string>
 
-#include "include/repeat.h"
+#include "include/read_group.h"
+#include "genotyping/genotyping.h"
 
 class RegionFindings {
  public:
@@ -34,11 +35,11 @@ class RegionFindings {
   int num_anchored_irrs;
   int num_unaligned_irrs;
   int num_irrs;
-  std::vector<Repeat> repeats;
+  std::vector<RepeatReadGroup> read_groups;
   std::vector<RepeatAlign> rep_aligns;
   std::vector<RepeatAlign> flanking_repaligns;
   std::vector<int> offtarget_irr_counts;
-  std::vector<int> genotype;
+  Genotype genotype;
   std::vector<std::string> genotype_ci;
-  std::vector<HaplotypeSupport> genotype_support;
+  std::vector<AlleleSupport> genotype_support;
 };
