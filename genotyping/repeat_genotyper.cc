@@ -93,11 +93,11 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
       long_allele_size_ci_upper /= unit_len;
 
       short_allele.size_ = short_allele_size;
-      short_allele.ci_.lower_bound_ = short_allele_size_ci_lower;
+      short_allele.ci_.lower_bound_ = max_num_units_in_read;
       short_allele.ci_.upper_bound_ = short_allele_size_ci_upper;
 
       long_allele.size_ = long_allele_size;
-      long_allele.ci_.lower_bound_ = long_allele_size_ci_lower;
+      long_allele.ci_.lower_bound_ = short_allele_size_ci_lower;
       long_allele.ci_.upper_bound_ = long_allele_size_ci_upper;
     } else if (long_allele.type_ == ReadType::kInrepeat) {
       assert(short_allele.type_ == ReadType::kSpanning);
