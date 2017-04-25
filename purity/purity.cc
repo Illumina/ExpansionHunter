@@ -23,16 +23,17 @@
 #include "purity/purity.h"
 
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <string>
-using std::string;
 #include <vector>
-using std::vector;
 #include <limits>
 #include <algorithm>
 
 #include "common/parameters.h"
+
+using std::cerr;
+using std::endl;
+using std::string;
+using std::vector;
 
 static const string Rc(const string& seqStr) {
   std::string revComplStr(seqStr);

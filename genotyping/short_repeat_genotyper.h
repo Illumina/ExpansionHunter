@@ -51,12 +51,12 @@ private:
   int max_deviation_;
 };
 
-class Genotype {
+class ShortRepeatGenotyper {
 public:
-  Genotype() {}
-  Genotype(int max_num_units_in_read, double prop_correct_molecules,
-           double hap_depth, int read_len, int num_units_hap1,
-           int num_units_hap2)
+  ShortRepeatGenotyper() {}
+  ShortRepeatGenotyper(int max_num_units_in_read, double prop_correct_molecules,
+                       double hap_depth, int read_len, int num_units_hap1,
+                       int num_units_hap2)
       : max_num_units_in_read_(max_num_units_in_read), hap_depth_(hap_depth),
         read_len_(read_len) {
     alleles.push_back(
@@ -64,8 +64,8 @@ public:
     alleles.push_back(
         Allele(num_units_hap2, max_num_units_in_read, prop_correct_molecules));
   }
-  Genotype(int max_num_units_in_read, double prop_correct_molecules,
-           double hap_depth, int read_len, int num_units_hap)
+  ShortRepeatGenotyper(int max_num_units_in_read, double prop_correct_molecules,
+                       double hap_depth, int read_len, int num_units_hap)
       : hap_depth_(hap_depth), read_len_(read_len) {
     alleles.push_back(
         Allele(num_units_hap, max_num_units_in_read, prop_correct_molecules));
@@ -75,8 +75,6 @@ public:
   double CalcLogLik(const std::map<int, int> &flanking_size_counts,
                     const std::map<int, int> &spanning_size_counts,
                     std::vector<AlleleSupport> &support) const;
-  std::vector<int> ExtractAlleleSizes() const;
-  int NumAlleles() const { return alleles.size(); }
 
 private:
   int max_num_units_in_read_;
@@ -85,11 +83,10 @@ private:
   std::vector<Allele> alleles;
 };
 
-void GenotypeRepeat(int max_num_units_in_read, double prop_correct_molecules,
-                    double hap_depth, int read_len,
-                    const std::vector<int> &haplotype_candidates,
-                    const std::map<int, int> &flanking_size_count,
-                    const std::map<int, int> &spanning_size_count,
-                    GenotypeType genotype_type, Genotype &genotype,
-                    std::vector<std::string> &genotype_ci,
-                    std::vector<AlleleSupport> &support);
+void GenotypeShortRepeat(int max_num_units_in_read,
+                         double prop_correct_molecules, double hap_depth,
+                         int read_len,
+                         const std::vector<RepeatAllele> &haplotype_candidates,
+                         const std::map<int, int> &flanking_size_count,
+                         const std::map<int, int> &spanning_size_count,
+                         GenotypeType genotype_type, RepeatGenotype &genotype);

@@ -20,9 +20,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "genotyping/genotyping.h"
+#include "genotyping/short_repeat_genotyper.h"
 
 #include <algorithm>
+#import <cassert>
 #include <cctype>
 #include <cmath>
 #include <iostream>
@@ -89,7 +90,7 @@ double Allele::propMoleculesAtLeast(int num_units_lower_bound) const {
   return 1.0 - propMoleculesShorterThan(num_units_lower_bound);
 }
 
-double Genotype::CalcFlankingLoglik(int num_units_in_read) const {
+double ShortRepeatGenotyper::CalcFlankingLoglik(int num_units_in_read) const {
   const double prob_start = hap_depth_ / read_len_;
   double loglik_sum = 0.0;
   for (const Allele &haplotype : alleles) {
@@ -101,7 +102,7 @@ double Genotype::CalcFlankingLoglik(int num_units_in_read) const {
   return log(gen_flanking_lik);
 }
 
-double Genotype::CalcSpanningLoglik(int num_units_in_read) const {
+double ShortRepeatGenotyper::CalcSpanningLoglik(int num_units_in_read) const {
   const double prob_start = hap_depth_ / read_len_;
   double loglik_sum = 0.0;
   for (const Allele &haplotype : alleles) {
@@ -111,9 +112,10 @@ double Genotype::CalcSpanningLoglik(int num_units_in_read) const {
   return log(gen_spanning_lik);
 }
 
-double Genotype::CalcLogLik(const map<int, int> &flanking_size_counts,
-                            const map<int, int> &spanning_size_counts,
-                            std::vector<AlleleSupport> &support) const {
+double
+ShortRepeatGenotyper::CalcLogLik(const map<int, int> &flanking_size_counts,
+                                 const map<int, int> &spanning_size_counts,
+                                 std::vector<AlleleSupport> &support) const {
   double genotype_loglik = 0;
   support.resize(alleles.size());
   for (int i = 0; i != support.size(); ++i) {
@@ -124,11 +126,12 @@ double Genotype::CalcLogLik(const map<int, int> &flanking_size_counts,
     const int num_units = kv.first;
     int read_count = kv.second;
 
+    int adjusted_read_count = read_count;
     if (num_units == max_num_units_in_read_) {
-      read_count = std::min<int>(read_count, 5);
+      adjusted_read_count = std::min<int>(read_count, 5);
     }
 
-    genotype_loglik += read_count * CalcFlankingLoglik(num_units);
+    genotype_loglik += adjusted_read_count * CalcFlankingLoglik(num_units);
 
     for (int i = 0; i != alleles.size(); ++i) {
       const int hap_num_units = alleles[i].num_units();
@@ -160,36 +163,27 @@ double Genotype::CalcLogLik(const map<int, int> &flanking_size_counts,
   return genotype_loglik;
 }
 
-vector<int> Genotype::ExtractAlleleSizes() const {
-  vector<int> allele_sizes;
-  for (const Allele &allele : alleles) {
-    allele_sizes.push_back(allele.num_units());
-  }
-  return allele_sizes;
-}
-
-void GenotypeRepeat(int max_num_units_in_read, double prop_correct_molecules,
-                    double hap_depth, int read_len,
-                    const std::vector<int> &haplotype_candidates,
-                    const map<int, int> &flanking_size_count,
-                    const map<int, int> &spanning_size_count,
-                    GenotypeType genotype_type, Genotype &genotype,
-                    vector<string> &genotype_ci,
-                    vector<AlleleSupport> &support) {
+void GenotypeShortRepeat(int max_num_units_in_read,
+                         double prop_correct_molecules, double hap_depth,
+                         int read_len,
+                         const vector<RepeatAllele> &haplotype_candidates,
+                         const map<int, int> &flanking_size_count,
+                         const map<int, int> &spanning_size_count,
+                         GenotypeType genotype_type, RepeatGenotype &genotype) {
 
   bool is_first_pass = true;
   double max_loglik = std::numeric_limits<double>::lowest();
-  Genotype most_likely_genotype;
-  vector<AlleleSupport> most_likely_genotype_support;
+  RepeatGenotype most_likely_genotype;
 
   if (genotype_type == GenotypeType::kDiploid) {
-    for (int num_units_hap1 : haplotype_candidates) {
-      for (int num_units_hap2 : haplotype_candidates) {
-        if (num_units_hap1 > num_units_hap2) {
+    for (const RepeatAllele &allele1 : haplotype_candidates) {
+      for (const RepeatAllele &allele2 : haplotype_candidates) {
+        if (allele1.size_ > allele2.size_) {
           continue;
         }
-        Genotype genotype(max_num_units_in_read, prop_correct_molecules,
-                          hap_depth, read_len, num_units_hap1, num_units_hap2);
+        ShortRepeatGenotyper genotype(max_num_units_in_read,
+                                      prop_correct_molecules, hap_depth,
+                                      read_len, allele1.size_, allele2.size_);
         vector<AlleleSupport> genotype_support;
         const double cur_loglik = genotype.CalcLogLik(
             flanking_size_count, spanning_size_count, genotype_support);
@@ -197,15 +191,18 @@ void GenotypeRepeat(int max_num_units_in_read, double prop_correct_molecules,
         if (max_loglik < cur_loglik || is_first_pass) {
           max_loglik = cur_loglik;
           is_first_pass = false;
-          most_likely_genotype = genotype;
-          most_likely_genotype_support = genotype_support;
+          most_likely_genotype = {allele1, allele2};
+          assert(most_likely_genotype.size() == genotype_support.size());
+          most_likely_genotype[0].support_ = genotype_support[0];
+          most_likely_genotype[1].support_ = genotype_support[1];
         }
       }
     }
   } else if (genotype_type == GenotypeType::kHaploid) {
-    for (int num_units : haplotype_candidates) {
-      Genotype genotype(max_num_units_in_read, prop_correct_molecules,
-                        hap_depth, read_len, num_units);
+    for (const RepeatAllele &allele : haplotype_candidates) {
+      ShortRepeatGenotyper genotype(max_num_units_in_read,
+                                    prop_correct_molecules, hap_depth, read_len,
+                                    allele.size_);
       vector<AlleleSupport> genotype_support;
       const double cur_loglik = genotype.CalcLogLik(
           flanking_size_count, spanning_size_count, genotype_support);
@@ -213,67 +210,13 @@ void GenotypeRepeat(int max_num_units_in_read, double prop_correct_molecules,
       if (max_loglik < cur_loglik || is_first_pass) {
         max_loglik = cur_loglik;
         is_first_pass = false;
-        most_likely_genotype = genotype;
-        most_likely_genotype_support = genotype_support;
+        most_likely_genotype = {allele};
+        assert(most_likely_genotype.size() == genotype_support.size());
+        most_likely_genotype[0].support_ = genotype_support[0];
       }
     }
   } else {
     throw std::logic_error("ERROR: Unknown GenotypeRepeat type");
   }
   genotype = most_likely_genotype;
-  genotype_ci.clear();
-  for (int size : genotype.ExtractAlleleSizes()) {
-    genotype_ci.push_back(".");
-  }
-  support = most_likely_genotype_support;
 };
-
-
-/*
-    int len_estimate = 0;
-    int lower_bound = 0;
-    int upper_bound = 0;
-
-    // Haplotype depth should be twice as high because flanking reads
-    // are coming from both flanks.
-    EstimateRepeatLen(num_reads_from_unseen_allele, read_len, 2 * hap_depth,
-                      len_estimate, lower_bound, upper_bound);
-
-    // estimateRepeatLen adds read_len to size estimates so
-    // we need to subtract it.
-    len_estimate -= read_len;
-    lower_bound -= read_len;
-    upper_bound -= read_len;
-
-    len_estimate = len_estimate / motif_len + longest_spanning + 1;
-    lower_bound = lower_bound / motif_len + longest_spanning + 1;
-    upper_bound = upper_bound / motif_len + longest_spanning + 1;
-
-    // Repeat must be at least at long as the longest flanking read.
-    lower_bound = std::max(lower_bound, longest_flanking);
-    len_estimate = std::max(len_estimate, longest_flanking);
-    upper_bound = std::max(upper_bound, longest_flanking);
-
-    // Repeat estimated from flanking reads cannot be longer than the read
-    // length.
-    const int num_rep_in_read = read_len / motif_len;
-    lower_bound = std::min(lower_bound, num_rep_in_read);
-    len_estimate = std::min(len_estimate, num_rep_in_read);
-    upper_bound = std::min(upper_bound, num_rep_in_read);
-
-    // Make sure that size estimates have expected properties.
-    if (!(lower_bound <= len_estimate && len_estimate <= upper_bound)) {
-      cerr << "\t[Warning CoalesceFlankingReads: Unexpected size estimates. "
-           << "Repeat size is " << len_estimate << " (LB=" << lower_bound
-           << " UB=" << upper_bound << ")]" << endl;
-    }
- */
-
-/*
-     cerr << "\t[Estimating repeat length from IRRs]" << endl;
-    const double haplotype_depth = parameters.depth() / 2;
-    EstimateRepeatLen(region_findings.num_irrs, parameters.read_len(),
-                      haplotype_depth, repeat.size, repeat.size_ci_lower,
-                      repeat.size_ci_upper);
-
- */

@@ -33,20 +33,14 @@
 
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
+#include "common/common.h"
 #include "rep_align/rep_align.h"
 
 struct RepeatReadGroup {
-  enum class SupportType { kInrepeat, kSpanning, kFlanking, kOther };
-  std::map<SupportType, std::string> readtypeToStr = {
-      {SupportType::kInrepeat, "INREPEAT"},
-      {SupportType::kSpanning, "SPANNING"},
-      {SupportType::kFlanking, "FLANKING"},
-      {SupportType::kOther, "OTHER"}};
+  ReadType read_type;
   std::vector<RepeatAlign> rep_aligns;
   int size;
   int num_supporting_reads;
-  SupportType supported_by;
-  void AsPtree(boost::property_tree::ptree &allele_node) const;
 };
 
 static bool CompareReadGroupsBySize(const RepeatReadGroup &a1,

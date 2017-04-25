@@ -68,7 +68,7 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
 
   int longest_spanning = 0;
   for (const RepeatReadGroup &read_group : repeats) {
-    if (read_group.supported_by == RepeatReadGroup::SupportType::kSpanning) {
+    if (read_group.read_type == ReadType::kSpanning) {
       if (read_group.size > longest_spanning) {
         longest_spanning = read_group.size;
       }
@@ -190,7 +190,7 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
     cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
 
     RepeatReadGroup read_group;
-    read_group.supported_by = RepeatReadGroup::SupportType::kFlanking;
+    read_group.read_type = ReadType::kFlanking;
     read_group.size = longest_flanking;
     read_group.num_supporting_reads = num_reads_from_unseen_allele;
     read_group.rep_aligns = supporting_aligns;
@@ -274,13 +274,13 @@ void OutputRepeatAligns(const Parameters &parameters,
   *out << repeat_spec.repeat_id << ":" << endl;
 
   for (const RepeatReadGroup &read_group : read_groups) {
-    *out << "  " << read_group.readtypeToStr.at(read_group.supported_by) << "_"
+    *out << "  " << kReadTypeToString.at(read_group.read_type) << "_"
          << read_group.size << ":" << endl;
     for (const RepeatAlign &rep_align : read_group.rep_aligns) {
       *out << "    -\n      name: \"" << rep_align.read.name << "\"" << endl;
 
-      if (read_group.supported_by == RepeatReadGroup::SupportType::kSpanning ||
-          read_group.supported_by == RepeatReadGroup::SupportType::kFlanking) {
+      if (read_group.read_type == ReadType::kSpanning ||
+          read_group.read_type == ReadType::kFlanking) {
         *out << "      align: |" << endl;
         Plot plot;
         const string cased_based = LowerLowqualBases(
@@ -289,8 +289,7 @@ void OutputRepeatAligns(const Parameters &parameters,
         PlotSpanningAlign(plot, cased_based, left_flank, right_flank,
                           rep_align.left_flank_len, rep_align.right_flank_len);
         PlotToStream(*out, plot);
-      } else if (read_group.supported_by ==
-                 RepeatReadGroup::SupportType::kInrepeat) {
+      } else if (read_group.read_type == ReadType::kInrepeat) {
         const string read_bases = LowerLowqualBases(
             rep_align.read.bases, rep_align.read.quals, parameters.min_baseq());
         const string mate_bases = LowerLowqualBases(

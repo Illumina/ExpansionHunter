@@ -22,9 +22,16 @@
 
 #pragma once
 
+#include <map>
+#include <ostream>
 #include <string>
 
 enum class ReadType { kSpanning, kFlanking, kInrepeat, kOther };
+const std::map<ReadType, std::string> kReadTypeToString = {
+    {ReadType::kInrepeat, "INREPEAT"},
+    {ReadType::kSpanning, "SPANNING"},
+    {ReadType::kFlanking, "FLANKING"},
+    {ReadType::kOther, "OTHER"}};
 
 struct Read {
   std::string name;
@@ -63,3 +70,34 @@ private:
   int num_flanking_;
   int num_inrepeat_;
 };
+
+struct Interval {
+  Interval() : lower_bound_(-1), upper_bound_(-1) {}
+  int lower_bound_;
+  int upper_bound_;
+  bool operator==(const Interval &rhs) const {
+    return lower_bound_ == rhs.lower_bound_ && upper_bound_ == rhs.upper_bound_;
+  }
+  std::string ToString() const {
+    return std::to_string(lower_bound_) + "-" + std::to_string(upper_bound_);
+  }
+};
+
+struct RepeatAllele {
+  RepeatAllele(int size, int num_supporting_reads, ReadType type)
+      : size_(size), num_supporting_reads_(num_supporting_reads), type_(type) {}
+  RepeatAllele(int size, ReadType type, AlleleSupport support)
+      : size_(size), type_(type), num_supporting_reads_(-1), support_(support) {}
+  bool operator==(const RepeatAllele &rhs) const {
+    return size_ == rhs.size_ && ci_ == rhs.ci_ && support_ == rhs.support_ &&
+           type_ == rhs.type_ &&
+           num_supporting_reads_ == rhs.num_supporting_reads_;
+  }
+  int size_;
+  Interval ci_;
+  AlleleSupport support_; // TODO: Rename to "consistent".
+  int num_supporting_reads_;
+  ReadType type_;
+};
+
+typedef std::vector<RepeatAllele> RepeatGenotype;

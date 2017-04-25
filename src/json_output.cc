@@ -53,21 +53,22 @@ void WriteJson(const Parameters &parameters,
     const string unit_encoding = boost::algorithm::join(repeat_spec.units, "/");
 
     // Encode GenotypeRepeat.
-    vector<string> genotype_encoding_vec;
-    for (int size : region_findings.genotype.ExtractAlleleSizes()) {
-      genotype_encoding_vec.push_back(std::to_string(size));
+    vector<string> genotype_encoding_vec, genotype_ci_encoding_vec;
+    for (const RepeatAllele allele : region_findings.genotype) {
+      genotype_encoding_vec.push_back(std::to_string(allele.size_));
+      genotype_ci_encoding_vec.push_back(allele.ci_.ToString());
     }
 
     // Encode GenotypeRepeat CI.
     const string genotype_ci_encoding =
-        boost::algorithm::join(region_findings.genotype_ci, "/");
+        boost::algorithm::join(genotype_ci_encoding_vec, "/");
     const string genotype_encoding =
         boost::algorithm::join(genotype_encoding_vec, "/");
 
     // Encode support vector.
     vector<string> genotype_support_encoding_vec;
-    for (const auto &haplotype_support : region_findings.genotype_support) {
-      genotype_support_encoding_vec.push_back(haplotype_support.ToString());
+    for (const RepeatAllele &allele : region_findings.genotype) {
+      genotype_support_encoding_vec.push_back(allele.support_.ToString());
     }
     const string genotype_support_encoding =
         boost::algorithm::join(genotype_support_encoding_vec, "/");
@@ -103,12 +104,12 @@ void WriteJson(const Parameters &parameters,
       vector<RepeatReadGroup> read_groups = region_findings.read_groups;
       std::sort(read_groups.begin(), read_groups.end(),
                 CompareReadGroupsBySize);
-      for (const RepeatReadGroup &repeat : read_groups) {
+      for (const RepeatReadGroup &read_group : read_groups) {
         const string repeat_id = "Repeat" + std::to_string(num_repeat);
         repeat_section[repeat_id] = {
-            {"Size", repeat.size},
-            {"Source", repeat.readtypeToStr.at(repeat.supported_by)},
-            {"NumSupportingReads", repeat.num_supporting_reads}};
+            {"Size", read_group.size},
+            {"Source", kReadTypeToString.at(read_group.read_type)},
+            {"NumSupportingReads", read_group.num_supporting_reads}};
 
         ++num_repeat;
       }
@@ -120,80 +121,3 @@ void WriteJson(const Parameters &parameters,
 
   out << results_json.dump(4);
 }
-
-/*
-
-  for (int size : GenotypeRepeat) {
-    genotype_encoding_vec.push_back(std::to_string(size));
-    bool repeat_found = false;
-    for (const Repeat &repeat : repeats) {
-      if (repeat.size == size) {
-        genotype_repeats.push_back(repeat);
-        string ci = ".";
-        if (repeat.supported_by == Repeat::SupportType::kFlanking ||
-            repeat.supported_by == Repeat::SupportType::kInrepeat) {
-          ci = std::to_string(repeat.size_ci_lower) + "-" +
-               std::to_string(repeat.size_ci_upper);
-        }
-        genotype_ci_encoding_vec.push_back(ci);
-        repeat_found = true;
-        break;
-      }
-    }
-    if (!repeat_found) {
-      throw std::runtime_error("ERROR: Could not find " + std::to_string(size) +
-                               " among repeats of " + region_info.repeat_id);
-    }
-  }
-
-  if (genotype_repeats.size() == 2 &&
-      genotype_repeats[0].supported_by == genotype_repeats[1].supported_by) {
-    const Repeat &repeat = genotype_repeats[0];
-
-    if (repeat.supported_by == Repeat::SupportType::kInrepeat) {
-
-      const int unit_len = region_info.units[0].length();
-      const double haplotype_depth = parameters.depth() / 2;
-
-      // Calculate CI for the short allele.
-      int short_allele_size, short_allele_size_ci_lower,
-          short_allele_size_ci_upper;
-
-      EstimateRepeatLen(num_irrs / 2, parameters.read_len(), haplotype_depth,
-                        short_allele_size, short_allele_size_ci_lower,
-                        short_allele_size_ci_upper);
-
-      short_allele_size /= unit_len;
-      short_allele_size_ci_lower /= unit_len;
-      short_allele_size_ci_upper /= unit_len;
-
-      // Calculate CI for the long allele.
-      int long_allele_size, long_allele_size_ci_lower,
-          long_allele_size_ci_upper;
-
-      EstimateRepeatLen(num_irrs, parameters.read_len(), haplotype_depth,
-                        long_allele_size, long_allele_size_ci_lower,
-                        long_allele_size_ci_upper);
-
-      long_allele_size /= unit_len;
-      long_allele_size_ci_lower /= unit_len;
-      long_allele_size_ci_upper /= unit_len;
-
-      genotype_encoding_vec = {std::to_string(short_allele_size),
-                               std::to_string(long_allele_size)};
-
-      const string short_allele_size_ci =
-          std::to_string(parameters.read_len()) + "-" +
-          std::to_string(short_allele_size_ci_upper);
-      const string long_allele_size_ci =
-          std::to_string(short_allele_size_ci_lower) + "-" +
-          std::to_string(long_allele_size_ci_upper);
-      genotype_ci_encoding_vec = {short_allele_size_ci, long_allele_size_ci};
-
-    } else if (repeat.supported_by == Repeat::SupportType::kFlanking) {
-      // If both alleles are flanking, they are assumed to have the same
-      // lengths and CIs.
-    }
-  }
-
- */

@@ -28,7 +28,7 @@
 
 #include "common/genomic_region.h"
 #include "common/repeat_spec.h"
-#include "genotyping/genotyping.h"
+#include "genotyping/short_repeat_genotyper.h"
 
 class Outputs {
 public:

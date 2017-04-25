@@ -23,21 +23,18 @@
 #pragma once
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
-#include "include/read_group.h"
+#include "common/common.h"
+#include "common/parameters.h"
+#include "common/repeat_spec.h"
 #include "genotyping/short_repeat_genotyper.h"
 
-class RegionFindings {
- public:
-  std::string region_id;
-  int num_anchored_irrs;
-  int num_unaligned_irrs;
-  int num_irrs;
-  std::vector<RepeatReadGroup> read_groups;
-  std::vector<RepeatAlign> rep_aligns;
-  std::vector<RepeatAlign> flanking_repaligns;
-  std::vector<int> offtarget_irr_counts;
-  RepeatGenotype genotype;
-};
+void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
+                    int max_num_units_in_read, double prop_correct_molecules,
+                    double hap_depth, int read_len,
+                    const std::vector<RepeatAllele> &haplotype_candidates,
+                    const std::map<int, int> &flanking_size_count,
+                    const std::map<int, int> &spanning_size_count,
+                    GenotypeType genotype_type, RepeatGenotype &genotype);

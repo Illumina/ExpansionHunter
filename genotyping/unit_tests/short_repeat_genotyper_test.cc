@@ -20,7 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "genotyping/genotyping.h"
+#include "genotyping/short_repeat_genotyper.h"
 
 #include <array>
 #include <iostream>
@@ -44,7 +44,7 @@ TEST(CalculateMoleculeProportions, TypicalHaplotypeProportionsCalculated) {
   const int max_num_units_in_read = 25;
   const double prop_correct_molecules = 0.97;
   Allele hap(num_units_haplotype, max_num_units_in_read,
-                   prop_correct_molecules);
+             prop_correct_molecules);
 
   EXPECT_DOUBLE_EQ(2.2885056508333023e-08, hap.propMolecules(25));
   EXPECT_DOUBLE_EQ(0.97087262363952287, hap.propMoleculesShorterThan(3));
@@ -52,13 +52,13 @@ TEST(CalculateMoleculeProportions, TypicalHaplotypeProportionsCalculated) {
 }
 
 TEST(CalcFlankingLoglik, TypicalFlankingReadsLoglikelihoodsCalculated) {
-  Genotype genotype(25, 0.97, 20.0, 150, 2, 3);
+  ShortRepeatGenotyper genotype(25, 0.97, 20.0, 150, 2, 3);
   EXPECT_DOUBLE_EQ(-2.0300033341853156, genotype.CalcFlankingLoglik(2));
   EXPECT_DOUBLE_EQ(-19.607697373350305, genotype.CalcFlankingLoglik(25));
 }
 
 TEST(CalcSpanningLoglik, TypicalSpanningReadsLoglikelihoodsCalcualted) {
-  Genotype genotype(25, 0.97, 20.0, 150, 2, 3);
+  ShortRepeatGenotyper genotype(25, 0.97, 20.0, 150, 2, 3);
   EXPECT_DOUBLE_EQ(-2.7385082705573418, genotype.CalcSpanningLoglik(3));
   EXPECT_DOUBLE_EQ(-6.2450661678773223, genotype.CalcSpanningLoglik(4));
 }
@@ -68,7 +68,7 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
   const map<int, int> spanning_size_counts = {{3, 4}, {5, 5}};
   vector<AlleleSupport> genotype_support;
 
-  Genotype genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
+  ShortRepeatGenotyper genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
   EXPECT_DOUBLE_EQ(-48.468337669679954,
                    genotype_3_5.CalcLogLik(flanking_size_counts,
                                            spanning_size_counts,
@@ -77,7 +77,7 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
   const vector<AlleleSupport> expected_3_5_support = {{4, 5, 0}, {5, 5, 0}};
   EXPECT_EQ(expected_3_5_support, genotype_support);
 
-  Genotype genotype_3_10(25, 0.97, 25.0, 150, 3, 10);
+  ShortRepeatGenotyper genotype_3_10(25, 0.97, 25.0, 150, 3, 10);
   EXPECT_DOUBLE_EQ(-69.444360064064853,
                    genotype_3_10.CalcLogLik(flanking_size_counts,
                                             spanning_size_counts,
@@ -85,13 +85,12 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
   const vector<AlleleSupport> expected_3_10_support = {{4, 5, 0}, {0, 6, 0}};
   EXPECT_EQ(expected_3_10_support, genotype_support);
 
-  Genotype genotype_10_10(25, 0.97, 25.0, 150, 10, 10);
+  ShortRepeatGenotyper genotype_10_10(25, 0.97, 25.0, 150, 10, 10);
   EXPECT_DOUBLE_EQ(-185.24122167420646,
                    genotype_10_10.CalcLogLik(flanking_size_counts,
                                              spanning_size_counts,
                                              genotype_support));
-  const vector<AlleleSupport> expected_10_10_support = {{0, 6, 0},
-                                                           {0, 6, 0}};
+  const vector<AlleleSupport> expected_10_10_support = {{0, 6, 0}, {0, 6, 0}};
   EXPECT_EQ(expected_10_10_support, genotype_support);
 }
 
@@ -100,7 +99,7 @@ TEST(CalcGenotypeLoglik, LongGenotypesLoglikelihoodsCalculated) {
   const map<int, int> spanning_size_counts = {{3, 4}, {5, 5}};
   vector<AlleleSupport> genotype_support;
 
-  Genotype genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
+  ShortRepeatGenotyper genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
   EXPECT_DOUBLE_EQ(-48.468337669679954,
                    genotype_3_5.CalcLogLik(flanking_size_counts,
                                            spanning_size_counts,
@@ -112,14 +111,13 @@ TEST(CalcDiploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
   const map<int, int> spanning_size_counts = {{5, 5}};
   vector<AlleleSupport> genotype_support;
 
-  Genotype diploid_genotype(25, 0.97, 25.0, 150, 5, 25);
-  EXPECT_DOUBLE_EQ(-46.837086567255447,
+  ShortRepeatGenotyper diploid_genotype(25, 0.97, 25.0, 150, 5, 25);
+  EXPECT_DOUBLE_EQ(-34.260255045398637,
                    diploid_genotype.CalcLogLik(flanking_size_counts,
                                                spanning_size_counts,
                                                genotype_support));
 
-  const vector<AlleleSupport> expected_5_25_support = {{5, 5, 0},
-                                                          {0, 5, 10}};
+  const vector<AlleleSupport> expected_5_25_support = {{5, 5, 0}, {0, 5, 10}};
   EXPECT_EQ(expected_5_25_support, genotype_support);
 }
 
@@ -131,25 +129,22 @@ TEST(GenotypeStr, TypicalDiploidStrReturnsGenotype) {
   const double prop_correct_molecules = 0.97;
   const double hap_depth = 25.0;
   const int read_len = 150;
-  const vector<int> haplotype_candidates = {0,  1,  2,  3,  4,  5,  6,  7,  8,
-                                            9,  10, 11, 12, 13, 14, 15, 16, 17,
-                                            18, 19, 20, 21, 22, 23, 24, 25};
 
-  vector<AlleleSupport> support;
-  Genotype genotype;
-  vector<string> genotype_ci;
+  vector<RepeatAllele> haplotype_candidates;
+  for (int i = 0; i != 26; ++i) {
+    haplotype_candidates.push_back(RepeatAllele(i, -1, ReadType::kSpanning));
+  }
 
-  GenotypeRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
-                 read_len, haplotype_candidates, flanking_size_counts,
-                 spanning_size_counts, GenotypeType::kDiploid, genotype,
-                 genotype_ci, support);
+  RepeatGenotype genotype;
 
-  const vector<int> expected_genotype = {3, 5};
-  EXPECT_EQ(expected_genotype, genotype.ExtractAlleleSizes());
-  const vector<AlleleSupport> expected_support = {{4, 5, 0}, {5, 5, 0}};
-  EXPECT_EQ(expected_support, support);
-  const vector<string> expected_genotype_ci = {".", "."};
-  EXPECT_EQ(expected_genotype_ci, genotype_ci);
+  GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
+                      read_len, haplotype_candidates, flanking_size_counts,
+                      spanning_size_counts, GenotypeType::kDiploid, genotype);
+
+  const vector<RepeatAllele> expected_genotype = {
+      RepeatAllele(3, ReadType::kSpanning, AlleleSupport(4, 5, 0)),
+      RepeatAllele(5, ReadType::kSpanning, AlleleSupport(5, 5, 0))};
+  EXPECT_EQ(expected_genotype, genotype);
 }
 
 TEST(GenotypeStr, TypicalHaploidStrReturnsGenotype) {
@@ -160,20 +155,19 @@ TEST(GenotypeStr, TypicalHaploidStrReturnsGenotype) {
   const double prop_correct_molecules = 0.97;
   const double hap_depth = 25.0;
   const int read_len = 150;
-  const vector<int> haplotype_candidates = {0,  1,  2,  3,  4,  5,  6,  7,  8,
-                                            9,  10, 11, 12, 13, 14, 15, 16, 17,
-                                            18, 19, 20, 21, 22, 23, 24, 25};
 
-  vector<AlleleSupport> support;
-  Genotype genotype;
-  vector<string> genotype_ci;
-  GenotypeRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
-                 read_len, haplotype_candidates, flanking_size_counts,
-                 spanning_size_counts, GenotypeType::kHaploid, genotype,
-                 genotype_ci, support);
+  vector<RepeatAllele> haplotype_candidates;
+  for (int i = 0; i != 26; ++i) {
+    haplotype_candidates.push_back(RepeatAllele(i, -1, ReadType::kSpanning));
+  }
 
-  const vector<int> expected_genotype = {5};
-  EXPECT_EQ(expected_genotype, genotype.ExtractAlleleSizes());
-  const vector<string> expected_genotype_ci = {"."};
-  EXPECT_EQ(expected_genotype_ci, genotype_ci);
+  RepeatGenotype genotype;
+  GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
+                      read_len, haplotype_candidates, flanking_size_counts,
+                      spanning_size_counts, GenotypeType::kHaploid, genotype);
+
+  const vector<RepeatAllele> expected_genotype = {
+      RepeatAllele(5, ReadType::kSpanning, AlleleSupport(5, 5, 0))};
+
+  EXPECT_EQ(expected_genotype, genotype);
 }

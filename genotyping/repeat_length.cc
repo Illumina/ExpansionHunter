@@ -20,7 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "include/repeat_length.h"
+#include "genotyping/repeat_length.h"
 
 #include <boost/math/distributions.hpp>
 using boost::math::cdf;
