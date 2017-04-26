@@ -47,15 +47,15 @@ void EstimateRepeatLen(const int num_irrs, const int read_len,
   const int ml_estimate =
       static_cast<int>(std::round(num_irrs / prob_read_start));
 
-  std::random_device rd;
-  std::mt19937 gen(rd());
+  const unsigned int kSeed = 42;
+  std::mt19937 gen(kSeed);
 
   // Perform ml_estimate trials with probability of succeed prob_read_start.
   std::binomial_distribution<> binom(ml_estimate, prob_read_start);
 
   vector<int> bootstrap_samples;
-  const int NUM_SAMPLES = 10000;
-  for (int n = 0; n < NUM_SAMPLES; ++n) {
+  const int kNumSamples = 10000;
+  for (int n = 0; n < kNumSamples; ++n) {
     const int sampled_num_irrs = binom(gen);
     const int bootstrap_sample =
         static_cast<int>(std::round(sampled_num_irrs / prob_read_start)) -
