@@ -57,8 +57,6 @@ bool GetAlignFromHtsAlign(bam1_t* hts_align_ptr, Align& align,
   return true;
 }
 
-/*****************************************************************************/
-
 bool GetQualsFromHtsAlign(bam1_t* hts_align_ptr, string& quals) {
   uint8_t* hts_quals_ptr = bam_get_qual(hts_align_ptr);
   const int32_t read_len = hts_align_ptr->core.l_qseq;
@@ -72,8 +70,6 @@ bool GetQualsFromHtsAlign(bam1_t* hts_align_ptr, string& quals) {
 
   return true;
 }
-
-/*****************************************************************************/
 
 bool GetBasesFromHtsAlign(bam1_t* hts_align_ptr, string& bases) {
   uint8_t* hts_seq_ptr = bam_get_seq(hts_align_ptr);

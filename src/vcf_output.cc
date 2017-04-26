@@ -72,7 +72,6 @@ void WriteVcf(const Parameters &parameters,
     const int unit_len = repeat_spec.units[0].length();
     const int reference_size = repeat_spec.ref_seq.length() / unit_len;
 
-    // const ptree &alleles_node = region_node.get_child("RepeatSizes");
     const string unit_encoding = boost::algorithm::join(repeat_spec.units, "/");
 
     string alt;
@@ -81,55 +80,23 @@ void WriteVcf(const Parameters &parameters,
     string format_gt, format_so, format_cn, format_ci, format_ad_sp,
         format_ad_fl, format_ad_ir;
 
-    // vector<string> genotype_ci_encoding_vec;
-    // for (const RepeatAllele allele : region_findings.genotype) {
-    //  genotype_ci_encoding_vec.push_back(allele.ci_.ToString());
-    //}
-    // const string genotype_ci_encoding =
-    //    boost::algorithm::join(genotype_ci_encoding_vec, "/");
-
     for (const RepeatAllele allele : region_findings.genotype) {
-      // const int allele_size = allele_sizes[i];
-      // const string allele_ci = region_findings.genotype_ci[i];
-      // const AlleleSupport allele_support =
-      // region_findings.genotype_support[i];
-
-      // Only homozygous in-repeat and flanking alleles would two "-" in CI
-      // encoding.
-
-      // long num_dashes = std::count(genotype_ci_encoding.begin(),
-      //                             genotype_ci_encoding.end(), '-');
-
-      // RepeatReadGroup const *read_group_for_allele = nullptr;
-      // if (num_dashes == 2) { // homozygous in - repeat or flanking repeat.
-      //  for (const RepeatReadGroup &read_group : region_findings.read_groups)
-      //  {
-      //    if (read_group.read_type == ReadType::kInrepeat ||
-      //        read_group.read_type == ReadType::kFlanking) {
-      //      read_group_for_allele = &read_group;
-      //      break;
-      //    }
-      //  }
-      //} else {
-      //  for (const RepeatReadGroup &repeat : region_findings.read_groups) {
-      //    if (allele.size_ == repeat.size) {
-      //      read_group_for_allele = &repeat;
-      //      break;
-      //    }
-      //  }
-      //}
-      // if (!read_group_for_allele) {
-      //  throw std::runtime_error("ERROR: Can't find repeat of size " +
-      //                           std::to_string(allele.size_));
-      //}
 
       const int allele_len = allele.size_ * unit_len;
       const string source = kReadTypeToString.at(allele.type_);
 
       if (allele.size_ != reference_size) {
         alt_sizes.insert(allele.size_);
-        if (!alt.empty()) {
-          alt += ",";
+        const bool is_hom_diploid_genotype =
+            region_findings.genotype.size() == 2 &&
+            region_findings.genotype[0] == region_findings.genotype[1];
+
+        const string allele_symbol =
+            "<STR" + std::to_string(allele.size_) + ">";
+        if (alt.empty()) {
+          alt = allele_symbol;
+        } else if (!is_hom_diploid_genotype) {
+          alt += "," + allele_symbol;
         }
 
         if (!format_gt.empty()) {
@@ -141,7 +108,6 @@ void WriteVcf(const Parameters &parameters,
           format_ad_fl += "/";
           format_ad_ir += "/";
         }
-        alt += "<STR" + std::to_string(allele.size_) + ">";
         ++genotype_num;
         format_gt += std::to_string(genotype_num);
         format_so += source;
