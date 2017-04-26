@@ -75,10 +75,10 @@ void WriteVcf(const Parameters &parameters,
     const string unit_encoding = boost::algorithm::join(repeat_spec.units, "/");
 
     string alt;
-    int genotype_num = 0;
+    int num_alt_allele = 0;
 
-    string format_gt, format_so, format_cn, format_ci, format_ad_sp,
-        format_ad_fl, format_ad_ir;
+    string sample_gt, sample_so, sample_cn, sample_ci, sample_ad_sp,
+        sample_ad_fl, sample_ad_ir;
 
     for (const RepeatAllele allele : region_findings.genotype) {
 
@@ -99,37 +99,39 @@ void WriteVcf(const Parameters &parameters,
           alt += "," + allele_symbol;
         }
 
-        if (!format_gt.empty()) {
-          format_gt += "/";
-          format_so += "/";
-          format_cn += "/";
-          format_ci += "/";
-          format_ad_sp += "/";
-          format_ad_fl += "/";
-          format_ad_ir += "/";
+        if (!sample_gt.empty()) {
+          sample_gt += "/";
+          sample_so += "/";
+          sample_cn += "/";
+          sample_ci += "/";
+          sample_ad_sp += "/";
+          sample_ad_fl += "/";
+          sample_ad_ir += "/";
         }
-        ++genotype_num;
-        format_gt += std::to_string(genotype_num);
-        format_so += source;
-        format_cn += std::to_string(allele.size_);
-        format_ci += allele.ci_.ToString();
-        format_ad_sp += std::to_string(allele.support_.num_spanning());
-        format_ad_fl += std::to_string(allele.support_.num_flanking());
-        format_ad_ir += std::to_string(allele.support_.num_inrepeat());
+        if (num_alt_allele != 1 || !is_hom_diploid_genotype) {
+          ++num_alt_allele;
+        }
+        sample_gt += std::to_string(num_alt_allele);
+        sample_so += source;
+        sample_cn += std::to_string(allele.size_);
+        sample_ci += allele.ci_.ToString();
+        sample_ad_sp += std::to_string(allele.support_.num_spanning());
+        sample_ad_fl += std::to_string(allele.support_.num_flanking());
+        sample_ad_ir += std::to_string(allele.support_.num_inrepeat());
       } else {
-        if (!format_gt.empty()) {
-          format_gt = "/" + format_gt;
-          format_so = "/" + format_so;
-          format_cn = "/" + format_cn;
-          format_ci = "/" + format_ci;
-          format_ad_sp = "/" + format_ad_sp;
-          format_ad_fl = "/" + format_ad_fl;
-          format_ad_ir = "/" + format_ad_ir;
+        if (!sample_gt.empty()) {
+          sample_gt = "/" + sample_gt;
+          sample_so = "/" + sample_so;
+          sample_cn = "/" + sample_cn;
+          sample_ci = "/" + sample_ci;
+          sample_ad_sp = "/" + sample_ad_sp;
+          sample_ad_fl = "/" + sample_ad_fl;
+          sample_ad_ir = "/" + sample_ad_ir;
         }
-        format_gt = "0" + format_gt;
-        format_so = source + format_so;
-        format_cn = std::to_string(allele.size_) + format_cn;
-        format_ci = allele.ci_.ToString() + format_ci;
+        sample_gt = "0" + sample_gt;
+        sample_so = source + sample_so;
+        sample_cn = std::to_string(allele.size_) + sample_cn;
+        sample_ci = allele.ci_.ToString() + sample_ci;
       }
     }
     const Region &region = repeat_spec.target_region;
@@ -143,9 +145,9 @@ void WriteVcf(const Parameters &parameters,
 
     vcf_body << region.chrom() << "\t" << region.start() - 1 << "\t.\t"
              << ref_field << "\t" << alt << "\t.\tPASS\t" << info
-             << "\tGT:SO:CN:CI:AD_FL:AD_SP:AD_FL:AD_IR\t" << format_gt << ":"
-             << format_so << ":" << format_cn << ":" << format_ci << ":"
-             << format_ad_sp << ":" << format_ad_fl << ":" << format_ad_ir
+             << "\tGT:SO:CN:CI:AD_SP:AD_FL:AD_IR\t" << sample_gt << ":"
+             << sample_so << ":" << sample_cn << ":" << sample_ci << ":"
+             << sample_ad_sp << ":" << sample_ad_fl << ":" << sample_ad_ir
              << endl;
   }
 
