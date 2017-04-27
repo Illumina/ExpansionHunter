@@ -422,6 +422,12 @@ void EstimateRepeatSizes(const Parameters &parameters,
     }
     cerr << endl;
 
+    if (haplotype_candidates.empty()) {
+      cerr << "\t[Skipping this region because no informative reads were found]"
+           << endl;
+      continue;
+    }
+
     const int unit_len = repeat_spec.units[0].length();
     double kPropCorrectMolecules = 0.97;
     if (unit_len <= 2) {
