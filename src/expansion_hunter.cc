@@ -289,6 +289,11 @@ bool FindLongRepeats(const Parameters &parameters,
   }
 }
 
+static bool CompareRegionFindings(const RegionFindings &r1,
+                                  const RegionFindings &r2) {
+  return r1.region < r2.region;
+}
+
 // For each repeat region, calculate sizes of repeats that are (a) shorter and
 // (b) longer than the read length; reconsile alleles and output results to
 // appropriate files.
@@ -329,6 +334,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     RegionFindings region_findings;
     region_findings.region_id = repeat_spec.repeat_id;
+    region_findings.region = repeat_spec.target_region;
     region_findings.offtarget_irr_counts =
         vector<int>(repeat_spec.offtarget_regions.size(), 0);
 
@@ -438,6 +444,8 @@ void EstimateRepeatSizes(const Parameters &parameters,
                        region_findings.flanking_repaligns, &(*outputs).log());
   }
 
+  std::sort(sample_findings.begin(), sample_findings.end(),
+            CompareRegionFindings);
   WriteJson(parameters, repeat_specs, sample_findings, outputs->json());
   WriteVcf(parameters, repeat_specs, sample_findings, outputs->vcf());
   cerr << "[All done]" << endl;

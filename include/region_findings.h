@@ -26,12 +26,14 @@
 #include <vector>
 #include <string>
 
+#include "common/genomic_region.h"
 #include "include/read_group.h"
 #include "genotyping/short_repeat_genotyper.h"
 
 class RegionFindings {
  public:
   std::string region_id;
+  Region region;
   int num_anchored_irrs;
   int num_unaligned_irrs;
   int num_irrs;
