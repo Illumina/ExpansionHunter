@@ -171,3 +171,28 @@ TEST(GenotypeStr, TypicalHaploidStrReturnsGenotype) {
 
   EXPECT_EQ(expected_genotype, genotype);
 }
+
+TEST(GenotypeStr, ExpandedHaploidStrGenotyped) {
+  const map<int, int> flanking_size_counts = {{1, 2}, {2, 3}, {10, 1}, {25, 8}};
+  const map<int, int> spanning_size_counts = {{3, 1}, {5, 1}};
+
+  const int max_num_units_in_read = 25;
+  const double prop_correct_molecules = 0.97;
+  const double hap_depth = 25.0;
+  const int read_len = 150;
+
+  vector<RepeatAllele> haplotype_candidates;
+  for (int i = 0; i != 26; ++i) {
+    haplotype_candidates.push_back(RepeatAllele(i, -1, ReadType::kSpanning));
+  }
+
+  RepeatGenotype genotype;
+  GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
+                      read_len, haplotype_candidates, flanking_size_counts,
+                      spanning_size_counts, GenotypeType::kHaploid, genotype);
+
+  const vector<RepeatAllele> expected_genotype = {
+      RepeatAllele(25, ReadType::kSpanning, AlleleSupport(0, 6, 8))};
+
+  EXPECT_EQ(expected_genotype, genotype);
+}

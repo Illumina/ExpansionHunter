@@ -66,7 +66,8 @@ public:
   }
   ShortRepeatGenotyper(int max_num_units_in_read, double prop_correct_molecules,
                        double hap_depth, int read_len, int num_units_hap)
-      : hap_depth_(hap_depth), read_len_(read_len) {
+      : max_num_units_in_read_(max_num_units_in_read), hap_depth_(hap_depth),
+        read_len_(read_len) {
     alleles.push_back(
         Allele(num_units_hap, max_num_units_in_read, prop_correct_molecules));
   }
