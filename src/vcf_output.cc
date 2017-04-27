@@ -52,7 +52,7 @@ void WriteVcf(const Parameters &parameters,
       "##INFO=<ID=REF,Number=1,Type=Integer,Description=\"Reference copy number\">\n"
       "##INFO=<ID=RL,Number=1,Type=Integer,Description=\"Reference length in bp\">\n"
       "##INFO=<ID=RU,Number=1,Type=String,Description=\"Repeat unit in the reference orientation\">\n"
-      "##INFO=<ID=REPID,Number=1,Type=String,Description=\"Repeat identifier from the input specification file\">\n"
+      "##INFO=<ID=REPID,Number=1,Type=String,Description=\"Repeat identifier from the repeat specification file\">\n"
       "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
       "##FORMAT=<ID=SO,Number=1,Type=String,Description=\"Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat\">\n"
       "##FORMAT=<ID=CN,Number=1,Type=String,Description=\"Allele copy number\">\n"
@@ -132,6 +132,12 @@ void WriteVcf(const Parameters &parameters,
         sample_so = source + sample_so;
         sample_cn = std::to_string(allele.size_) + sample_cn;
         sample_ci = allele.ci_.ToString() + sample_ci;
+        sample_ad_sp =
+            std::to_string(allele.support_.num_spanning()) + sample_ad_sp;
+        sample_ad_fl =
+            std::to_string(allele.support_.num_flanking()) + sample_ad_fl;
+        sample_ad_ir =
+            std::to_string(allele.support_.num_inrepeat()) + sample_ad_ir;
       }
     }
     const Region &region = repeat_spec.target_region;
