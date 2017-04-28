@@ -46,7 +46,7 @@ private:
 
 class Parameters {
 public:
-  const double kSmallestPossibleDepth = 0.00001;
+  const double kSmallestPossibleDepth = 5.0;
   Parameters()
       : region_extension_len_(1000), min_wp_(0.90), min_baseq_(20),
         min_anchor_mapq_(60), skip_unaligned_(false), depth_(0.0),
