@@ -20,10 +20,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string>
-#include <vector>
 #include <cassert>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "include/read_group.h"
 #include "purity/purity.h"
@@ -264,15 +264,15 @@ bool IsSpanningOrFlankingReadRc(const Parameters &params,
   return reverse_match;
 }
 
-static float ScoreSpanningAlign(size_t min_baseq, double min_wp,
-                                const vector<string> &units,
-                                const string &left_flank,
-                                const string &right_flank, const string &bases,
-                                const string &quals, size_t left_flank_len,
-                                size_t right_flank_len) {
+static double ScoreSpanningAlign(size_t min_baseq, double min_wp,
+                                 const vector<string> &units,
+                                 const string &left_flank,
+                                 const string &right_flank, const string &bases,
+                                 const string &quals, size_t left_flank_len,
+                                 size_t right_flank_len) {
   const double kFlankMinWpScore = 0.7;
   const string bases_prefix = bases.substr(0, left_flank_len);
-  const string quals_prefix = quals.substr(0, right_flank_len);
+  const string quals_prefix = quals.substr(0, left_flank_len);
 
   assert(bases.length() >= left_flank_len + right_flank_len);
   const size_t repeat_len = bases.length() - left_flank_len - right_flank_len;
@@ -285,19 +285,19 @@ static float ScoreSpanningAlign(size_t min_baseq, double min_wp,
   const string quals_suffix =
       quals.substr(quals.length() - right_flank_len, right_flank_len);
 
-  float repeat_score =
+  double repeat_score =
       MatchRepeat(units, bases_repeat, quals_repeat, min_baseq);
 
   const string left_flank_pref =
       left_flank.substr(left_flank.length() - left_flank_len, left_flank_len);
   const vector<string> left_flank_pref_units = {left_flank_pref};
-  float left_flank_score = MatchUnits(
+  double left_flank_score = MatchUnits(
       left_flank_pref_units, bases_prefix.begin(), bases_prefix.end(),
       quals_prefix.begin(), quals_prefix.end(), min_baseq);
 
   const string right_flank_pref = right_flank.substr(0, right_flank_len);
   const vector<string> right_flank_pref_units = {right_flank_pref};
-  float right_flank_score = MatchUnits(
+  double right_flank_score = MatchUnits(
       right_flank_pref_units, bases_suffix.begin(), bases_suffix.end(),
       quals_suffix.begin(), quals_suffix.end(), min_baseq);
 
@@ -320,7 +320,7 @@ static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
 
     assert(bases.length() >= cur_left_len + test_repeat_len);
     size_t test_right_len = bases.length() - cur_left_len - test_repeat_len;
-    const float test_wp =
+    const double test_wp =
         ScoreSpanningAlign(min_baseq, min_wp, units, left_flank, right_flank,
                            bases, quals, cur_left_len, test_right_len);
     if (test_wp > top_wp) {
@@ -348,7 +348,7 @@ static size_t FindTopLeftFlankLen(size_t min_baseq, double min_wp,
     const size_t test_repeat_len = test_size * unit_len;
     assert(bases.length() >= cur_right_len + test_repeat_len);
     size_t test_left_len = bases.length() - cur_right_len - test_repeat_len;
-    const float test_wp =
+    const double test_wp =
         ScoreSpanningAlign(min_baseq, min_wp, units, left_flank, right_flank,
                            bases, quals, test_left_len, cur_right_len);
     if (test_wp > top_wp) {
