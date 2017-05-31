@@ -22,22 +22,24 @@
 
 #pragma once
 
-#include <string>
+#include <map>
 #include <vector>
+#include <string>
 
-#include "htslib/hts.h"
+#include "common/genomic_region.h"
+#include "include/read_group.h"
+#include "genotyping/short_repeat_genotyper.h"
 
-class BamIndex {
+class RegionFindings {
  public:
-  BamIndex(const std::string& bam_path);
-  ~BamIndex();
-
-  bool GetChrReadCounts(std::vector<std::string>& chrom_names,
-                        std::vector<int64_t>& chrom_lens,
-                        std::vector<int64_t>& mapped_read_counts,
-                        std::vector<int64_t>& unmapped_read_counts) const;
-
- private:
-  htsFile* hts_file_ptr_;
-  std::string bam_path_;
+  std::string region_id;
+  Region region;
+  int num_anchored_irrs;
+  int num_unaligned_irrs;
+  int num_irrs;
+  std::vector<RepeatReadGroup> read_groups;
+  std::vector<RepeatAlign> rep_aligns;
+  std::vector<RepeatAlign> flanking_repaligns;
+  std::vector<int> offtarget_irr_counts;
+  RepeatGenotype genotype;
 };

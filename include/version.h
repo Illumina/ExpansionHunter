@@ -20,11 +20,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef VERSION_H_
-#define VERSION_H_
+#pragma once
 
 #include <string>
 
-const std::string kProgramVersion = "Expansion Hunter v2.0.9";
-
-#endif  // VERSION_H_
+const std::string kProgramVersion = "Expansion Hunter v2.5.1";

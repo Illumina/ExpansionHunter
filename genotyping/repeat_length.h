@@ -20,17 +20,10 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_REPEAT_LENGTH_H_
-#define INCLUDE_REPEAT_LENGTH_H_
+#pragma once
 
 #include <cstddef>
 
-/*****************************************************************************/
-
-void EstimateRepeatLen(const size_t num_irrs, const size_t read_len,
-                       const double hap_depth, size_t& len_estimate,
-                       size_t& lower_bound, size_t& upper_bound);
-
-/*****************************************************************************/
-
-#endif  // INCLUDE_REPEAT_LENGTH_H_
+void EstimateRepeatLen(const int num_irrs, const int read_len,
+                       const double hap_depth, int& len_estimate,
+                       int& lower_bound, int& upper_bound);

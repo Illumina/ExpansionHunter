@@ -20,8 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef PURITY_PURITY_H_
-#define PURITY_PURITY_H_
+#pragma once
 
 #include <vector>
 #include <string>
@@ -46,5 +45,3 @@ double MatchUnits(const std::vector<std::string>& units,
                   std::string::const_iterator bases_end,
                   std::string::const_iterator quals_start,
                   std::string::const_iterator quals_end, size_t min_baseq = 20);
-
-#endif  // PURITY_PURITY_H_

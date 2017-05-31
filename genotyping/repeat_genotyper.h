@@ -22,22 +22,19 @@
 
 #pragma once
 
+#include <map>
 #include <string>
 #include <vector>
 
-#include "htslib/hts.h"
+#include "common/common.h"
+#include "common/parameters.h"
+#include "common/repeat_spec.h"
+#include "genotyping/short_repeat_genotyper.h"
 
-class BamIndex {
- public:
-  BamIndex(const std::string& bam_path);
-  ~BamIndex();
-
-  bool GetChrReadCounts(std::vector<std::string>& chrom_names,
-                        std::vector<int64_t>& chrom_lens,
-                        std::vector<int64_t>& mapped_read_counts,
-                        std::vector<int64_t>& unmapped_read_counts) const;
-
- private:
-  htsFile* hts_file_ptr_;
-  std::string bam_path_;
-};
+void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
+                    int max_num_units_in_read, double prop_correct_molecules,
+                    double hap_depth, int read_len,
+                    const std::vector<RepeatAllele> &haplotype_candidates,
+                    const std::map<int, int> &flanking_size_count,
+                    const std::map<int, int> &spanning_size_count,
+                    GenotypeType genotype_type, RepeatGenotype &genotype);

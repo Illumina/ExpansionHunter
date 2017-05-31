@@ -23,21 +23,19 @@
 #pragma once
 
 #include <string>
-#include <vector>
+#include <iostream>
 
-#include "htslib/hts.h"
+// Include the fai class from samtools
+#include "htslib/faidx.h"
 
-class BamIndex {
+class RefGenome {
  public:
-  BamIndex(const std::string& bam_path);
-  ~BamIndex();
+  explicit RefGenome(const std::string& genome_path);
+  ~RefGenome();
 
-  bool GetChrReadCounts(std::vector<std::string>& chrom_names,
-                        std::vector<int64_t>& chrom_lens,
-                        std::vector<int64_t>& mapped_read_counts,
-                        std::vector<int64_t>& unmapped_read_counts) const;
+  void ExtractSeq(const std::string& region, std::string* sequence) const;
 
  private:
-  htsFile* hts_file_ptr_;
-  std::string bam_path_;
+  std::string genome_path_;
+  faidx_t* fai_ptr_;
 };

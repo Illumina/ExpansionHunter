@@ -20,41 +20,39 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <string>
+#include <fstream>
+#include <cassert>
+#include <set>
+#include <iostream>
+#include <sstream>
+#include <vector>
+#include <map>
+
 #include <boost/property_tree/ptree.hpp>
-using boost::property_tree::ptree;
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
 #include <boost/optional/optional.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/join.hpp>
-using boost::algorithm::join;
 
-#include <string>
+#include "common/ref_genome.h"
+#include "common/repeat_spec.h"
+#include "purity/purity.h"
+
 using std::string;
-#include <fstream>
-#include <cassert>
-#include <set>
-#include <iostream>
 using std::cerr;
 using std::endl;
-#include <sstream>
-#include <vector>
 using std::vector;
-#include <map>
 using std::map;
 
-#include "include/ref_genome.h"
-#include "purity/purity.h"
-#include "include/repeat_spec.h"
-
-/*****************************************************************************/
+using boost::property_tree::ptree;
+using boost::lexical_cast;
+using boost::algorithm::join;
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
-
-/*****************************************************************************/
 
 const char RepeatSpec::LeftFlankBase() const {
   if (left_flank.empty()) {
@@ -63,8 +61,6 @@ const char RepeatSpec::LeftFlankBase() const {
 
   return left_flank[left_flank.size() - 1];
 }
-
-/*****************************************************************************/
 
 RepeatSpec::RepeatSpec(const string& json_path) {
   std::ifstream istrm(json_path.c_str());
@@ -115,21 +111,19 @@ RepeatSpec::RepeatSpec(const string& json_path) {
   }
 }
 
-/*****************************************************************************/
-
 // Fill out prefix and suffix sequences.
 bool LoadFlanks(const string& genome_path, double min_wp,
                 RepeatSpec* repeat_spec) {
   RefGenome ref_genome(genome_path);
   // Reference repeat flanks should be at least as long as reads.
-  const size_t kFlankLen = 250;
+  const int kFlankLen = 250;
 
   const Region& repeat_region = repeat_spec->target_region;
 
-  const size_t left_flank_begin = repeat_region.start() - kFlankLen;
-  const size_t left_flank_end = repeat_region.start() - 1;
-  const size_t right_flank_begin = repeat_region.end() + 1;
-  const size_t right_flank_end = repeat_region.end() + kFlankLen;
+  const int64_t left_flank_begin = repeat_region.start() - kFlankLen;
+  const int64_t left_flank_end = repeat_region.start() - 1;
+  const int64_t right_flank_begin = repeat_region.end() + 1;
+  const int64_t right_flank_end = repeat_region.end() + kFlankLen;
 
   const string left_flank_coords = repeat_region.chrom() + ":" +
                                    lexical_cast<string>(left_flank_begin) +
@@ -161,8 +155,6 @@ bool LoadFlanks(const string& genome_path, double min_wp,
   return true;
 }
 
-/*****************************************************************************/
-
 bool LoadRepeatSpecs(const string& specs_path, const string& genome_path,
                      double min_wp, map<string, RepeatSpec>* repeat_specs) {
   assert(!specs_path.empty());
@@ -182,7 +174,7 @@ bool LoadRepeatSpecs(const string& specs_path, const string& genome_path,
         const string json_path = itr->path().string();
         RepeatSpec repeat_spec(json_path);
         LoadFlanks(genome_path, min_wp, &repeat_spec);
-        (*repeat_specs)[repeat_spec.target_region.AsString()] = repeat_spec;
+        (*repeat_specs)[repeat_spec.repeat_id] = repeat_spec;
       }
     }
   }

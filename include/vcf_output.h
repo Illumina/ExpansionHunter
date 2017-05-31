@@ -22,22 +22,16 @@
 
 #pragma once
 
+#include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
-#include "htslib/hts.h"
+#include "common/parameters.h"
+#include "common/repeat_spec.h"
+#include "include/region_findings.h"
 
-class BamIndex {
- public:
-  BamIndex(const std::string& bam_path);
-  ~BamIndex();
-
-  bool GetChrReadCounts(std::vector<std::string>& chrom_names,
-                        std::vector<int64_t>& chrom_lens,
-                        std::vector<int64_t>& mapped_read_counts,
-                        std::vector<int64_t>& unmapped_read_counts) const;
-
- private:
-  htsFile* hts_file_ptr_;
-  std::string bam_path_;
-};
+void WriteVcf(const Parameters &parameters,
+              const std::map<std::string, RepeatSpec> &repeat_specs,
+              const std::vector<RegionFindings> &sample_findings,
+              std::ostream &out);
