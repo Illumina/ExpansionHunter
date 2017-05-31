@@ -46,12 +46,12 @@ private:
 
 class Parameters {
 public:
-  const double kSmallestPossibleDepth = 0.00001;
+  const double kSmallestPossibleDepth = 5.0;
   Parameters()
       : region_extension_len_(1000), min_wp_(0.90), min_baseq_(20),
         min_anchor_mapq_(60), skip_unaligned_(false), depth_(0.0),
         sex_(Sex::kFemale) {}
-  bool Load(int numArgs, char *argPtrArr[]);
+  bool Load(int argc, char **argv);
   std::string bam_path() const { return bam_path_; }
   std::string genome_path() const { return genome_path_; }
   int region_extension_len() const { return region_extension_len_; }
@@ -60,7 +60,6 @@ public:
   int min_baseq() const { return min_baseq_; }
   void set_min_baseq(int min_baseq) { min_baseq_ = min_baseq; }
   int min_anchor_mapq() const { return min_anchor_mapq_; }
-  bool onlyUnaligned() const;
   bool skip_unaligned() const { return skip_unaligned_; }
   int read_len() const { return read_len_; };
   void set_read_len(int read_len) { read_len_ = read_len; }
@@ -77,8 +76,7 @@ public:
 private:
   std::string bam_path_;
   std::string genome_path_;
-  // Specifies maximum distance from a target locus where
-  // interesting reads may be.
+  // Maximum distance from a region to search for relevant reads.
   int region_extension_len_;
   double min_wp_;
   int min_baseq_;

@@ -22,63 +22,56 @@
 
 #include "common/parameters.h"
 
-#include <boost/program_options.hpp>
-namespace po = boost::program_options;
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
-#include <boost/format.hpp>
-using boost::format;
-#include <boost/assign.hpp>
-#include <boost/filesystem.hpp>
-using boost::assign::list_of;
-
-#include <string>
-using std::string;
+#include <iomanip>
 #include <ios>
 #include <iostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/assign.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
+
+using boost::lexical_cast;
+using boost::format;
+using boost::assign::list_of;
+using std::string;
 using std::cerr;
 using std::endl;
-#include <iomanip>
-#include <stdexcept>
-#include <vector>
 using std::vector;
+
+namespace po = boost::program_options;
 
 Outputs::Outputs(const string vcf_path, const string json_path,
                  const string log_path) {
   vcf_.open(vcf_path.c_str());
-
   if (!vcf_.is_open()) {
-    throw std::runtime_error("Failed to open output file '" + vcf_path +
-                             "' for writing: " + strerror(errno));
+    throw std::runtime_error("ERROR: Failed to open " + vcf_path +
+                             " for writing: " + strerror(errno));
   }
 
-  if (!json_path.empty()) {
-    json_.open(json_path.c_str());
-
-    if (!json_.is_open()) {
-      throw std::runtime_error("Failed to open output JSON file '" + json_path +
-                               "' for writing: " + strerror(errno));
-    }
+  json_.open(json_path.c_str());
+  if (!json_.is_open()) {
+    throw std::runtime_error("ERROR: Failed to open " + json_path +
+                             " for writing: " + strerror(errno));
   }
 
-  if (!log_path.empty()) {
-    log_.open(log_path.c_str());
-
-    if (!log_.is_open()) {
-      throw std::runtime_error("Failed to open log file '" + log_path +
-                               "' for writing: " + strerror(errno));
-    }
-
-    log_ << std::unitbuf << std::setprecision(4);
+  log_.open(log_path.c_str());
+  if (!log_.is_open()) {
+    throw std::runtime_error("ERROR: Failed to open " + log_path +
+                             " for writing: " + strerror(errno));
   }
 }
 
-bool CheckIndexFile(const string &bam_path) {
-  vector<string> indexExtStrVec = list_of(".bai")(".csi")(".crai");
+static bool CheckIfIndexFileExists(const string &bam_path) {
+  vector<string> kPossibleIndexExtensions = {".bai", ".csi", ".crai"};
 
-  for (const string &indexExtStr : indexExtStrVec) {
-    if (boost::filesystem::exists(bam_path + indexExtStr)) {
+  for (const string &index_extension : kPossibleIndexExtensions) {
+    if (boost::filesystem::exists(bam_path + index_extension)) {
       return true;
     }
   }
@@ -86,7 +79,7 @@ bool CheckIndexFile(const string &bam_path) {
   return false;
 }
 
-void DieNotOutputFilePath(const string &output_path_str) {
+void DieIfOutputPathDoesntExist(const string &output_path_str) {
   const boost::filesystem::path output_path(output_path_str);
   const boost::filesystem::path output_dir(output_path.parent_path());
 
@@ -98,145 +91,113 @@ void DieNotOutputFilePath(const string &output_path_str) {
   if ((is_no_dir || is_existing_dir) && is_valid_fname) {
     return;
   }
-  const string error_msg =
-      "'" + output_path_str + "' is not a valid output path.";
-  throw std::invalid_argument(error_msg);
+
+  throw std::invalid_argument("ERROR: " + output_path_str +
+                              " is not a valid output path");
 }
 
-bool Parameters::Load(int numArgs, char *argPtrArr[]) {
+bool Parameters::Load(int argc, char **argv) {
   // clang-format off
   po::options_description usage("Allowed options");
   usage.add_options()
       ("help", "Print help message")
       ("version", "Print version number")
-      ("bam", po::value<string>(), "BAM file path")
-      ("ref-fasta", po::value<string>(), "Reference genome file (FASTA) path")
-      ("repeat-specs", po::value<string>(), "Directory containing JSON files specifying target repeat regions")
-      ("vcf", po::value<string>(), "Output VCF file path")
-      ("json", po::value<string>(), "Output JSON file path")
-      ("log", po::value<string>(), "Output read alignment file path")
-      ("region-extension-length", po::value<int>(),
-          ("[Optional] How far from on/off-target regions to search for informative reads [Default " + std::to_string(region_extension_len_) + "]").c_str())
-      ("min-score", po::value<float>(),
-          ("[Optional] Minimum weighted matching score (0 <= x <= 1) [Default " + boost::str(format("%.3f") % min_wp_) + "]").c_str())
-      ("min-baseq", po::value<int>(), ("[Optional] Minimum quality of a high-confidence base call [Default " + std::to_string(min_baseq_) + "]").c_str())
-      ("min-anchor-mapq", po::value<int>(), ("[Optional] Minimum MAPQ of a read anchor [Default " + std::to_string(min_anchor_mapq_) + "]").c_str())
-      ("skip-unaligned", "[Optional] Do not search for IRRs in unaligned reads")
-      ("read-depth", po::value<float>(), "[Optional] Read depth")
-      ("sex", po::value<string>(), "[Optional] Sex of the sample; can be either male or female [Default female]");
+      ("bam", po::value<string>()->required(), "BAM file")
+      ("ref-fasta", po::value<string>()->required(), "FASTA file with reference genome")
+      ("repeat-specs", po::value<string>()->required(), "Directory with repeat-specification files")
+      ("vcf", po::value<string>()->required(), "Output VCF file")
+      ("json", po::value<string>()->required(), "Output JSON file")
+      ("log", po::value<string>()->required(), "Output read alignment file")
+      ("region-extension-length", po::value<int>()->default_value(1000), "How far from on/off-target regions to search for informative reads")
+      ("min-score", po::value<double>()->default_value(0.90, "0.90"), "Minimum weighted purity score required to flag a read as an in-repeat read; must be between 0 and 1")
+      ("min-baseq", po::value<int>()->default_value(20), "Minimum quality of a high-confidence base call")
+      ("min-anchor-mapq", po::value<int>()->default_value(60), "Minimum MAPQ of a read anchor")
+      ("skip-unaligned", po::bool_switch()->default_value(false), "Skip unaligned reads when searching for IRRs")
+      ("read-depth", po::value<double>()->default_value(0.0, "calculated if not set"), "Read depth")
+      ("sex", po::value<string>()->default_value("female"), "Sex of the sample; must be either male or female");
   // clang-format on
-  po::variables_map argMap;
-  po::store(po::parse_command_line(numArgs, argPtrArr, usage), argMap);
-  po::notify(argMap);
 
-  if (argMap.count("help")) {
+  if (argc == 1) {
     std::cerr << usage << std::endl;
     return false;
   }
 
-  if (argMap.count("version")) {
+  po::variables_map arg_map;
+  po::store(po::command_line_parser(argc, argv).options(usage).run(), arg_map);
+
+  if (arg_map.count("help")) {
+    std::cerr << usage << std::endl;
     return false;
   }
 
-  if (!argMap.count("bam")) {
-    throw std::invalid_argument("--bam parameter is required");
+  if (arg_map.count("version")) {
+    return false;
   }
 
-  bam_path_ = argMap["bam"].as<string>();
+  po::notify(arg_map);
 
+  bam_path_ = arg_map["bam"].as<string>();
   if (!boost::filesystem::exists(bam_path_)) {
-    throw std::invalid_argument("'" + bam_path_ + "' does not exist");
+    throw std::invalid_argument("ERROR: " + bam_path_ + " does not exist");
   }
-
-  if (!CheckIndexFile(bam_path_)) {
-    throw std::invalid_argument("Could not find index file for BAM '" +
-                                bam_path_ + "'");
+  if (!CheckIfIndexFileExists(bam_path_)) {
+    throw std::invalid_argument("ERROR: Could not find index file for BAM: " +
+                                bam_path_);
   }
 
   // Extract sample name.
   boost::filesystem::path boost_bam_path(bam_path_);
   sample_name_ = boost_bam_path.stem().string();
 
-  if (!argMap.count("ref-fasta")) {
-    throw std::invalid_argument("--ref-fasta parameter is required");
-  }
-
-  genome_path_ = argMap["ref-fasta"].as<string>();
-
+  genome_path_ = arg_map["ref-fasta"].as<string>();
   if (!boost::filesystem::exists(genome_path_)) {
-    throw std::invalid_argument("'" + genome_path_ + "' does not exist");
+    throw std::invalid_argument("ERROR: " + genome_path_ + " does not exist");
   }
 
-  if (!argMap.count("repeat-specs")) {
-    throw std::invalid_argument("--repeat-specs parameter is required");
-  }
-
-  repeat_specs_path_ = argMap["repeat-specs"].as<string>();
-
+  repeat_specs_path_ = arg_map["repeat-specs"].as<string>();
   if (!boost::filesystem::exists(repeat_specs_path_)) {
-    throw std::invalid_argument("'" + repeat_specs_path_ +
-                                "' is not a directory");
+    throw std::invalid_argument("ERROR: " + repeat_specs_path_ +
+                                " is not a directory");
   }
 
-  if (!argMap.count("json")) {
-    throw std::invalid_argument("--json parameter is required");
-  }
-  json_path_ = argMap["json"].as<string>();
-  DieNotOutputFilePath(json_path_);
+  json_path_ = arg_map["json"].as<string>();
+  DieIfOutputPathDoesntExist(json_path_);
 
-  if (!argMap.count("vcf")) {
-    throw std::invalid_argument("--vcf parameter is required");
-  }
-  vcf_path_ = argMap["vcf"].as<string>();
-  DieNotOutputFilePath(vcf_path_);
+  vcf_path_ = arg_map["vcf"].as<string>();
+  DieIfOutputPathDoesntExist(vcf_path_);
 
-  if (!argMap.count("log")) {
-    throw std::invalid_argument("--log parameter is required");
-  }
-  log_path_ = argMap["log"].as<string>();
-  DieNotOutputFilePath(log_path_);
+  log_path_ = arg_map["log"].as<string>();
+  DieIfOutputPathDoesntExist(log_path_);
 
-  if (argMap.count("region-extension-length")) {
-    region_extension_len_ = argMap["region-extension-length"].as<int>();
+  region_extension_len_ = arg_map["region-extension-length"].as<int>();
+
+  min_wp_ = arg_map["min-score"].as<double>();
+  if (min_wp_ > 1) {
+    throw std::invalid_argument("min-score must be less than or equal to 1");
   }
 
-  if (argMap.count("min-score")) {
-    min_wp_ = argMap["min-score"].as<float>();
-    if (min_wp_ > 1) {
-      throw std::invalid_argument("min-score must be less than or equal to 1");
-    }
-  }
+  min_baseq_ = arg_map["min-baseq"].as<int>();
+  min_anchor_mapq_ = arg_map["min-anchor-mapq"].as<int>();
+  skip_unaligned_ = arg_map["skip-unaligned"].as<bool>();
 
-  if (argMap.count("min-baseq")) {
-    min_baseq_ = argMap["min-baseq"].as<int>();
-  }
-
-  if (argMap.count("min-anchor-mapq")) {
-    min_anchor_mapq_ = argMap["min-anchor-mapq"].as<int>();
-  }
-
-  if (argMap.count("skip-unaligned")) {
-    skip_unaligned_ = true;
-  }
-
-  if (argMap.count("read-depth")) {
-    depth_ = argMap["read-depth"].as<float>();
+  if (!arg_map["read-depth"].defaulted()) {
+    depth_ = arg_map["read-depth"].as<double>();
 
     if (depth_ < kSmallestPossibleDepth) {
-      throw std::invalid_argument("read-depth must be >= " +
-                                  lexical_cast<string>(kSmallestPossibleDepth));
+      throw std::invalid_argument("read-depth must be at least " +
+                                  std::to_string(kSmallestPossibleDepth));
     }
   }
 
-  if (argMap.count("sex")) {
-    const string sex_encoding = argMap["sex"].as<string>();
-    if (sex_encoding == "male") {
-      sex_ = Sex::kMale;
-    } else if (sex_encoding != "female") {
-      throw std::invalid_argument(
-          sex_encoding +
-          " is an invalid value for sex; it must be either male or female");
-    }
+  const string sex_encoding = arg_map["sex"].as<string>();
+  if (sex_encoding == "male") {
+    sex_ = Sex::kMale;
+  } else if (sex_encoding == "female") {
+    sex_ = Sex::kFemale;
+  } else {
+    throw std::invalid_argument(
+        "ERROR: " + sex_encoding +
+        " is invalid for sex; must be either male or female");
   }
 
   return true;
