@@ -1,0 +1,38 @@
+##fileformat=VCFv4.1
+##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
+##INFO=<ID=END,Number=1,Type=Integer,Description="End position of the variant">
+##INFO=<ID=REF,Number=1,Type=Integer,Description="Reference copy number">
+##INFO=<ID=RL,Number=1,Type=Integer,Description="Reference length in bp">
+##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit in the reference orientation">
+##INFO=<ID=REPID,Number=1,Type=String,Description="Repeat identifier from the repeat specification file">
+##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
+##FORMAT=<ID=SO,Number=1,Type=String,Description="Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat">
+##FORMAT=<ID=CN,Number=1,Type=String,Description="Allele copy number">
+##FORMAT=<ID=CI,Number=1,Type=String,Description="Confidence interval for CN">
+##FORMAT=<ID=AD_FL,Number=1,Type=String,Description="Number of flanking reads consistent with the allele">
+##FORMAT=<ID=AD_SP,Number=1,Type=String,Description="Number of spanning reads consistent with the allele">
+##FORMAT=<ID=AD_IR,Number=1,Type=String,Description="Number of in-repeat reads consistent with the allele">
+##ALT=<ID=STR2,Description="Allele comprised of 2 repeat units">
+##ALT=<ID=STR5,Description="Allele comprised of 5 repeat units">
+##ALT=<ID=STR8,Description="Allele comprised of 8 repeat units">
+##ALT=<ID=STR9,Description="Allele comprised of 9 repeat units">
+##ALT=<ID=STR10,Description="Allele comprised of 10 repeat units">
+##ALT=<ID=STR11,Description="Allele comprised of 11 repeat units">
+##ALT=<ID=STR12,Description="Allele comprised of 12 repeat units">
+##ALT=<ID=STR14,Description="Allele comprised of 14 repeat units">
+##ALT=<ID=STR20,Description="Allele comprised of 20 repeat units">
+##ALT=<ID=STR23,Description="Allele comprised of 23 repeat units">
+##ALT=<ID=STR24,Description="Allele comprised of 24 repeat units">
+##ALT=<ID=STR25,Description="Allele comprised of 25 repeat units">
+##ALT=<ID=STR30,Description="Allele comprised of 30 repeat units">
+##ALT=<ID=STR37,Description="Allele comprised of 37 repeat units">
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	bamlet
+chr12	7045879	.	C	<STR12>,<STR14>	.	PASS	SVTYPE=STR;END=7045936;REF=19;RL=57;RU=CAG;REPID=ATN1	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/2:SPANNING/SPANNING:12/14:12-12/14-14:13/22:9/9:0/0
+chr14	92537353	.	C	<STR24>	.	PASS	SVTYPE=STR;END=92537386;REF=11;RL=33;RU=GCT;REPID=ATXN3	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/1:SPANNING/SPANNING:24/24:24-24/24-24:10/10:15/15:0/0
+chr19	46273462	.	C	<STR5>,<STR11>	.	PASS	SVTYPE=STR;END=46273522;REF=20;RL=60;RU=CAG;REPID=DMPK	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/2:SPANNING/SPANNING:5/11:5-5/11-11:20/11:8/13:0/0
+chr4	3076603	.	C	<STR10>,<STR20>	.	PASS	SVTYPE=STR;END=3076660;REF=19;RL=57;RU=CAG;REPID=HTT	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/2:SPANNING/SPANNING:10/20:10-10/20-20:5/12:14/18:0/0
+chr6	16327864	.	G	<STR37>	.	PASS	SVTYPE=STR;END=16327954;REF=30;RL=90;RU=TGC;REPID=ATXN1	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	0/1:SPANNING/SPANNING:30/37:30-30/37-37:10/4:42/42:0/0
+chr9	27573526	.	C	<STR2>,<STR8>	.	PASS	SVTYPE=STR;END=27573544;REF=3;RL=18;RU=GGCCCC;REPID=C9ORF72	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/2:SPANNING/SPANNING:2/8:2-2/8-8:9/6:5/7:0/0
+chr9	71652202	.	A	<STR9>	.	PASS	SVTYPE=STR;END=71652220;REF=6;RL=18;RU=GAA;REPID=FXN	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/1:SPANNING/SPANNING:9/9:9-9/9-9:10/10:4/4:0/0
+chrX	66765158	.	T	<STR24>,<STR25>	.	PASS	SVTYPE=STR;END=66765227;REF=23;RL=69;RU=GCA;REPID=AR	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/2:SPANNING/SPANNING:24/25:24-24/25-25:10/5:20/20:0/0
+chrX	146993568	.	G	<STR23>,<STR30>	.	PASS	SVTYPE=STR;END=146993628;REF=20;RL=60;RU=CGG;REPID=FMR1	GT:SO:CN:CI:AD_SP:AD_FL:AD_IR	1/2:SPANNING/SPANNING:23/30:23-23/30-30:5/5:4/6:0/0
