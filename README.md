@@ -16,3 +16,11 @@ Documentation
 -------------
 
 Installation instructions, usage guide, and description of file formats are available on [wiki](https://github.com/Illumina/ExpansionHunter/wiki).
+
+
+Method
+------
+
+The detailed description of the method can be found here:
+
+Dolzhenko et al., [Detection of long repeat expansions from PCR-free whole-genome sequence data](http://biorxiv.org/content/early/2016/12/19/093831), BioRxiv 2017
