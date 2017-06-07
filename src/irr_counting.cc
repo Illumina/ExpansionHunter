@@ -60,7 +60,7 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
     }
   } else {
     if (!(*bam_file).SetRegionToRange(region)) {
-      throw std::runtime_error("Failed to jump to " + region.AsString());
+      throw std::runtime_error("Failed to jump to " + region.ToString());
     }
   }
 
@@ -72,7 +72,7 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
     if (it == (*align_pairs).end()) {
       Align dummy_align;
 
-      align.region = region.AsString();
+      align.region = region.ToString();
       array<Align, 2> pair = {align, dummy_align};
       if (!align.IsFirstMate()) {
         std::reverse(pair.begin(), pair.end());
@@ -84,8 +84,8 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
       // with a warning. Two alignments for the same mate, however, are not
       // permitted.
 
-      align.region = region.AsString();
-      AlignPair &frag = (*align_pairs)[align.name];
+      align.region = region.ToString();
+      AlignPair& frag = (*align_pairs)[align.name];
 
       if (align.IsFirstMate()) {
         if (frag[0].name.empty()) {
@@ -127,12 +127,12 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
   }
 }
 
-bool CheckAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
-                       const Region &target_neighborhood,
-                       const RepeatSpec &repeat_spec, const Align &read_align,
-                       const Align &mate_align,
-                       const vector<vector<string>> &units_shifts) {
-  const size_t min_mapq = parameters.min_anchor_mapq();
+bool CheckAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
+                       const Region& target_neighborhood,
+                       const RepeatSpec& repeat_spec, const Align& read_align,
+                       const Align& mate_align,
+                       const vector<vector<string>>& units_shifts) {
+  const int min_mapq = parameters.min_anchor_mapq();
   // Check if the read has low mapping quality and it is an off-target
   // anchor; such reads are reported but not included into the calculation.
   if (read_align.mapq < min_mapq) {
@@ -202,20 +202,20 @@ void FillinMates(BamFile &bam_file, AlignPairs &align_pairs) {
         assert(missing_al.chrom_id < refVec.size());
         missing_al.region = Region(refVec[missing_al.chrom_id],
                                    missing_al.pos + 1, missing_al.pos + 2)
-                                .AsString();
+                                .ToString();
       } else {
         missing_al = Align();
-        missing_al.region = Region("chr-1", 0, 0).AsString();
+        missing_al.region = Region("chr-1", 0, 0).ToString();
       }
     }
   }
 }
 
 // TODO(edolzhenko): Move cache creation out of the function.
-bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
-                        size_t &numUnalignedIRRs,
-                        const vector<vector<string>> &units_shifts,
-                        vector<RepeatAlign> *irr_rep_aligns) {
+bool CountUnalignedIrrs(BamFile& bam_file, const Parameters& parameters,
+                        int& numUnalignedIRRs,
+                        const vector<vector<string>>& units_shifts,
+                        vector<RepeatAlign>* irr_rep_aligns) {
   numUnalignedIRRs = 0;
 
   AlignPairs align_pairs;
@@ -253,16 +253,16 @@ bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
       numUnalignedIRRs += 2;
 
       RepeatAlign rep_align;
-      rep_align.name = it->first;
-      rep_align.bases = frag[0].bases;
-      rep_align.quals = frag[0].quals;
+      rep_align.read.name = it->first;
+      rep_align.read.bases = frag[0].bases;
+      rep_align.read.quals = frag[0].quals;
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
-      rep_align.type = kUnalignedIrrPair;
-      const size_t unit_len = units_shifts[0][0].length();
-      rep_align.size = rep_align.bases.length() / unit_len;
-      rep_align.bases_mate = frag[1].bases;
-      rep_align.quals_mate = frag[1].quals;
+      rep_align.type = RepeatAlign::Type::kUnalignedIrrPair;
+      const int unit_len = units_shifts[0][0].length();
+      rep_align.size = rep_align.read.bases.length() / unit_len;
+      rep_align.mate.bases = frag[1].bases;
+      rep_align.mate.quals = frag[1].quals;
       irr_rep_aligns->push_back(rep_align);
     } else if (is_irr1 || is_irr2) {
       ++numUnalignedIRRs;
@@ -270,27 +270,27 @@ bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
       const Align &mate = is_irr1 ? frag[1] : frag[0];
 
       RepeatAlign rep_align;
-      rep_align.name = it->first;
-      rep_align.bases = irr.bases;
-      rep_align.quals = irr.quals;
+      rep_align.read.name = it->first;
+      rep_align.read.bases = irr.bases;
+      rep_align.read.quals = irr.quals;
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
-      rep_align.type = kUnalignedIrrSingleton;
-      const size_t unit_len = units_shifts[0][0].length();
-      rep_align.size = rep_align.bases.length() / unit_len;
-      rep_align.bases_mate = mate.bases;
-      rep_align.quals_mate = mate.quals;
+      rep_align.type = RepeatAlign::Type::kUnalignedIrrSingleton;
+      const int unit_len = units_shifts[0][0].length();
+      rep_align.size = rep_align.read.bases.length() / unit_len;
+      rep_align.mate.bases = mate.bases;
+      rep_align.mate.quals = mate.quals;
       irr_rep_aligns->push_back(rep_align);
     }
   }
 }
 
-size_t CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
-                       const AlignPairs &align_pairs,
-                       map<string, size_t> &numIrrConfRegion,
-                       const vector<vector<string>> &units_shifts,
-                       vector<RepeatAlign> *irr_rep_aligns) {
-  size_t irr_count = 0;
+int CountAlignedIrr(const BamFile& bam_file, const Parameters& parameters,
+                       const AlignPairs& align_pairs,
+                       map<string, int>& numIrrConfRegion,
+                       const vector<vector<string>>& units_shifts,
+                       vector<RepeatAlign>* irr_rep_aligns) {
+  int irr_count = 0;
   bool isFwdKmer = false;
   for (AlignPairs::const_iterator it = align_pairs.begin();
        it != align_pairs.end(); ++it) {
@@ -318,16 +318,16 @@ size_t CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
       numIrrConfRegion[frag[1].region] += 1;
 
       RepeatAlign rep_align;
-      rep_align.name = it->first;
-      rep_align.bases = frag[0].bases;
-      rep_align.quals = frag[0].quals;
+      rep_align.read.name = it->first;
+      rep_align.read.bases = frag[0].bases;
+      rep_align.read.quals = frag[0].quals;
       rep_align.left_flank_len = 0;
       rep_align.right_flank_len = 0;
-      rep_align.type = kAlignedIrrPair;
-      const size_t unit_len = units_shifts[0][0].length();
-      rep_align.size = rep_align.bases.length() / unit_len;
-      rep_align.bases_mate = frag[1].bases;
-      rep_align.quals_mate = frag[1].quals;
+      rep_align.type = RepeatAlign::Type::kAlignedIrrPair;
+      const int unit_len = units_shifts[0][0].length();
+      rep_align.size = rep_align.read.bases.length() / unit_len;
+      rep_align.mate.bases = frag[1].bases;
+      rep_align.mate.quals = frag[1].quals;
       irr_rep_aligns->push_back(rep_align);
     }
   }
@@ -335,12 +335,12 @@ size_t CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
   return irr_count;
 }
 
-void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
-                       const Region &targetNhood, const RepeatSpec &repeat_spec,
-                       const unordered_set<string> &ontarget_frag_names,
-                       AlignPairs &align_pairs, size_t &numAnchoredIrrs,
-                       const vector<vector<string>> &units_shifts,
-                       vector<RepeatAlign> *anchored_irrs) {
+void CountAnchoredIrrs(const BamFile& bam_file, const Parameters& parameters,
+                       const Region& targetNhood, const RepeatSpec& repeat_spec,
+                       const unordered_set<string>& ontarget_frag_names,
+                       AlignPairs& align_pairs, int& numAnchoredIrrs,
+                       const vector<vector<string>>& units_shifts,
+                       vector<RepeatAlign>* anchored_irrs) {
   numAnchoredIrrs = 0;
 
   // Check fragments from the target locus.
@@ -370,16 +370,16 @@ void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
 
         ++numAnchoredIrrs;
         RepeatAlign rep_align;
-        rep_align.name = irr.name;
-        rep_align.bases = irr.bases;
-        rep_align.quals = irr.quals;
+        rep_align.read.name = irr.name;
+        rep_align.read.bases = irr.bases;
+        rep_align.read.quals = irr.quals;
         rep_align.left_flank_len = 0;
         rep_align.right_flank_len = 0;
-        rep_align.type = kAnchored;
-        const size_t unit_len = units_shifts[0][0].length();
-        rep_align.size = rep_align.bases.length() / unit_len;
-        rep_align.bases_mate = anchor.bases;
-        rep_align.quals_mate = anchor.quals;
+        rep_align.type = RepeatAlign::Type::kAnchored;
+        const int unit_len = units_shifts[0][0].length();
+        rep_align.size = rep_align.read.bases.length() / unit_len;
+        rep_align.mate.bases = anchor.bases;
+        rep_align.mate.quals = anchor.quals;
         anchored_irrs->push_back(rep_align);
       }
     }

@@ -20,15 +20,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#ifndef INCLUDE_BAM_INDEX_H_
-#define INCLUDE_BAM_INDEX_H_
+#pragma once
 
 #include <string>
 #include <vector>
 
 #include "htslib/hts.h"
-
-/*****************************************************************************/
 
 class BamIndex {
  public:
@@ -36,15 +33,11 @@ class BamIndex {
   ~BamIndex();
 
   bool GetChrReadCounts(std::vector<std::string>& chrom_names,
-                        std::vector<size_t>& chrom_lens,
-                        std::vector<size_t>& mapped_read_counts,
-                        std::vector<size_t>& unmapped_read_counts) const;
+                        std::vector<int64_t>& chrom_lens,
+                        std::vector<int64_t>& mapped_read_counts,
+                        std::vector<int64_t>& unmapped_read_counts) const;
 
  private:
   htsFile* hts_file_ptr_;
   std::string bam_path_;
 };
-
-/*****************************************************************************/
-
-#endif  // INCLUDE_BAM_INDEX_H_

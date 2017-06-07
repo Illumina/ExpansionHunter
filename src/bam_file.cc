@@ -25,20 +25,13 @@
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/tokenizer.hpp>
-typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 #include <boost/lexical_cast.hpp>
-using boost::lexical_cast;
 
 #include <string>
-using std::string;
 #include <iostream>
-using std::cerr;
-using std::endl;
 #include <vector>
-using std::vector;
-#include <cassert>
 #include <algorithm>
-using std::sort;
+#include <cassert>
 #include <cstring>
 #include <stdexcept>
 
@@ -46,18 +39,22 @@ using std::sort;
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 
-#include "include/ref_genome.h"
-#include "include/parameters.h"
+#include "common/parameters.h"
+#include "common/ref_genome.h"
 #include "include/bam_index.h"
 
+typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
+using boost::lexical_cast;
+
+using std::string;
+using std::cerr;
+using std::endl;
+using std::vector;
+using std::sort;
+
 BamFile::BamFile()
-    : hts_file_ptr_(0),
-      hts_bam_hdr_ptr_(0),
-      hts_idx_ptr_(0),
-      hts_itr_ptr_(0),
-      hts_bam_align_ptr_(0),
-      jump_to_unaligned_(false),
-      at_file_end_(false),
+    : hts_file_ptr_(0), hts_bam_hdr_ptr_(0), hts_idx_ptr_(0), hts_itr_ptr_(0),
+      hts_bam_align_ptr_(0), jump_to_unaligned_(false), at_file_end_(false),
       format_(kUnknownFormat) {}
 
 BamFile::~BamFile() {
@@ -69,9 +66,7 @@ BamFile::~BamFile() {
   Close();
 }
 
-/*****************************************************************************/
-
-void BamFile::Init(const string& path, const string& reference) {
+void BamFile::Init(const string &path, const string &reference) {
   path_ = path;
   // Open a BAM file for reading.
   hts_file_ptr_ = sam_open(path.c_str(), "r");
@@ -124,8 +119,6 @@ void BamFile::Init(const string& path, const string& reference) {
   }
 }
 
-/*****************************************************************************/
-
 bool BamFile::Close() {
   if (hts_file_ptr_) {
     if (hts_bam_hdr_ptr_) {
@@ -150,10 +143,8 @@ bool BamFile::Close() {
   return true;
 }
 
-/*****************************************************************************/
-
 // Set bam file to a specific range from which the reads will be extracted.
-bool BamFile::SetRegionToRange(const Region& gRange) {
+bool BamFile::SetRegionToRange(const Region &gRange) {
   // If we were in unaligned pairs reset first.
   if (jump_to_unaligned_) {
     jump_to_unaligned_ = false;
@@ -165,11 +156,11 @@ bool BamFile::SetRegionToRange(const Region& gRange) {
   }
 
   hts_itr_ptr_ =
-      sam_itr_querys(hts_idx_ptr_, hts_bam_hdr_ptr_, gRange.AsString().c_str());
+      sam_itr_querys(hts_idx_ptr_, hts_bam_hdr_ptr_, gRange.ToString().c_str());
 
   if (hts_itr_ptr_ == 0) {
     throw std::runtime_error("Failed to set target region: '" +
-                             gRange.AsString() + "'");
+                             gRange.ToString() + "'");
     return false;
   }
 
@@ -177,8 +168,6 @@ bool BamFile::SetRegionToRange(const Region& gRange) {
 
   return true;
 }
-
-/*****************************************************************************/
 
 bool BamFile::CloseRegion() {
   if (hts_itr_ptr_) {
@@ -227,9 +216,7 @@ bool BamFile::JumpToUnaligned() {
   return true;
 }
 
-/*****************************************************************************/
-
-bool BamFile::GetRead(Align& align) {
+bool BamFile::GetRead(Align &align) {
   if (jump_to_unaligned_) {
     if (hts_file_ptr_->format.format == bam) {
       return GetUnalignedPrRead(align);
@@ -257,7 +244,7 @@ bool BamFile::GetRead(Align& align) {
   readRet = GetNextGoodRead();
 
   if (readRet == -1) {
-    at_file_end_ = true;  // EOF
+    at_file_end_ = true; // EOF
     return false;
   }
 
@@ -272,10 +259,8 @@ bool BamFile::GetRead(Align& align) {
   return true;
 }
 
-/*****************************************************************************/
-
 // Try to get an aligned mate.
-bool BamFile::GetAlignedMate(const Align& align, Align& mate_align) {
+bool BamFile::GetAlignedMate(const Align &align, Align &mate_align) {
   Region mateRegion;
   int32_t tid = 0;
   int32_t beg = 0;
@@ -291,10 +276,10 @@ bool BamFile::GetAlignedMate(const Align& align, Align& mate_align) {
     end = align.pos + 1;
   }
 
-  hts_itr_t* iter;
+  hts_itr_t *iter;
   iter = sam_itr_queryi(hts_idx_ptr_, tid, beg, end);
   if (!iter) {
-    cerr << "[Failed to parse " + mateRegion.AsString() << endl;
+    cerr << "[Failed to parse " + mateRegion.ToString() << endl;
     return false;
   }
   while (sam_itr_next(hts_file_ptr_, iter, hts_bam_align_ptr_) >= 0) {
@@ -312,9 +297,7 @@ bool BamFile::GetAlignedMate(const Align& align, Align& mate_align) {
   return false;
 }
 
-/*****************************************************************************/
-
-bool BamFile::GetUnalignedPrRead(Align& align) {
+bool BamFile::GetUnalignedPrRead(Align &align) {
   if (at_file_end_) {
     return false;
   }
@@ -343,14 +326,12 @@ bool BamFile::GetUnalignedPrRead(Align& align) {
 
   // Have retrieved an unaligned read. Copy the bits needed to align.
   if (!GetAlignFromHtsAlign(hts_bam_align_ptr_, align,
-                            true)) {  // assumeUnaligned=T
+                            true)) { // assumeUnaligned=T
     throw std::runtime_error("Failed to process read from BAM file.");
   }
 
   return true;
 }
-
-/*****************************************************************************/
 
 int BamFile::GetNextGoodRead() {
   bool is_primary_align = false;
@@ -371,18 +352,14 @@ int BamFile::GetNextGoodRead() {
   return return_value;
 }
 
-/*****************************************************************************/
-
-const size_t CountValidBases(const string& bases) {
+const size_t CountValidBases(const string &bases) {
   const size_t n_count = std::count(bases.begin(), bases.end(), 'N');
   const size_t valid_base_count = bases.length() - n_count;
 
   return valid_base_count;
 }
 
-/*****************************************************************************/
-
-double BamFile::CalcMedianDepth(Parameters& parameters, size_t read_len) {
+double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
   if (read_len == 0) {
     throw std::logic_error("Read length must be non-zero: " +
                            lexical_cast<string>(read_len));
@@ -391,36 +368,36 @@ double BamFile::CalcMedianDepth(Parameters& parameters, size_t read_len) {
   RefGenome ref_genome(parameters.genome_path());
   BamIndex bam_index(parameters.bam_path());
 
-  vector<size_t> mapped_read_counts;
-  vector<size_t> unmapped_read_counts;
+  vector<int64_t> mapped_read_counts;
+  vector<int64_t> unmapped_read_counts;
 
   vector<string> chrom_names;
-  vector<size_t> chrom_lens;
+  vector<int64_t> chrom_lens;
   if (!bam_index.GetChrReadCounts(chrom_names, chrom_lens, mapped_read_counts,
                                   unmapped_read_counts)) {
     throw std::runtime_error("Failed to get chrom read depths from index of " +
                              parameters.bam_path());
   }
 
-  const size_t chrom_count = chrom_names.size();
+  const int chrom_count = chrom_names.size();
 
   if (format_ == kCramFile) {
     mapped_read_counts =
         cram_suppliment.CountAlignedReads(parameters.bam_path(), chrom_count);
-    for (size_t i = 0; i < chrom_names.size(); ++i) {
+    for (int i = 0; i < chrom_names.size(); ++i) {
       cerr << chrom_names[i] << " " << chrom_lens[i] << " "
            << mapped_read_counts[i] << endl;
     }
   }
 
-  typedef std::pair<size_t, double> ChromIndDepth;
+  typedef std::pair<int, double> ChromIndDepth;
   typedef vector<ChromIndDepth> ChromIndDepths;
   ChromIndDepths chrom_ind_depths;
 
   string chrom_bases;
 
-  for (size_t chrom_ind = 0; chrom_ind < chrom_count; ++chrom_ind) {
-    const string& chrom_name = chrom_names[chrom_ind];
+  for (int chrom_ind = 0; chrom_ind < chrom_count; ++chrom_ind) {
+    const string &chrom_name = chrom_names[chrom_ind];
 
     bool skip_cur_chrom = false;
     if (chrom_name == "chrX" || chrom_name == "X" || chrom_name == "chrY" ||
@@ -429,13 +406,14 @@ double BamFile::CalcMedianDepth(Parameters& parameters, size_t read_len) {
       skip_cur_chrom = true;
     }
 
-    size_t gl_pos = chrom_name.find("GL000");
+    int gl_pos = chrom_name.find("GL000");
     if (gl_pos != std::string::npos) {
       skip_cur_chrom = true;
     }
 
     if (skip_cur_chrom) {
-      cerr << "[Skipping " << chrom_name << " during depth calculation]" << endl;
+      cerr << "[Skipping " << chrom_name << " during depth calculation]"
+           << endl;
       continue;
     }
 
@@ -449,8 +427,8 @@ double BamFile::CalcMedianDepth(Parameters& parameters, size_t read_len) {
   }
 
   sort(chrom_ind_depths.begin(), chrom_ind_depths.end(),
-       boost::bind(&std::pair<size_t, double>::second, _1) >
-           boost::bind(&std::pair<size_t, double>::second, _2));
+       boost::bind(&std::pair<int, double>::second, _1) >
+           boost::bind(&std::pair<int, double>::second, _2));
 
   const size_t autosome_count = chrom_ind_depths.size();
   const bool autosome_count_is_odd = (autosome_count % 2) == 1;
@@ -465,11 +443,9 @@ double BamFile::CalcMedianDepth(Parameters& parameters, size_t read_len) {
   return median_autosome_depth;
 }
 
-/*****************************************************************************/
-
-vector<size_t> CramFile::CountAlignedReads(const string& cram_path,
-                                           size_t num_chroms) {
-  vector<size_t> read_counts(num_chroms, 0);
+vector<int64_t> CramFile::CountAlignedReads(const string &cram_path,
+                                            int num_chroms) {
+  vector<int64_t> read_counts(num_chroms, 0);
   file_ptr_ = sam_open(cram_path.c_str(), "r");
 
   if (!file_ptr_) {
@@ -490,7 +466,7 @@ vector<size_t> CramFile::CountAlignedReads(const string& cram_path,
   found_unaligned_reads_ = false;
   int ret;
   while ((ret = sam_read1(file_ptr_, header_ptr_, align_ptr_)) >= 0) {
-    if (align_ptr_->core.tid == -1) {  // Reached unaligned reads.
+    if (align_ptr_->core.tid == -1) { // Reached unaligned reads.
       found_unaligned_reads_ = true;
       cerr << "[Found unaligend reads]" << endl;
       break;
@@ -504,9 +480,7 @@ vector<size_t> CramFile::CountAlignedReads(const string& cram_path,
   return read_counts;
 }
 
-/*****************************************************************************/
-
-bool CramFile::GetUnalignedRead(Align& align) {
+bool CramFile::GetUnalignedRead(Align &align) {
   int ret = sam_read1(file_ptr_, header_ptr_, align_ptr_);
   if (ret < 0) {
     return false;
