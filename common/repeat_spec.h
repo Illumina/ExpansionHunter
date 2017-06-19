@@ -22,18 +22,20 @@
 
 #pragma once
 
-#include <string>
-#include <iostream>
-#include <vector>
-#include <map>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
+
+#include "third_party/json/json.hpp"
 
 #include "common/genomic_region.h"
 
 class RepeatSpec {
- public:
+public:
   RepeatSpec() {}
-  explicit RepeatSpec(const std::string& json_path);
+  explicit RepeatSpec(const nlohmann::json &spec_json);
   const char LeftFlankBase() const;
   bool is_common_unit() const { return is_common_unit_; }
 
@@ -46,11 +48,10 @@ class RepeatSpec {
   std::vector<std::vector<std::string>> units_shifts;
   std::vector<Region> offtarget_regions;
 
- private:
+private:
   bool is_common_unit_;
 };
 
-bool LoadRepeatSpecs(const std::string& specs_path,
-                     const std::string& genome_path, double min_wp,
-                     std::map<std::string, RepeatSpec>* repeat_specs);
-
+bool LoadRepeatSpecs(const std::string &specs_path,
+                     const std::string &genome_path, double min_wp,
+                     std::map<std::string, RepeatSpec> *repeat_specs);

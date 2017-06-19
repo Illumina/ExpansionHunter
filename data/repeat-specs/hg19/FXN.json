@@ -1,5 +1,5 @@
 {
-    "CommonUnit": "true",
+    "CommonUnit": true,
     "RepeatId": "FXN",
     "RepeatUnit": "GAA",
     "TargetRegion": "chr9:71652203-71652220"
