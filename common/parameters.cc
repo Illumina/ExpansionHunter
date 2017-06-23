@@ -157,7 +157,7 @@ bool Parameters::Load(int argc, char **argv) {
   repeat_specs_path_ = arg_map["repeat-specs"].as<string>();
   if (!boost::filesystem::exists(repeat_specs_path_)) {
     throw std::invalid_argument("ERROR: " + repeat_specs_path_ +
-                                " is not a directory");
+                                " does not exist");
   }
 
   json_path_ = arg_map["json"].as<string>();

@@ -20,23 +20,24 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string>
-#include <fstream>
 #include <cassert>
-#include <set>
+#include <fstream>
 #include <iostream>
-#include <sstream>
-#include <vector>
 #include <map>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
+#include "third_party/json/json.hpp"
+#include <boost/algorithm/string/join.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
-#include <boost/tokenizer.hpp>
-#include <boost/filesystem.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
 #include <boost/regex.hpp>
-#include <boost/algorithm/string/join.hpp>
+#include <boost/tokenizer.hpp>
 
 #include "common/ref_genome.h"
 #include "common/repeat_spec.h"
@@ -51,6 +52,7 @@ using std::map;
 using boost::property_tree::ptree;
 using boost::lexical_cast;
 using boost::algorithm::join;
+using json = nlohmann::json;
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 
@@ -62,63 +64,38 @@ const char RepeatSpec::LeftFlankBase() const {
   return left_flank[left_flank.size() - 1];
 }
 
-RepeatSpec::RepeatSpec(const string& json_path) {
-  std::ifstream istrm(json_path.c_str());
+RepeatSpec::RepeatSpec(const nlohmann::json &spec_json) {
+  repeat_id = spec_json["RepeatId"];
 
-  if (!istrm.is_open()) {
-    throw std::logic_error("Failed to open region JSON file " + json_path);
-  }
-
-  ptree root_node;
-  boost::property_tree::read_json(istrm, root_node);
-
-  repeat_id = root_node.get_child("RepeatId").data();
-  const string unit = root_node.get_child("RepeatUnit").data();
-
+  const string unit = spec_json["RepeatUnit"];
   const boost::char_separator<char> slash_separator("/");
-
   Tokenizer tokenizer(unit, slash_separator);
   units = vector<string>(tokenizer.begin(), tokenizer.end());
   units_shifts = shift_units(units);
 
   is_common_unit_ = false;
-  boost::optional<ptree> commonality_node(
-      root_node.get_child_optional("CommonUnit"));
-  if (commonality_node) {
-    const string is_common_unit_encoding = commonality_node->data();
-    if (is_common_unit_encoding == "true") {
-      is_common_unit_ = true;
-    } else if (is_common_unit_encoding == "false") {
-      is_common_unit_ = false;
-    } else {
-      throw std::runtime_error(
-          "ERROR: CommonUnit must be either \"true\" or \"false\".");
-    }
+  if (spec_json.find("CommonUnit") != spec_json.end()) {
+    is_common_unit_ = spec_json["CommonUnit"].get<bool>();
   }
 
-  const string region_encoding(root_node.get_child("TargetRegion").data());
-  target_region = Region(region_encoding);
+  target_region = Region(spec_json["TargetRegion"].get<string>());
 
-  boost::optional<ptree> confusion_node(
-      root_node.get_child_optional("OffTargetRegions"));
-
-  if (confusion_node) {
-    offtarget_regions.clear();
-    for (const ptree::value_type& region_node : *confusion_node) {
-      assert(region_node.first.empty());  // array elements have no names
-      offtarget_regions.push_back(Region(region_node.second.data()));
-    }
+  if (spec_json.find("OffTargetRegions") != spec_json.end()) {
+      offtarget_regions.clear();
+      for (const string &region_encoding : spec_json["OffTargetRegions"]) {
+        offtarget_regions.push_back(Region(region_encoding));
+      }
   }
 }
 
 // Fill out prefix and suffix sequences.
-bool LoadFlanks(const string& genome_path, double min_wp,
-                RepeatSpec* repeat_spec) {
+bool LoadFlanks(const string &genome_path, double min_wp,
+                RepeatSpec *repeat_spec) {
   RefGenome ref_genome(genome_path);
   // Reference repeat flanks should be at least as long as reads.
   const int kFlankLen = 250;
 
-  const Region& repeat_region = repeat_spec->target_region;
+  const Region &repeat_region = repeat_spec->target_region;
 
   const int64_t left_flank_begin = repeat_region.start() - kFlankLen;
   const int64_t left_flank_end = repeat_region.start() - 1;
@@ -155,11 +132,33 @@ bool LoadFlanks(const string& genome_path, double min_wp,
   return true;
 }
 
-bool LoadRepeatSpecs(const string& specs_path, const string& genome_path,
-                     double min_wp, map<string, RepeatSpec>* repeat_specs) {
+bool LoadRepeatSpecs(const string &specs_path, const string &genome_path,
+                     double min_wp, map<string, RepeatSpec> *repeat_specs) {
   assert(!specs_path.empty());
 
   const boost::regex regex_json(".*\\.json$");
+
+  boost::smatch what;
+  if (boost::regex_match(specs_path, what, regex_json)) {
+    std::ifstream istrm(specs_path.c_str());
+
+    if (!istrm.is_open()) {
+      throw std::logic_error("Failed to open region JSON file " + specs_path);
+    }
+
+    json specs_json;
+    istrm >> specs_json;
+
+    for (const auto &spec_json : specs_json) {
+      std::cerr << spec_json << std::endl;
+      RepeatSpec repeat_spec(spec_json);
+      LoadFlanks(genome_path, min_wp, &repeat_spec);
+      (*repeat_specs)[repeat_spec.repeat_id] = repeat_spec;
+    }
+
+    return true;
+  }
+
   boost::filesystem::path path(specs_path);
   boost::filesystem::directory_iterator end_itr;
 
@@ -172,7 +171,15 @@ bool LoadRepeatSpecs(const string& specs_path, const string& genome_path,
         cerr << "[Loading " << fname << "]" << endl;
 
         const string json_path = itr->path().string();
-        RepeatSpec repeat_spec(json_path);
+        std::ifstream istrm(json_path.c_str());
+        if (!istrm.is_open()) {
+          throw std::logic_error("Failed to open region JSON file " +
+                                 json_path);
+        }
+        json spec_json;
+        spec_json << istrm;
+
+        RepeatSpec repeat_spec(spec_json);
         LoadFlanks(genome_path, min_wp, &repeat_spec);
         (*repeat_specs)[repeat_spec.repeat_id] = repeat_spec;
       }

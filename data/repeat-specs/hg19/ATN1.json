@@ -1,5 +1,5 @@
 {
-    "CommonUnit": "true",
+    "CommonUnit": true,
     "RepeatId": "ATN1",
     "RepeatUnit": "CAG",
     "TargetRegion": "chr12:7045880-7045936"
