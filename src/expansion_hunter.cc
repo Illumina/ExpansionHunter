@@ -191,7 +191,8 @@ void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
   // Filling-in missing mates by jumping around the BAM.
   cerr << "\t[Filling in mates]" << endl;
   if ((*bam_file).format() == BamFile::kBamFile) {
-    FillinMates(*bam_file, align_pairs);
+    FillinMates(*bam_file, align_pairs, repeat_spec.units_shifts, 0.9,
+                ontarget_frag_names);
   } else {
     cerr << "\t[Skipping filling in mates]" << endl;
   }

@@ -22,10 +22,10 @@
 
 #pragma once
 
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
-#include <string>
 #include <vector>
 
 #include "common/genomic_region.h"
@@ -46,31 +46,33 @@ enum WhatToCache { kCacheAll, kCacheIrr };
 
 // Extract alignment pairs from a specified region.
 void CacheReadsFromRegion(
-    const Region& region, const WhatToCache whatToCache,
-    const std::vector<std::vector<std::string>>& units_shifts,
-    double min_wp_score, BamFile* bam_file, AlignPairs* align_pairs);
+    const Region &region, const WhatToCache whatToCache,
+    const std::vector<std::vector<std::string>> &units_shifts,
+    double min_wp_score, BamFile *bam_file, AlignPairs *align_pairs);
 
 void CountAnchoredIrrs(
-    const BamFile& bam_file, const Parameters& parameters,
-    const Region& target_neighborhood, const RepeatSpec& repeat_spec,
-    const std::unordered_set<std::string>& ontarget_frag_names,
-    AlignPairs& align_pairs, int& num_anchored_irrs,
-    const std::vector<std::vector<std::string>>& units_shifts,
-    std::vector<RepeatAlign>* anchored_irrs);
+    const BamFile &bam_file, const Parameters &parameters,
+    const Region &target_neighborhood, const RepeatSpec &repeat_spec,
+    const std::unordered_set<std::string> &ontarget_frag_names,
+    AlignPairs &align_pairs, int &num_anchored_irrs,
+    const std::vector<std::vector<std::string>> &units_shifts,
+    std::vector<RepeatAlign> *anchored_irrs);
 
-void FillinMates(BamFile& bam_file, AlignPairs& align_pairs);
+void FillinMates(BamFile &bam_file, AlignPairs &align_pairs,
+                 const std::vector<std::vector<std::string>> &units_shifts,
+                 double min_wp_score,
+                 const std::unordered_set<std::string> &ontarget_frag_names);
 
 // Count the number of in-repeat reads stored in an AlignPairs object.
 // A fragment is in-repeat if both of the reads fuzzy match to the repeat
 // sequence.
 bool CountUnalignedIrrs(
-    BamFile& bam_file, const Parameters& parameters, int& numInRepeatReads,
-    const std::vector<std::vector<std::string>>& units_shifts,
-    std::vector<RepeatAlign>* irr_rep_aligns);
+    BamFile &bam_file, const Parameters &parameters, int &numInRepeatReads,
+    const std::vector<std::vector<std::string>> &units_shifts,
+    std::vector<RepeatAlign> *irr_rep_aligns);
 
-int CountAlignedIrr(
-    const BamFile& bam_file, const Parameters& parameters,
-    const AlignPairs& align_pairs,
-    std::map<std::string, int>& num_irrs_per_offtarget_region,
-    const std::vector<std::vector<std::string>>& units_shifts,
-    std::vector<RepeatAlign>* irr_rep_aligns);
+int CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
+                    const AlignPairs &align_pairs,
+                    std::map<std::string, int> &num_irrs_per_offtarget_region,
+                    const std::vector<std::vector<std::string>> &units_shifts,
+                    std::vector<RepeatAlign> *irr_rep_aligns);
