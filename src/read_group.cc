@@ -150,9 +150,9 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
       }
 
-      if (0.7 > flank_wp || flank_wp > 1.0) {
-        cerr << "[WARNING: flank_wp = " << flank_wp << "]" << endl;
-      }
+      //if (0.7 > flank_wp || flank_wp > 1.0) {
+      //  cerr << "[WARNING: flank_wp = " << flank_wp << "]" << endl;
+      //}
 
       piece_wp_score /= piece_bases.length();
 
@@ -163,8 +163,8 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
           longest_flanking = rep_align.size;
         }
       } else {
-        cerr << "\t[Discarding flanking read " << rep_align.read.name << " "
-             << rep_align.read.bases << "]" << endl;
+        //cerr << "\t[Discarding flanking read " << rep_align.read.name << " "
+        //     << rep_align.read.bases << "]" << endl;
       }
     } else {
       good_flanking_repaligns.push_back(rep_align);
@@ -185,9 +185,9 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
     }
     *flanking_repaligns = short_aligns;
 
-    cerr << "\t[Found " << num_reads_from_unseen_allele
-         << " flanking reads longer with long repeat]" << endl;
-    cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
+    //cerr << "\t[Found " << num_reads_from_unseen_allele
+    //     << " flanking reads longer with long repeat]" << endl;
+    //cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
 
     RepeatReadGroup read_group;
     read_group.read_type = ReadType::kFlanking;
