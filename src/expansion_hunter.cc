@@ -38,6 +38,7 @@
 
 #include "common/parameters.h"
 #include "common/ref_genome.h"
+#include "common/timestamp.h"
 #include "genotyping/repeat_genotyper.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
@@ -177,8 +178,8 @@ void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
     ontarget_frag_names.insert(name);
   }
 
-  cerr << "\t[Found " << ontarget_frag_names.size() << " reads in target locus]"
-       << endl;
+  cerr << TimeStamp() << ",\t[Found " << ontarget_frag_names.size()
+       << " reads in target locus]" << endl;
 
   // Cache aligned off-target reads.
   for (const Region &confusion_region : repeat_spec.offtarget_regions) {
@@ -189,13 +190,14 @@ void CacheAligns(BamFile *bam_file, const RepeatSpec &repeat_spec,
   }
 
   // Filling-in missing mates by jumping around the BAM.
-  cerr << "\t[Filling in mates]" << endl;
+  cerr << TimeStamp() << ",\t[Filling in mates]" << endl;
   if ((*bam_file).format() == BamFile::kBamFile) {
-    FillinMates(*bam_file, align_pairs);
+    FillinMates(*bam_file, align_pairs, repeat_spec.units_shifts, 0.9,
+                ontarget_frag_names);
   } else {
-    cerr << "\t[Skipping filling in mates]" << endl;
+    cerr << TimeStamp() << ",\t[Skipping filling in mates]" << endl;
   }
-  cerr << "\t[Done filling in mates]" << endl;
+  cerr << TimeStamp() << ",\t[Done filling in mates]" << endl;
 }
 
 bool IsFlannkingGroup(const RepeatReadGroup &read_group) {
@@ -218,9 +220,10 @@ bool FindLongRepeats(const Parameters &parameters,
                     region_findings.num_anchored_irrs, repeat_spec.units_shifts,
                     &irr_rep_aligns);
 
-  cerr << "\t[Found " << region_findings.num_anchored_irrs << " anchored IRRs]"
-       << endl
-       << "\t[Cached " << align_pairs.size() << " reads]" << endl;
+  cerr << TimeStamp() << ",\t[Found " << region_findings.num_anchored_irrs
+       << " anchored IRRs]" << endl
+       << TimeStamp() << ",\t[Cached " << align_pairs.size() << " reads]"
+       << endl;
 
   // Stores the total IRR count.
   region_findings.num_irrs = region_findings.num_anchored_irrs;
@@ -228,7 +231,7 @@ bool FindLongRepeats(const Parameters &parameters,
   // Look for IRR pairs only if anchored IRRs are found.
   if (region_findings.num_anchored_irrs) {
     if (!repeat_spec.is_common_unit()) {
-      cerr << "\t[Counting aligned IRR pairs]" << endl;
+      cerr << TimeStamp() << ",\t[Counting aligned IRR pairs]" << endl;
       map<string, int> numIrrConfRegion;
       region_findings.num_irrs +=
           CountAlignedIrr(bam_file, parameters, align_pairs, numIrrConfRegion,
@@ -245,13 +248,13 @@ bool FindLongRepeats(const Parameters &parameters,
       region_findings.num_unaligned_irrs = 0;
 
       if (!parameters.skip_unaligned()) {
-        cerr << "\t[Counting unaligned IRRs]" << endl;
+        cerr << TimeStamp() << ",\t[Counting unaligned IRRs]" << endl;
         CountUnalignedIrrs(bam_file, parameters,
                            region_findings.num_unaligned_irrs,
                            repeat_spec.units_shifts, &irr_rep_aligns);
         region_findings.num_irrs += region_findings.num_unaligned_irrs;
       } else {
-        cerr << "\t[Skipping unaligned IRRs]" << endl;
+        cerr << TimeStamp() << ",\t[Skipping unaligned IRRs]" << endl;
       }
     }
 
@@ -318,12 +321,12 @@ void EstimateRepeatSizes(const Parameters &parameters,
         parameters.sex() == Sex::kFemale && (chrom == "chrY" || chrom == "Y");
 
     if (is_female_chrom_y) {
-      cerr << "[Skipping " << repeat_header << " because the sample is female]"
-           << endl;
+      cerr << TimeStamp() << ",[Skipping " << repeat_header
+           << " because the sample is female]" << endl;
       continue;
     }
 
-    cerr << "[Analyzing " << repeat_header << "]" << endl;
+    cerr << TimeStamp() << ",[Analyzing " << repeat_header << "]" << endl;
 
     const bool is_sex_chrom =
         chrom == "chrX" || chrom == "X" || chrom == "chrY" || chrom == "Y";
@@ -338,22 +341,23 @@ void EstimateRepeatSizes(const Parameters &parameters,
     region_findings.offtarget_irr_counts =
         vector<int>(repeat_spec.offtarget_regions.size(), 0);
 
-    cerr << "\t[Caching reads]" << endl;
+    cerr << TimeStamp() << ",\t[Caching reads]" << endl;
     AlignPairs align_pairs;
     unordered_set<string> ontarget_frag_names;
     CacheAligns(&(*bam_file), repeat_spec, align_pairs, ontarget_frag_names,
                 parameters.region_extension_len());
     if (align_pairs.empty()) {
-      cerr << "\t[Found no on-target or off-target reads]" << endl;
+      cerr << TimeStamp() << ",\t[Found no on-target or off-target reads]"
+           << endl;
       continue;
     }
 
-    cerr << "\t[Estimating short repeat sizes]" << endl;
+    cerr << TimeStamp() << ",\t[Estimating short repeat sizes]" << endl;
     FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs,
                      region_findings.read_groups,
                      &region_findings.flanking_repaligns);
 
-    cerr << "\t[Estimating long repeat sizes]" << endl;
+    cerr << TimeStamp() << ",\t[Estimating long repeat sizes]" << endl;
     region_findings.num_anchored_irrs = 0;
     region_findings.num_unaligned_irrs = 0;
     region_findings.num_irrs = 0;
@@ -375,8 +379,6 @@ void EstimateRepeatSizes(const Parameters &parameters,
     vector<RepeatAllele> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
     for (const auto &read_group : region_findings.read_groups) {
-      cerr << kReadTypeToString.at(read_group.read_type) << endl;
-
       if (read_group.read_type == ReadType::kSpanning) {
         spanning_size_counts[read_group.size] +=
             read_group.num_supporting_reads;
@@ -406,24 +408,27 @@ void EstimateRepeatSizes(const Parameters &parameters,
       }
     }
 
-    cerr << "Flanking:" << endl;
+    cerr << TimeStamp() << ",\t[Flanking:";
     for (const auto &kv : flanking_size_counts) {
-      cerr << "\t" << kv.first << " -- " << kv.second << endl;
+      cerr << " (" << kv.first << ", " << kv.second << ")";
     }
+    cerr << "]" << endl;
 
-    cerr << "Spanning:" << endl;
+    cerr << TimeStamp() << ",\t[Spanning:";
     for (const auto &kv : spanning_size_counts) {
-      cerr << "\t" << kv.first << " -- " << kv.second << endl;
+      cerr << " (" << kv.first << ", " << kv.second << ")";
     }
+    cerr << "]" << endl;
 
-    cerr << "Haplotype candidates: ";
+    cerr << TimeStamp() << ",\t[Haplotype candidates:";
     for (const auto &candiate : haplotype_candidates) {
-      cerr << candiate.size_ << " ";
+      cerr << " " << candiate.size_;
     }
-    cerr << endl;
+    cerr << "]" << endl;
 
     if (haplotype_candidates.empty()) {
-      cerr << "\t[Skipping this region because no informative reads were found]"
+      cerr << TimeStamp()
+           << ",\t[Skipping this region because no informative reads were found]"
            << endl;
       continue;
     }
@@ -454,7 +459,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
             CompareRegionFindings);
   WriteJson(parameters, repeat_specs, sample_findings, outputs->json());
   WriteVcf(parameters, repeat_specs, sample_findings, outputs->vcf());
-  cerr << "[All done]" << endl;
+  cerr << TimeStamp() << ",[All done]" << endl;
 }
 
 int main(int argc, char *argv[]) {
@@ -466,7 +471,9 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    Outputs outputs(parameters.vcf_path(), parameters.json_path(),
+    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name() << "]" << endl;
+
+         Outputs outputs(parameters.vcf_path(), parameters.json_path(),
                     parameters.log_path());
 
     map<string, RepeatSpec> repeat_specs;
@@ -484,17 +491,15 @@ int main(int argc, char *argv[]) {
     BamFile bam_file;
     bam_file.Init(parameters.bam_path(), parameters.genome_path());
 
-    cerr << "[Sample " << parameters.sample_name() << "]" << endl;
-
     if (!parameters.depth_is_set()) {
-      cerr << "[Calculating depth]" << endl;
+      cerr << TimeStamp() << ",[Calculating depth]" << endl;
       const double depth =
           bam_file.CalcMedianDepth(parameters, parameters.read_len());
       parameters.set_depth(depth);
     }
 
-    cerr << "[Read length: " << parameters.read_len() << "]" << endl;
-    cerr << "[Depth: " << parameters.depth() << "]" << endl;
+    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]" << endl;
+    cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
 
     if (parameters.depth() < parameters.kSmallestPossibleDepth) {
       throw std::runtime_error("Estimated depth of " +

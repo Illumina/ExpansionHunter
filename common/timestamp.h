@@ -23,5 +23,6 @@
 #pragma once
 
 #include <string>
+#include <chrono>
 
-const std::string kProgramVersion = "Expansion Hunter v2.5.2";
+std::string TimeStamp();

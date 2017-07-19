@@ -41,6 +41,7 @@
 
 #include "common/parameters.h"
 #include "common/ref_genome.h"
+#include "common/timestamp.h"
 #include "include/bam_index.h"
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
@@ -94,7 +95,14 @@ void BamFile::Init(const string &path, const string &reference) {
     }
   }
 
-  cerr << "[Input format: " << format_ << "]" << endl;
+  string input_format = "Unknown";
+  if (format_ == kBamFile) {
+    input_format = "BAM";
+  } else if (format_ == kCramFile) {
+    input_format = "CRAM";
+  }
+
+  cerr << TimeStamp() << ",[Input format: " << input_format << "]" << endl;
 
   // Read hdr and set up ref_vec_
   hts_bam_hdr_ptr_ = sam_hdr_read(hts_file_ptr_);
@@ -412,7 +420,7 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
     }
 
     if (skip_cur_chrom) {
-      cerr << "[Skipping " << chrom_name << " during depth calculation]"
+      cerr << TimeStamp() << ",[Skipping " << chrom_name << " during depth calculation]"
            << endl;
       continue;
     }

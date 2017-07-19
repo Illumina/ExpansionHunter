@@ -26,6 +26,7 @@
 #include <ostream>
 #include <string>
 
+
 enum class ReadType { kSpanning, kFlanking, kInrepeat, kOther };
 const std::map<ReadType, std::string> kReadTypeToString = {
     {ReadType::kInrepeat, "INREPEAT"},

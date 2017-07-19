@@ -23,7 +23,7 @@
 #include "genotyping/short_repeat_genotyper.h"
 
 #include <algorithm>
-#import <cassert>
+#include <cassert>
 #include <cctype>
 #include <cmath>
 #include <iostream>
