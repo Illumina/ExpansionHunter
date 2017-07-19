@@ -60,12 +60,12 @@ using std::endl;
 using std::pair;
 using std::array;
 
-std::string TimeStamp() {
-  std::time_t now =
-      std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&now), "%FT%T");
-  return ss.str();
+string TimeStamp() {
+  std::time_t now = time(0);
+  const size_t timestamp_size = 80;
+  char timestamp_buf[timestamp_size];
+  std::strftime(timestamp_buf, timestamp_size, "%FT%T", std::localtime(&now));
+  return string(timestamp_buf);
 }
 
 // Returns the length of the first read in a BAM file.
