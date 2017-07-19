@@ -41,6 +41,7 @@
 
 #include "common/parameters.h"
 #include "common/ref_genome.h"
+#include "common/timestamp.h"
 #include "include/bam_index.h"
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
@@ -412,7 +413,7 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
     }
 
     if (skip_cur_chrom) {
-      cerr << "[Skipping " << chrom_name << " during depth calculation]"
+      cerr << TimeStamp() << ",[Skipping " << chrom_name << " during depth calculation]"
            << endl;
       continue;
     }

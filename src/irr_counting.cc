@@ -22,25 +22,25 @@
 
 #include "include/irr_counting.h"
 
-#include <string>
-using std::string;
-#include <iostream>
-using std::endl;
-using std::cerr;
-#include <unordered_set>
-using std::unordered_set;
-#include <vector>
-using std::vector;
-#include <map>
-using std::map;
 #include <algorithm>
-using std::array;
 #include <cstdlib>
+#include <iostream>
+#include <map>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
+#include "common/timestamp.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
 
-/*****************************************************************************/
+using std::string;
+using std::endl;
+using std::cerr;
+using std::unordered_set;
+using std::vector;
+using std::map;
+using std::array;
 
 // Check if two alignments are same.
 static bool SameAlign(Align &al1, Align &al2) {
@@ -141,13 +141,13 @@ bool CheckAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
       mate_align.GetReadRegion(mateRegion, bam_file.ref_vec());
 
       if (!mateRegion.Overlaps(target_neighborhood)) {
-        cerr << "Discarding IRR " << read_align.name << " read"
-             << (read_align.IsFirstMate() ? "1" : "2") << read_align.pos
-             << " MAPQ " << read_align.mapq << ") because anchoring mate "
-             << mate_align.name << " read"
+        cerr << TimeStamp() << ",\t[Discarding IRR " << read_align.name
+             << " read" << (read_align.IsFirstMate() ? "1" : "2")
+             << read_align.pos << " MAPQ " << read_align.mapq
+             << ") because anchoring mate " << mate_align.name << " read"
              << (mate_align.IsFirstMate() ? "1" : "2") << mate_align.pos
              << " MAPQ " << mate_align.mapq << ") not on target ("
-             << target_neighborhood << ")" << endl;
+             << target_neighborhood << ")]" << endl;
         return false;
       }
     }

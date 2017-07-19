@@ -75,15 +75,15 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
     }
   }
 
-  cerr << "\t[Longest spanning allele has size " << longest_spanning << "]"
-       << endl;
+  //cerr << "\t[Longest spanning allele has size " << longest_spanning << "]"
+  //     << endl;
 
   bool good_repeat_exists = false;
   int num_reads_from_unseen_allele = 0;
   int longest_flanking = 0;
 
-  cerr << "\t[There are " << flanking_repaligns->size() << " flanking reads]"
-       << endl;
+  //cerr << "\t[There are " << flanking_repaligns->size() << " flanking reads]"
+  //     << endl;
 
   vector<RepeatAlign> good_flanking_repaligns;
 
@@ -374,14 +374,14 @@ void DistributeFlankingReads(const Parameters &parameters,
               right_flank_ref_units, bases_suffix.begin(), bases_suffix.end(),
               quals_suffix.begin(), quals_suffix.end(), parameters.min_baseq());
           if (right_flank_score / bases_suffix.length() >= kWpCutoff) {
-            cerr << "[Reasign flanking to spanning]" << endl;
-            Plot plot;
-            const string cased_bases =
-                LowerLowqualBases(bases, quals, parameters.min_baseq());
-            PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
-                              rep_align.left_flank_len, bases_suffix.length());
-            PlotToStream(cerr, plot);
-            cerr << endl;
+            // cerr << "[Reasign flanking to spanning]" << endl;
+            // Plot plot;
+            // const string cased_bases =
+            //     LowerLowqualBases(bases, quals, parameters.min_baseq());
+            // PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
+            //                   rep_align.left_flank_len, bases_suffix.length());
+            // PlotToStream(cerr, plot);
+            // cerr << endl;
 
             found_align = true;
             rep_align.right_flank_len = bases_suffix.length();

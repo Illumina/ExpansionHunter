@@ -27,7 +27,6 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
-#include <chrono>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -39,6 +38,7 @@
 
 #include "common/parameters.h"
 #include "common/ref_genome.h"
+#include "common/timestamp.h"
 #include "genotyping/repeat_genotyper.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
@@ -59,14 +59,6 @@ using std::cerr;
 using std::endl;
 using std::pair;
 using std::array;
-
-string TimeStamp() {
-  std::time_t now = time(0);
-  const size_t timestamp_size = 80;
-  char timestamp_buf[timestamp_size];
-  std::strftime(timestamp_buf, timestamp_size, "%FT%T", std::localtime(&now));
-  return string(timestamp_buf);
-}
 
 // Returns the length of the first read in a BAM file.
 size_t CalcReadLen(const string &bam_path) {
