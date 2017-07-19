@@ -92,7 +92,8 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
           frag[0] = align;
         } else {
           if (!SameAlign(frag[0], align)) {
-            cerr << "[WARNING: There are multiple first mates named \""
+            cerr << TimeStamp()
+                 << ",\t[WARNING: There are multiple first mates named \""
                  << frag[0].name << "\"]" << endl;
           }
         }
@@ -101,7 +102,8 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
           frag[1] = align;
         } else {
           if (!SameAlign(frag[1], align)) {
-            cerr << "[WARNING: There are multiple second mates named \""
+            cerr << TimeStamp()
+                 << ",\t[WARNING: There are multiple second mates named \""
                  << frag[1].name << "\"]" << endl;
           }
         }
@@ -236,11 +238,11 @@ bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
   AlignPairs align_pairs;
   Region unalignedRegion("*", 0, 0, "");
 
-  cerr << "\t[Caching unaligned IRRs]" << endl;
+  cerr << TimeStamp() << ",\t[Caching unaligned IRRs]" << endl;
   CacheReadsFromRegion(unalignedRegion, kCacheIrr, units_shifts,
                        parameters.min_wp(), &bam_file, &align_pairs);
 
-  cerr << "\t[Done; cached " << align_pairs.size()
+  cerr << TimeStamp() << ",\t[Done; cached " << align_pairs.size()
        << " unaligned fragments containing at least one IRR read]" << endl;
 
   for (AlignPairs::const_iterator it = align_pairs.begin();
