@@ -403,14 +403,14 @@ void DistributeFlankingReads(const Parameters &parameters,
               quals_prefix.begin(), quals_prefix.end(), parameters.min_baseq());
 
           if (left_flank_score / bases_prefix.length() >= kWpCutoff) {
-            cerr << "[Reasign flanking to spanning]" << endl;
-            Plot plot;
-            const string cased_bases =
-                LowerLowqualBases(bases, quals, parameters.min_baseq());
-            PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
-                              bases_prefix.length(), rep_align.right_flank_len);
-            PlotToStream(cerr, plot);
-            cerr << endl;
+            //cerr << "[Reasign flanking to spanning]" << endl;
+            //Plot plot;
+            //const string cased_bases =
+            //    LowerLowqualBases(bases, quals, parameters.min_baseq());
+            //PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
+            //                  bases_prefix.length(), rep_align.right_flank_len);
+            //PlotToStream(cerr, plot);
+            //cerr << endl;
 
             found_align = true;
             rep_align.left_flank_len = bases_prefix.length();

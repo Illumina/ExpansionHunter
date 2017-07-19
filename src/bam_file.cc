@@ -95,7 +95,14 @@ void BamFile::Init(const string &path, const string &reference) {
     }
   }
 
-  cerr << "[Input format: " << format_ << "]" << endl;
+  string input_format = "Unknown";
+  if (format_ == kBamFile) {
+    input_format = "BAM";
+  } else if (format_ == kCramFile) {
+    input_format = "CRAM";
+  }
+
+  cerr << TimeStamp() << ",[Input format: " << input_format << "]" << endl;
 
   // Read hdr and set up ref_vec_
   hts_bam_hdr_ptr_ = sam_hdr_read(hts_file_ptr_);
