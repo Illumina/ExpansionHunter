@@ -49,6 +49,7 @@
 #include "include/version.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
+#include "stats/counts.h"
 
 using std::unordered_set;
 using std::map;
@@ -96,6 +97,40 @@ size_t CalcReadLen(const string &bam_path) {
   sam_close(file_ptr);
 
   return read_len;
+}
+
+void TestFlankingReads(const Parameters &parameters,
+                       const vector<RepeatAlign> &flanking_repaligns) {
+  int32_t num_left_flanking = 0;
+  int32_t num_right_flanking = 0;
+  for (const RepeatAlign &repalign : flanking_repaligns) {
+    if (repalign.left_flank_len != 0) {
+      assert(repalign.right_flank_len == 0);
+      ++num_left_flanking;
+    } else {
+      assert(repalign.left_flank_len == 0 && repalign.right_flank_len != 0);
+      ++num_right_flanking;
+    }
+  }
+
+  const int32_t read_length = parameters.read_len();
+  const double depth = parameters.depth();
+
+  const double start_probability = depth / read_length;
+  const int32_t num_possible_starts = read_length - 2;
+  const double expected_num_flanking_reads =
+      start_probability * num_possible_starts;
+
+  assert(num_left_flanking <= num_possible_starts);
+  assert(num_right_flanking <= num_possible_starts);
+
+  ExpectedCountTest count_test((int32_t)expected_num_flanking_reads);
+
+  cerr << "\t[Flanking reads: " << flanking_repaligns.size() << "]" << endl;
+  cerr << "\t[Left-flanking reads: " << num_left_flanking
+       << " p-value: " << count_test.Test(num_left_flanking) << "]" << endl;
+  cerr << "\t[Right-flanking reads: " << num_right_flanking
+       << " p-value: " << count_test.Test(num_right_flanking) << "]" << endl;
 }
 
 // Search for reads spanning the entire repeat sequence.
@@ -445,6 +480,8 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     // End genotyping
     sample_findings.push_back(region_findings);
+
+    TestFlankingReads(parameters, region_findings.flanking_repaligns);
 
     OutputRepeatAligns(parameters, repeat_spec, region_findings.read_groups,
                        region_findings.flanking_repaligns, &(*outputs).log());
