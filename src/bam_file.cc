@@ -24,16 +24,17 @@
 
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/tokenizer.hpp>
 
-#include <string>
-#include <iostream>
-#include <vector>
 #include <algorithm>
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 #include "htslib/bgzf.h"
 #include "htslib/hts.h"
@@ -367,6 +368,22 @@ const size_t CountValidBases(const string &bases) {
   return valid_base_count;
 }
 
+bool IsAutosome(string chrom_name) {
+  static std::unordered_set<string> autosome_names = {
+      "chr1",  "chr2",  "chr3",  "chr4",  "chr5",  "chr6",  "chr7",  "chr8",
+      "chr9",  "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16",
+      "chr17", "chr18", "chr19", "chr20", "chr21", "chr22", "1",     "2",
+      "3",     "4",     "5",     "6",     "7",     "8",     "9",     "10",
+      "11",    "12",    "13",    "14",    "15",    "16",    "17",    "18",
+      "19",    "20",    "21",    "22"};
+
+  auto search = autosome_names.find(chrom_name);
+  if (search != autosome_names.end()) {
+    return true;
+  }
+  return false;
+}
+
 double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
   if (read_len == 0) {
     throw std::logic_error("Read length must be non-zero: " +
@@ -407,23 +424,12 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
   for (int chrom_ind = 0; chrom_ind < chrom_count; ++chrom_ind) {
     const string &chrom_name = chrom_names[chrom_ind];
 
-    bool skip_cur_chrom = false;
-    if (chrom_name == "chrX" || chrom_name == "X" || chrom_name == "chrY" ||
-        chrom_name == "Y" || chrom_name == "chrM" || chrom_name == "M" ||
-        chrom_name == "*" || chrom_name == "MT") {
-      skip_cur_chrom = true;
-    }
-
-    int gl_pos = chrom_name.find("GL000");
-    if (gl_pos != std::string::npos) {
-      skip_cur_chrom = true;
-    }
-
-    if (skip_cur_chrom) {
-      cerr << TimeStamp() << ",[Skipping " << chrom_name << " during depth calculation]"
-           << endl;
+    if (!IsAutosome(chrom_name)) {
       continue;
     }
+
+    cerr << TimeStamp() << ",[Using " << chrom_name << " to calculate depth]"
+         << endl;
 
     ref_genome.ExtractSeq(chrom_name, &chrom_bases);
 
