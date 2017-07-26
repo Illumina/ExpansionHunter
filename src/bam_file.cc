@@ -205,14 +205,13 @@ bool BamFile::JumpToUnaligned() {
     const bool hasUnalignedPairs(hts_idx_get_n_no_coor(hts_idx_ptr_) > 0);
 
     if (!hasUnalignedPairs) {
-      cerr << "[WARNING]: JumpToUnaligned : no unaligned pairs" << endl;
       return false;
     }
 
     hts_itr_ptr_ = sam_itr_querys(hts_idx_ptr_, hts_bam_hdr_ptr_, "*");
 
     if (hts_itr_ptr_ == 0) {
-      throw std::runtime_error("[ERROR] : Failed to jump to unaligned!");
+      throw std::runtime_error("Failed to extract an unaligned read");
     }
 
     jump_to_unaligned_ = true;
