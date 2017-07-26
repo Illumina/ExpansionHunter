@@ -367,7 +367,7 @@ const size_t CountValidBases(const string &bases) {
   return valid_base_count;
 }
 
-bool IsAutosome(string chrom_name) {
+static bool IsAutosome(const string &chrom_name) {
   static std::unordered_set<string> autosome_names = {
       "chr1",  "chr2",  "chr3",  "chr4",  "chr5",  "chr6",  "chr7",  "chr8",
       "chr9",  "chr10", "chr11", "chr12", "chr13", "chr14", "chr15", "chr16",
@@ -437,6 +437,11 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
         CountValidBases(chrom_bases);
 
     chrom_ind_depths.push_back(ChromIndDepth(chrom_ind, read_depth));
+  }
+
+  if (chrom_ind_depths.empty()) {
+    throw std::runtime_error("Error: No contigs named chr1-chr22 or 1-22 "
+                             "found; consider setting the depth manually");
   }
 
   sort(chrom_ind_depths.begin(), chrom_ind_depths.end(),
