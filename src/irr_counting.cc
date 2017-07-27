@@ -56,7 +56,8 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
   // is "*" then jump to unaligned reads.
   if (region.chrom() == "*") {
     if (!(*bam_file).JumpToUnaligned()) {
-      throw std::runtime_error("Failed to jump to unaligned pairs.");
+      cerr << TimeStamp() << ",\t[Warning: there appears to be no aligned reads]" << endl;
+      return;
     }
   } else {
     if (!(*bam_file).SetRegionToRange(region)) {
