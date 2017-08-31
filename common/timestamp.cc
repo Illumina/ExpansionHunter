@@ -1,9 +1,3 @@
-//
-// Expansion Hunter
-// Copyright (c) 2016 Illumina, Inc.
-//
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Mitch Bekritsky <mbekritsky@illumina.com>, Richard Shaw
 // Concept: Michael Eberle <meberle@illumina.com>
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,8 +14,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#pragma once
+#include "common/timestamp.h"
 
-#include <string>
-
-const std::string kProgramVersion = "Expansion Hunter v2.5.3";
+std::string TimeStamp() {
+  std::time_t now = time(0);
+  const size_t timestamp_size = 80;
+  char timestamp_buf[timestamp_size];
+  std::strftime(timestamp_buf, timestamp_size, "%FT%T", std::localtime(&now));
+  return std::string(timestamp_buf);
+}

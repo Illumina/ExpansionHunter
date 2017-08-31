@@ -41,6 +41,7 @@
 
 #include "common/ref_genome.h"
 #include "common/repeat_spec.h"
+#include "common/timestamp.h"
 #include "purity/purity.h"
 
 using std::string;
@@ -66,7 +67,6 @@ const char RepeatSpec::LeftFlankBase() const {
 
 RepeatSpec::RepeatSpec(const nlohmann::json &spec_json) {
   repeat_id = spec_json["RepeatId"];
-
   const string unit = spec_json["RepeatUnit"];
   const boost::char_separator<char> slash_separator("/");
   Tokenizer tokenizer(unit, slash_separator);
@@ -168,7 +168,7 @@ bool LoadRepeatSpecs(const string &specs_path, const string &genome_path,
       boost::smatch what;
 
       if (boost::regex_match(fname, what, regex_json)) {
-        cerr << "[Loading " << fname << "]" << endl;
+        cerr << TimeStamp() << ",[Loading " << fname << "]" << endl;
 
         const string json_path = itr->path().string();
         std::ifstream istrm(json_path.c_str());
