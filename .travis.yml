@@ -1,9 +1,23 @@
 language: cpp
+
+addons:
+  apt:
+    sources:
+      - boost-latest
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-4.9
+      - libboost1.55-all-dev
+
+
 compiler:
- - clang
- - gcc
+  - gcc
+
+install:
+  - export CXX="g++-4.9"
+
 script:
- - mkdir build
- - cd build
- - cmake .. && make
- - make test
+  - mkdir build
+  - cd build
+  - cmake .. && make -j4
+  - make test
