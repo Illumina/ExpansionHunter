@@ -13,11 +13,9 @@ addons:
 compiler:
   - gcc
 
-install:
-  - export CXX="g++-4.9"
-
 script:
   - mkdir build
   - cd build
-  - cmake .. && make -j4
+  - cmake -DCMAKE_CXX_COMPILER=`which g++-4.9` ..
+  - make -j4
   - make test
