@@ -9,6 +9,9 @@ addons:
       - gcc-4.9
       - libboost1.55-all-dev
 
+env:
+  - CC=gcc-4.9
+  - CXX=g++-3.3
 
 compiler:
   - gcc
@@ -16,6 +19,6 @@ compiler:
 script:
   - mkdir build
   - cd build
-  - cmake -DCMAKE_CXX_COMPILER=`which g++-4.9` ..
+  - cmake ..
   - make -j4
   - make test
