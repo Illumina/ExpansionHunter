@@ -6,17 +6,11 @@ addons:
       - boost-latest
       - ubuntu-toolchain-r-test
     packages:
-      - gcc-4.9
       - g++-4.9
       - libboost1.55-all-dev
 
 env:
-  global:
-    - CC=gcc-4.9
-    - CXX=g++-4.9
-
-compiler:
-  - gcc
+  - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
 script:
   - mkdir build
