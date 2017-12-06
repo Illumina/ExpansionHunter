@@ -9,13 +9,9 @@ addons:
       - g++-4.9
       - libboost1.55-all-dev
 
-env:
-  - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
-
-before_install:
-    - eval "${MATRIX_EVAL}"
-
 script:
+  - export CC="gcc-4.9"
+  - export CXX="g++-4.9"
   - mkdir build
   - cd build
   - cmake ..
