@@ -9,9 +9,9 @@ addons:
       - gcc-4.9
       - libboost1.55-all-dev
 
-env:
-  - CC=gcc-4.9
-  - CXX=g++-3.3
+install:
+  - export CC="gcc-4.9"
+  - export CXX="g++-4.9"
 
 compiler:
   - gcc
