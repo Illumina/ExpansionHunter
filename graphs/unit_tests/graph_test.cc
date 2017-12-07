@@ -20,6 +20,8 @@
 
 #include "graphs/graph.h"
 
+#include <memory>
+
 #include "gtest/gtest.h"
 
 using std::set;
