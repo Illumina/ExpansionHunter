@@ -24,5 +24,18 @@
 
 #include "graphs/graph.h"
 
-Graph makeDeletionGraph(const std::string& left_flank, const std::string& del,
+Graph makeDeletionGraph(const std::string& left_flank,
+                        const std::string& deletion,
                         const std::string& right_flank);
+
+Graph makeSwapGraph(const std::string& left_flank, const std::string& deletion,
+                    const std::string& insertion,
+                    const std::string& right_flank);
+
+Graph makeDoubleSwapGraph(const std::string& left_flank,
+                          const std::string& deletion1,
+                          const std::string& insertion1,
+                          const std::string& middle,
+                          const std::string& deletion2,
+                          const std::string& insertion2,
+                          const std::string& right_flank);

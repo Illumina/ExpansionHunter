@@ -26,15 +26,64 @@ using std::string;
 
 TEST(DeletionGraph, IsCreatedFromNodeSequences) {
   const string left_flank = "AATT";
-  const string del = "CCCC";
+  const string deletion = "CCCC";
   const string right_flank = "GGGCC";
-  const Graph graph = makeDeletionGraph(left_flank, del, right_flank);
+  const Graph graph = makeDeletionGraph(left_flank, deletion, right_flank);
 
   EXPECT_EQ(3, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));
-  EXPECT_EQ(del, graph.NodeSeq(1));
+  EXPECT_EQ(deletion, graph.NodeSeq(1));
   EXPECT_EQ(right_flank, graph.NodeSeq(2));
   EXPECT_TRUE(graph.HasEdge(0, 1));
   EXPECT_TRUE(graph.HasEdge(0, 2));
   EXPECT_TRUE(graph.HasEdge(1, 2));
+}
+
+TEST(SwapGraph, IsCreatedFromNodeSequences) {
+  const string left_flank = "AATT";
+  const string deletion = "CCCC";
+  const string insertion = "TTTT";
+  const string right_flank = "GGGCC";
+  const Graph graph =
+      makeSwapGraph(left_flank, deletion, insertion, right_flank);
+
+  EXPECT_EQ(4, graph.NumNodes());
+  EXPECT_EQ(left_flank, graph.NodeSeq(0));
+  EXPECT_EQ(deletion, graph.NodeSeq(1));
+  EXPECT_EQ(insertion, graph.NodeSeq(2));
+  EXPECT_EQ(right_flank, graph.NodeSeq(3));
+  EXPECT_TRUE(graph.HasEdge(0, 1));
+  EXPECT_TRUE(graph.HasEdge(0, 2));
+  EXPECT_TRUE(graph.HasEdge(1, 3));
+  EXPECT_TRUE(graph.HasEdge(2, 3));
+}
+
+TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
+  const string left_flank = "AATT";
+  const string deletion1 = "CCCC";
+  const string insertion1 = "TTTT";
+  const string middle = "CCCC";
+  const string deletion2 = "AAAA";
+  const string insertion2 = "GGGG";
+  const string right_flank = "GGGCC";
+  const Graph graph =
+      makeDoubleSwapGraph(left_flank, deletion1, insertion1, middle, deletion2,
+                          insertion2, right_flank);
+
+  EXPECT_EQ(7, graph.NumNodes());
+  EXPECT_EQ(left_flank, graph.NodeSeq(0));
+  EXPECT_EQ(deletion1, graph.NodeSeq(1));
+  EXPECT_EQ(insertion1, graph.NodeSeq(2));
+  EXPECT_EQ(middle, graph.NodeSeq(3));
+  EXPECT_EQ(deletion2, graph.NodeSeq(4));
+  EXPECT_EQ(insertion2, graph.NodeSeq(5));
+  EXPECT_EQ(right_flank, graph.NodeSeq(6));
+  EXPECT_TRUE(graph.HasEdge(0, 1));
+  EXPECT_TRUE(graph.HasEdge(0, 2));
+  EXPECT_TRUE(graph.HasEdge(1, 3));
+  EXPECT_TRUE(graph.HasEdge(2, 3));
+  EXPECT_TRUE(graph.HasEdge(3, 4));
+  EXPECT_TRUE(graph.HasEdge(3, 5));
+  EXPECT_TRUE(graph.HasEdge(4, 6));
+  EXPECT_TRUE(graph.HasEdge(5, 6));
 }
