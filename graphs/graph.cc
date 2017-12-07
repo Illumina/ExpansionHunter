@@ -26,6 +26,16 @@ using std::set;
 using std::string;
 using std::to_string;
 
+const string& Graph::NodeSeq(int32_t node_id) const {
+  AssertNodeExists(node_id);
+  return nodes_[node_id].seq;
+}
+
+void Graph::SetNodeSeq(int32_t node_id, const string& seq) {
+  AssertNodeExists(node_id);
+  nodes_[node_id].seq = seq;
+}
+
 void Graph::AddEdge(int32_t source_node_id, int32_t sink_node_id) {
   AssertNodeExists(source_node_id);
   AssertNodeExists(sink_node_id);

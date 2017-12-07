@@ -34,10 +34,12 @@ typedef std::vector<std::set<int32_t>> AdjacencyList;
 
 class Graph {
  public:
-  Graph(int32_t num_nodes = 0) { Init(num_nodes); }
+  explicit Graph(int32_t num_nodes = 0) { Init(num_nodes); }
   int32_t NumNodes() const { return nodes_.size(); }
   void AddEdge(int32_t source_node_id, int32_t sink_node_id);
   bool HasEdge(int32_t source_node_id, int32_t sink_node_id) const;
+  const std::string& NodeSeq(int32_t node_id) const;
+  void SetNodeSeq(int32_t node_id, const std::string& seq);
   const std::set<int32_t>& Successors(int32_t node_id) const {
     AssertNodeExists(node_id);
     return adjacency_list_[node_id];
