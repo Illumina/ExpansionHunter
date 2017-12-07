@@ -23,4 +23,4 @@ Method
 
 The detailed description of the method can be found here:
 
-Dolzhenko et al., [Detection of long repeat expansions from PCR-free whole-genome sequence data](http://biorxiv.org/content/early/2016/12/19/093831), BioRxiv 2017
+Dolzhenko et al., [Detection of long repeat expansions from PCR-free whole-genome sequence data](http://genome.cshlp.org/content/27/11/1895), Genome Research 2017
