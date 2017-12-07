@@ -37,13 +37,24 @@ class Graph {
   Graph(int32_t num_nodes) {
     nodes_.resize(num_nodes);
     adjacency_list_.resize(num_nodes);
+    reverse_adjacency_list_.resize(num_nodes);
   }
-  int32_t NumNodes() { return nodes_.size(); }
+  int32_t NumNodes() const { return nodes_.size(); }
   void AddEdge(int32_t source_node_id, int32_t sink_node_id);
-  bool HasEdge(int32_t source_node_id, int32_t sink_node_id);
+  bool HasEdge(int32_t source_node_id, int32_t sink_node_id) const;
+  const std::set<int32_t>& Successors(int32_t node_id) const {
+    AssertNodeExists(node_id);
+    return adjacency_list_[node_id];
+  }
+
+  const std::set<int32_t>& Predecessors(int32_t node_id) const {
+    AssertNodeExists(node_id);
+    return reverse_adjacency_list_[node_id];
+  }
 
  private:
-  void AssertNodeExists(int32_t node_id);
+  void AssertNodeExists(int32_t node_id) const;
   std::vector<Node> nodes_;
   AdjacencyList adjacency_list_;
+  AdjacencyList reverse_adjacency_list_;
 };

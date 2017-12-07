@@ -36,9 +36,10 @@ void Graph::AddEdge(int32_t source_node_id, int32_t sink_node_id) {
   }
 
   adjacency_list_[source_node_id].emplace(sink_node_id);
+  reverse_adjacency_list_[sink_node_id].emplace(source_node_id);
 }
 
-bool Graph::HasEdge(int32_t source_node_id, int32_t sink_node_id) {
+bool Graph::HasEdge(int32_t source_node_id, int32_t sink_node_id) const {
   AssertNodeExists(source_node_id);
   AssertNodeExists(sink_node_id);
 
@@ -46,7 +47,7 @@ bool Graph::HasEdge(int32_t source_node_id, int32_t sink_node_id) {
   return successors.find(sink_node_id) != successors.end();
 }
 
-void Graph::AssertNodeExists(int32_t node_id) {
+void Graph::AssertNodeExists(int32_t node_id) const {
   if (node_id < 0 || node_id >= nodes_.size()) {
     throw std::logic_error("Node " + to_string(node_id) + " does not exist");
   }
