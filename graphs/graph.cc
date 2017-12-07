@@ -52,3 +52,15 @@ void Graph::AssertNodeExists(int32_t node_id) const {
     throw std::logic_error("Node " + to_string(node_id) + " does not exist");
   }
 }
+
+void Graph::Init(int32_t num_nodes) {
+  nodes_.resize(num_nodes);
+  adjacency_list_.resize(num_nodes);
+  reverse_adjacency_list_.resize(num_nodes);
+}
+
+void Graph::ClearNodesAndEdges() {
+  nodes_.clear();
+  adjacency_list_.clear();
+  reverse_adjacency_list_.clear();
+}

@@ -34,11 +34,7 @@ typedef std::vector<std::set<int32_t>> AdjacencyList;
 
 class Graph {
  public:
-  Graph(int32_t num_nodes = 0) {
-    nodes_.resize(num_nodes);
-    adjacency_list_.resize(num_nodes);
-    reverse_adjacency_list_.resize(num_nodes);
-  }
+  Graph(int32_t num_nodes = 0) { Init(num_nodes); }
   int32_t NumNodes() const { return nodes_.size(); }
   void AddEdge(int32_t source_node_id, int32_t sink_node_id);
   bool HasEdge(int32_t source_node_id, int32_t sink_node_id) const;
@@ -53,17 +49,14 @@ class Graph {
   }
 
   void Reset(int32_t num_nodes) {
-    nodes_.clear();
-    adjacency_list_.clear();
-    reverse_adjacency_list_.clear();
-
-    nodes_.resize(num_nodes);
-    adjacency_list_.resize(num_nodes);
-    reverse_adjacency_list_.resize(num_nodes);
+    ClearNodesAndEdges();
+    Init(num_nodes);
   }
 
  private:
   void AssertNodeExists(int32_t node_id) const;
+  void Init(int32_t num_nodes);
+  void ClearNodesAndEdges();
   std::vector<Node> nodes_;
   AdjacencyList adjacency_list_;
   AdjacencyList reverse_adjacency_list_;
