@@ -52,14 +52,14 @@
 #include "rep_align/rep_align.h"
 #include "stats/counts.h"
 
-using std::unordered_set;
-using std::map;
-using std::vector;
-using std::string;
+using std::array;
 using std::cerr;
 using std::endl;
+using std::map;
 using std::pair;
-using std::array;
+using std::string;
+using std::unordered_set;
+using std::vector;
 
 // Returns the length of the first read in a BAM file.
 size_t CalcReadLen(const string &bam_path) {
@@ -420,14 +420,12 @@ void EstimateRepeatSizes(const Parameters &parameters,
         haplotype_candidates.push_back(
             RepeatAllele(read_group.size, read_group.num_supporting_reads,
                          ReadType::kSpanning));
-
       } else if (read_group.read_type == ReadType::kInrepeat) {
         flanking_size_counts[num_units_in_read] +=
             read_group.num_supporting_reads;
         haplotype_candidates.push_back(
             RepeatAllele(num_units_in_read, read_group.num_supporting_reads,
                          ReadType::kInrepeat));
-
       } else if (read_group.read_type == ReadType::kFlanking) {
         haplotype_candidates.push_back(
             RepeatAllele(read_group.size, read_group.num_supporting_reads,
@@ -435,7 +433,6 @@ void EstimateRepeatSizes(const Parameters &parameters,
         for (const auto &align : read_group.rep_aligns) {
           flanking_size_counts[align.size] += 1;
         }
-
       } else {
         throw std::logic_error("Do not know how to deal with " +
                                kReadTypeToString.at(read_group.read_type) +
@@ -462,9 +459,10 @@ void EstimateRepeatSizes(const Parameters &parameters,
     cerr << "]" << endl;
 
     if (haplotype_candidates.empty()) {
-      cerr << TimeStamp()
-           << ",\t[Skipping this region because no informative reads were found]"
-           << endl;
+      cerr
+          << TimeStamp()
+          << ",\t[Skipping this region because no informative reads were found]"
+          << endl;
       continue;
     }
 
@@ -508,9 +506,10 @@ int main(int argc, char *argv[]) {
       return 1;
     }
 
-    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name() << "]" << endl;
+    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name()
+         << "]" << endl;
 
-         Outputs outputs(parameters.vcf_path(), parameters.json_path(),
+    Outputs outputs(parameters.vcf_path(), parameters.json_path(),
                     parameters.log_path());
 
     map<string, RepeatSpec> repeat_specs;
@@ -535,7 +534,8 @@ int main(int argc, char *argv[]) {
       parameters.set_depth(depth);
     }
 
-    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]" << endl;
+    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
+         << endl;
     cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
 
     if (parameters.depth() < parameters.kSmallestPossibleDepth) {
