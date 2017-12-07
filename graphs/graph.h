@@ -34,7 +34,7 @@ typedef std::vector<std::set<int32_t>> AdjacencyList;
 
 class Graph {
  public:
-  Graph(int32_t num_nodes) {
+  Graph(int32_t num_nodes = 0) {
     nodes_.resize(num_nodes);
     adjacency_list_.resize(num_nodes);
     reverse_adjacency_list_.resize(num_nodes);
@@ -50,6 +50,16 @@ class Graph {
   const std::set<int32_t>& Predecessors(int32_t node_id) const {
     AssertNodeExists(node_id);
     return reverse_adjacency_list_[node_id];
+  }
+
+  void Reset(int32_t num_nodes) {
+    nodes_.clear();
+    adjacency_list_.clear();
+    reverse_adjacency_list_.clear();
+
+    nodes_.resize(num_nodes);
+    adjacency_list_.resize(num_nodes);
+    reverse_adjacency_list_.resize(num_nodes);
   }
 
  private:
