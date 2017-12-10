@@ -95,3 +95,12 @@ TEST(AGraph, ResettingErasesAllEdges) {
   EXPECT_TRUE(graph.Successors(1).empty());
   EXPECT_TRUE(graph.Predecessors(1).empty());
 }
+
+TEST(AGraph, AllowsManipulatingNodeSequences) {
+  Graph graph(3);
+  graph.SetNodeSeq(1, "ATT");
+  EXPECT_EQ("ATT", graph.NodeSeq(1));
+
+  EXPECT_ANY_THROW(graph.SetNodeSeq(4, "ATT"));
+  EXPECT_ANY_THROW(graph.NodeSeq(4));
+}
