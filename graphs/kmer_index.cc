@@ -65,7 +65,7 @@ KmerIndex::KmerIndexImpl::KmerIndexImpl(std::shared_ptr<Graph> graph_ptr,
 void KmerIndex::KmerIndexImpl::addKmerPathsStartingAtNode(
     std::shared_ptr<Graph> graph_ptr, int32_t node_id) {
   const string& node_seq = graph_ptr->NodeSeq(node_id);
-  list<int32_t> node_list;
+  vector<int32_t> node_list;
   node_list.push_back(node_id);
   for (size_t pos = 0; pos != node_seq.length(); ++pos) {
     GraphPath path(graph_ptr, pos, node_list, pos);

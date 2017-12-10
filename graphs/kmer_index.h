@@ -31,7 +31,7 @@ typedef std::unordered_map<std::string, std::list<GraphPath>> StringToPathsMap;
 // and supports a few standard operations.
 class KmerIndex {
  public:
-  explicit KmerIndex(std::shared_ptr<Graph> graph, int32_t kmer_len = 12);
+  explicit KmerIndex(std::shared_ptr<Graph> wgraph, int32_t kmer_len = 12);
   explicit KmerIndex(const StringToPathsMap& kmer_to_paths_map);
   explicit KmerIndex(const KmerIndex& other);
   explicit KmerIndex(KmerIndex&& other) noexcept;
