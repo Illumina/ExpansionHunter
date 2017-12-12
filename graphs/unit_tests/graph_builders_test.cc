@@ -87,3 +87,34 @@ TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
   EXPECT_TRUE(graph.HasEdge(4, 6));
   EXPECT_TRUE(graph.HasEdge(5, 6));
 }
+
+TEST(ConstructionOfStrGraph, TypicalParameters_GraphConstructed) {
+  const string left_flank = "AATT";
+  const string repeat_unit = "CGG";
+  const string right_flank = "ATTT";
+  const int32_t read_len = 10;
+  const Graph graph =
+      makeStrGraph(read_len, left_flank, repeat_unit, right_flank);
+
+  ASSERT_EQ(6, graph.NumNodes());
+  EXPECT_EQ(left_flank, graph.NodeSeq(0));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(1));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(2));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(3));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(4));
+  EXPECT_EQ(right_flank, graph.NodeSeq(5));
+
+  EXPECT_TRUE(graph.HasEdge(0, 5));
+
+  EXPECT_TRUE(graph.HasEdge(0, 1));
+  EXPECT_TRUE(graph.HasEdge(1, 5));
+
+  EXPECT_TRUE(graph.HasEdge(1, 2));
+  EXPECT_TRUE(graph.HasEdge(2, 5));
+
+  EXPECT_TRUE(graph.HasEdge(2, 3));
+  EXPECT_TRUE(graph.HasEdge(3, 5));
+
+  EXPECT_TRUE(graph.HasEdge(3, 4));
+  EXPECT_TRUE(graph.HasEdge(4, 5));
+}

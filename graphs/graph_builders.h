@@ -39,3 +39,7 @@ Graph makeDoubleSwapGraph(const std::string& left_flank,
                           const std::string& deletion2,
                           const std::string& insertion2,
                           const std::string& right_flank);
+
+Graph makeStrGraph(int32_t read_len, const std::string& left_flank,
+                   const std::string& repeat_unit,
+                   const std::string& right_flank);
