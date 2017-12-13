@@ -52,10 +52,6 @@ TEST_F(AGraphWithFourNodes, ErrorsOutWhenAddingEdgesBreakingTopologicalOrder) {
   EXPECT_ANY_THROW(graph.AddEdge(2, 1));
 }
 
-TEST_F(AGraphWithFourNodes, ErrorsOutWhenAddingLoops) {
-  EXPECT_ANY_THROW(graph.AddEdge(0, 0));
-}
-
 TEST_F(AGraphWithFourNodes, ErrorsOutWhenAddingEdgesWithNonexistingNodes) {
   EXPECT_ANY_THROW(graph.AddEdge(-1, 2));
   EXPECT_ANY_THROW(graph.AddEdge(1, 4));
