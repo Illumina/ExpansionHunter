@@ -151,6 +151,7 @@ class GraphMapping {
   std::string reference() const;
   int32_t querySpan() const;
   int32_t referenceSpan() const;
+  int32_t NumMatches() const;
   const_iterator begin() const { return node_mappings_.begin(); }
   const_iterator end() const { return node_mappings_.end(); }
   const NodeMapping& front() const { return node_mappings_.front(); }

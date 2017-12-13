@@ -119,6 +119,14 @@ TEST(Mapping, CalculatesQueryAndReferenceSpans) {
   EXPECT_EQ((int32_t)11, mapping.referenceSpan());
 }
 
+TEST(GraphMapping, CalculatesNumberOfMatches) {
+  Graph graph = makeDeletionGraph("AAAA", "TTGG", "TTTT");
+  const string query = "AAAATTCCC";
+  GraphMapping graph_mapping =
+      decodeFromString(0, "0[4M]1[2M3S]", query, graph);
+  EXPECT_EQ((int32_t)6, graph_mapping.NumMatches());
+}
+
 TEST(Mapping, OutputsQueryAndReferenceSequences) {
   Mapping mapping(3, "3M1X2M2D2M3I1M10S", "TTCGTTTTGGGTCCCCCCCCCC",
                   "CCCTTCCTTAATTT");

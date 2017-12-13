@@ -320,6 +320,14 @@ int32_t GraphMapping::referenceSpan() const {
   return reference_span;
 }
 
+int32_t GraphMapping::NumMatches() const {
+  int32_t num_matches = 0;
+  for (const auto& node_mapping : node_mappings_) {
+    num_matches += node_mapping.mapping.matched();
+  }
+  return num_matches;
+}
+
 std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping) {
   for (const NodeMapping& node_mapping : graph_mapping) {
     os << node_mapping.node_id << "[" << node_mapping.mapping << "]";
