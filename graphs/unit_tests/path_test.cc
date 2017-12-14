@@ -20,8 +20,6 @@
 
 #include "graphs/path.h"
 
-#include <list>
-
 #include "gtest/gtest.h"
 
 #include "graphs/graph.h"
@@ -29,67 +27,7 @@
 
 using std::list;
 using std::string;
-
-class DeletionGraph : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    left_flank = "AAAACC";
-    deletion = "TTTGG";
-    right_flank = "ATTT";
-    graph = makeDeletionGraph(left_flank, deletion, right_flank);
-    graph_ptr = std::make_shared<Graph>(graph);
-  }
-  Graph graph;
-  string left_flank;
-  string deletion;
-  string right_flank;
-  std::shared_ptr<Graph> graph_ptr;
-};
-
-class SwapGraph : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    left_flank = "AAAAA";
-    deletion = "CCCC";
-    insertion = "TTT";
-    right_flank = "GGGG";
-    graph = makeSwapGraph(left_flank, deletion, insertion, right_flank);
-    graph_ptr = std::make_shared<Graph>(graph);
-  }
-  Graph graph;
-  string left_flank;
-  string deletion;
-  string insertion;
-  string right_flank;
-
-  std::shared_ptr<Graph> graph_ptr;
-};
-
-class DoubleSwapGraph : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    left_flank = "AAAAA";
-    deletion1 = "CCCC";
-    insertion1 = "TTT";
-    mid = "CCCC";
-    deletion2 = "GGGGG";
-    insertion2 = "AAA";
-    right_flank = "TTTT";
-    graph = makeDoubleSwapGraph(left_flank, deletion1, insertion1, mid,
-                                deletion2, insertion2, right_flank);
-    graph_ptr = std::make_shared<Graph>(graph);
-  }
-  Graph graph;
-  string left_flank;
-  string deletion1;
-  string insertion1;
-  string mid;
-  string deletion2;
-  string insertion2;
-  string right_flank;
-
-  std::shared_ptr<Graph> graph_ptr;
-};
+using std::vector;
 
 TEST(GettingPathSequence, TypicalPathOnDeletionGraph_SequenceReturned) {
   Graph graph = makeDeletionGraph("AAAACC", "TTTGG", "ATTT");
@@ -110,38 +48,46 @@ TEST(GettingPathSequence, TypicalPathOnDeletionGraph_SequenceReturned) {
   }
 }
 
-TEST(GettingPathSequence, TypicalPathOnStrGraph_SequenceReturned) {}
+TEST(GettingPathSequence, TypicalPathOnStrGraph_SequenceReturned) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
+  EXPECT_EQ("TTATATC", path.seq());
+}
+
+TEST(GettingLengthOfPathOverEachNode, TypicalPathOnStrGraph_LengthReturned) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
+
+  EXPECT_EQ((size_t)1, path.GetOverlapWithNodeByIndex(0));
+  EXPECT_EQ((size_t)2, path.GetOverlapWithNodeByIndex(1));
+  EXPECT_EQ((size_t)1, path.GetOverlapWithNodeByIndex(2));
+}
 
 /*
-TEST_F(DeletionGraph, PathReturnsItsLength) {
+TEST(GettingPathLength, TypicalPathOnStrGraph_LengthReturned) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   {
-    GraphPath path(graph_ptr, 3, {0}, 3);
+    GraphPath path(graph_ptr, 2, {0}, 2);
     EXPECT_EQ((size_t)1, path.length());
   }
+
   {
-    GraphPath path(graph_ptr, 3, {1}, 4);
+    GraphPath path(graph_ptr, 0, {1}, 1);
     EXPECT_EQ((size_t)2, path.length());
   }
 
   {
-    GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-    EXPECT_EQ((size_t)10, path.length());
+    GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
+    EXPECT_EQ((size_t)4, path.length());
   }
-}
+}*/
 
-TEST_F(DeletionGraph, PathReturnsLengthOfNodeOverlaps) {
-  {
-    GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-    EXPECT_EQ((size_t)3, path.lengthOnNode(0));
-    EXPECT_EQ((size_t)5, path.lengthOnNode(1));
-    EXPECT_EQ((size_t)2, path.lengthOnNode(2));
-  }
-  {
-    GraphPath path(graph_ptr, 1, {2}, 2);
-    EXPECT_EQ((size_t)2, path.lengthOnNode(2));
-  }
-}
-
+/*
 TEST_F(DeletionGraph, PathReturnsSequenceOfNodeItOverlaps) {
   GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
   EXPECT_EQ("ACC", path.seqOnNode(0));

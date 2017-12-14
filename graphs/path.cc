@@ -172,6 +172,26 @@ size_t GraphPath::lengthOnNode(int32_t node_id) const {
   return length_on_node;
 }
 
+size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
+  int32_t node_id = pimpl_->nodes_[node_index];
+  const size_t node_length = pimpl_->graph_ptr_->NodeSeq(node_id).length();
+  size_t length_on_node =
+      node_length;  // This is the length of all intermediate nodes.
+
+  const bool is_first_node = node_index == 0;
+  const bool is_last_node = node_index + 1 == num_nodes();
+
+  if (is_first_node && is_last_node) {
+    length_on_node = pimpl_->end_position_ - pimpl_->start_position_ + 1;
+  } else if (is_first_node) {
+    length_on_node = node_length - pimpl_->start_position_;
+  } else if (is_last_node) {
+    length_on_node = pimpl_->end_position_ + 1;
+  }
+
+  return length_on_node;
+}
+
 size_t GraphPath::length() const {
   size_t path_length = 0;
   for (int32_t node_id : pimpl_->nodes_) {
