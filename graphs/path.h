@@ -46,7 +46,7 @@ class GraphPath {
   std::vector<int32_t> node_ids() const;
   size_t num_nodes() const;
   std::string seq() const;
-  std::string seqOnNode(int32_t node_index) const;
+  std::string SeqOnNodeByIndex(int32_t node_index) const;
   std::shared_ptr<Graph> graph_ptr() const;
   bool isValid() const;
   bool operator==(const GraphPath& other) const;

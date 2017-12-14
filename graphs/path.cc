@@ -47,6 +47,14 @@ struct GraphPath::Impl {
   bool isFirstNodePosValid() const;
   bool isLastNodePosValid() const;
   bool isPathConected() const;
+  string encode() const;
+  void assertThatIndexIsValid(int32_t node_index) const {
+    if (node_index < 0 || node_index >= nodes_.size()) {
+      const string msg = "Node index " + to_string(node_index) +
+                         "is out of bounds for path " + encode();
+      throw std::logic_error(msg);
+    }
+  }
 
   bool operator==(const Impl& other) const {
     return (graph_ptr_ == other.graph_ptr_) &&
@@ -66,7 +74,7 @@ bool GraphPath::Impl::areNodesOrdered() const {
   ++node_id_iter;  // Assuming the path contains at least one node.
   while (node_id_iter != nodes_.end()) {
     const int32_t next_node_id = *node_id_iter;
-    if (cur_node_id >= next_node_id) {
+    if (cur_node_id > next_node_id) {
       return false;
     }
     cur_node_id = next_node_id;
@@ -118,6 +126,36 @@ bool GraphPath::Impl::isPathConected() const {
   }
   return true;
 }
+
+string GraphPath::Impl::encode() const {
+  string path_encoding;
+
+  size_t node_index = 0;
+  const size_t last_index = nodes_.size() - 1;
+  for (int32_t node_id : nodes_) {
+    const string node_name = to_string(node_id);
+    string node_encoding;
+    if (node_index == 0)  // Encoding first node.
+    {
+      node_encoding = "(" + node_name + "@" + to_string(start_position_) + ")";
+    }
+    if (node_index == last_index)  // Encoding last node.
+    {
+      node_encoding += "-(" + node_name + "@" + to_string(end_position_) + ")";
+    }
+    if (node_index != 0 &&
+        node_index != last_index)  // Encoding intermediate node.
+    {
+      node_encoding = "-(" + node_name + ")";
+    }
+    path_encoding += node_encoding;
+    ++node_index;
+  }
+
+  return path_encoding;
+}
+
+string GraphPath::encode() const { return pimpl_->encode(); }
 
 GraphPath::GraphPath(shared_ptr<Graph> graph_ptr, int32_t start_position,
                      const vector<int32_t>& nodes, int32_t end_position)
@@ -173,6 +211,7 @@ size_t GraphPath::lengthOnNode(int32_t node_id) const {
 }
 
 size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
+  pimpl_->assertThatIndexIsValid(node_index);
   int32_t node_id = pimpl_->nodes_[node_index];
   const size_t node_length = pimpl_->graph_ptr_->NodeSeq(node_id).length();
   size_t length_on_node =
@@ -194,14 +233,15 @@ size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
 
 size_t GraphPath::length() const {
   size_t path_length = 0;
-  for (int32_t node_id : pimpl_->nodes_) {
-    path_length += lengthOnNode(node_id);
+  for (int32_t node_index = 0; node_index != pimpl_->nodes_.size();
+       ++node_index) {
+    path_length += GetOverlapWithNodeByIndex(node_index);
   }
 
   return path_length;
 }
 
-string GraphPath::seqOnNode(int32_t node_index) const {
+string GraphPath::SeqOnNodeByIndex(int32_t node_index) const {
   uint64_t node_id = (int32_t)pimpl_->nodes_[node_index];
   const string& sequence = pimpl_->graph_ptr_->NodeSeq(node_id);
 
@@ -244,38 +284,6 @@ bool GraphPath::isValid() const {
 
 bool GraphPath::operator==(const GraphPath& other) const {
   return *pimpl_ == *other.pimpl_;
-}
-
-string GraphPath::encode() const {
-  string path_encoding;
-
-  size_t node_index = 0;
-  const size_t last_index = pimpl_->nodes_.size() - 1;
-  for (int32_t node_id : pimpl_->nodes_) {
-    const string node_name = to_string(node_id);
-    string node_encoding;
-    if (node_index == 0)  // Encoding first node.
-    {
-      node_encoding =
-          "(" + node_name + "@" + to_string(pimpl_->start_position_) + ")";
-    }
-
-    if (node_index == last_index)  // Encoding last node.
-    {
-      node_encoding +=
-          "-(" + node_name + "@" + to_string(pimpl_->end_position_) + ")";
-    }
-
-    if (node_index != 0 &&
-        node_index != last_index)  // Encoding intermediate node.
-    {
-      node_encoding = "-(" + node_name + ")";
-    }
-    path_encoding += node_encoding;
-    ++node_index;
-  }
-
-  return path_encoding;
 }
 
 ostream& operator<<(ostream& os, const GraphPath& path) {

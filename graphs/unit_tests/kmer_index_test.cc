@@ -165,9 +165,9 @@ TEST_F(DeletionGraph, PathReturnsLengthOfNodeOverlaps) {
 
 TEST_F(DeletionGraph, PathReturnsSequenceOfNodeItOverlaps) {
   GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-  EXPECT_EQ("ACC", path.seqOnNode(0));
-  EXPECT_EQ("TTTGG", path.seqOnNode(1));
-  EXPECT_EQ("AT", path.seqOnNode(2));
+  EXPECT_EQ("ACC", path.SeqOnNodeByIndex(0));
+  EXPECT_EQ("TTTGG", path.SeqOnNodeByIndex(1));
+  EXPECT_EQ("AT", path.SeqOnNodeByIndex(2));
 }
 
 TEST_F(DeletionGraph, WellFormedPathIsValid) {

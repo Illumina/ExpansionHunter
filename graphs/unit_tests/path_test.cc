@@ -66,7 +66,16 @@ TEST(GettingLengthOfPathOverEachNode, TypicalPathOnStrGraph_LengthReturned) {
   EXPECT_EQ((size_t)1, path.GetOverlapWithNodeByIndex(2));
 }
 
-/*
+TEST(GettingLengthOfPathOverEachNode, IndexOutOfBounds_ExceptionRaised) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
+
+  EXPECT_ANY_THROW(path.GetOverlapWithNodeByIndex(-1));
+  EXPECT_ANY_THROW(path.GetOverlapWithNodeByIndex(3));
+}
+
 TEST(GettingPathLength, TypicalPathOnStrGraph_LengthReturned) {
   Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
@@ -85,185 +94,191 @@ TEST(GettingPathLength, TypicalPathOnStrGraph_LengthReturned) {
     GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
     EXPECT_EQ((size_t)4, path.length());
   }
-}*/
-
-/*
-TEST_F(DeletionGraph, PathReturnsSequenceOfNodeItOverlaps) {
-  GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-  EXPECT_EQ("ACC", path.seqOnNode(0));
-  EXPECT_EQ("TTTGG", path.seqOnNode(1));
-  EXPECT_EQ("AT", path.seqOnNode(2));
 }
 
-TEST_F(DeletionGraph, WellFormedPathIsValid) {
-  GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
+TEST(GettingPathSequenceOnNode, TypicalPathOnStrGraph_SequenceReturned) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
+  EXPECT_EQ("TT", path.SeqOnNodeByIndex(0));
+  EXPECT_EQ("AT", path.SeqOnNodeByIndex(1));
+  EXPECT_EQ("AT", path.SeqOnNodeByIndex(2));
+  EXPECT_EQ("C", path.SeqOnNodeByIndex(3));
+}
+
+TEST(ValidatingPath, WellFormedPath_IsValid) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
   ASSERT_TRUE(path.isValid());
 }
 
-TEST_F(DeletionGraph, PathStartingOutsideOfNodeSequenceIsInvalid) {
-  GraphPath path(graph_ptr, 6, {0, 1, 2}, 1);
+TEST(ValidatingPath, PathStartingOutsideOfNodeSequence_IsInvalid) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
   ASSERT_FALSE(path.isValid());
 }
 
-TEST_F(DeletionGraph, PathEndingOutsideOfNodeSequenceIsInvalid) {
+TEST(ValidatingPath, PathEndingOutsideOfNodeSequence_IsInvalid) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   GraphPath path(graph_ptr, 3, {0, 1, 2}, 10);
   ASSERT_FALSE(path.isValid());
 }
 
-TEST_F(DeletionGraph, PathWithUnorderedNodesIsInvalid) {
-  GraphPath path(graph_ptr, 3, {2, 1}, 1);
+TEST(ValidatingPath, PathWithUnorderedNodes_IsInvalid) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 1, {2, 1}, 1);
   ASSERT_FALSE(path.isValid());
 }
 
-TEST_F(DeletionGraph, SingleNodePathWithEndBeforeStartIsInvalid) {
+TEST(ValidatingPath, SingleNodePathWithEndBeforeStart_IsInvalid) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   GraphPath path(graph_ptr, 3, {0}, 1);
   ASSERT_FALSE(path.isValid());
 }
 
-TEST_F(SwapGraph, DisconnectedPathIsInvalid) {
+TEST(ValidatingPath, DisconnectedPath_IsInvalid) {
+  Graph graph = makeSwapGraph("TTT", "AT", "GG", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   GraphPath path(graph_ptr, 0, {0, 3}, 0);
   ASSERT_FALSE(path.isValid());
 }
 
-TEST_F(DeletionGraph, PathIsEncodedAsString) {
+TEST(EncodingPaths, TypicalPath_EncodedAsString) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   {
     GraphPath path(graph_ptr, 0, {0}, 1);
     ASSERT_EQ("(0@0)-(0@1)", path.encode());
   }
+
   {
-    GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-    ASSERT_EQ("(0@3)-(1)-(2@1)", path.encode());
+    GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
+    ASSERT_EQ("(0@1)-(1)-(1)-(2@0)", path.encode());
   }
 }
 
-TEST_F(DeletionGraph, PathStartPositionIsExtended) {
+TEST(ExtendingPathAlongNode, TypicalPath_StartPositionExtended) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   {
-    GraphPath path(graph_ptr, 3, {0, 1}, 1);
-    GraphPath extended_path = path.extendStartPosition(3);
+    GraphPath path(graph_ptr, 2, {0, 1}, 1);
+    GraphPath extended_path = path.extendStartPosition(2);
     GraphPath expected_path(graph_ptr, 0, {0, 1}, 1);
     ASSERT_EQ(expected_path, extended_path);
   }
+
   {
-    GraphPath path(graph_ptr, 3, {0, 1}, 1);
-    GraphPath extended_path = path.extendEndPosition(2);
-    GraphPath expected_path(graph_ptr, 3, {0, 1}, 3);
+    GraphPath path(graph_ptr, 1, {0, 1, 1}, 0);
+    GraphPath extended_path = path.extendEndPosition(1);
+    GraphPath expected_path(graph_ptr, 1, {0, 1, 1}, 1);
     ASSERT_EQ(expected_path, extended_path);
   }
 }
 
-TEST_F(DeletionGraph, InvalidPathExtensionCausesError) {
-  GraphPath path(graph_ptr, 3, {0, 1}, 1);
-  ASSERT_ANY_THROW(path.extendStartPosition(4));
-  ASSERT_ANY_THROW(path.extendEndPosition(4));
+TEST(ExtendingPathAlongNode, ExtensionPastNodeBoundaries_ExceptionRaised) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 2, {0, 1}, 1);
+  EXPECT_ANY_THROW(path.extendStartPosition(3));
+  EXPECT_ANY_THROW(path.extendEndPosition(1));
 }
 
-TEST_F(SwapGraph, PathIsExtendedToAdjacentNode) {
+TEST(ExtendingPathToNode, TypicalPathInSwapGraph_PathExtended) {
+  Graph graph = makeSwapGraph("TTT", "AT", "GG", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
   {
     GraphPath path(graph_ptr, 1, {1, 3}, 2);
-    GraphPath extended_path = path.extendStartNodeTo(0);
-    const int32_t new_left_pos = left_flank.length() - 1;
-    GraphPath expected_path(graph_ptr, new_left_pos, {0, 1, 3}, 2);
-    ASSERT_EQ(expected_path, extended_path);
+    GraphPath expected_path(graph_ptr, 2, {0, 1, 3}, 2);
+    ASSERT_EQ(expected_path, path.extendStartNodeTo(0));
+  }
+
+  {
+    GraphPath path(graph_ptr, 1, {0}, 2);
+    GraphPath expected_path(graph_ptr, 1, {0, 1}, 0);
+    ASSERT_EQ(expected_path, path.extendEndNodeTo(1));
+  }
+}
+
+TEST(ExtendingPathToNode, ExtendingPathToNonadjacentNode_ExceptionThrown) {
+  Graph graph = makeSwapGraph("TTT", "AT", "GG", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  {
+    GraphPath path(graph_ptr, 1, {2, 3}, 1);
+    EXPECT_ANY_THROW(path.extendStartNodeTo(1));
   }
   {
     GraphPath path(graph_ptr, 1, {0}, 2);
-    GraphPath extended_path = path.extendEndNodeTo(1);
-    GraphPath expected_path(graph_ptr, 1, {0, 1}, 0);
-    ASSERT_EQ(expected_path, extended_path);
+    EXPECT_ANY_THROW(path.extendEndNodeTo(3));
   }
 }
 
-TEST_F(SwapGraph, ExtendingPathToNonadjacentNodeCausesError) {
-  {
-    GraphPath path(graph_ptr, 1, {2, 3}, 3);
-    ASSERT_ANY_THROW(path.extendStartNodeTo(1));
-  }
-  {
-    GraphPath path(graph_ptr, 1, {0}, 3);
-    ASSERT_ANY_THROW(path.extendEndNodeTo(3));
-  }
-}
+TEST(ExtendingPathsByGivenLength, TypicalPathInStrGraph_PathExtended) {
+  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
-TEST_F(DeletionGraph, EndOfPathIsExtendedBySpecifiedLength) {
-  GraphPath path(graph_ptr, 2, {0}, 4);
   {
+    GraphPath path(graph_ptr, 1, {0}, 1);
     const int32_t start_extension = 0;
+    const int32_t end_extension = 6;
+    const list<GraphPath> path_extensions =
+        path.extendBy(start_extension, end_extension);
+
+    const list<GraphPath> expected_path_extensions = {
+        GraphPath(graph_ptr, 1, {0, 1, 1, 1}, 0),
+        GraphPath(graph_ptr, 1, {0, 1, 1, 2}, 0),
+        GraphPath(graph_ptr, 1, {0, 1, 2}, 2),
+        GraphPath(graph_ptr, 1, {0, 2}, 4)};
+    ASSERT_EQ(expected_path_extensions, path_extensions);
+  }
+
+  {
+    GraphPath path(graph_ptr, 0, {1}, 1);
+    const int32_t start_extension = 1;
     const int32_t end_extension = 1;
     const list<GraphPath> path_extensions =
         path.extendBy(start_extension, end_extension);
-    const list<GraphPath> expected_path_extensions = {
-        GraphPath(graph_ptr, 2, {0}, 5)};
-    ASSERT_EQ(expected_path_extensions, path_extensions);
-  }
 
-  {
-    const int32_t start_extension = 0;
-    const int32_t end_extension = 2;
-    const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
     const list<GraphPath> expected_path_extensions = {
-        GraphPath(graph_ptr, 2, {0, 1}, 0), GraphPath(graph_ptr, 2, {0, 2}, 0)};
+        GraphPath(graph_ptr, 2, {0, 1, 1}, 0),
+        GraphPath(graph_ptr, 2, {0, 1, 2}, 0),
+        GraphPath(graph_ptr, 1, {1, 1, 1}, 0),
+        GraphPath(graph_ptr, 1, {1, 1, 2}, 0),
+    };
     ASSERT_EQ(expected_path_extensions, path_extensions);
   }
 }
 
-TEST_F(SwapGraph, EndOfPathIsExtendedBySpecifiedLength) {
-  const GraphPath path(graph_ptr, 0, {0}, 4);
-  const int32_t start_extension = 0;
-  const int32_t end_extension = 5;
+TEST(ExtendingPathsByGivenLength, TypicalPathInHomopolymerGraph_PathExtended) {
+  Graph graph = makeStrGraph("T", "A", "C");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  GraphPath path(graph_ptr, 0, {1}, 0);
+  const int32_t start_extension = 3;
+  const int32_t end_extension = 3;
   const list<GraphPath> path_extensions =
       path.extendBy(start_extension, end_extension);
+
   const list<GraphPath> expected_path_extensions = {
-      GraphPath(graph_ptr, 0, {0, 1, 3}, 0),
-      GraphPath(graph_ptr, 0, {0, 2, 3}, 1)};
+      GraphPath(graph_ptr, 0, {0, 1, 1, 1, 1, 1, 1}, 0),
+      GraphPath(graph_ptr, 0, {0, 1, 1, 1, 1, 1, 2}, 0),
+      GraphPath(graph_ptr, 0, {1, 1, 1, 1, 1, 1, 1}, 0),
+      GraphPath(graph_ptr, 0, {1, 1, 1, 1, 1, 1, 2}, 0)};
   ASSERT_EQ(expected_path_extensions, path_extensions);
 }
-
-TEST_F(DeletionGraph, PathIsExtendedBySpecifiedLength) {
-  GraphPath path(graph_ptr, 2, {0}, 4);
-  {
-    const int32_t start_extension = 2;
-    const int32_t end_extension = 1;
-    const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
-    const list<GraphPath> expected_path_extensions = {
-        GraphPath(graph_ptr, 0, {0}, 5)};
-    ASSERT_EQ(expected_path_extensions, path_extensions);
-  }
-}
-
-TEST_F(DoubleSwapGraph, PathIsExtendedBySpecifiedLength) {
-  GraphPath path(graph_ptr, 1, {3}, 3);
-  {
-    const int32_t start_extension = 5;
-    const int32_t end_extension = 1;
-    const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
-    const list<GraphPath> expected_path_extensions = {
-        GraphPath(graph_ptr, 0, {1, 3, 4}, 0),
-        GraphPath(graph_ptr, 0, {1, 3, 5}, 0),
-        GraphPath(graph_ptr, 4, {0, 2, 3, 4}, 0),
-        GraphPath(graph_ptr, 4, {0, 2, 3, 5}, 0)};
-    ASSERT_EQ(expected_path_extensions, path_extensions);
-  }
-}
-
-TEST_F(DoubleSwapGraph, PathExtensionsThatAreTooLongAreNotOutput) {
-  GraphPath path(graph_ptr, 1, {3}, 3);
-  {
-    const int32_t start_extension = 50;
-    const int32_t end_extension = 1;
-    const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
-    ASSERT_TRUE(path_extensions.empty());
-  }
-  {
-    const int32_t start_extension = 10;
-    const int32_t end_extension = 9;
-    const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
-    const list<GraphPath> expected_path_extensions = {
-        GraphPath(graph_ptr, 0, {0, 1, 3, 4, 6}, 3)};
-    ASSERT_EQ(expected_path_extensions, path_extensions);
-  }
-}*/
