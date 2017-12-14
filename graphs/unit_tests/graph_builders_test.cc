@@ -118,3 +118,20 @@ TEST(ConstructionOfLooplessStrGraph, TypicalParameters_GraphConstructed) {
   EXPECT_TRUE(graph.HasEdge(3, 4));
   EXPECT_TRUE(graph.HasEdge(4, 5));
 }
+
+TEST(ConstructionOfStrGraph, TypicalParameters_GraphConstructed) {
+  const string left_flank = "AATT";
+  const string repeat_unit = "CGG";
+  const string right_flank = "ATTT";
+  const Graph graph = makeStrGraph(left_flank, repeat_unit, right_flank);
+
+  ASSERT_EQ(3, graph.NumNodes());
+  EXPECT_EQ(left_flank, graph.NodeSeq(0));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(1));
+  EXPECT_EQ(right_flank, graph.NodeSeq(2));
+
+  EXPECT_TRUE(graph.HasEdge(0, 1));
+  EXPECT_TRUE(graph.HasEdge(0, 2));
+  EXPECT_TRUE(graph.HasEdge(1, 1));
+  EXPECT_TRUE(graph.HasEdge(1, 2));
+}

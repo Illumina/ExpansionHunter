@@ -102,3 +102,19 @@ Graph makeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
 
   return graph;
 }
+
+Graph makeStrGraph(const std::string& left_flank,
+                   const std::string& repeat_unit,
+                   const std::string& right_flank) {
+  Graph graph(3);
+  graph.SetNodeSeq(0, left_flank);
+  graph.SetNodeSeq(1, repeat_unit);
+  graph.SetNodeSeq(2, right_flank);
+
+  graph.AddEdge(0, 1);
+  graph.AddEdge(0, 2);
+  graph.AddEdge(1, 1);
+  graph.AddEdge(1, 2);
+
+  return graph;
+}

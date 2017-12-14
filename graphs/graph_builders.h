@@ -43,3 +43,7 @@ Graph makeDoubleSwapGraph(const std::string& left_flank,
 Graph makeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
                            const std::string& repeat_unit,
                            const std::string& right_flank);
+
+Graph makeStrGraph(const std::string& left_flank,
+                   const std::string& repeat_unit,
+                   const std::string& right_flank);
