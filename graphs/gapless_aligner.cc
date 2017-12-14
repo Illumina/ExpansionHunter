@@ -30,7 +30,7 @@ using std::list;
 using std::string;
 using std::vector;
 
-Mapping alignWithoutGaps(const std::string& query, int32_t ref_start,
+Mapping AlignWithoutGaps(const std::string& query, int32_t ref_start,
                          const std::string& reference) {
   if (reference.length() < ref_start + query.length()) {
     const string msg = "Gapless alignment requires that read " + query +
@@ -77,19 +77,19 @@ Mapping alignWithoutGaps(const std::string& query, int32_t ref_start,
   return Mapping(ref_start, operations);
 }
 
-GraphMapping alignWithoutGaps(const GraphPath& path, const string& read) {
-  vector<string> read_pieces = splitByPath(path, read);
+GraphMapping AlignWithoutGaps(const GraphPath& path, const string& read) {
+  vector<string> read_pieces = SplitByPath(path, read);
   vector<Mapping> node_mappings;
 
   size_t index = 0;
-  for (int32_t node_id : path.node_ids()) {
-    std::shared_ptr<Graph> graph_ptr = path.graph_ptr();
+  for (int32_t node_id : path.NodeIds()) {
+    std::shared_ptr<Graph> graph_ptr = path.GraphPtr();
     const string node_seq = graph_ptr->NodeSeq(node_id);
     const string read_piece = read_pieces[index];
-    const int32_t ref_start = index == 0 ? path.start_position() : 0;
-    node_mappings.push_back(alignWithoutGaps(read_piece, ref_start, node_seq));
+    const int32_t ref_start = index == 0 ? path.StartPosition() : 0;
+    node_mappings.push_back(AlignWithoutGaps(read_piece, ref_start, node_seq));
     ++index;
   }
 
-  return GraphMapping(path.node_ids(), node_mappings);
+  return GraphMapping(path.NodeIds(), node_mappings);
 }

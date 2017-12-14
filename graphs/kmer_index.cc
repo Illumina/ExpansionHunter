@@ -69,13 +69,13 @@ void KmerIndex::KmerIndexImpl::addKmerPathsStartingAtNode(
   node_list.push_back(node_id);
   for (size_t pos = 0; pos != node_seq.length(); ++pos) {
     GraphPath path(graph_ptr, pos, node_list, pos);
-    addKmerPaths(path.extendBy(0, _kmer_len - 1));
+    addKmerPaths(path.ExtendBy(0, _kmer_len - 1));
   }
 }
 
 void KmerIndex::KmerIndexImpl::addKmerPaths(const list<GraphPath>& kmer_paths) {
   for (const GraphPath& kmer_path : kmer_paths) {
-    _kmer_to_paths_map[kmer_path.seq()].push_back(kmer_path);
+    _kmer_to_paths_map[kmer_path.Seq()].push_back(kmer_path);
   }
 }
 
@@ -110,41 +110,41 @@ bool KmerIndex::operator==(const KmerIndex& other) const {
           _impl->_kmer_len == other._impl->_kmer_len);
 }
 
-static string encodePaths(const list<GraphPath>& paths) {
+static string EncodePaths(const list<GraphPath>& paths) {
   list<string> path_encodings;
   for (const auto& path : paths) {
-    path_encodings.push_back(path.encode());
+    path_encodings.push_back(path.Encode());
   }
   return boost::algorithm::join(path_encodings, ",");
 }
 
-string KmerIndex::encode() const {
+string KmerIndex::Encode() const {
   list<string> kv_encodings;
   for (const auto& kv : _impl->_kmer_to_paths_map) {
-    const string encoding_of_paths = encodePaths(kv.second);
+    const string encoding_of_paths = EncodePaths(kv.second);
     const string kv_encoding = "{" + kv.first + "->" + encoding_of_paths + "}";
     kv_encodings.push_back(kv_encoding);
   }
   return boost::algorithm::join(kv_encodings, ",");
 }
 
-bool KmerIndex::contains(const std::string& kmer) const {
+bool KmerIndex::Contains(const std::string& kmer) const {
   return _impl->_kmer_to_paths_map.find(kmer) !=
          _impl->_kmer_to_paths_map.end();
 }
 
-size_t KmerIndex::numPaths(const std::string& kmer) const {
-  if (!contains(kmer)) {
+size_t KmerIndex::NumPaths(const std::string& kmer) const {
+  if (!Contains(kmer)) {
     return 0;
   }
   return _impl->_kmer_to_paths_map.at(kmer).size();
 }
 
-const list<GraphPath>& KmerIndex::getPaths(const std::string& kmer) const {
+const list<GraphPath>& KmerIndex::GetPaths(const std::string& kmer) const {
   return _impl->_kmer_to_paths_map.at(kmer);
 }
 
-unordered_set<string> KmerIndex::getKmersWithNonzeroCount() const {
+unordered_set<string> KmerIndex::GetKmersWithNonzeroCount() const {
   unordered_set<string> kmers_with_nonzero_count;
   for (const auto& kv : _impl->_kmer_to_paths_map) {
     kmers_with_nonzero_count.insert(kv.first);
@@ -153,6 +153,6 @@ unordered_set<string> KmerIndex::getKmersWithNonzeroCount() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const KmerIndex& kmer_index) {
-  os << kmer_index.encode();
+  os << kmer_index.Encode();
   return os;
 }

@@ -30,33 +30,33 @@ using std::string;
 using std::vector;
 
 TEST(GettingPathSequence, TypicalPathOnDeletionGraph_SequenceReturned) {
-  Graph graph = makeDeletionGraph("AAAACC", "TTTGG", "ATTT");
+  Graph graph = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
   {
     GraphPath path(graph_ptr, 3, {0}, 3);
-    EXPECT_EQ("A", path.seq());
+    EXPECT_EQ("A", path.Seq());
   }
 
   {
     GraphPath path(graph_ptr, 3, {1}, 4);
-    EXPECT_EQ("GG", path.seq());
+    EXPECT_EQ("GG", path.Seq());
   }
 
   {
     GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-    EXPECT_EQ("ACCTTTGGAT", path.seq());
+    EXPECT_EQ("ACCTTTGGAT", path.Seq());
   }
 }
 
 TEST(GettingPathSequence, TypicalPathOnStrGraph_SequenceReturned) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
   GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
-  EXPECT_EQ("TTATATC", path.seq());
+  EXPECT_EQ("TTATATC", path.Seq());
 }
 
 TEST(GettingLengthOfPathOverEachNode, TypicalPathOnStrGraph_LengthReturned) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
@@ -67,7 +67,7 @@ TEST(GettingLengthOfPathOverEachNode, TypicalPathOnStrGraph_LengthReturned) {
 }
 
 TEST(GettingLengthOfPathOverEachNode, IndexOutOfBounds_ExceptionRaised) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
@@ -77,27 +77,27 @@ TEST(GettingLengthOfPathOverEachNode, IndexOutOfBounds_ExceptionRaised) {
 }
 
 TEST(GettingPathLength, TypicalPathOnStrGraph_LengthReturned) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   {
     GraphPath path(graph_ptr, 2, {0}, 2);
-    EXPECT_EQ((size_t)1, path.length());
+    EXPECT_EQ((size_t)1, path.Length());
   }
 
   {
     GraphPath path(graph_ptr, 0, {1}, 1);
-    EXPECT_EQ((size_t)2, path.length());
+    EXPECT_EQ((size_t)2, path.Length());
   }
 
   {
     GraphPath path(graph_ptr, 2, {0, 1, 1}, 0);
-    EXPECT_EQ((size_t)4, path.length());
+    EXPECT_EQ((size_t)4, path.Length());
   }
 }
 
 TEST(GettingPathSequenceOnNode, TypicalPathOnStrGraph_SequenceReturned) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
@@ -108,129 +108,129 @@ TEST(GettingPathSequenceOnNode, TypicalPathOnStrGraph_SequenceReturned) {
 }
 
 TEST(ValidatingPath, WellFormedPath_IsValid) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
-  ASSERT_TRUE(path.isValid());
+  ASSERT_TRUE(path.IsValid());
 }
 
 TEST(ValidatingPath, PathStartingOutsideOfNodeSequence_IsInvalid) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
-  ASSERT_FALSE(path.isValid());
+  ASSERT_FALSE(path.IsValid());
 }
 
 TEST(ValidatingPath, PathEndingOutsideOfNodeSequence_IsInvalid) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 3, {0, 1, 2}, 10);
-  ASSERT_FALSE(path.isValid());
+  ASSERT_FALSE(path.IsValid());
 }
 
 TEST(ValidatingPath, PathWithUnorderedNodes_IsInvalid) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 1, {2, 1}, 1);
-  ASSERT_FALSE(path.isValid());
+  ASSERT_FALSE(path.IsValid());
 }
 
 TEST(ValidatingPath, SingleNodePathWithEndBeforeStart_IsInvalid) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 3, {0}, 1);
-  ASSERT_FALSE(path.isValid());
+  ASSERT_FALSE(path.IsValid());
 }
 
 TEST(ValidatingPath, DisconnectedPath_IsInvalid) {
-  Graph graph = makeSwapGraph("TTT", "AT", "GG", "CCCCC");
+  Graph graph = MakeSwapGraph("TTT", "AT", "GG", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 0, {0, 3}, 0);
-  ASSERT_FALSE(path.isValid());
+  ASSERT_FALSE(path.IsValid());
 }
 
 TEST(EncodingPaths, TypicalPath_EncodedAsString) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   {
     GraphPath path(graph_ptr, 0, {0}, 1);
-    ASSERT_EQ("(0@0)-(0@1)", path.encode());
+    ASSERT_EQ("(0@0)-(0@1)", path.Encode());
   }
 
   {
     GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
-    ASSERT_EQ("(0@1)-(1)-(1)-(2@0)", path.encode());
+    ASSERT_EQ("(0@1)-(1)-(1)-(2@0)", path.Encode());
   }
 }
 
 TEST(ExtendingPathAlongNode, TypicalPath_StartPositionExtended) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   {
     GraphPath path(graph_ptr, 2, {0, 1}, 1);
-    GraphPath extended_path = path.extendStartPosition(2);
+    GraphPath extended_path = path.ExtendStartPosition(2);
     GraphPath expected_path(graph_ptr, 0, {0, 1}, 1);
     ASSERT_EQ(expected_path, extended_path);
   }
 
   {
     GraphPath path(graph_ptr, 1, {0, 1, 1}, 0);
-    GraphPath extended_path = path.extendEndPosition(1);
+    GraphPath extended_path = path.ExtendEndPosition(1);
     GraphPath expected_path(graph_ptr, 1, {0, 1, 1}, 1);
     ASSERT_EQ(expected_path, extended_path);
   }
 }
 
 TEST(ExtendingPathAlongNode, ExtensionPastNodeBoundaries_ExceptionRaised) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 2, {0, 1}, 1);
-  EXPECT_ANY_THROW(path.extendStartPosition(3));
-  EXPECT_ANY_THROW(path.extendEndPosition(1));
+  EXPECT_ANY_THROW(path.ExtendStartPosition(3));
+  EXPECT_ANY_THROW(path.ExtendEndPosition(1));
 }
 
 TEST(ExtendingPathToNode, TypicalPathInSwapGraph_PathExtended) {
-  Graph graph = makeSwapGraph("TTT", "AT", "GG", "CCCCC");
+  Graph graph = MakeSwapGraph("TTT", "AT", "GG", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   {
     GraphPath path(graph_ptr, 1, {1, 3}, 2);
     GraphPath expected_path(graph_ptr, 2, {0, 1, 3}, 2);
-    ASSERT_EQ(expected_path, path.extendStartNodeTo(0));
+    ASSERT_EQ(expected_path, path.ExtendStartNodeTo(0));
   }
 
   {
     GraphPath path(graph_ptr, 1, {0}, 2);
     GraphPath expected_path(graph_ptr, 1, {0, 1}, 0);
-    ASSERT_EQ(expected_path, path.extendEndNodeTo(1));
+    ASSERT_EQ(expected_path, path.ExtendEndNodeTo(1));
   }
 }
 
 TEST(ExtendingPathToNode, ExtendingPathToNonadjacentNode_ExceptionThrown) {
-  Graph graph = makeSwapGraph("TTT", "AT", "GG", "CCCCC");
+  Graph graph = MakeSwapGraph("TTT", "AT", "GG", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   {
     GraphPath path(graph_ptr, 1, {2, 3}, 1);
-    EXPECT_ANY_THROW(path.extendStartNodeTo(1));
+    EXPECT_ANY_THROW(path.ExtendStartNodeTo(1));
   }
   {
     GraphPath path(graph_ptr, 1, {0}, 2);
-    EXPECT_ANY_THROW(path.extendEndNodeTo(3));
+    EXPECT_ANY_THROW(path.ExtendEndNodeTo(3));
   }
 }
 
 TEST(ExtendingPathsByGivenLength, TypicalPathInStrGraph_PathExtended) {
-  Graph graph = makeStrGraph("TTT", "AT", "CCCCC");
+  Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   {
@@ -238,7 +238,7 @@ TEST(ExtendingPathsByGivenLength, TypicalPathInStrGraph_PathExtended) {
     const int32_t start_extension = 0;
     const int32_t end_extension = 6;
     const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
+        path.ExtendBy(start_extension, end_extension);
 
     const list<GraphPath> expected_path_extensions = {
         GraphPath(graph_ptr, 1, {0, 1, 1, 1}, 0),
@@ -253,7 +253,7 @@ TEST(ExtendingPathsByGivenLength, TypicalPathInStrGraph_PathExtended) {
     const int32_t start_extension = 1;
     const int32_t end_extension = 1;
     const list<GraphPath> path_extensions =
-        path.extendBy(start_extension, end_extension);
+        path.ExtendBy(start_extension, end_extension);
 
     const list<GraphPath> expected_path_extensions = {
         GraphPath(graph_ptr, 2, {0, 1, 1}, 0),
@@ -266,14 +266,14 @@ TEST(ExtendingPathsByGivenLength, TypicalPathInStrGraph_PathExtended) {
 }
 
 TEST(ExtendingPathsByGivenLength, TypicalPathInHomopolymerGraph_PathExtended) {
-  Graph graph = makeStrGraph("T", "A", "C");
+  Graph graph = MakeStrGraph("T", "A", "C");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
   GraphPath path(graph_ptr, 0, {1}, 0);
   const int32_t start_extension = 3;
   const int32_t end_extension = 3;
   const list<GraphPath> path_extensions =
-      path.extendBy(start_extension, end_extension);
+      path.ExtendBy(start_extension, end_extension);
 
   const list<GraphPath> expected_path_extensions = {
       GraphPath(graph_ptr, 0, {0, 1, 1, 1, 1, 1, 1}, 0),

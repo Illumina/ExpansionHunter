@@ -43,28 +43,28 @@ class GraphPath {
   GraphPath(GraphPath&& other) noexcept;
   GraphPath& operator=(const GraphPath& other);
   GraphPath& operator=(GraphPath&& other) noexcept;
-  std::vector<int32_t> node_ids() const;
-  size_t num_nodes() const;
-  std::string seq() const;
+  std::vector<int32_t> NodeIds() const;
+  size_t NumNodes() const;
+  std::string Seq() const;
   std::string SeqOnNodeByIndex(int32_t node_index) const;
-  std::shared_ptr<Graph> graph_ptr() const;
-  bool isValid() const;
+  std::shared_ptr<Graph> GraphPtr() const;
+  bool IsValid() const;
   bool operator==(const GraphPath& other) const;
-  std::string encode() const;
-  int32_t start_position() const;
-  int32_t end_position() const;
-  size_t length() const;
-  size_t lengthOnNode(int32_t node_id) const;
+  std::string Encode() const;
+  int32_t StartPosition() const;
+  int32_t EndPosition() const;
+  size_t Length() const;
+  size_t LengthOnNode(int32_t node_id) const;
   size_t GetOverlapWithNodeByIndex(int32_t node_index) const;
-  GraphPath extendStartPosition(int32_t extension_len) const;
-  GraphPath extendEndPosition(int32_t extension_len) const;
-  GraphPath extendStartNodeTo(int32_t node_id) const;
-  GraphPath extendEndNodeTo(int32_t node_id) const;
-  std::list<GraphPath> extendStartBy(int32_t extension_len) const;
-  std::list<GraphPath> extendEndBy(int32_t extension_len) const;
+  GraphPath ExtendStartPosition(int32_t extension_len) const;
+  GraphPath ExtendEndPosition(int32_t extension_len) const;
+  GraphPath ExtendStartNodeTo(int32_t node_id) const;
+  GraphPath ExtendEndNodeTo(int32_t node_id) const;
+  std::list<GraphPath> ExtendStartBy(int32_t extension_len) const;
+  std::list<GraphPath> ExtendEndBy(int32_t extension_len) const;
   // Computes all possible extensions of the path by the specified length in
   // both directions.
-  std::list<GraphPath> extendBy(int32_t start_extension_len,
+  std::list<GraphPath> ExtendBy(int32_t start_extension_len,
                                 int32_t end_extension_len) const;
 
  private:

@@ -40,18 +40,18 @@ struct GraphPath::Impl {
         start_position_(start_position),
         end_position_(end_position),
         nodes_(nodes) {}
-  bool isNodePositionValid(int32_t node_id, int32_t position) const;
-  bool areNodesOrdered() const;
-  bool arePositionsOrdered() const;
-  bool isPathEmpty() const;
-  bool isFirstNodePosValid() const;
-  bool isLastNodePosValid() const;
-  bool isPathConected() const;
-  string encode() const;
-  void assertThatIndexIsValid(int32_t node_index) const {
+  bool IsNodePositionValid(int32_t node_id, int32_t position) const;
+  bool AreNodesOrdered() const;
+  bool ArePositionsOrdered() const;
+  bool IsPathEmpty() const;
+  bool IsFirstNodePosValid() const;
+  bool IsLastNodePosValid() const;
+  bool IsPathConected() const;
+  string Encode() const;
+  void AssertThatIndexIsValid(int32_t node_index) const {
     if (node_index < 0 || node_index >= nodes_.size()) {
       const string msg = "Node index " + to_string(node_index) +
-                         "is out of bounds for path " + encode();
+                         "is out of bounds for path " + Encode();
       throw std::logic_error(msg);
     }
   }
@@ -68,7 +68,7 @@ struct GraphPath::Impl {
   vector<int32_t> nodes_;
 };
 
-bool GraphPath::Impl::areNodesOrdered() const {
+bool GraphPath::Impl::AreNodesOrdered() const {
   int32_t cur_node_id = nodes_.front();
   vector<int32_t>::const_iterator node_id_iter = nodes_.begin();
   ++node_id_iter;  // Assuming the path contains at least one node.
@@ -83,14 +83,14 @@ bool GraphPath::Impl::areNodesOrdered() const {
   return true;
 }
 
-bool GraphPath::Impl::arePositionsOrdered() const {
+bool GraphPath::Impl::ArePositionsOrdered() const {
   if (nodes_.size() == 1 && start_position_ > end_position_) {
     return false;
   }
   return true;
 }
 
-bool GraphPath::Impl::isNodePositionValid(int32_t node_id,
+bool GraphPath::Impl::IsNodePositionValid(int32_t node_id,
                                           int32_t position) const {
   if (position < 0) {
     return false;
@@ -102,19 +102,19 @@ bool GraphPath::Impl::isNodePositionValid(int32_t node_id,
   return true;
 }
 
-bool GraphPath::Impl::isPathEmpty() const { return nodes_.empty(); }
+bool GraphPath::Impl::IsPathEmpty() const { return nodes_.empty(); }
 
-bool GraphPath::Impl::isFirstNodePosValid() const {
+bool GraphPath::Impl::IsFirstNodePosValid() const {
   const int32_t first_node_id = nodes_.front();
-  return isNodePositionValid(first_node_id, start_position_);
+  return IsNodePositionValid(first_node_id, start_position_);
 }
 
-bool GraphPath::Impl::isLastNodePosValid() const {
+bool GraphPath::Impl::IsLastNodePosValid() const {
   const int32_t last_node_id = nodes_.back();
-  return isNodePositionValid(last_node_id, end_position_);
+  return IsNodePositionValid(last_node_id, end_position_);
 }
 
-bool GraphPath::Impl::isPathConected() const {
+bool GraphPath::Impl::IsPathConected() const {
   vector<int32_t>::const_iterator start_iter;
   vector<int32_t>::const_iterator end_iter;
   for (start_iter = nodes_.begin(); start_iter != std::prev(nodes_.end());
@@ -127,7 +127,7 @@ bool GraphPath::Impl::isPathConected() const {
   return true;
 }
 
-string GraphPath::Impl::encode() const {
+string GraphPath::Impl::Encode() const {
   string path_encoding;
 
   size_t node_index = 0;
@@ -155,7 +155,7 @@ string GraphPath::Impl::encode() const {
   return path_encoding;
 }
 
-string GraphPath::encode() const { return pimpl_->encode(); }
+string GraphPath::Encode() const { return pimpl_->Encode(); }
 
 GraphPath::GraphPath(shared_ptr<Graph> graph_ptr, int32_t start_position,
                      const vector<int32_t>& nodes, int32_t end_position)
@@ -181,17 +181,17 @@ GraphPath& GraphPath::operator=(GraphPath&& other) noexcept {
   return *this;
 }
 
-int32_t GraphPath::start_position() const { return pimpl_->start_position_; }
-int32_t GraphPath::end_position() const { return pimpl_->end_position_; }
-std::shared_ptr<Graph> GraphPath::graph_ptr() const {
+int32_t GraphPath::StartPosition() const { return pimpl_->start_position_; }
+int32_t GraphPath::EndPosition() const { return pimpl_->end_position_; }
+std::shared_ptr<Graph> GraphPath::GraphPtr() const {
   return pimpl_->graph_ptr_;
 }
 
-vector<int32_t> GraphPath::node_ids() const { return pimpl_->nodes_; }
+vector<int32_t> GraphPath::NodeIds() const { return pimpl_->nodes_; }
 
-size_t GraphPath::num_nodes() const { return pimpl_->nodes_.size(); }
+size_t GraphPath::NumNodes() const { return pimpl_->nodes_.size(); }
 
-size_t GraphPath::lengthOnNode(int32_t node_id) const {
+size_t GraphPath::LengthOnNode(int32_t node_id) const {
   const size_t node_length = pimpl_->graph_ptr_->NodeSeq(node_id).length();
   size_t length_on_node =
       node_length;  // This is the length of all intermediate nodes.
@@ -211,14 +211,14 @@ size_t GraphPath::lengthOnNode(int32_t node_id) const {
 }
 
 size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
-  pimpl_->assertThatIndexIsValid(node_index);
+  pimpl_->AssertThatIndexIsValid(node_index);
   int32_t node_id = pimpl_->nodes_[node_index];
   const size_t node_length = pimpl_->graph_ptr_->NodeSeq(node_id).length();
   size_t length_on_node =
       node_length;  // This is the length of all intermediate nodes.
 
   const bool is_first_node = node_index == 0;
-  const bool is_last_node = node_index + 1 == num_nodes();
+  const bool is_last_node = node_index + 1 == NumNodes();
 
   if (is_first_node && is_last_node) {
     length_on_node = pimpl_->end_position_ - pimpl_->start_position_ + 1;
@@ -231,7 +231,7 @@ size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
   return length_on_node;
 }
 
-size_t GraphPath::length() const {
+size_t GraphPath::Length() const {
   size_t path_length = 0;
   for (int32_t node_index = 0; node_index != pimpl_->nodes_.size();
        ++node_index) {
@@ -246,15 +246,15 @@ string GraphPath::SeqOnNodeByIndex(int32_t node_index) const {
   const string& sequence = pimpl_->graph_ptr_->NodeSeq(node_id);
 
   if (node_index == 0) {
-    return sequence.substr(pimpl_->start_position_, lengthOnNode(node_id));
+    return sequence.substr(pimpl_->start_position_, LengthOnNode(node_id));
   } else if ((size_t)node_index == pimpl_->nodes_.size() - 1) {
-    return sequence.substr(0, lengthOnNode(node_id));
+    return sequence.substr(0, LengthOnNode(node_id));
   } else {
     return sequence;
   }
 }
 
-string GraphPath::seq() const {
+string GraphPath::Seq() const {
   string path_seq;
   size_t node_index = 0;
   for (int32_t node_id : pimpl_->nodes_) {
@@ -276,10 +276,10 @@ string GraphPath::seq() const {
   return path_seq;
 }
 
-bool GraphPath::isValid() const {
-  return (!pimpl_->isPathEmpty() && pimpl_->isFirstNodePosValid() &&
-          pimpl_->isLastNodePosValid() && pimpl_->areNodesOrdered() &&
-          pimpl_->arePositionsOrdered() && pimpl_->isPathConected());
+bool GraphPath::IsValid() const {
+  return (!pimpl_->IsPathEmpty() && pimpl_->IsFirstNodePosValid() &&
+          pimpl_->IsLastNodePosValid() && pimpl_->AreNodesOrdered() &&
+          pimpl_->ArePositionsOrdered() && pimpl_->IsPathConected());
 }
 
 bool GraphPath::operator==(const GraphPath& other) const {
@@ -287,60 +287,60 @@ bool GraphPath::operator==(const GraphPath& other) const {
 }
 
 ostream& operator<<(ostream& os, const GraphPath& path) {
-  return os << path.encode();
+  return os << path.Encode();
 }
 
-GraphPath GraphPath::extendStartPosition(int32_t extension_len) const {
+GraphPath GraphPath::ExtendStartPosition(int32_t extension_len) const {
   const int32_t extended_first_node_pos =
       pimpl_->start_position_ - extension_len;
   GraphPath extended_path(pimpl_->graph_ptr_, extended_first_node_pos,
                           pimpl_->nodes_, pimpl_->end_position_);
-  if (!extended_path.isValid()) {
-    throw std::logic_error("Cannot extend " + encode() + " left by " +
+  if (!extended_path.IsValid()) {
+    throw std::logic_error("Cannot extend " + Encode() + " left by " +
                            to_string(extension_len));
   }
   return extended_path;
 }
 
-GraphPath GraphPath::extendEndPosition(int32_t extension_len) const {
+GraphPath GraphPath::ExtendEndPosition(int32_t extension_len) const {
   int32_t extended_last_node_pos = pimpl_->end_position_ + extension_len;
   GraphPath extended_path(pimpl_->graph_ptr_, pimpl_->start_position_,
                           pimpl_->nodes_, extended_last_node_pos);
-  if (!extended_path.isValid()) {
-    throw std::logic_error("Cannot extend " + encode() + " right by " +
+  if (!extended_path.IsValid()) {
+    throw std::logic_error("Cannot extend " + Encode() + " right by " +
                            to_string(extension_len));
   }
   return extended_path;
 }
 
-GraphPath GraphPath::extendStartNodeTo(int32_t node_id) const {
+GraphPath GraphPath::ExtendStartNodeTo(int32_t node_id) const {
   vector<int32_t> extended_nodes = pimpl_->nodes_;
   extended_nodes.insert(extended_nodes.begin(), node_id);
   int32_t new_node_seq_len = pimpl_->graph_ptr_->NodeSeq(node_id).length();
   GraphPath extended_path(pimpl_->graph_ptr_, new_node_seq_len - 1,
                           extended_nodes, pimpl_->end_position_);
-  if (!extended_path.isValid()) {
-    throw std::logic_error("Cannot extend " + encode() + " left to node %i" +
+  if (!extended_path.IsValid()) {
+    throw std::logic_error("Cannot extend " + Encode() + " left to node %i" +
                            to_string(node_id));
   }
 
   return extended_path;
 }
 
-GraphPath GraphPath::extendEndNodeTo(int32_t node_id) const {
+GraphPath GraphPath::ExtendEndNodeTo(int32_t node_id) const {
   vector<int32_t> extended_nodes = pimpl_->nodes_;
   extended_nodes.push_back(node_id);
   GraphPath extended_path(pimpl_->graph_ptr_, pimpl_->start_position_,
                           extended_nodes, 0);
-  if (!extended_path.isValid()) {
-    throw std::logic_error("Cannot extend " + encode() + " right to node " +
+  if (!extended_path.IsValid()) {
+    throw std::logic_error("Cannot extend " + Encode() + " right to node " +
                            to_string(node_id));
   }
 
   return extended_path;
 }
 
-list<GraphPath> GraphPath::extendStartBy(int32_t extension_len) const {
+list<GraphPath> GraphPath::ExtendStartBy(int32_t extension_len) const {
   list<GraphPath> extended_paths;
 
   const int32_t start_node_id = pimpl_->nodes_.front();
@@ -349,15 +349,15 @@ list<GraphPath> GraphPath::extendStartBy(int32_t extension_len) const {
 
   // Start position gives the maximum extension.
   if (extension_len <= pimpl_->start_position_) {
-    extended_paths.push_back(extendStartPosition(extension_len));
+    extended_paths.push_back(ExtendStartPosition(extension_len));
   } else {
     const set<int32_t> pred_node_ids =
         pimpl_->graph_ptr_->Predecessors(start_node_id);
     const int32_t leftover_length = extension_len - pimpl_->start_position_ - 1;
     for (int32_t pred_node_id : pred_node_ids) {
-      const GraphPath path_with_this_node = extendStartNodeTo(pred_node_id);
+      const GraphPath path_with_this_node = ExtendStartNodeTo(pred_node_id);
       list<GraphPath> extensions_of_path_with_this_node =
-          path_with_this_node.extendStartBy(leftover_length);
+          path_with_this_node.ExtendStartBy(leftover_length);
       extended_paths.splice(extended_paths.end(),
                             extensions_of_path_with_this_node);
     }
@@ -366,7 +366,7 @@ list<GraphPath> GraphPath::extendStartBy(int32_t extension_len) const {
   return extended_paths;
 }
 
-list<GraphPath> GraphPath::extendEndBy(int32_t extension_len) const {
+list<GraphPath> GraphPath::ExtendEndBy(int32_t extension_len) const {
   list<GraphPath> extended_paths;
 
   const int32_t end_node_id = pimpl_->nodes_.back();
@@ -376,16 +376,16 @@ list<GraphPath> GraphPath::extendEndBy(int32_t extension_len) const {
       end_node_length - pimpl_->end_position_ - 1;
 
   if (extension_len <= max_extension_at_end_node) {
-    extended_paths.push_back(extendEndPosition(extension_len));
+    extended_paths.push_back(ExtendEndPosition(extension_len));
   } else {
     const set<int32_t> succ_node_ids =
         pimpl_->graph_ptr_->Successors(end_node_id);
     const int32_t leftover_length =
         extension_len - max_extension_at_end_node - 1;
     for (int32_t succ_node_id : succ_node_ids) {
-      const GraphPath path_with_this_node = extendEndNodeTo(succ_node_id);
+      const GraphPath path_with_this_node = ExtendEndNodeTo(succ_node_id);
       list<GraphPath> extensions_of_path_with_this_node =
-          path_with_this_node.extendEndBy(leftover_length);
+          path_with_this_node.ExtendEndBy(leftover_length);
       extended_paths.splice(extended_paths.end(),
                             extensions_of_path_with_this_node);
     }
@@ -394,12 +394,12 @@ list<GraphPath> GraphPath::extendEndBy(int32_t extension_len) const {
   return extended_paths;
 }
 
-list<GraphPath> GraphPath::extendBy(int32_t start_extension_len,
+list<GraphPath> GraphPath::ExtendBy(int32_t start_extension_len,
                                     int32_t end_extension_len) const {
   list<GraphPath> extended_paths;
-  list<GraphPath> start_extended_paths = extendStartBy(start_extension_len);
+  list<GraphPath> start_extended_paths = ExtendStartBy(start_extension_len);
   for (const GraphPath& path : start_extended_paths) {
-    list<GraphPath> end_extended_paths = path.extendEndBy(end_extension_len);
+    list<GraphPath> end_extended_paths = path.ExtendEndBy(end_extension_len);
     extended_paths.splice(extended_paths.end(), end_extended_paths);
   }
   return extended_paths;

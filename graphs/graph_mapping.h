@@ -43,27 +43,27 @@ class Operation {
 
   Operation(char type_encoding, int length, std::string query,
             std::string reference) {
-    decodeOperation(type_encoding, length, std::move(query),
+    DecodeOperation(type_encoding, length, std::move(query),
                     std::move(reference));
-    validate();
+    Validate();
   }
   Operation(std::string cigar, std::string query, std::string reference);
   Type type() const { return type_; }
-  int length() const { return length_; }
-  std::string query() const { return query_; }
-  std::string reference() const { return reference_; }
-  int32_t querySpan() const;
-  int32_t referenceSpan() const;
+  int Length() const { return length_; }
+  std::string Query() const { return query_; }
+  std::string Reference() const { return reference_; }
+  int32_t QuerySpan() const;
+  int32_t ReferenceSpan() const;
   bool operator==(const Operation& other) const {
     return type_ == other.type_ && length_ == other.length_ &&
            query_ == other.query_ && reference_ == other.reference_;
   }
-  char asSymbol() const;
+  char AsSymbol() const;
 
  private:
-  void decodeOperation(char op_char, int length, std::string query_seq,
+  void DecodeOperation(char op_char, int length, std::string query_seq,
                        std::string reference_seq);
-  void validate() const;
+  void Validate() const;
   Type type_;
   int length_;
   std::string query_;
@@ -79,17 +79,17 @@ class Mapping {
   Mapping() = default;
   Mapping(int32_t reference_start, std::vector<Operation> operations)
       : reference_start_(reference_start), operations_(std::move(operations)) {
-    updateCounts();
+    UpdateCounts();
   }
   Mapping(int32_t reference_start, const std::string& encoding,
           const std::string& query, const std::string& reference);
-  size_type num_operations() const { return operations_.size(); }
-  std::string query() const;
-  std::string reference() const;
-  int32_t querySpan() const;
-  int32_t referenceSpan() const;
-  int32_t reference_start() const { return reference_start_; }
-  void set_reference_start(int32_t reference_start) {
+  size_type NumOperations() const { return operations_.size(); }
+  std::string Query() const;
+  std::string Reference() const;
+  int32_t QuerySpan() const;
+  int32_t ReferenceSpan() const;
+  int32_t ReferenceStart() const { return reference_start_; }
+  void SetReferenceStart(int32_t reference_start) {
     reference_start_ = reference_start;
   }
   const Operation& operator[](size_type index) const {
@@ -99,17 +99,17 @@ class Mapping {
     return operations_ == other.operations_ &&
            reference_start_ == other.reference_start_;
   }
-  size_t matched() const { return matched_; }
-  size_t mismatched() const { return mismatched_; }
-  size_t clipped() const { return clipped_; }
-  size_t inserted() const { return inserted_; }
-  size_t deleted() const { return deleted_; }
+  size_t NumMatched() const { return matched_; }
+  size_t NumMismatched() const { return mismatched_; }
+  size_t NumClipped() const { return clipped_; }
+  size_t NumInserted() const { return inserted_; }
+  size_t NumDeleted() const { return deleted_; }
 
  protected:
-  void decodeOperations(int32_t reference_start, const std::string& encoding,
+  void DecodeOperations(int32_t reference_start, const std::string& encoding,
                         const std::string& query, const std::string& reference);
 
-  void updateCounts();
+  void UpdateCounts();
 
  private:
   size_t matched_ = 0;
@@ -147,10 +147,10 @@ class GraphMapping {
       node_mappings_.push_back(node_mapping);
     }
   }
-  std::string query() const;
-  std::string reference() const;
-  int32_t querySpan() const;
-  int32_t referenceSpan() const;
+  std::string Query() const;
+  std::string Reference() const;
+  int32_t QuerySpan() const;
+  int32_t ReferenceSpan() const;
   int32_t NumMatches() const;
   const_iterator begin() const { return node_mappings_.begin(); }
   const_iterator end() const { return node_mappings_.end(); }

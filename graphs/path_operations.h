@@ -32,5 +32,5 @@
  * @param sequence A string having the same length as the path
  * @return Segments of the sequence corresponding to nodes spanned by the path
  */
-std::vector<std::string> splitByPath(const GraphPath& path,
+std::vector<std::string> SplitByPath(const GraphPath& path,
                                      const std::string& sequence);

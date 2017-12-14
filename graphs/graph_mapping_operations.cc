@@ -25,7 +25,7 @@
 using std::string;
 using std::vector;
 
-GraphMapping decodeFromString(int32_t first_node_start,
+GraphMapping DecodeFromString(int32_t first_node_start,
                               const string& graph_cigar, const string& query,
                               const Graph& graph) {
   vector<int32_t> node_ids;
@@ -40,19 +40,19 @@ GraphMapping decodeFromString(int32_t first_node_start,
 
       string cigar;
       int32_t node_id;
-      splitNodeCigar(node_cigar, cigar, node_id);
+      SplitNodeCigar(node_cigar, cigar, node_id);
       node_ids.push_back(node_id);
       const string& node_seq = graph.NodeSeq(node_id);
       Mapping node_mapping(ref_pos, cigar, query_piece, node_seq);
       node_mappings.push_back(node_mapping);
-      query_pos += node_mapping.querySpan();
+      query_pos += node_mapping.QuerySpan();
       node_cigar.clear();
     }
   }
   return GraphMapping(node_ids, node_mappings);
 }
 
-void splitNodeCigar(const string& node_cigar, string& cigar, int32_t& node_id) {
+void SplitNodeCigar(const string& node_cigar, string& cigar, int32_t& node_id) {
   node_id = -1;
   string nodeid_encoding;
   for (size_t index = 0; index != node_cigar.length(); ++index) {

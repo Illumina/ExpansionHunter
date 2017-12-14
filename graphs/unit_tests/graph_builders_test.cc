@@ -28,7 +28,7 @@ TEST(DeletionGraph, IsCreatedFromNodeSequences) {
   const string left_flank = "AATT";
   const string deletion = "CCCC";
   const string right_flank = "GGGCC";
-  const Graph graph = makeDeletionGraph(left_flank, deletion, right_flank);
+  const Graph graph = MakeDeletionGraph(left_flank, deletion, right_flank);
 
   EXPECT_EQ(3, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));
@@ -45,7 +45,7 @@ TEST(SwapGraph, IsCreatedFromNodeSequences) {
   const string insertion = "TTTT";
   const string right_flank = "GGGCC";
   const Graph graph =
-      makeSwapGraph(left_flank, deletion, insertion, right_flank);
+      MakeSwapGraph(left_flank, deletion, insertion, right_flank);
 
   EXPECT_EQ(4, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));
@@ -67,7 +67,7 @@ TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
   const string insertion2 = "GGGG";
   const string right_flank = "GGGCC";
   const Graph graph =
-      makeDoubleSwapGraph(left_flank, deletion1, insertion1, middle, deletion2,
+      MakeDoubleSwapGraph(left_flank, deletion1, insertion1, middle, deletion2,
                           insertion2, right_flank);
 
   EXPECT_EQ(7, graph.NumNodes());
@@ -94,7 +94,7 @@ TEST(ConstructionOfLooplessStrGraph, TypicalParameters_GraphConstructed) {
   const string right_flank = "ATTT";
   const int32_t read_len = 10;
   const Graph graph =
-      makeLooplessStrGraph(read_len, left_flank, repeat_unit, right_flank);
+      MakeLooplessStrGraph(read_len, left_flank, repeat_unit, right_flank);
 
   ASSERT_EQ(6, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));
@@ -123,7 +123,7 @@ TEST(ConstructionOfStrGraph, TypicalParameters_GraphConstructed) {
   const string left_flank = "AATT";
   const string repeat_unit = "CGG";
   const string right_flank = "ATTT";
-  const Graph graph = makeStrGraph(left_flank, repeat_unit, right_flank);
+  const Graph graph = MakeStrGraph(left_flank, repeat_unit, right_flank);
 
   ASSERT_EQ(3, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));

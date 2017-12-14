@@ -39,7 +39,7 @@ class DeletionGraphForAlignment : public ::testing::Test {
     left_flank = "AAAACC";
     deletion = "TTTGG";
     right_flank = "ATTT";
-    graph = makeDeletionGraph(left_flank, deletion, right_flank);
+    graph = MakeDeletionGraph(left_flank, deletion, right_flank);
     graph_ptr = std::make_shared<Graph>(graph);
   }
   Graph graph;
@@ -50,18 +50,18 @@ class DeletionGraphForAlignment : public ::testing::Test {
 };
 
 TEST_F(DeletionGraphForAlignment, AligningReadsToShortReferenceCausesError) {
-  EXPECT_ANY_THROW(alignWithoutGaps("AAAA", 0, "AAA"));
+  EXPECT_ANY_THROW(AlignWithoutGaps("AAAA", 0, "AAA"));
 }
 
 TEST_F(DeletionGraphForAlignment, AligningEmptySequencesCausesError) {
-  EXPECT_ANY_THROW(alignWithoutGaps("", 0, ""));
+  EXPECT_ANY_THROW(AlignWithoutGaps("", 0, ""));
 }
 
 TEST_F(DeletionGraphForAlignment, AlignSequences) {
   const string query = "AGGTTTTG";
   const string reference = "NNNNATCGTTTG";
   const Mapping expected_mapping(4, "1M3X4M", query, reference);
-  ASSERT_EQ(expected_mapping, alignWithoutGaps(query, 4, reference));
+  ASSERT_EQ(expected_mapping, AlignWithoutGaps(query, 4, reference));
 }
 
 TEST_F(DeletionGraphForAlignment, AlignReadToSingleNodePath) {
@@ -69,8 +69,8 @@ TEST_F(DeletionGraphForAlignment, AlignReadToSingleNodePath) {
   const string read = "ATGC";
 
   GraphMapping expected_graph_mapping =
-      decodeFromString(1, "1[1X2M1X]", read, graph);
-  GraphMapping graph_mapping = alignWithoutGaps(path, read);
+      DecodeFromString(1, "1[1X2M1X]", read, graph);
+  GraphMapping graph_mapping = AlignWithoutGaps(path, read);
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
 }
 
@@ -79,7 +79,7 @@ TEST_F(DeletionGraphForAlignment, AlignReadToMultiNodePath) {
   const string read = "TTCCTTAGGAT";
 
   GraphMapping expected_graph_mapping =
-      decodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", read, graph);
-  GraphMapping graph_mapping = alignWithoutGaps(path, read);
+      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", read, graph);
+  GraphMapping graph_mapping = AlignWithoutGaps(path, read);
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
 }

@@ -24,7 +24,7 @@
 
 using std::string;
 
-Graph makeDeletionGraph(const string& left_flank, const string& deletion,
+Graph MakeDeletionGraph(const string& left_flank, const string& deletion,
                         const string& right_flank) {
   Graph graph(3);
 
@@ -38,7 +38,7 @@ Graph makeDeletionGraph(const string& left_flank, const string& deletion,
   return graph;
 }
 
-Graph makeSwapGraph(const string& left_flank, const string& deletion,
+Graph MakeSwapGraph(const string& left_flank, const string& deletion,
                     const string& insertion, const string& right_flank) {
   Graph graph(4);
 
@@ -54,7 +54,7 @@ Graph makeSwapGraph(const string& left_flank, const string& deletion,
   return graph;
 }
 
-Graph makeDoubleSwapGraph(const string& left_flank, const string& deletion1,
+Graph MakeDoubleSwapGraph(const string& left_flank, const string& deletion1,
                           const string& insertion1, const string& middle,
                           const string& deletion2, const string& insertion2,
                           const string& right_flank) {
@@ -79,7 +79,7 @@ Graph makeDoubleSwapGraph(const string& left_flank, const string& deletion1,
   return graph;
 }
 
-Graph makeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
+Graph MakeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
                            const std::string& repeat_unit,
                            const std::string& right_flank) {
   const int32_t num_repeat_unit_nodes =
@@ -103,7 +103,7 @@ Graph makeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
   return graph;
 }
 
-Graph makeStrGraph(const std::string& left_flank,
+Graph MakeStrGraph(const std::string& left_flank,
                    const std::string& repeat_unit,
                    const std::string& right_flank) {
   Graph graph(3);

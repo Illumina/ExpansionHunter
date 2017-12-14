@@ -25,6 +25,6 @@
 #include "graphs/graph_mapping.h"
 #include "graphs/path.h"
 
-Mapping alignWithoutGaps(const std::string& query, int32_t ref_start,
+Mapping AlignWithoutGaps(const std::string& query, int32_t ref_start,
                          const std::string& reference);
-GraphMapping alignWithoutGaps(const GraphPath& path, const std::string& read);
+GraphMapping AlignWithoutGaps(const GraphPath& path, const std::string& read);
