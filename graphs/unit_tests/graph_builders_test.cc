@@ -88,13 +88,13 @@ TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
   EXPECT_TRUE(graph.HasEdge(5, 6));
 }
 
-TEST(ConstructionOfStrGraph, TypicalParameters_GraphConstructed) {
+TEST(ConstructionOfLooplessStrGraph, TypicalParameters_GraphConstructed) {
   const string left_flank = "AATT";
   const string repeat_unit = "CGG";
   const string right_flank = "ATTT";
   const int32_t read_len = 10;
   const Graph graph =
-      makeStrGraph(read_len, left_flank, repeat_unit, right_flank);
+      makeLooplessStrGraph(read_len, left_flank, repeat_unit, right_flank);
 
   ASSERT_EQ(6, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));

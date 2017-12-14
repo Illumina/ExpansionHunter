@@ -79,9 +79,9 @@ Graph makeDoubleSwapGraph(const string& left_flank, const string& deletion1,
   return graph;
 }
 
-Graph makeStrGraph(int32_t read_len, const std::string& left_flank,
-                   const std::string& repeat_unit,
-                   const std::string& right_flank) {
+Graph makeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
+                           const std::string& repeat_unit,
+                           const std::string& right_flank) {
   const int32_t num_repeat_unit_nodes =
       (int)std::ceil(read_len / (double)repeat_unit.length());
   const int32_t num_nodes = num_repeat_unit_nodes + 2;  // Account for flanks
