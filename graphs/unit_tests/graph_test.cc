@@ -82,6 +82,15 @@ TEST(GettingNodeNeighbors, TypicalNode_SuccessorsFound) {
   ASSERT_TRUE(graph.Successors(1).empty());
 }
 
+TEST(GettingNodeNeighbors, LoopAtNode_SuccessorsFound) {
+  Graph graph(4);
+  graph.AddEdge(0, 0);
+  graph.AddEdge(0, 1);
+
+  const set<int32_t> expected_predecessors = {0, 1};
+  ASSERT_EQ(expected_predecessors, graph.Successors(0));
+}
+
 TEST(GettingNodeNeighbors, TypicalNode_PredecessorsFound) {
   Graph graph(4);
   graph.AddEdge(0, 1);
