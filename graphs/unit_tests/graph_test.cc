@@ -95,8 +95,8 @@ TEST(GettingNodeNeighbors, TypicalNode_PredecessorsFound) {
 
 TEST(GettingNodeNeighbors, NeighborsOfNonexistingNode_ExceptionRaised) {
   Graph graph(4);
-  ASSERT_ANY_THROW(graph.Successors(4));
-  ASSERT_ANY_THROW(graph.Predecessors(-1));
+  EXPECT_ANY_THROW(graph.Successors(4));
+  EXPECT_ANY_THROW(graph.Predecessors(-1));
 }
 
 TEST(ResettingGraph, TypicalReset_NewGraphInitialized) {
