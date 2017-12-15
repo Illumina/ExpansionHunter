@@ -72,15 +72,15 @@ TEST(AligningSequenceToPath, MultiNodePath_Aligned) {
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
 }
 
-// TEST(AligningSequenceToPath, TypicalStrPath_Aligned) {
-//  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
-//  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-//  GraphPath path(graph_ptr, 2, {0, 1, 2}, 1);
-//  //                   FFFFRRRRRRRRRFFFF
-//  const string read = "AACCCCGCCGCCGATTT";
-//
-//  GraphMapping expected_graph_mapping =
-//      DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, graph);
-//  GraphMapping graph_mapping = AlignWithoutGaps(path, read);
-//  EXPECT_EQ(expected_graph_mapping, graph_mapping);
-//}
+TEST(AligningSequenceToPath, TypicalStrPath_Aligned) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphPath path(graph_ptr, 2, {0, 1, 1, 1, 2}, 3);
+  //                   FFFFRRRRRRRRRFFFF
+  const string read = "AACCCCGCCGCCGATTT";
+
+  GraphMapping expected_graph_mapping =
+      DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, graph);
+  GraphMapping graph_mapping = AlignWithoutGaps(path, read);
+  EXPECT_EQ(expected_graph_mapping, graph_mapping);
+}

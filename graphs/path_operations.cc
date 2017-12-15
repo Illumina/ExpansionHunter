@@ -27,7 +27,7 @@ using std::vector;
 vector<string> SplitByPath(const GraphPath& path, const std::string& sequence) {
   if (path.Length() != sequence.length()) {
     throw std::logic_error("Split operation requires that " + path.Encode() +
-                           "  and " + sequence + " have same length");
+                           " and " + sequence + " have same length");
   }
 
   vector<string> split_seq;
