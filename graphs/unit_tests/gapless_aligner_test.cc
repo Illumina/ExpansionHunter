@@ -123,18 +123,37 @@ TEST(AlignmentOfSequenceToGraph, TypicalSequence_BestAlignmentObtained) {
   ASSERT_EQ(expected_mapping, mapping);
 }
 
-TEST(AlignmentOfSequenceToGraph,
-     TypicalSequenceOnStrGraph_BestAlignmentObtained) {
+TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
   Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-
   const int32_t kmer_len = 3;
   GaplessAligner aligner(graph_ptr, kmer_len);
-  //                   FFFFRRRRRRRRRFFFF
-  const string read = "AACCCCGCCGCCGATTT";
-  GraphMapping mapping = aligner.GetBestAlignment(read);
 
-  GraphMapping expected_graph_mapping =
-      DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, graph);
-  EXPECT_EQ(expected_graph_mapping, mapping);
+  {
+    //                   FFFFRRRRRRRRRFFFF
+    const string spanning_read = "AACCCCGCCGCCGATTT";
+    GraphMapping mapping = aligner.GetBestAlignment(spanning_read);
+
+    GraphMapping expected_mapping =
+        DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", spanning_read, graph);
+    EXPECT_EQ(expected_mapping, mapping);
+  }
+
+  {
+    //                          RRRRRRRRRRRR
+    const string repeat_read = "CCGCCGCCGCCG";
+    GraphMapping mapping = aligner.GetBestAlignment(repeat_read);
+    GraphMapping expected_mapping =
+        DecodeFromString(0, "1[3M]1[3M]1[3M]1[3M]", repeat_read, graph);
+    EXPECT_EQ(expected_mapping, mapping);
+  }
+
+  {
+    //                          RRRXRRRRXRRR
+    const string repeat_read = "CCGACGCCTCCG";
+    GraphMapping mapping = aligner.GetBestAlignment(repeat_read);
+    GraphMapping expected_mapping =
+        DecodeFromString(0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, graph);
+    EXPECT_EQ(expected_mapping, mapping);
+  }
 }

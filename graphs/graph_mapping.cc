@@ -107,8 +107,7 @@ void Operation::Validate() const {
   }
 
   throw std::logic_error(query_ + " and " + reference_ +
-                         " are incompatible with operation " +
-                         to_string(AsSymbol()));
+                         " are incompatible with operation " + AsSymbol());
 }
 
 int32_t Operation::QuerySpan() const {
