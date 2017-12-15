@@ -31,6 +31,7 @@
 #include "graphs/graph_mapping_operations.h"
 #include "graphs/path.h"
 
+using std::list;
 using std::string;
 
 TEST(AligningSequences, SequencesWithUnequalLength_ExceptionThrown) {
@@ -83,4 +84,57 @@ TEST(AligningSequenceToPath, TypicalStrPath_Aligned) {
       DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, graph);
   GraphMapping graph_mapping = AlignWithoutGaps(path, read);
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
+}
+
+TEST(KmerExtraction, TypicalSequence_KmersExtracted) {
+  const string sequence = "AAATTT";
+  const list<string> expected_4mers = {"AAAT", "AATT", "ATTT"};
+  ASSERT_EQ(expected_4mers, ExtractKmersFromAllPositions(sequence, 4));
+
+  const list<string> expected_7mers = {};
+  ASSERT_EQ(expected_7mers, ExtractKmersFromAllPositions(sequence, 7));
+}
+
+TEST(AlignmentOfSequenceToShortPath, TypicalSequence_BestAlignmentObtained) {
+  Graph graph = MakeDeletionGraph("AAACC", "TTGGG", "TTAAA");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  const GraphPath path(graph_ptr, 4, {0}, 4);
+  const string sequence = "CCTTA";
+
+  GraphMapping mapping = GetBestAlignmentToShortPath(path, 1, sequence);
+
+  GraphMapping expected_mapping =
+      DecodeFromString(3, "0[2M]2[3M]", sequence, graph);
+  ASSERT_EQ(expected_mapping, mapping);
+}
+
+TEST(AlignmentOfSequenceToGraph, TypicalSequence_BestAlignmentObtained) {
+  Graph graph = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  const int32_t kmer_len = 3;
+  GaplessAligner aligner(graph_ptr, kmer_len);
+  const string sequence = "TTCCTTAGGAT";
+
+  GraphMapping mapping = aligner.GetBestAlignment(sequence);
+
+  GraphMapping expected_mapping =
+      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", sequence, graph);
+  ASSERT_EQ(expected_mapping, mapping);
+}
+
+TEST(AlignmentOfSequenceToGraph,
+     TypicalSequenceOnStrGraph_BestAlignmentObtained) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+
+  const int32_t kmer_len = 3;
+  GaplessAligner aligner(graph_ptr, kmer_len);
+  //                   FFFFRRRRRRRRRFFFF
+  const string read = "AACCCCGCCGCCGATTT";
+  GraphMapping mapping = aligner.GetBestAlignment(read);
+
+  GraphMapping expected_graph_mapping =
+      DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, graph);
+  EXPECT_EQ(expected_graph_mapping, mapping);
 }
