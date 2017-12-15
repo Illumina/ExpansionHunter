@@ -100,11 +100,19 @@ TEST(GettingPathSequenceOnNode, TypicalPathOnStrGraph_SequenceReturned) {
   Graph graph = MakeStrGraph("TTT", "AT", "CCCCC");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
 
-  GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
-  EXPECT_EQ("TT", path.SeqOnNodeByIndex(0));
-  EXPECT_EQ("AT", path.SeqOnNodeByIndex(1));
-  EXPECT_EQ("AT", path.SeqOnNodeByIndex(2));
-  EXPECT_EQ("C", path.SeqOnNodeByIndex(3));
+  {
+    GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
+    EXPECT_EQ("TT", path.SeqOnNodeByIndex(0));
+    EXPECT_EQ("AT", path.SeqOnNodeByIndex(1));
+    EXPECT_EQ("AT", path.SeqOnNodeByIndex(2));
+    EXPECT_EQ("C", path.SeqOnNodeByIndex(3));
+  }
+
+  {
+    GraphPath path(graph_ptr, 1, {1, 1}, 1);
+    EXPECT_EQ("T", path.SeqOnNodeByIndex(0));
+    EXPECT_EQ("AT", path.SeqOnNodeByIndex(1));
+  }
 }
 
 TEST(ValidatingPath, WellFormedPath_IsValid) {

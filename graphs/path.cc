@@ -191,25 +191,6 @@ vector<int32_t> GraphPath::NodeIds() const { return pimpl_->nodes_; }
 
 size_t GraphPath::NumNodes() const { return pimpl_->nodes_.size(); }
 
-size_t GraphPath::LengthOnNode(int32_t node_id) const {
-  const size_t node_length = pimpl_->graph_ptr_->NodeSeq(node_id).length();
-  size_t length_on_node =
-      node_length;  // This is the length of all intermediate nodes.
-
-  const bool is_first_node = node_id == pimpl_->nodes_.front();
-  const bool is_last_node = node_id == pimpl_->nodes_.back();
-
-  if (is_first_node && is_last_node) {
-    length_on_node = pimpl_->end_position_ - pimpl_->start_position_ + 1;
-  } else if (is_first_node) {
-    length_on_node = node_length - pimpl_->start_position_;
-  } else if (is_last_node) {
-    length_on_node = pimpl_->end_position_ + 1;
-  }
-
-  return length_on_node;
-}
-
 size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
   pimpl_->AssertThatIndexIsValid(node_index);
   int32_t node_id = pimpl_->nodes_[node_index];
@@ -246,9 +227,11 @@ string GraphPath::SeqOnNodeByIndex(int32_t node_index) const {
   const string& sequence = pimpl_->graph_ptr_->NodeSeq(node_id);
 
   if (node_index == 0) {
-    return sequence.substr(pimpl_->start_position_, LengthOnNode(node_id));
+    const size_t node_overlap_len = GetOverlapWithNodeByIndex(node_index);
+    return sequence.substr(pimpl_->start_position_, node_overlap_len);
   } else if ((size_t)node_index == pimpl_->nodes_.size() - 1) {
-    return sequence.substr(0, LengthOnNode(node_id));
+    const size_t node_overlap_len = GetOverlapWithNodeByIndex(node_index);
+    return sequence.substr(0, node_overlap_len);
   } else {
     return sequence;
   }

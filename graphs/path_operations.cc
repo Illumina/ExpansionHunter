@@ -31,11 +31,9 @@ vector<string> SplitByPath(const GraphPath& path, const std::string& sequence) {
   }
 
   vector<string> split_seq;
-  const vector<int32_t> path_node_ids = path.NodeIds();
-
   size_t cur_position = 0;
-  for (int32_t node_id : path_node_ids) {
-    const size_t length_on_node = path.LengthOnNode(node_id);
+  for (int32_t node_index = 0; node_index != path.NumNodes(); ++node_index) {
+    const size_t length_on_node = path.GetOverlapWithNodeByIndex(node_index);
     split_seq.push_back(sequence.substr(cur_position, length_on_node));
     cur_position += length_on_node;
   }

@@ -54,7 +54,6 @@ class GraphPath {
   int32_t StartPosition() const;
   int32_t EndPosition() const;
   size_t Length() const;
-  size_t LengthOnNode(int32_t node_id) const;
   size_t GetOverlapWithNodeByIndex(int32_t node_index) const;
   GraphPath ExtendStartPosition(int32_t extension_len) const;
   GraphPath ExtendEndPosition(int32_t extension_len) const;
