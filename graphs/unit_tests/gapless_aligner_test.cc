@@ -130,7 +130,7 @@ TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
   GaplessAligner aligner(graph_ptr, kmer_len);
 
   {
-    //                   FFFFRRRRRRRRRFFFF
+    //                            FFFFRRRRRRRRRFFFF
     const string spanning_read = "AACCCCGCCGCCGATTT";
     GraphMapping mapping = aligner.GetBestAlignment(spanning_read);
 
