@@ -1,0 +1,5 @@
+add_executable(read_classifier_test read_classifier_test.cc)
+
+target_link_libraries(read_classifier_test classification gtest_main)
+
+add_test(NAME read_classifier_test COMMAND read_classifier_test)
