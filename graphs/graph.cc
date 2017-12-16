@@ -39,7 +39,7 @@ void Graph::SetNodeSeq(int32_t node_id, const string& seq) {
 void Graph::AddEdge(int32_t source_node_id, int32_t sink_node_id) {
   AssertNodeExists(source_node_id);
   AssertNodeExists(sink_node_id);
-  if (source_node_id >= sink_node_id) {
+  if (source_node_id > sink_node_id) {
     const string edge =
         "(" + to_string(source_node_id) + "," + to_string(sink_node_id) + ")";
     throw std::logic_error("Edge " + edge + " breaks topological order");

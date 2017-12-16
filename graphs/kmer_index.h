@@ -20,9 +20,9 @@
 
 #pragma once
 
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
-#include <memory>
 
 #include "graphs/path.h"
 
@@ -40,11 +40,11 @@ class KmerIndex {
   KmerIndex& operator=(KmerIndex&& other) noexcept;
   ~KmerIndex();
   bool operator==(const KmerIndex& other) const;
-  std::string encode() const;
-  const std::list<GraphPath>& getPaths(const std::string& kmer) const;
-  bool contains(const std::string& kmer) const;
-  size_t numPaths(const std::string& kmer) const;
-  std::unordered_set<std::string> getKmersWithNonzeroCount() const;
+  std::string Encode() const;
+  const std::list<GraphPath>& GetPaths(const std::string& kmer) const;
+  bool Contains(const std::string& kmer) const;
+  size_t NumPaths(const std::string& kmer) const;
+  std::unordered_set<std::string> GetKmersWithNonzeroCount() const;
 
  private:
   struct KmerIndexImpl;

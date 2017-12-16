@@ -20,9 +20,11 @@
 
 #include "graphs/graph_builders.h"
 
+#include <cmath>
+
 using std::string;
 
-Graph makeDeletionGraph(const string& left_flank, const string& deletion,
+Graph MakeDeletionGraph(const string& left_flank, const string& deletion,
                         const string& right_flank) {
   Graph graph(3);
 
@@ -36,7 +38,7 @@ Graph makeDeletionGraph(const string& left_flank, const string& deletion,
   return graph;
 }
 
-Graph makeSwapGraph(const string& left_flank, const string& deletion,
+Graph MakeSwapGraph(const string& left_flank, const string& deletion,
                     const string& insertion, const string& right_flank) {
   Graph graph(4);
 
@@ -52,7 +54,7 @@ Graph makeSwapGraph(const string& left_flank, const string& deletion,
   return graph;
 }
 
-Graph makeDoubleSwapGraph(const string& left_flank, const string& deletion1,
+Graph MakeDoubleSwapGraph(const string& left_flank, const string& deletion1,
                           const string& insertion1, const string& middle,
                           const string& deletion2, const string& insertion2,
                           const string& right_flank) {
@@ -73,6 +75,46 @@ Graph makeDoubleSwapGraph(const string& left_flank, const string& deletion1,
   graph.AddEdge(3, 5);
   graph.AddEdge(4, 6);
   graph.AddEdge(5, 6);
+
+  return graph;
+}
+
+Graph MakeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
+                           const std::string& repeat_unit,
+                           const std::string& right_flank) {
+  const int32_t num_repeat_unit_nodes =
+      (int)std::ceil(read_len / (double)repeat_unit.length());
+  const int32_t num_nodes = num_repeat_unit_nodes + 2;  // Account for flanks
+
+  Graph graph(num_nodes);
+
+  int32_t right_flank_node_id = num_nodes - 1;
+
+  graph.SetNodeSeq(0, left_flank);
+  graph.SetNodeSeq(right_flank_node_id, right_flank);
+  graph.AddEdge(0, right_flank_node_id);
+
+  for (int32_t node_id = 0; node_id != num_repeat_unit_nodes; ++node_id) {
+    graph.SetNodeSeq(node_id + 1, repeat_unit);
+    graph.AddEdge(node_id, node_id + 1);
+    graph.AddEdge(node_id + 1, right_flank_node_id);
+  }
+
+  return graph;
+}
+
+Graph MakeStrGraph(const std::string& left_flank,
+                   const std::string& repeat_unit,
+                   const std::string& right_flank) {
+  Graph graph(3);
+  graph.SetNodeSeq(0, left_flank);
+  graph.SetNodeSeq(1, repeat_unit);
+  graph.SetNodeSeq(2, right_flank);
+
+  graph.AddEdge(0, 1);
+  graph.AddEdge(0, 2);
+  graph.AddEdge(1, 1);
+  graph.AddEdge(1, 2);
 
   return graph;
 }

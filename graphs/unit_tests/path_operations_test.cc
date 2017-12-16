@@ -40,7 +40,7 @@ class DeletionGraphForOperations : public ::testing::Test {
     left_flank = "AAAACC";
     deletion = "TTTGG";
     right_flank = "ATTT";
-    graph = makeDeletionGraph(left_flank, deletion, right_flank);
+    graph = MakeDeletionGraph(left_flank, deletion, right_flank);
     graph_ptr = std::make_shared<Graph>(graph);
   }
   Graph graph;
@@ -54,14 +54,14 @@ TEST_F(DeletionGraphForOperations,
        SplittingSequenceByPathOfDifferentLengthCausesError) {
   GraphPath path(graph_ptr, 3, {0, 1}, 2);
   const string sequence = "AA";
-  EXPECT_ANY_THROW(splitByPath(path, sequence));
+  EXPECT_ANY_THROW(SplitByPath(path, sequence));
 }
 
 TEST_F(DeletionGraphForOperations, SplittingSequenceBySingleNodePath) {
   GraphPath path(graph_ptr, 1, {1}, 3);
   const string sequence = "AAT";
   const vector<string> expected_pieces = {sequence};
-  EXPECT_EQ(expected_pieces, splitByPath(path, sequence));
+  EXPECT_EQ(expected_pieces, SplitByPath(path, sequence));
 }
 
 TEST_F(DeletionGraphForOperations, SplittingSequenceByMultiNodePath) {
@@ -69,18 +69,18 @@ TEST_F(DeletionGraphForOperations, SplittingSequenceByMultiNodePath) {
     GraphPath path(graph_ptr, 1, {0, 1}, 3);
     const string sequence = "AAAAAGGGG";
     const vector<string> expected_pieces = {"AAAAA", "GGGG"};
-    EXPECT_EQ(expected_pieces, splitByPath(path, sequence));
+    EXPECT_EQ(expected_pieces, SplitByPath(path, sequence));
   }
   {
     GraphPath path(graph_ptr, 3, {0, 2}, 1);
     const string sequence = "AAACC";
     const vector<string> expected_pieces = {"AAA", "CC"};
-    EXPECT_EQ(expected_pieces, splitByPath(path, sequence));
+    EXPECT_EQ(expected_pieces, SplitByPath(path, sequence));
   }
   {
     GraphPath path(graph_ptr, 3, {0, 1, 2}, 1);
     const string sequence = "AAAGGGGGCC";
     const vector<string> expected_pieces = {"AAA", "GGGGG", "CC"};
-    EXPECT_EQ(expected_pieces, splitByPath(path, sequence));
+    EXPECT_EQ(expected_pieces, SplitByPath(path, sequence));
   }
 }

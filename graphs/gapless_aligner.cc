@@ -20,7 +20,7 @@
 
 #include "graphs/gapless_aligner.h"
 
-#include <list>
+#include <iostream>
 #include <stdexcept>
 #include <vector>
 
@@ -30,12 +30,66 @@ using std::list;
 using std::string;
 using std::vector;
 
-Mapping alignWithoutGaps(const std::string& query, int32_t ref_start,
+GraphMapping GaplessAligner::GetBestAlignment(const string& sequence) const {
+  const list<string> kmers = ExtractKmersFromAllPositions(sequence, _kmer_len);
+
+  int32_t pos = 0;
+  for (const string& kmer : kmers) {
+    // Initiate alignment from a unique kmer.
+    if (_kmer_index.NumPaths(kmer) == 1) {
+      GraphPath kmer_path = _kmer_index.GetPaths(kmer).front();
+      return GetBestAlignmentToShortPath(kmer_path, pos, sequence);
+    }
+    ++pos;
+  }
+  return GraphMapping();
+}
+
+GraphMapping GetBestAlignmentToShortPath(const GraphPath& path,
+                                         int32_t start_pos,
+                                         const string& sequence) {
+  const int32_t start_extension = start_pos;
+  const int32_t end_extension = sequence.length() - start_pos - path.Length();
+  const list<GraphPath> full_paths =
+      path.ExtendBy(start_extension, end_extension);
+
+  GraphMapping best_mapping;
+  int32_t max_matches = -1;
+
+  for (const GraphPath& full_path : full_paths) {
+    GraphMapping mapping = AlignWithoutGaps(full_path, sequence);
+    if (mapping.NumMatches() > max_matches) {
+      max_matches = mapping.NumMatches();
+      best_mapping = mapping;
+    }
+  }
+
+  return best_mapping;
+}
+
+GraphMapping AlignWithoutGaps(const GraphPath& path, const string& sequence) {
+  vector<string> sequence_pieces = SplitByPath(path, sequence);
+  vector<Mapping> node_mappings;
+
+  std::shared_ptr<Graph> graph_ptr = path.GraphPtr();
+  size_t index = 0;
+  for (int32_t node_id : path.NodeIds()) {
+    const string node_seq = graph_ptr->NodeSeq(node_id);
+    const string sequence_piece = sequence_pieces[index];
+    const int32_t ref_start = index == 0 ? path.StartPosition() : 0;
+    node_mappings.push_back(
+        AlignWithoutGaps(sequence_piece, ref_start, node_seq));
+    ++index;
+  }
+
+  return GraphMapping(path.NodeIds(), node_mappings);
+}
+
+Mapping AlignWithoutGaps(const std::string& query, int32_t ref_start,
                          const std::string& reference) {
   if (reference.length() < ref_start + query.length()) {
-    const string msg = "Gapless alignment requires that read " + query +
-                       " is shorter than reference " + reference;
-    throw std::logic_error(msg);
+    throw std::logic_error("Gapless alignment requires that read " + query +
+                           " and " + reference + " have same length.");
   }
 
   if (query.empty() || reference.empty()) {
@@ -77,19 +131,11 @@ Mapping alignWithoutGaps(const std::string& query, int32_t ref_start,
   return Mapping(ref_start, operations);
 }
 
-GraphMapping alignWithoutGaps(const GraphPath& path, const string& read) {
-  vector<string> read_pieces = splitByPath(path, read);
-  vector<Mapping> node_mappings;
-
-  size_t index = 0;
-  for (int32_t node_id : path.node_ids()) {
-    std::shared_ptr<Graph> graph_ptr = path.graph_ptr();
-    const string node_seq = graph_ptr->NodeSeq(node_id);
-    const string read_piece = read_pieces[index];
-    const int32_t ref_start = index == 0 ? path.start_position() : 0;
-    node_mappings.push_back(alignWithoutGaps(read_piece, ref_start, node_seq));
-    ++index;
+list<string> ExtractKmersFromAllPositions(const std::string& sequence,
+                                          int32_t kmer_len) {
+  list<string> kmers;
+  for (size_t pos = 0; pos + kmer_len <= sequence.length(); ++pos) {
+    kmers.push_back(sequence.substr(pos, kmer_len));
   }
-
-  return GraphMapping(path.node_ids(), node_mappings);
+  return kmers;
 }

@@ -33,15 +33,15 @@ TEST(SplitNodeCigar, ExtractsCigarAndNodeId) {
   const string node_cigar = "1[4M5S]";
   string cigar;
   int32_t node_id;
-  splitNodeCigar(node_cigar, cigar, node_id);
+  SplitNodeCigar(node_cigar, cigar, node_id);
   EXPECT_EQ(1, node_id);
   EXPECT_EQ("4M5S", cigar);
 }
 
 TEST(DecodeGraphMapping, DecodesTypicalGraphMappings) {
-  Graph graph = makeDeletionGraph("AAAA", "TTGG", "TTTT");
+  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string read = "AAAATTCCC";
-  GraphMapping graph_mapping = decodeFromString(0, "0[4M]1[2M3S]", read, graph);
+  GraphMapping graph_mapping = DecodeFromString(0, "0[4M]1[2M3S]", read, graph);
 
   GraphMapping expected_graph_mapping(
       {0, 1},

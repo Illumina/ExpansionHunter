@@ -20,11 +20,72 @@
 
 #pragma once
 
+#include <list>
+#include <memory>
 #include <string>
 
 #include "graphs/graph_mapping.h"
+#include "graphs/kmer_index.h"
 #include "graphs/path.h"
 
-Mapping alignWithoutGaps(const std::string& query, int32_t ref_start,
+/**
+ * @brief Gapless graph aligner
+ *
+ * Enables gapless alignment of any sequence to a graph.
+ */
+class GaplessAligner {
+ public:
+  GaplessAligner(std::shared_ptr<Graph> wgraph_ptr, int32_t kmer_len)
+      : _kmer_len(kmer_len), _kmer_index(wgraph_ptr, kmer_len) {}
+  GraphMapping GetBestAlignment(const std::string& sequence) const;
+
+ private:
+  int32_t _kmer_len;
+  KmerIndex _kmer_index;
+};
+
+/**
+ * @brief Computes a top-scoring gapless alignment of a sequence to the graph
+ * that goes through the path starting at the given position on the sequence
+ *
+ * @param path: Any path shorter than the sequence
+ * @param start_pos: Position on the sequence corrsponding to the start of the
+ * path
+ * @param sequence: Any sequence
+ * @return Best gapless alignment with the above properety
+ */
+GraphMapping GetBestAlignmentToShortPath(const GraphPath& path,
+                                         int32_t start_pos,
+                                         const std::string& sequence);
+
+/**
+ * @brief Aligns a sequence to a path of the same length
+ *
+ * @param path: Any graph path
+ * @param sequence: Any sequence that has the same length as the path
+ * @return Result of the alignment
+ */
+GraphMapping AlignWithoutGaps(const GraphPath& path,
+                              const std::string& sequence);
+
+/**
+ * @brief Aligns query sequence to the reference sequence starting at the given
+ * position
+ *
+ * @param query: Any sequence
+ * @param ref_start: Position of the start of the alignment on the reference
+ * @param reference: Any sequence
+ * @return Result of the alignment
+ */
+Mapping AlignWithoutGaps(const std::string& query, int32_t ref_start,
                          const std::string& reference);
-GraphMapping alignWithoutGaps(const GraphPath& path, const std::string& read);
+
+/**
+ * @brief Extracts kmers starting at each position
+ *
+ * @param sequence: Any sequence
+ * @param kmer_len: Kmer length
+ * @return List of kmers indexed by start position in the original sequence
+ */
+std::list<std::string> ExtractKmersFromAllPositions(const std::string& sequence,
+                                                    int32_t kmer_len);

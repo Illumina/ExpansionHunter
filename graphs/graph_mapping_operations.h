@@ -25,8 +25,8 @@
 #include "graphs/graph.h"
 #include "graphs/graph_mapping.h"
 
-void splitNodeCigar(const std::string& node_cigar, std::string& cigar,
+void SplitNodeCigar(const std::string& node_cigar, std::string& cigar,
                     int32_t& node_id);
-GraphMapping decodeFromString(int32_t first_node_start,
+GraphMapping DecodeFromString(int32_t first_node_start,
                               const std::string& graph_cigar,
                               const std::string& query, const Graph& graph);

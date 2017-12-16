@@ -38,38 +38,38 @@ TEST(Operation, InitializesFromString) {
 TEST(Operation, OutputsQueryAndReferenceSpans) {
   {
     Operation operation("3M", "AAA", "AAA");
-    EXPECT_EQ((int32_t)3, operation.querySpan());
-    EXPECT_EQ((int32_t)3, operation.referenceSpan());
+    EXPECT_EQ((int32_t)3, operation.QuerySpan());
+    EXPECT_EQ((int32_t)3, operation.ReferenceSpan());
   }
   {
     Operation operation("4X", "AAAA", "TTTT");
-    EXPECT_EQ((int32_t)4, operation.querySpan());
-    EXPECT_EQ((int32_t)4, operation.referenceSpan());
+    EXPECT_EQ((int32_t)4, operation.QuerySpan());
+    EXPECT_EQ((int32_t)4, operation.ReferenceSpan());
   }
   {
     Operation operation("5D", "", "AAAAA");
-    EXPECT_EQ((int32_t)0, operation.querySpan());
-    EXPECT_EQ((int32_t)5, operation.referenceSpan());
+    EXPECT_EQ((int32_t)0, operation.QuerySpan());
+    EXPECT_EQ((int32_t)5, operation.ReferenceSpan());
   }
   {
     Operation operation("7I", "AAAAAAA", "");
-    EXPECT_EQ((int32_t)7, operation.querySpan());
-    EXPECT_EQ((int32_t)0, operation.referenceSpan());
+    EXPECT_EQ((int32_t)7, operation.QuerySpan());
+    EXPECT_EQ((int32_t)0, operation.ReferenceSpan());
   }
   {
     Operation operation("10S", "AAAAAAAAAA", "");
-    EXPECT_EQ((int32_t)10, operation.querySpan());
-    EXPECT_EQ((int32_t)0, operation.referenceSpan());
+    EXPECT_EQ((int32_t)10, operation.QuerySpan());
+    EXPECT_EQ((int32_t)0, operation.ReferenceSpan());
   }
   {
     Operation operation("7N", "NNNNNNN", "NNNNNNN");
-    EXPECT_EQ((int32_t)7, operation.querySpan());
-    EXPECT_EQ((int32_t)7, operation.referenceSpan());
+    EXPECT_EQ((int32_t)7, operation.QuerySpan());
+    EXPECT_EQ((int32_t)7, operation.ReferenceSpan());
   }
   {
     Operation operation("3N", "NCN", "CNN");
-    EXPECT_EQ((int32_t)3, operation.querySpan());
-    EXPECT_EQ((int32_t)3, operation.referenceSpan());
+    EXPECT_EQ((int32_t)3, operation.QuerySpan());
+    EXPECT_EQ((int32_t)3, operation.ReferenceSpan());
   }
 }
 
@@ -115,40 +115,48 @@ TEST(Mapping, InitializesFromCigar) {
 TEST(Mapping, CalculatesQueryAndReferenceSpans) {
   Mapping mapping(3, "3M1X2M2D2M3I1M10S", "TTCGTTTTGGGTCCCCCCCCCC",
                   "CCCTTCCTTAATTT");
-  EXPECT_EQ((int32_t)22, mapping.querySpan());
-  EXPECT_EQ((int32_t)11, mapping.referenceSpan());
+  EXPECT_EQ((int32_t)22, mapping.QuerySpan());
+  EXPECT_EQ((int32_t)11, mapping.ReferenceSpan());
+}
+
+TEST(GraphMapping, CalculatesNumberOfMatches) {
+  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
+  const string query = "AAAATTCCC";
+  GraphMapping graph_mapping =
+      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+  EXPECT_EQ((int32_t)6, graph_mapping.NumMatches());
 }
 
 TEST(Mapping, OutputsQueryAndReferenceSequences) {
   Mapping mapping(3, "3M1X2M2D2M3I1M10S", "TTCGTTTTGGGTCCCCCCCCCC",
                   "CCCTTCCTTAATTT");
-  EXPECT_EQ("TTCGTTTTGGGT", mapping.query());
-  EXPECT_EQ("TTCCTTAATTT", mapping.reference());
+  EXPECT_EQ("TTCGTTTTGGGT", mapping.Query());
+  EXPECT_EQ("TTCCTTAATTT", mapping.Reference());
 }
 
 TEST(GraphMapping, StitchesQueryAndReferenceSequences) {
-  Graph graph = makeDeletionGraph("AAAA", "TTGG", "TTTT");
+  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      decodeFromString(0, "0[4M]1[2M3S]", query, graph);
-  EXPECT_EQ("AAAATT", graph_mapping.query());
-  EXPECT_EQ("AAAATT", graph_mapping.reference());
+      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+  EXPECT_EQ("AAAATT", graph_mapping.Query());
+  EXPECT_EQ("AAAATT", graph_mapping.Reference());
 }
 
 TEST(GraphMapping, CalculatesQueryAndReferenceSpans) {
-  Graph graph = makeDeletionGraph("AAAA", "TTGG", "TTTT");
+  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      decodeFromString(0, "0[4M]1[2M3S]", query, graph);
-  EXPECT_EQ((int32_t)9, graph_mapping.querySpan());
-  EXPECT_EQ((int32_t)6, graph_mapping.referenceSpan());
+      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+  EXPECT_EQ((int32_t)9, graph_mapping.QuerySpan());
+  EXPECT_EQ((int32_t)6, graph_mapping.ReferenceSpan());
 }
 
 TEST(GraphMapping, AllowsAccessingNodeMappingsByIndex) {
-  Graph graph = makeDeletionGraph("AAAA", "TTGC", "TTTT");
+  Graph graph = MakeDeletionGraph("AAAA", "TTGC", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      decodeFromString(0, "0[4M]1[2M3S]", query, graph);
+      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
   EXPECT_EQ(Mapping(0, "4M", "AAAA", "AAAA"), graph_mapping[0].mapping);
   EXPECT_EQ(Mapping(0, "2M3S", "TTCCC", "TTGG"), graph_mapping[1].mapping);
 }

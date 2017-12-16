@@ -32,12 +32,12 @@ Operation::Operation(std::string cigar, string query, string reference) {
   length_encoding.pop_back();
   char type_encoding = cigar.back();
 
-  decodeOperation(type_encoding, std::stoi(length_encoding), std::move(query),
+  DecodeOperation(type_encoding, std::stoi(length_encoding), std::move(query),
                   std::move(reference));
-  validate();
+  Validate();
 }
 
-void Operation::decodeOperation(char type_encoding, int length, string query,
+void Operation::DecodeOperation(char type_encoding, int length, string query,
                                 string reference) {
   query_ = std::move(query);
   reference_ = std::move(reference);
@@ -68,7 +68,7 @@ void Operation::decodeOperation(char type_encoding, int length, string query,
   length_ = length;
 }
 
-void Operation::validate() const {
+void Operation::Validate() const {
   const bool full_length_query = query_.length() == (size_t)length_;
   const bool full_length_ref = reference_.length() == (size_t)length_;
   switch (type_) {
@@ -107,11 +107,10 @@ void Operation::validate() const {
   }
 
   throw std::logic_error(query_ + " and " + reference_ +
-                         " are incompatible with operation " +
-                         to_string(asSymbol()));
+                         " are incompatible with operation " + AsSymbol());
 }
 
-int32_t Operation::querySpan() const {
+int32_t Operation::QuerySpan() const {
   switch (type_) {
     case Type::kMatch:
     case Type::kMismatch:
@@ -125,7 +124,7 @@ int32_t Operation::querySpan() const {
   return -1;
 }
 
-int32_t Operation::referenceSpan() const {
+int32_t Operation::ReferenceSpan() const {
   switch (type_) {
     case Type::kMatch:
     case Type::kMismatch:
@@ -139,7 +138,7 @@ int32_t Operation::referenceSpan() const {
   return -1;
 }
 
-char Operation::asSymbol() const {
+char Operation::AsSymbol() const {
   static const map<Operation::Type, char> kOperationToChar = {
       {Operation::Type::kMatch, 'M'},
       {Operation::Type::kMismatch, 'X'},
@@ -151,51 +150,51 @@ char Operation::asSymbol() const {
 }
 
 std::ostream& operator<<(std::ostream& os, const Operation& operation) {
-  os << operation.length() << operation.asSymbol() << "("
-     << operation.reference() << "->" << operation.query() << ")";
+  os << operation.Length() << operation.AsSymbol() << "("
+     << operation.Reference() << "->" << operation.Query() << ")";
   return os;
 }
 
 Mapping::Mapping(int32_t reference_start, const std::string& cigar,
                  const std::string& query, const std::string& reference)
     : reference_start_(reference_start) {
-  decodeOperations(reference_start, cigar, query, reference);
-  updateCounts();
+  DecodeOperations(reference_start, cigar, query, reference);
+  UpdateCounts();
 }
 
-void Mapping::updateCounts() {
+void Mapping::UpdateCounts() {
   clipped_ = 0;
   matched_ = 0;
   mismatched_ = 0;
   missing_ = 0;
   inserted_ = 0;
   deleted_ = 0;
-  for (size_t i = 0; i < num_operations(); ++i) {
+  for (size_t i = 0; i < NumOperations(); ++i) {
     auto const& m = operations_[i];
     switch (m.type()) {
       case Operation::Type::kSoftClipping:
-        clipped_ += m.length();
+        clipped_ += m.Length();
         break;
       case Operation::Type::kMatch:
-        matched_ += m.length();
+        matched_ += m.Length();
         break;
       case Operation::Type::kMismatch:
-        mismatched_ += m.length();
+        mismatched_ += m.Length();
         break;
       case Operation::Type::kMissingBases:
-        missing_ += m.length();
+        missing_ += m.Length();
         break;
       case Operation::Type::kInsertionToRef:
-        inserted_ += m.length();
+        inserted_ += m.Length();
         break;
       case Operation::Type::kDeletionFromRef:
-        deleted_ += m.length();
+        deleted_ += m.Length();
         break;
     }
   }
 }
 
-void Mapping::decodeOperations(int32_t reference_start,
+void Mapping::DecodeOperations(int32_t reference_start,
                                const std::string& cigar,
                                const std::string& query,
                                const std::string& reference) {
@@ -245,79 +244,87 @@ void Mapping::decodeOperations(int32_t reference_start,
   }
 }
 
-string Mapping::query() const {
+string Mapping::Query() const {
   string query;
   for (const auto& operation : operations_) {
     if (operation.type() != Operation::Type::kSoftClipping) {
-      query += operation.query();
+      query += operation.Query();
     }
   }
   return query;
 }
 
-string Mapping::reference() const {
+string Mapping::Reference() const {
   string reference;
   for (const auto& operation : operations_) {
-    reference += operation.reference();
+    reference += operation.Reference();
   }
   return reference;
 }
 
-int32_t Mapping::querySpan() const {
+int32_t Mapping::QuerySpan() const {
   int32_t query_span = 0;
   for (const auto& operation : operations_) {
-    query_span += operation.querySpan();
+    query_span += operation.QuerySpan();
   }
   return query_span;
 }
 
-int32_t Mapping::referenceSpan() const {
+int32_t Mapping::ReferenceSpan() const {
   int32_t reference_span = 0;
   for (const auto& operation : operations_) {
-    reference_span += operation.referenceSpan();
+    reference_span += operation.ReferenceSpan();
   }
   return reference_span;
 }
 
 std::ostream& operator<<(std::ostream& os, const Mapping& mapping) {
-  os << "Ref start: " << mapping.reference_start() << ", ";
-  for (size_t index = 0; index != mapping.num_operations(); ++index) {
+  os << "Ref start: " << mapping.ReferenceStart() << ", ";
+  for (size_t index = 0; index != mapping.NumOperations(); ++index) {
     os << mapping[index];
   }
 
   return os;
 }
 
-string GraphMapping::query() const {
+string GraphMapping::Query() const {
   string query;
   for (const auto& node_mapping : node_mappings_) {
-    query += node_mapping.mapping.query();
+    query += node_mapping.mapping.Query();
   }
   return query;
 }
 
-string GraphMapping::reference() const {
+string GraphMapping::Reference() const {
   string reference;
   for (const auto& node_mapping : node_mappings_) {
-    reference += node_mapping.mapping.reference();
+    reference += node_mapping.mapping.Reference();
   }
   return reference;
 }
 
-int32_t GraphMapping::querySpan() const {
+int32_t GraphMapping::QuerySpan() const {
   int32_t query_span = 0;
   for (const auto& node_mapping : node_mappings_) {
-    query_span += node_mapping.mapping.querySpan();
+    query_span += node_mapping.mapping.QuerySpan();
   }
   return query_span;
 }
 
-int32_t GraphMapping::referenceSpan() const {
+int32_t GraphMapping::ReferenceSpan() const {
   int32_t reference_span = 0;
   for (const auto& node_mapping : node_mappings_) {
-    reference_span += node_mapping.mapping.referenceSpan();
+    reference_span += node_mapping.mapping.ReferenceSpan();
   }
   return reference_span;
+}
+
+int32_t GraphMapping::NumMatches() const {
+  int32_t num_matches = 0;
+  for (const auto& node_mapping : node_mappings_) {
+    num_matches += node_mapping.mapping.NumMatched();
+  }
+  return num_matches;
 }
 
 std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping) {

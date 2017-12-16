@@ -24,18 +24,16 @@ using std::list;
 using std::string;
 using std::vector;
 
-vector<string> splitByPath(const GraphPath& path, const std::string& sequence) {
-  if (path.length() != sequence.length()) {
-    throw std::logic_error("Split operation requires that " + path.encode() +
-                           "  and " + sequence + " have same length");
+vector<string> SplitByPath(const GraphPath& path, const std::string& sequence) {
+  if (path.Length() != sequence.length()) {
+    throw std::logic_error("Split operation requires that " + path.Encode() +
+                           " and " + sequence + " have same length");
   }
 
   vector<string> split_seq;
-  const vector<int32_t> path_node_ids = path.node_ids();
-
   size_t cur_position = 0;
-  for (int32_t node_id : path_node_ids) {
-    const size_t length_on_node = path.lengthOnNode(node_id);
+  for (int32_t node_index = 0; node_index != path.NumNodes(); ++node_index) {
+    const size_t length_on_node = path.GetOverlapWithNodeByIndex(node_index);
     split_seq.push_back(sequence.substr(cur_position, length_on_node));
     cur_position += length_on_node;
   }

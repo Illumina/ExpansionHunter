@@ -28,7 +28,7 @@ TEST(DeletionGraph, IsCreatedFromNodeSequences) {
   const string left_flank = "AATT";
   const string deletion = "CCCC";
   const string right_flank = "GGGCC";
-  const Graph graph = makeDeletionGraph(left_flank, deletion, right_flank);
+  const Graph graph = MakeDeletionGraph(left_flank, deletion, right_flank);
 
   EXPECT_EQ(3, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));
@@ -45,7 +45,7 @@ TEST(SwapGraph, IsCreatedFromNodeSequences) {
   const string insertion = "TTTT";
   const string right_flank = "GGGCC";
   const Graph graph =
-      makeSwapGraph(left_flank, deletion, insertion, right_flank);
+      MakeSwapGraph(left_flank, deletion, insertion, right_flank);
 
   EXPECT_EQ(4, graph.NumNodes());
   EXPECT_EQ(left_flank, graph.NodeSeq(0));
@@ -67,7 +67,7 @@ TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
   const string insertion2 = "GGGG";
   const string right_flank = "GGGCC";
   const Graph graph =
-      makeDoubleSwapGraph(left_flank, deletion1, insertion1, middle, deletion2,
+      MakeDoubleSwapGraph(left_flank, deletion1, insertion1, middle, deletion2,
                           insertion2, right_flank);
 
   EXPECT_EQ(7, graph.NumNodes());
@@ -86,4 +86,52 @@ TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
   EXPECT_TRUE(graph.HasEdge(3, 5));
   EXPECT_TRUE(graph.HasEdge(4, 6));
   EXPECT_TRUE(graph.HasEdge(5, 6));
+}
+
+TEST(ConstructionOfLooplessStrGraph, TypicalParameters_GraphConstructed) {
+  const string left_flank = "AATT";
+  const string repeat_unit = "CGG";
+  const string right_flank = "ATTT";
+  const int32_t read_len = 10;
+  const Graph graph =
+      MakeLooplessStrGraph(read_len, left_flank, repeat_unit, right_flank);
+
+  ASSERT_EQ(6, graph.NumNodes());
+  EXPECT_EQ(left_flank, graph.NodeSeq(0));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(1));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(2));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(3));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(4));
+  EXPECT_EQ(right_flank, graph.NodeSeq(5));
+
+  EXPECT_TRUE(graph.HasEdge(0, 5));
+
+  EXPECT_TRUE(graph.HasEdge(0, 1));
+  EXPECT_TRUE(graph.HasEdge(1, 5));
+
+  EXPECT_TRUE(graph.HasEdge(1, 2));
+  EXPECT_TRUE(graph.HasEdge(2, 5));
+
+  EXPECT_TRUE(graph.HasEdge(2, 3));
+  EXPECT_TRUE(graph.HasEdge(3, 5));
+
+  EXPECT_TRUE(graph.HasEdge(3, 4));
+  EXPECT_TRUE(graph.HasEdge(4, 5));
+}
+
+TEST(ConstructionOfStrGraph, TypicalParameters_GraphConstructed) {
+  const string left_flank = "AATT";
+  const string repeat_unit = "CGG";
+  const string right_flank = "ATTT";
+  const Graph graph = MakeStrGraph(left_flank, repeat_unit, right_flank);
+
+  ASSERT_EQ(3, graph.NumNodes());
+  EXPECT_EQ(left_flank, graph.NodeSeq(0));
+  EXPECT_EQ(repeat_unit, graph.NodeSeq(1));
+  EXPECT_EQ(right_flank, graph.NodeSeq(2));
+
+  EXPECT_TRUE(graph.HasEdge(0, 1));
+  EXPECT_TRUE(graph.HasEdge(0, 2));
+  EXPECT_TRUE(graph.HasEdge(1, 1));
+  EXPECT_TRUE(graph.HasEdge(1, 2));
 }
