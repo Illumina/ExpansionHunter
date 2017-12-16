@@ -25,6 +25,7 @@
 
 #include "gtest/gtest.h"
 
+#include "common/seq_operations.h"
 #include "graphs/graph.h"
 #include "graphs/graph_builders.h"
 #include "graphs/graph_mapping.h"
@@ -156,4 +157,15 @@ TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
         DecodeFromString(0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, graph);
     EXPECT_EQ(expected_mapping, mapping);
   }
+}
+
+TEST(StrandClassification, TypicalRead_StrandDetermined) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  const int32_t kmer_len = 3;
+  StrandClassifier classifier(graph_ptr, kmer_len);
+  EXPECT_TRUE(classifier.IsForwardOriented("CCGCCGCCGCCG"));
+  EXPECT_FALSE(classifier.IsForwardOriented(ReverseComplement("CCGCCGCCGCCG")));
+  EXPECT_TRUE(classifier.IsForwardOriented("CCGACGCCTCCG"));
+  EXPECT_FALSE(classifier.IsForwardOriented(ReverseComplement("CCGACGCCTCCG")));
 }

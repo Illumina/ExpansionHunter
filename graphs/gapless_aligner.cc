@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <vector>
 
+#include "common/seq_operations.h"
 #include "graphs/path_operations.h"
 
 using std::list;
@@ -31,13 +32,13 @@ using std::string;
 using std::vector;
 
 GraphMapping GaplessAligner::GetBestAlignment(const string& sequence) const {
-  const list<string> kmers = ExtractKmersFromAllPositions(sequence, _kmer_len);
+  const list<string> kmers = ExtractKmersFromAllPositions(sequence, kmer_len_);
 
   int32_t pos = 0;
   for (const string& kmer : kmers) {
     // Initiate alignment from a unique kmer.
-    if (_kmer_index.NumPaths(kmer) == 1) {
-      GraphPath kmer_path = _kmer_index.GetPaths(kmer).front();
+    if (kmer_index_.NumPaths(kmer) == 1) {
+      GraphPath kmer_path = kmer_index_.GetPaths(kmer).front();
       return GetBestAlignmentToShortPath(kmer_path, pos, sequence);
     }
     ++pos;
@@ -138,4 +139,22 @@ list<string> ExtractKmersFromAllPositions(const std::string& sequence,
     kmers.push_back(sequence.substr(pos, kmer_len));
   }
   return kmers;
+}
+
+int32_t StrandClassifier::CountKmerMatches(const std::string& seq) const {
+  const list<string> kmers = ExtractKmersFromAllPositions(seq, kmer_len_);
+  int32_t num_kmer_matches = 0;
+
+  for (const string& kmer : kmers) {
+    if (kmer_index_.NumPaths(kmer) != 0) {
+      ++num_kmer_matches;
+    }
+  }
+  return num_kmer_matches;
+}
+
+bool StrandClassifier::IsForwardOriented(const std::string& seq) const {
+  const int32_t num_forward_matches = CountKmerMatches(seq);
+  const int32_t num_revcomp_matches = CountKmerMatches(ReverseComplement(seq));
+  return num_forward_matches >= num_revcomp_matches;
 }
