@@ -17,3 +17,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+
+#include <cstdint>
+#include <iostream>
+
+#include "graphs/graph_mapping.h"
+
+enum class ReadClass {
+  kSpansRepeat,
+  kFlanksRepeat,
+  kInsideRepeat,
+  kOutsideRepeat,
+  kUnmapped,
+  kUnknown
+};
+
+std::ostream& operator<<(std::ostream& os, const ReadClass& read_class);
+
+class StrReadClassifier {
+ public:
+  StrReadClassifier(int32_t left_flank_id, int32_t repeat_id,
+                    int32_t right_flank_id) {}
+  ReadClass Classify(const GraphMapping& mapping) {
+    return ReadClass::kFlanksRepeat;
+  }
+};

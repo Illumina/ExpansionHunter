@@ -45,7 +45,7 @@ class GaplessAligner {
 };
 
 /**
- * @brief Determines how to orient the read relative to the graph
+ * @brief Determines orientation of a read relative to the graph
  *
  */
 class StrandClassifier {

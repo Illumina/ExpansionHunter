@@ -18,14 +18,29 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "classification/read_classifier.h"
+
 #include <memory>
+#include <string>
 
 #include "gtest/gtest.h"
 
 #include "graphs/graph.h"
 #include "graphs/graph_builders.h"
+#include "graphs/graph_mapping.h"
+#include "graphs/graph_mapping_operations.h"
 
-TEST(ReadClassificaton, SpanningRead_Classified) {
+using std::string;
+
+TEST(MappingClassificaton, SpanningRead_Classified) {
   Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  //                            FFRRRRRRFF
+  const string spanning_read = "CCCCGCCGAT";
+  GraphMapping spanning_mapping =
+      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", spanning_read, graph);
+
+  StrReadClassifier read_classifier(0, 1, 2);
+  ASSERT_EQ(ReadClass::kSpansRepeat,
+            read_classifier.Classify(spanning_mapping));
 }

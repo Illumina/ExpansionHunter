@@ -17,3 +17,24 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+
+#include <map>
+#include <string>
+
+#include "classification/read_classifier.h"
+
+using std::map;
+using std::ostream;
+using std::string;
+
+ostream& operator<<(ostream& os, const ReadClass& read_class) {
+  static const std::map<ReadClass, string> class_to_string = {
+      {ReadClass::kSpansRepeat, "kSpansRepeat"},
+      {ReadClass::kFlanksRepeat, "kFlanksRepeat"},
+      {ReadClass::kInsideRepeat, "kInsideRepeat"},
+      {ReadClass::kOutsideRepeat, "kOutsideRepeat"},
+      {ReadClass::kUnmapped, "kUnmapped"},
+      {ReadClass::kUnknown, "kUnknown"}};
+  os << class_to_string.at(read_class);
+  return os;
+}
