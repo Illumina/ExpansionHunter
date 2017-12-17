@@ -43,10 +43,17 @@ ReadClass StrMappingClassifier::Classify(const GraphMapping& mapping) {
   const bool overlaps_left_flank = mapping.OverlapsNode(left_flank_id_);
   const bool overlaps_repeat_unit = mapping.OverlapsNode(repeat_unit_id_);
   const bool overlaps_right_flank = mapping.OverlapsNode(right_flank_id_);
+  const bool overlaps_both_flanks = overlaps_left_flank && overlaps_right_flank;
+  const bool overlaps_either_flank =
+      overlaps_left_flank || overlaps_right_flank;
 
-  if (overlaps_left_flank && overlaps_repeat_unit && overlaps_right_flank) {
+  if (overlaps_both_flanks) {
     return ReadClass::kSpansRepeat;
   }
 
-  return ReadClass::kFlanksRepeat;
+  if (overlaps_either_flank && overlaps_repeat_unit) {
+    return ReadClass::kFlanksRepeat;
+  }
+
+  return ReadClass::kUnmapped;
 }

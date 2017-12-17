@@ -35,12 +35,42 @@ using std::string;
 TEST(MappingClassificaton, SpanningRead_Classified) {
   Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
-  //                            FFRRRRRRFF
-  const string spanning_read = "CCCCGCCGAT";
-  GraphMapping spanning_mapping =
-      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", spanning_read, graph);
-
   StrMappingClassifier mapping_classifier(0, 1, 2);
-  ASSERT_EQ(ReadClass::kSpansRepeat,
-            mapping_classifier.Classify(spanning_mapping));
+
+  {  //                  FFRRRRRRFF
+    const string read = "CCCCGCCGAT";
+    GraphMapping mapping =
+        DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph);
+
+    EXPECT_EQ(ReadClass::kSpansRepeat, mapping_classifier.Classify(mapping));
+  }
+
+  {  //                  FFFF
+    const string read = "CCAT";
+    GraphMapping mapping = DecodeFromString(4, "0[2M]2[2M]", read, graph);
+
+    StrMappingClassifier mapping_classifier(0, 1, 2);
+    EXPECT_EQ(ReadClass::kSpansRepeat, mapping_classifier.Classify(mapping));
+  }
+}
+
+TEST(MappingClassificaton, FlankingRead_Classified) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+
+  {  //                  FFFFRRR
+    const string read = "AACCCCG";
+    GraphMapping mapping = DecodeFromString(2, "0[4M]1[3M]", read, graph);
+
+    EXPECT_EQ(ReadClass::kFlanksRepeat, mapping_classifier.Classify(mapping));
+  }
+
+  {  //                  RRRFFF
+    const string read = "CCGATT";
+    GraphMapping mapping = DecodeFromString(0, "1[3M]2[3M]", read, graph);
+
+    StrMappingClassifier mapping_classifier(0, 1, 2);
+    EXPECT_EQ(ReadClass::kFlanksRepeat, mapping_classifier.Classify(mapping));
+  }
 }
