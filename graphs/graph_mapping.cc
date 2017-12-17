@@ -328,7 +328,7 @@ int32_t GraphMapping::NumMatches() const {
   return num_matches;
 }
 
-bool GraphMapping::SpansNode(int32_t node_id) const {
+bool GraphMapping::OverlapsNode(int32_t node_id) const {
   for (const auto& node_mapping : node_mappings_) {
     if (node_mapping.node_id == node_id) {
       return true;

@@ -18,7 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "classification/read_classifier.h"
+#include "classification/mapping_classifier.h"
 
 #include <memory>
 #include <string>

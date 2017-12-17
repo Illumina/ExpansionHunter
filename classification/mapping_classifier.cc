@@ -21,7 +21,7 @@
 #include <map>
 #include <string>
 
-#include "classification/read_classifier.h"
+#include "classification/mapping_classifier.h"
 
 using std::map;
 using std::ostream;
@@ -40,9 +40,9 @@ ostream& operator<<(ostream& os, const ReadClass& read_class) {
 }
 
 ReadClass StrMappingClassifier::Classify(const GraphMapping& mapping) {
-  const bool overlaps_left_flank = mapping.SpansNode(left_flank_id_);
-  const bool overlaps_repeat_unit = mapping.SpansNode(repeat_unit_id_);
-  const bool overlaps_right_flank = mapping.SpansNode(right_flank_id_);
+  const bool overlaps_left_flank = mapping.OverlapsNode(left_flank_id_);
+  const bool overlaps_repeat_unit = mapping.OverlapsNode(repeat_unit_id_);
+  const bool overlaps_right_flank = mapping.OverlapsNode(right_flank_id_);
 
   if (overlaps_left_flank && overlaps_repeat_unit && overlaps_right_flank) {
     return ReadClass::kSpansRepeat;
