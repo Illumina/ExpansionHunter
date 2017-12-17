@@ -38,3 +38,15 @@ ostream& operator<<(ostream& os, const ReadClass& read_class) {
   os << class_to_string.at(read_class);
   return os;
 }
+
+ReadClass StrMappingClassifier::Classify(const GraphMapping& mapping) {
+  const bool overlaps_left_flank = mapping.SpansNode(left_flank_id_);
+  const bool overlaps_repeat_unit = mapping.SpansNode(repeat_unit_id_);
+  const bool overlaps_right_flank = mapping.SpansNode(right_flank_id_);
+
+  if (overlaps_left_flank && overlaps_repeat_unit && overlaps_right_flank) {
+    return ReadClass::kSpansRepeat;
+  }
+
+  return ReadClass::kFlanksRepeat;
+}

@@ -36,9 +36,15 @@ std::ostream& operator<<(std::ostream& os, const ReadClass& read_class);
 
 class StrMappingClassifier {
  public:
-  StrMappingClassifier(int32_t left_flank_id, int32_t repeat_id,
-                       int32_t right_flank_id) {}
-  ReadClass Classify(const GraphMapping& mapping) {
-    return ReadClass::kFlanksRepeat;
-  }
+  StrMappingClassifier(int32_t left_flank_id, int32_t repeat_unit_id,
+                       int32_t right_flank_id)
+      : left_flank_id_(left_flank_id),
+        repeat_unit_id_(repeat_unit_id),
+        right_flank_id_(right_flank_id) {}
+  ReadClass Classify(const GraphMapping& mapping);
+
+ private:
+  int32_t left_flank_id_;
+  int32_t repeat_unit_id_;
+  int32_t right_flank_id_;
 };
