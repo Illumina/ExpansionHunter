@@ -55,5 +55,13 @@ ReadClass StrMappingClassifier::Classify(const GraphMapping& mapping) {
     return ReadClass::kFlanksRepeat;
   }
 
+  if (overlaps_repeat_unit) {
+    return ReadClass::kInsideRepeat;
+  }
+
+  if (overlaps_either_flank) {
+    return ReadClass::kOutsideRepeat;
+  }
+
   return ReadClass::kUnmapped;
 }

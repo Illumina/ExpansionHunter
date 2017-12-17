@@ -32,7 +32,7 @@
 
 using std::string;
 
-TEST(MappingClassificaton, SpanningRead_Classified) {
+TEST(MappingClassificaton, SpanningMapping_Classified) {
   Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
   StrMappingClassifier mapping_classifier(0, 1, 2);
@@ -54,7 +54,7 @@ TEST(MappingClassificaton, SpanningRead_Classified) {
   }
 }
 
-TEST(MappingClassificaton, FlankingRead_Classified) {
+TEST(MappingClassificaton, FlankingMapping_Classified) {
   Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
   StrMappingClassifier mapping_classifier(0, 1, 2);
@@ -72,5 +72,47 @@ TEST(MappingClassificaton, FlankingRead_Classified) {
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
     EXPECT_EQ(ReadClass::kFlanksRepeat, mapping_classifier.Classify(mapping));
+  }
+}
+
+TEST(MappingClassificaton, RepeatMapping_Classified) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+
+  {  //                  RRRRRRRR
+    const string read = "CCGCCGCC";
+    GraphMapping mapping = DecodeFromString(0, "1[3M]1[3M]1[2M]", read, graph);
+
+    EXPECT_EQ(ReadClass::kInsideRepeat, mapping_classifier.Classify(mapping));
+  }
+
+  {  //                  RRRRRRRR
+    const string read = "CGCCGCCG";
+    GraphMapping mapping = DecodeFromString(1, "1[2M]1[3M]1[3M]", read, graph);
+
+    StrMappingClassifier mapping_classifier(0, 1, 2);
+    EXPECT_EQ(ReadClass::kInsideRepeat, mapping_classifier.Classify(mapping));
+  }
+}
+
+TEST(MappingClassificaton, OutsideRepeatMapping_Classified) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+
+  {  //                  FFFFF
+    const string read = "AAAAC";
+    GraphMapping mapping = DecodeFromString(0, "0[5M]", read, graph);
+
+    EXPECT_EQ(ReadClass::kOutsideRepeat, mapping_classifier.Classify(mapping));
+  }
+
+  {  //                  FFF
+    const string read = "TTT";
+    GraphMapping mapping = DecodeFromString(1, "2[3M]", read, graph);
+
+    StrMappingClassifier mapping_classifier(0, 1, 2);
+    EXPECT_EQ(ReadClass::kOutsideRepeat, mapping_classifier.Classify(mapping));
   }
 }
