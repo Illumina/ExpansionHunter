@@ -23,6 +23,7 @@
 
 #include "graphs/graph_mapping.h"
 
+using std::list;
 using std::map;
 using std::string;
 using std::to_string;
@@ -325,6 +326,17 @@ int32_t GraphMapping::NumMatches() const {
     num_matches += node_mapping.mapping.NumMatched();
   }
   return num_matches;
+}
+
+list<int32_t> GraphMapping::GetIndexesOfNode(int32_t node_id) const {
+  list<int32_t> indexes;
+  for (int32_t node_index = 0; node_index != (int32_t)node_mappings_.size();
+       ++node_index) {
+    if (node_mappings_[node_index].node_id == node_id) {
+      indexes.push_back(node_index);
+    }
+  }
+  return indexes;
 }
 
 std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping) {

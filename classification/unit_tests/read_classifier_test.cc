@@ -40,7 +40,7 @@ TEST(MappingClassificaton, SpanningRead_Classified) {
   GraphMapping spanning_mapping =
       DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", spanning_read, graph);
 
-  StrReadClassifier read_classifier(0, 1, 2);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
   ASSERT_EQ(ReadClass::kSpansRepeat,
-            read_classifier.Classify(spanning_mapping));
+            mapping_classifier.Classify(spanning_mapping));
 }

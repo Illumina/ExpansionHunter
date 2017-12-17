@@ -34,10 +34,10 @@ enum class ReadClass {
 
 std::ostream& operator<<(std::ostream& os, const ReadClass& read_class);
 
-class StrReadClassifier {
+class StrMappingClassifier {
  public:
-  StrReadClassifier(int32_t left_flank_id, int32_t repeat_id,
-                    int32_t right_flank_id) {}
+  StrMappingClassifier(int32_t left_flank_id, int32_t repeat_id,
+                       int32_t right_flank_id) {}
   ReadClass Classify(const GraphMapping& mapping) {
     return ReadClass::kFlanksRepeat;
   }

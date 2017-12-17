@@ -26,6 +26,7 @@
 #include "graphs/graph_builders.h"
 #include "graphs/graph_mapping_operations.h"
 
+using std::list;
 using std::string;
 using std::vector;
 
@@ -159,4 +160,26 @@ TEST(GraphMapping, AllowsAccessingNodeMappingsByIndex) {
       DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
   EXPECT_EQ(Mapping(0, "4M", "AAAA", "AAAA"), graph_mapping[0].mapping);
   EXPECT_EQ(Mapping(0, "2M3S", "TTCCC", "TTGG"), graph_mapping[1].mapping);
+}
+
+TEST(GettingIndexesOfNode, TypicalMapping_IndexesObtained) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  const string read = "CCCCGCCGAT";
+  GraphMapping mapping =
+      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph);
+  const list<int32_t> left_flank_indexes = {0};
+  const list<int32_t> repeat_unit_indexes = {1, 2};
+  const list<int32_t> right_flank_indexes = {3};
+  EXPECT_EQ(left_flank_indexes, mapping.GetIndexesOfNode(0));
+  EXPECT_EQ(repeat_unit_indexes, mapping.GetIndexesOfNode(1));
+  EXPECT_EQ(right_flank_indexes, mapping.GetIndexesOfNode(2));
+}
+
+TEST(GettingIndexesOfNode, NodeNotInMapping_EmptyListReturned) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  const string read = "ACCCCG";
+  GraphMapping mapping = DecodeFromString(3, "0[3M]1[3M]", read, graph);
+  const list<int32_t> empty_list;
+  EXPECT_EQ(empty_list, mapping.GetIndexesOfNode(2));
+  EXPECT_EQ(empty_list, mapping.GetIndexesOfNode(4));
 }
