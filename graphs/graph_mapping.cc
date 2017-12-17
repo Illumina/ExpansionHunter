@@ -328,6 +328,15 @@ int32_t GraphMapping::NumMatches() const {
   return num_matches;
 }
 
+bool GraphMapping::SpansNode(int32_t node_id) const {
+  for (const auto& node_mapping : node_mappings_) {
+    if (node_mapping.node_id == node_id) {
+      return true;
+    }
+  }
+  return false;
+}
+
 list<int32_t> GraphMapping::GetIndexesOfNode(int32_t node_id) const {
   list<int32_t> indexes;
   for (int32_t node_index = 0; node_index != (int32_t)node_mappings_.size();

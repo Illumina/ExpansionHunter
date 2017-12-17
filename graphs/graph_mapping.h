@@ -153,6 +153,7 @@ class GraphMapping {
   int32_t QuerySpan() const;
   int32_t ReferenceSpan() const;
   int32_t NumMatches() const;
+  bool SpansNode(int32_t node_id) const;
   std::list<int32_t> GetIndexesOfNode(int32_t node_id) const;
   const_iterator begin() const { return node_mappings_.begin(); }
   const_iterator end() const { return node_mappings_.end(); }

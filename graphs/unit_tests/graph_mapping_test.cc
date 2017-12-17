@@ -183,3 +183,13 @@ TEST(GettingIndexesOfNode, NodeNotInMapping_EmptyListReturned) {
   EXPECT_EQ(empty_list, mapping.GetIndexesOfNode(2));
   EXPECT_EQ(empty_list, mapping.GetIndexesOfNode(4));
 }
+
+TEST(CheckingIfMappingSpansNode, TypicalMapping_ChecksPerformed) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  const string read = "ACCCCG";
+  GraphMapping mapping = DecodeFromString(3, "0[3M]1[3M]", read, graph);
+  EXPECT_TRUE(mapping.SpansNode(0));
+  EXPECT_TRUE(mapping.SpansNode(1));
+  EXPECT_FALSE(mapping.SpansNode(2));
+  EXPECT_FALSE(mapping.SpansNode(3));
+}
