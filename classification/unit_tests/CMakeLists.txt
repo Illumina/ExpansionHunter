@@ -1,0 +1,5 @@
+add_executable(mapping_classifier_test mapping_classifier_test.cc)
+
+target_link_libraries(mapping_classifier_test classification gtest_main)
+
+add_test(NAME mapping_classifier_test COMMAND mapping_classifier_test)

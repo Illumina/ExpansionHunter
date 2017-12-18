@@ -24,47 +24,51 @@
 #include <stdexcept>
 #include <vector>
 
+#include "common/seq_operations.h"
 #include "graphs/path_operations.h"
 
 using std::list;
 using std::string;
 using std::vector;
 
-GraphMapping GaplessAligner::GetBestAlignment(const string& sequence) const {
-  const list<string> kmers = ExtractKmersFromAllPositions(sequence, _kmer_len);
+list<GraphMapping> GaplessAligner::GetBestAlignment(
+    const string& sequence) const {
+  const list<string> kmers = ExtractKmersFromAllPositions(sequence, kmer_len_);
 
   int32_t pos = 0;
   for (const string& kmer : kmers) {
     // Initiate alignment from a unique kmer.
-    if (_kmer_index.NumPaths(kmer) == 1) {
-      GraphPath kmer_path = _kmer_index.GetPaths(kmer).front();
+    if (kmer_index_.NumPaths(kmer) == 1) {
+      GraphPath kmer_path = kmer_index_.GetPaths(kmer).front();
       return GetBestAlignmentToShortPath(kmer_path, pos, sequence);
     }
     ++pos;
   }
-  return GraphMapping();
+  return {};
 }
 
-GraphMapping GetBestAlignmentToShortPath(const GraphPath& path,
-                                         int32_t start_pos,
-                                         const string& sequence) {
+list<GraphMapping> GetBestAlignmentToShortPath(const GraphPath& path,
+                                               int32_t start_pos,
+                                               const string& sequence) {
   const int32_t start_extension = start_pos;
   const int32_t end_extension = sequence.length() - start_pos - path.Length();
   const list<GraphPath> full_paths =
       path.ExtendBy(start_extension, end_extension);
 
-  GraphMapping best_mapping;
+  list<GraphMapping> best_mappings;
   int32_t max_matches = -1;
 
   for (const GraphPath& full_path : full_paths) {
     GraphMapping mapping = AlignWithoutGaps(full_path, sequence);
     if (mapping.NumMatches() > max_matches) {
       max_matches = mapping.NumMatches();
-      best_mapping = mapping;
+      best_mappings = {mapping};
+    } else if (mapping.NumMatches() == max_matches) {
+      best_mappings.push_back(mapping);
     }
   }
 
-  return best_mapping;
+  return best_mappings;
 }
 
 GraphMapping AlignWithoutGaps(const GraphPath& path, const string& sequence) {
@@ -138,4 +142,22 @@ list<string> ExtractKmersFromAllPositions(const std::string& sequence,
     kmers.push_back(sequence.substr(pos, kmer_len));
   }
   return kmers;
+}
+
+int32_t StrandClassifier::CountKmerMatches(const std::string& seq) const {
+  const list<string> kmers = ExtractKmersFromAllPositions(seq, kmer_len_);
+  int32_t num_kmer_matches = 0;
+
+  for (const string& kmer : kmers) {
+    if (kmer_index_.NumPaths(kmer) != 0) {
+      ++num_kmer_matches;
+    }
+  }
+  return num_kmer_matches;
+}
+
+bool StrandClassifier::IsForwardOriented(const std::string& seq) const {
+  const int32_t num_forward_matches = CountKmerMatches(seq);
+  const int32_t num_revcomp_matches = CountKmerMatches(ReverseComplement(seq));
+  return num_forward_matches >= num_revcomp_matches;
 }

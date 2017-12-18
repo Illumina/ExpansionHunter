@@ -35,13 +35,29 @@
  */
 class GaplessAligner {
  public:
-  GaplessAligner(std::shared_ptr<Graph> wgraph_ptr, int32_t kmer_len)
-      : _kmer_len(kmer_len), _kmer_index(wgraph_ptr, kmer_len) {}
-  GraphMapping GetBestAlignment(const std::string& sequence) const;
+  GaplessAligner(std::shared_ptr<Graph> graph_ptr, int32_t kmer_len)
+      : kmer_len_(kmer_len), kmer_index_(graph_ptr, kmer_len) {}
+  std::list<GraphMapping> GetBestAlignment(const std::string& sequence) const;
 
  private:
-  int32_t _kmer_len;
-  KmerIndex _kmer_index;
+  int32_t kmer_len_;
+  KmerIndex kmer_index_;
+};
+
+/**
+ * @brief Determines orientation of a read relative to the graph
+ *
+ */
+class StrandClassifier {
+ public:
+  StrandClassifier(std::shared_ptr<Graph> graph_ptr, int32_t kmer_len)
+      : kmer_len_(kmer_len), kmer_index_(graph_ptr, kmer_len) {}
+  bool IsForwardOriented(const std::string& seq) const;
+
+ private:
+  int32_t CountKmerMatches(const std::string& seq) const;
+  int32_t kmer_len_;
+  KmerIndex kmer_index_;
 };
 
 /**
@@ -54,9 +70,8 @@ class GaplessAligner {
  * @param sequence: Any sequence
  * @return Best gapless alignment with the above properety
  */
-GraphMapping GetBestAlignmentToShortPath(const GraphPath& path,
-                                         int32_t start_pos,
-                                         const std::string& sequence);
+std::list<GraphMapping> GetBestAlignmentToShortPath(
+    const GraphPath& path, int32_t start_pos, const std::string& sequence);
 
 /**
  * @brief Aligns a sequence to a path of the same length

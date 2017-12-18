@@ -25,6 +25,7 @@
 
 #include "gtest/gtest.h"
 
+#include "common/seq_operations.h"
 #include "graphs/graph.h"
 #include "graphs/graph_builders.h"
 #include "graphs/graph_mapping.h"
@@ -101,11 +102,11 @@ TEST(AlignmentOfSequenceToShortPath, TypicalSequence_BestAlignmentObtained) {
   const GraphPath path(graph_ptr, 4, {0}, 4);
   const string sequence = "CCTTA";
 
-  GraphMapping mapping = GetBestAlignmentToShortPath(path, 1, sequence);
+  list<GraphMapping> mappings = GetBestAlignmentToShortPath(path, 1, sequence);
 
-  GraphMapping expected_mapping =
-      DecodeFromString(3, "0[2M]2[3M]", sequence, graph);
-  ASSERT_EQ(expected_mapping, mapping);
+  list<GraphMapping> expected_mappings = {
+      DecodeFromString(3, "0[2M]2[3M]", sequence, graph)};
+  ASSERT_EQ(expected_mappings, mappings);
 }
 
 TEST(AlignmentOfSequenceToGraph, TypicalSequence_BestAlignmentObtained) {
@@ -116,44 +117,56 @@ TEST(AlignmentOfSequenceToGraph, TypicalSequence_BestAlignmentObtained) {
   GaplessAligner aligner(graph_ptr, kmer_len);
   const string sequence = "TTCCTTAGGAT";
 
-  GraphMapping mapping = aligner.GetBestAlignment(sequence);
+  list<GraphMapping> mappings = aligner.GetBestAlignment(sequence);
 
-  GraphMapping expected_mapping =
-      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", sequence, graph);
-  ASSERT_EQ(expected_mapping, mapping);
+  list<GraphMapping> expected_mappings = {
+      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", sequence, graph)};
+  ASSERT_EQ(expected_mappings, mappings);
 }
 
 TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
-  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  Graph graph = MakeStrGraph("AAAACG", "CCG", "ATTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
   const int32_t kmer_len = 3;
   GaplessAligner aligner(graph_ptr, kmer_len);
 
   {
     //                            FFFFRRRRRRRRRFFFF
-    const string spanning_read = "AACCCCGCCGCCGATTT";
-    GraphMapping mapping = aligner.GetBestAlignment(spanning_read);
+    const string spanning_read = "AACGCCGCCGCCGATTT";
+    list<GraphMapping> mappings = aligner.GetBestAlignment(spanning_read);
 
-    GraphMapping expected_mapping =
-        DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", spanning_read, graph);
-    EXPECT_EQ(expected_mapping, mapping);
+    list<GraphMapping> expected_mappings = {
+        DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", spanning_read, graph)};
+    EXPECT_EQ(expected_mappings, mappings);
   }
 
   {
-    //                          RRRRRRRRRRRR
-    const string repeat_read = "CCGCCGCCGCCG";
-    GraphMapping mapping = aligner.GetBestAlignment(repeat_read);
-    GraphMapping expected_mapping =
-        DecodeFromString(0, "1[3M]1[3M]1[3M]1[3M]", repeat_read, graph);
-    EXPECT_EQ(expected_mapping, mapping);
+    //                          RRRRRRRRRRR
+    const string repeat_read = "CGCCGCCGCCG";
+    list<GraphMapping> mappings = aligner.GetBestAlignment(repeat_read);
+    list<GraphMapping> expected_mappings = {
+        DecodeFromString(4, "0[2M]1[3M]1[3M]1[3M]", repeat_read, graph),
+        DecodeFromString(1, "1[2M]1[3M]1[3M]1[3M]", repeat_read, graph)};
+    EXPECT_EQ(expected_mappings, mappings);
   }
 
   {
     //                          RRRXRRRRXRRR
     const string repeat_read = "CCGACGCCTCCG";
-    GraphMapping mapping = aligner.GetBestAlignment(repeat_read);
-    GraphMapping expected_mapping =
-        DecodeFromString(0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, graph);
-    EXPECT_EQ(expected_mapping, mapping);
+    list<GraphMapping> mappings = {aligner.GetBestAlignment(repeat_read)};
+    list<GraphMapping> expected_mappings = {
+        DecodeFromString(0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, graph)};
+    EXPECT_EQ(expected_mappings, mappings);
   }
+}
+
+TEST(StrandClassification, TypicalRead_StrandDetermined) {
+  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  const int32_t kmer_len = 3;
+  StrandClassifier classifier(graph_ptr, kmer_len);
+  EXPECT_TRUE(classifier.IsForwardOriented("CCGCCGCCGCCG"));
+  EXPECT_FALSE(classifier.IsForwardOriented(ReverseComplement("CCGCCGCCGCCG")));
+  EXPECT_TRUE(classifier.IsForwardOriented("CCGACGCCTCCG"));
+  EXPECT_FALSE(classifier.IsForwardOriented(ReverseComplement("CCGACGCCTCCG")));
 }
