@@ -20,10 +20,11 @@
 
 #include <cstdint>
 #include <iostream>
+#include <list>
 
 #include "graphs/graph_mapping.h"
 
-enum class ReadClass {
+enum class MappingType {
   kSpansRepeat,
   kFlanksRepeat,
   kInsideRepeat,
@@ -32,7 +33,7 @@ enum class ReadClass {
   kUnknown
 };
 
-std::ostream& operator<<(std::ostream& os, const ReadClass& read_class);
+std::ostream& operator<<(std::ostream& os, const MappingType& read_class);
 
 class StrMappingClassifier {
  public:
@@ -41,7 +42,9 @@ class StrMappingClassifier {
       : left_flank_id_(left_flank_id),
         repeat_unit_id_(repeat_unit_id),
         right_flank_id_(right_flank_id) {}
-  ReadClass Classify(const GraphMapping& mapping);
+  MappingType Classify(const GraphMapping& mapping) const;
+  GraphMapping GetCanonicalMapping(
+      const std::list<GraphMapping>& mappings) const;
 
  private:
   int32_t left_flank_id_;

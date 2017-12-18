@@ -20,26 +20,44 @@
 
 #include <map>
 #include <string>
+#include <unordered_set>
 
 #include "classification/mapping_classifier.h"
 
-using std::map;
+using std::list;
 using std::ostream;
 using std::string;
+using std::unordered_set;
 
-ostream& operator<<(ostream& os, const ReadClass& read_class) {
-  static const std::map<ReadClass, string> class_to_string = {
-      {ReadClass::kSpansRepeat, "kSpansRepeat"},
-      {ReadClass::kFlanksRepeat, "kFlanksRepeat"},
-      {ReadClass::kInsideRepeat, "kInsideRepeat"},
-      {ReadClass::kOutsideRepeat, "kOutsideRepeat"},
-      {ReadClass::kUnmapped, "kUnmapped"},
-      {ReadClass::kUnknown, "kUnknown"}};
+ostream& operator<<(ostream& os, const MappingType& read_class) {
+  static const std::map<MappingType, string> class_to_string = {
+      {MappingType::kSpansRepeat, "kSpansRepeat"},
+      {MappingType::kFlanksRepeat, "kFlanksRepeat"},
+      {MappingType::kInsideRepeat, "kInsideRepeat"},
+      {MappingType::kOutsideRepeat, "kOutsideRepeat"},
+      {MappingType::kUnmapped, "kUnmapped"},
+      {MappingType::kUnknown, "kUnknown"}};
   os << class_to_string.at(read_class);
   return os;
 }
 
-ReadClass StrMappingClassifier::Classify(const GraphMapping& mapping) {
+GraphMapping StrMappingClassifier::GetCanonicalMapping(
+    const list<GraphMapping>& mappings) const {
+  GraphMapping canonical_mapping;
+  for (const GraphMapping& mapping : mappings) {
+    MappingType mapping_type = Classify(mapping);
+    if (canonical_mapping.size() == 0) {
+      canonical_mapping = mapping;
+    } else if (mapping_type == MappingType::kInsideRepeat) {
+      return mapping;
+    } else if (mapping_type == MappingType::kFlanksRepeat) {
+      canonical_mapping = mapping;
+    }
+  }
+  return canonical_mapping;
+}
+
+MappingType StrMappingClassifier::Classify(const GraphMapping& mapping) const {
   const bool overlaps_left_flank = mapping.OverlapsNode(left_flank_id_);
   const bool overlaps_repeat_unit = mapping.OverlapsNode(repeat_unit_id_);
   const bool overlaps_right_flank = mapping.OverlapsNode(right_flank_id_);
@@ -48,20 +66,20 @@ ReadClass StrMappingClassifier::Classify(const GraphMapping& mapping) {
       overlaps_left_flank || overlaps_right_flank;
 
   if (overlaps_both_flanks) {
-    return ReadClass::kSpansRepeat;
+    return MappingType::kSpansRepeat;
   }
 
   if (overlaps_either_flank && overlaps_repeat_unit) {
-    return ReadClass::kFlanksRepeat;
+    return MappingType::kFlanksRepeat;
   }
 
   if (overlaps_repeat_unit) {
-    return ReadClass::kInsideRepeat;
+    return MappingType::kInsideRepeat;
   }
 
   if (overlaps_either_flank) {
-    return ReadClass::kOutsideRepeat;
+    return MappingType::kOutsideRepeat;
   }
 
-  return ReadClass::kUnmapped;
+  return MappingType::kUnmapped;
 }

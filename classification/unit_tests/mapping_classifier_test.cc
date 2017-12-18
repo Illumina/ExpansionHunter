@@ -20,6 +20,7 @@
 
 #include "classification/mapping_classifier.h"
 
+#include <list>
 #include <memory>
 #include <string>
 
@@ -30,6 +31,7 @@
 #include "graphs/graph_mapping.h"
 #include "graphs/graph_mapping_operations.h"
 
+using std::list;
 using std::string;
 
 TEST(MappingClassificaton, SpanningMapping_Classified) {
@@ -42,7 +44,7 @@ TEST(MappingClassificaton, SpanningMapping_Classified) {
     GraphMapping mapping =
         DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph);
 
-    EXPECT_EQ(ReadClass::kSpansRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kSpansRepeat, mapping_classifier.Classify(mapping));
   }
 
   {  //                  FFFF
@@ -50,7 +52,7 @@ TEST(MappingClassificaton, SpanningMapping_Classified) {
     GraphMapping mapping = DecodeFromString(4, "0[2M]2[2M]", read, graph);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
-    EXPECT_EQ(ReadClass::kSpansRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kSpansRepeat, mapping_classifier.Classify(mapping));
   }
 }
 
@@ -63,7 +65,7 @@ TEST(MappingClassificaton, FlankingMapping_Classified) {
     const string read = "AACCCCG";
     GraphMapping mapping = DecodeFromString(2, "0[4M]1[3M]", read, graph);
 
-    EXPECT_EQ(ReadClass::kFlanksRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kFlanksRepeat, mapping_classifier.Classify(mapping));
   }
 
   {  //                  RRRFFF
@@ -71,7 +73,7 @@ TEST(MappingClassificaton, FlankingMapping_Classified) {
     GraphMapping mapping = DecodeFromString(0, "1[3M]2[3M]", read, graph);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
-    EXPECT_EQ(ReadClass::kFlanksRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kFlanksRepeat, mapping_classifier.Classify(mapping));
   }
 }
 
@@ -84,7 +86,7 @@ TEST(MappingClassificaton, RepeatMapping_Classified) {
     const string read = "CCGCCGCC";
     GraphMapping mapping = DecodeFromString(0, "1[3M]1[3M]1[2M]", read, graph);
 
-    EXPECT_EQ(ReadClass::kInsideRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kInsideRepeat, mapping_classifier.Classify(mapping));
   }
 
   {  //                  RRRRRRRR
@@ -92,7 +94,7 @@ TEST(MappingClassificaton, RepeatMapping_Classified) {
     GraphMapping mapping = DecodeFromString(1, "1[2M]1[3M]1[3M]", read, graph);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
-    EXPECT_EQ(ReadClass::kInsideRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kInsideRepeat, mapping_classifier.Classify(mapping));
   }
 }
 
@@ -105,7 +107,8 @@ TEST(MappingClassificaton, OutsideRepeatMapping_Classified) {
     const string read = "AAAAC";
     GraphMapping mapping = DecodeFromString(0, "0[5M]", read, graph);
 
-    EXPECT_EQ(ReadClass::kOutsideRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kOutsideRepeat,
+              mapping_classifier.Classify(mapping));
   }
 
   {  //                  FFF
@@ -113,6 +116,41 @@ TEST(MappingClassificaton, OutsideRepeatMapping_Classified) {
     GraphMapping mapping = DecodeFromString(1, "2[3M]", read, graph);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
-    EXPECT_EQ(ReadClass::kOutsideRepeat, mapping_classifier.Classify(mapping));
+    EXPECT_EQ(MappingType::kOutsideRepeat,
+              mapping_classifier.Classify(mapping));
   }
+}
+
+TEST(ObtainingCanonicalMapping, FlankingAndInrepeatRead_ClassifiedAsInrepeat) {
+  Graph graph = MakeStrGraph("AAAACG", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+
+  //                   FFFFFFFF
+  const string read = "CGCCGCCG";
+  const GraphMapping flanking_mapping =
+      DecodeFromString(4, "0[2M]1[3M]1[3M]", read, graph);
+  const GraphMapping irr_mapping =
+      DecodeFromString(1, "1[2M]1[3M]1[3M]", read, graph);
+
+  const list<GraphMapping> mappings = {flanking_mapping, irr_mapping};
+
+  EXPECT_EQ(irr_mapping, mapping_classifier.GetCanonicalMapping(mappings));
+}
+
+TEST(ObtainingCanonicalMapping, FlankingAndSpanningRead_ClassifiedAsFlanking) {
+  Graph graph = MakeStrGraph("AAAACG", "CCG", "ATTT");
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+
+  //                   FFFFFFFFFF
+  const string read = "CGCCGCCGAT";
+  const GraphMapping spanning_mapping =
+      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph);
+  const GraphMapping flanking_mapping =
+      DecodeFromString(1, "1[2M]1[3M]1[3M]2[2M]", read, graph);
+
+  const list<GraphMapping> mappings = {spanning_mapping, flanking_mapping};
+
+  EXPECT_EQ(flanking_mapping, mapping_classifier.GetCanonicalMapping(mappings));
 }
