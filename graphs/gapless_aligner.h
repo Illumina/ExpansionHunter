@@ -37,7 +37,7 @@ class GaplessAligner {
  public:
   GaplessAligner(std::shared_ptr<Graph> graph_ptr, int32_t kmer_len)
       : kmer_len_(kmer_len), kmer_index_(graph_ptr, kmer_len) {}
-  GraphMapping GetBestAlignment(const std::string& sequence) const;
+  std::list<GraphMapping> GetBestAlignment(const std::string& sequence) const;
 
  private:
   int32_t kmer_len_;
@@ -70,9 +70,8 @@ class StrandClassifier {
  * @param sequence: Any sequence
  * @return Best gapless alignment with the above properety
  */
-GraphMapping GetBestAlignmentToShortPath(const GraphPath& path,
-                                         int32_t start_pos,
-                                         const std::string& sequence);
+std::list<GraphMapping> GetBestAlignmentToShortPath(
+    const GraphPath& path, int32_t start_pos, const std::string& sequence);
 
 /**
  * @brief Aligns a sequence to a path of the same length

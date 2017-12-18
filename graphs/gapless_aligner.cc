@@ -31,7 +31,8 @@ using std::list;
 using std::string;
 using std::vector;
 
-GraphMapping GaplessAligner::GetBestAlignment(const string& sequence) const {
+list<GraphMapping> GaplessAligner::GetBestAlignment(
+    const string& sequence) const {
   const list<string> kmers = ExtractKmersFromAllPositions(sequence, kmer_len_);
 
   int32_t pos = 0;
@@ -43,29 +44,31 @@ GraphMapping GaplessAligner::GetBestAlignment(const string& sequence) const {
     }
     ++pos;
   }
-  return GraphMapping();
+  return {};
 }
 
-GraphMapping GetBestAlignmentToShortPath(const GraphPath& path,
-                                         int32_t start_pos,
-                                         const string& sequence) {
+list<GraphMapping> GetBestAlignmentToShortPath(const GraphPath& path,
+                                               int32_t start_pos,
+                                               const string& sequence) {
   const int32_t start_extension = start_pos;
   const int32_t end_extension = sequence.length() - start_pos - path.Length();
   const list<GraphPath> full_paths =
       path.ExtendBy(start_extension, end_extension);
 
-  GraphMapping best_mapping;
+  list<GraphMapping> best_mappings;
   int32_t max_matches = -1;
 
   for (const GraphPath& full_path : full_paths) {
     GraphMapping mapping = AlignWithoutGaps(full_path, sequence);
     if (mapping.NumMatches() > max_matches) {
       max_matches = mapping.NumMatches();
-      best_mapping = mapping;
+      best_mappings = {mapping};
+    } else if (mapping.NumMatches() == max_matches) {
+      best_mappings.push_back(mapping);
     }
   }
 
-  return best_mapping;
+  return best_mappings;
 }
 
 GraphMapping AlignWithoutGaps(const GraphPath& path, const string& sequence) {
