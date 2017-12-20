@@ -28,6 +28,7 @@
 #include <array>
 #include <cassert>
 #include <iostream>
+#include <list>
 #include <map>
 #include <sstream>
 #include <stdexcept>
@@ -36,10 +37,16 @@
 #include <utility>
 #include <vector>
 
+#include "classification/mapping_classifier.h"
 #include "common/parameters.h"
 #include "common/ref_genome.h"
+#include "common/seq_operations.h"
 #include "common/timestamp.h"
 #include "genotyping/repeat_genotyper.h"
+#include "graphs/gapless_aligner.h"
+#include "graphs/graph.h"
+#include "graphs/graph_builders.h"
+#include "graphs/path.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
 #include "include/irr_counting.h"
@@ -55,6 +62,7 @@
 using std::array;
 using std::cerr;
 using std::endl;
+using std::list;
 using std::map;
 using std::pair;
 using std::string;
@@ -144,6 +152,17 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
   map<int, vector<RepeatAlign>> size_spanning_repaligns;
   flanking_repaligns->clear();
 
+  // Graph test.
+  Graph graph =
+      MakeStrGraph(repeat_spec.left_flank, repeat_spec.units_shifts[0][0],
+                   repeat_spec.right_flank);
+  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  const int32_t kmer_len = 14;
+  StrandClassifier strand_classifier(graph_ptr, kmer_len);
+  GaplessAligner aligner(graph_ptr, kmer_len);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+  // End graph test.
+
   // Align each read to the repeat.
   for (auto &kv : align_pairs) {
     AlignPair &frag = kv.second;
@@ -154,11 +173,41 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
                                     align.quals, &rep_align);
       rep_align.read.name = align.name;
 
+      cerr << " /" << endl;
+      cerr << "/" << endl;
+      {
+        cerr << align.name << endl;
+        const string read_seq = strand_classifier.IsForwardOriented(align.bases)
+                                    ? align.bases
+                                    : ReverseComplement(align.bases);
+        list<GraphMapping> mappings = aligner.GetBestAlignment(read_seq);
+        GraphMapping canonical_mapping =
+            mapping_classifier.GetCanonicalMapping(mappings);
+        cerr << read_seq << " "
+             << mapping_classifier.Classify(canonical_mapping) << endl;
+        cerr << canonical_mapping << endl;
+      }
+
+      cerr << align.bases << " ";
+
       if (!aligns) {
+        cerr << "not_flanking_or_spanning" << endl;
+        cerr << "\\ " << endl;
+        cerr << " \\" << endl;
         continue;
       }
 
-      // Not pretty, but lets downstream code know that this is not an IRR.
+      if (rep_align.type == RepeatAlign::Type::kSpanning) {
+        cerr << "spanning" << endl;
+      } else {
+        assert(rep_align.type == RepeatAlign::Type::kFlanking);
+        cerr << "flanking" << endl;
+      }
+      cerr << "\\ " << endl;
+      cerr << " \\" << endl;
+
+      // Not pretty, but lets downstream code know that this is not an
+      // IRR.
       align.status = kFlankingRead;
 
       if (rep_align.type == RepeatAlign::Type::kSpanning) {
