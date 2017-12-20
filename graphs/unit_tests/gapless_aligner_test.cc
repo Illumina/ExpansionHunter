@@ -153,7 +153,7 @@ TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
   {
     //                          RRRXRRRRXRRR
     const string repeat_read = "CCGACGCCTCCG";
-    list<GraphMapping> mappings = {aligner.GetBestAlignment(repeat_read)};
+    list<GraphMapping> mappings = aligner.GetBestAlignment(repeat_read);
     list<GraphMapping> expected_mappings = {
         DecodeFromString(0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, graph)};
     EXPECT_EQ(expected_mappings, mappings);
