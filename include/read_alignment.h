@@ -25,8 +25,8 @@
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
 
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "htslib/hts.h"
