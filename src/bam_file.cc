@@ -48,15 +48,20 @@
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 using boost::lexical_cast;
 
-using std::string;
 using std::cerr;
 using std::endl;
-using std::vector;
 using std::sort;
+using std::string;
+using std::vector;
 
 BamFile::BamFile()
-    : hts_file_ptr_(0), hts_bam_hdr_ptr_(0), hts_idx_ptr_(0), hts_itr_ptr_(0),
-      hts_bam_align_ptr_(0), jump_to_unaligned_(false), at_file_end_(false),
+    : hts_file_ptr_(0),
+      hts_bam_hdr_ptr_(0),
+      hts_idx_ptr_(0),
+      hts_itr_ptr_(0),
+      hts_bam_align_ptr_(0),
+      jump_to_unaligned_(false),
+      at_file_end_(false),
       format_(kUnknownFormat) {}
 
 BamFile::~BamFile() {
@@ -252,7 +257,7 @@ bool BamFile::GetRead(Align &align) {
   readRet = GetNextGoodRead();
 
   if (readRet == -1) {
-    at_file_end_ = true; // EOF
+    at_file_end_ = true;  // EOF
     return false;
   }
 
@@ -334,7 +339,7 @@ bool BamFile::GetUnalignedPrRead(Align &align) {
 
   // Have retrieved an unaligned read. Copy the bits needed to align.
   if (!GetAlignFromHtsAlign(hts_bam_align_ptr_, align,
-                            true)) { // assumeUnaligned=T
+                            true)) {  // assumeUnaligned=T
     throw std::runtime_error("Failed to process read from BAM file.");
   }
 
@@ -440,8 +445,9 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
   }
 
   if (chrom_ind_depths.empty()) {
-    throw std::runtime_error("Error: No contigs named chr1-chr22 or 1-22 "
-                             "found; consider setting the depth manually");
+    throw std::runtime_error(
+        "Error: No contigs named chr1-chr22 or 1-22 "
+        "found; consider setting the depth manually");
   }
 
   sort(chrom_ind_depths.begin(), chrom_ind_depths.end(),
@@ -484,7 +490,7 @@ vector<int64_t> CramFile::CountAlignedReads(const string &cram_path,
   found_unaligned_reads_ = false;
   int ret;
   while ((ret = sam_read1(file_ptr_, header_ptr_, align_ptr_)) >= 0) {
-    if (align_ptr_->core.tid == -1) { // Reached unaligned reads.
+    if (align_ptr_->core.tid == -1) {  // Reached unaligned reads.
       found_unaligned_reads_ = true;
       cerr << "[Found unaligend reads]" << endl;
       break;

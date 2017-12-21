@@ -25,7 +25,6 @@
 #include <iostream>
 #include <stack>
 #include <string>
-#include <string>
 #include <vector>
 
 // Include BAM processing from samtools
@@ -37,12 +36,12 @@
 #include "include/read_alignment.h"
 
 class CramFile {
-public:
+ public:
   std::vector<int64_t> CountAlignedReads(const std::string &cram_path,
                                          int num_chroms);
   bool GetUnalignedRead(Align &align);
 
-private:
+ private:
   htsFile *file_ptr_;
   bam_hdr_t *header_ptr_;
   bam1_t *align_ptr_;
@@ -50,7 +49,7 @@ private:
 };
 
 class BamFile {
-public:
+ public:
   enum FileFormat { kBamFile, kCramFile, kUnknownFormat };
 
   BamFile();
@@ -74,7 +73,7 @@ public:
   const std::vector<std::string> &ref_vec() const { return ref_vec_; }
   FileFormat format() const { return format_; }
 
-private:
+ private:
   bool GetUnalignedPrRead(Align &align);
   int GetNextGoodRead();
 

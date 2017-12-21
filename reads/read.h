@@ -2,9 +2,7 @@
 // Expansion Hunter
 // Copyright (c) 2016 Illumina, Inc.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Mitch Bekritsky <mbekritsky@illumina.com>, Richard Shaw
-// Concept: Michael Eberle <meberle@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
