@@ -24,24 +24,35 @@
 
 using namespace reads;
 
-TEST(ReadInitialization, CoreInfo_ReadCreated) {
-  Read read("frag1", "ATTC", "????");
+TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
+  Read read;
+  read.SetCoreInfo("frag1", "ATTC", "????");
   EXPECT_EQ("frag1", read.FragmentId());
   EXPECT_EQ("ATTC", read.Bases());
   EXPECT_EQ("????", read.Quals());
 }
 
+TEST(ReadInitialization, UnsetCoreInfo_ExceptionThrownOnAccess) {
+  Read read;
+  EXPECT_ANY_THROW(read.FragmentId());
+  EXPECT_ANY_THROW(read.Bases());
+  EXPECT_ANY_THROW(read.Quals());
+}
+
 TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  EXPECT_ANY_THROW(Read read("frag1", "ATT", "?"));
+  Read read;
+  EXPECT_ANY_THROW(read.SetCoreInfo("frag1", "ATT", "?"));
 }
 
 TEST(ReadInitialization, TypicalGraphMapping_GraphMappingAddedToRead) {
-  Read read("frag1", "ATTC", "????");
+  Read read;
+  read.SetCoreInfo("frag1", "ATTC", "????");
   GraphMappingPtr graph_mapping_ptr(new GraphMapping());
   read.SetCanonicalMapping(std::move(graph_mapping_ptr));
 }
 
-TEST(AccessToCanonicalMapping, CanonicalMappingNotSet_ExceptionThrown) {
-  Read read("frag1", "ATTC", "????");
+TEST(ReadInitialization, UnsertCanonicalMapping_ExceptionThrownOnAccess) {
+  Read read;
+  read.SetCoreInfo("frag1", "ATTC", "????");
   ASSERT_ANY_THROW(read.CanonicalMapping());
 }

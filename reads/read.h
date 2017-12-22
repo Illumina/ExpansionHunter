@@ -29,8 +29,6 @@
 namespace reads {
 
 struct CoreInfo {
-  CoreInfo(const std::string& new_fragment_id, const std::string& new_bases,
-           const std::string& new_quals);
   std::string fragment_id;
   std::string bases;
   std::string quals;
@@ -53,12 +51,11 @@ struct GraphInfo {
 
 class Read {
  public:
-  Read(const std::string& fragment_id, const std::string& bases,
-       const std::string& quals)
-      : core_info_(fragment_id, bases, quals) {}
-  const std::string& FragmentId() const { return core_info_.fragment_id; }
-  const std::string& Bases() const { return core_info_.bases; }
-  const std::string& Quals() const { return core_info_.quals; }
+  void SetCoreInfo(const std::string& fragment_id, const std::string& bases,
+                   const std::string& quals);
+  const std::string& FragmentId() const;
+  const std::string& Bases() const;
+  const std::string& Quals() const;
 
   // Provide access to information fro SAM files.
   int32_t SamChromId() const { return sam_info_.chrom_id; }
@@ -78,16 +75,16 @@ class Read {
   int32_t SamMatePos() const { return sam_info_.mate_pos; }
   void SetSamMatePos(int32_t mate_pos) { sam_info_.mate_pos = mate_pos; }
 
-  bool SamIsMapped() const { return sam_info_.is_mapped; }
-  void SetSamIsMapped(bool is_mapped) { sam_info_.is_mapped = is_mapped; }
+  bool IsSamMapped() const { return sam_info_.is_mapped; }
+  void SetIsSamMapped(bool is_mapped) { sam_info_.is_mapped = is_mapped; }
 
-  bool SamIsFirstMate() const { return sam_info_.is_first_mate; }
-  void SetSamIsFirstMate(bool is_first_mate) {
+  bool IsFirstMate() const { return sam_info_.is_first_mate; }
+  void SetIsFirstMate(bool is_first_mate) {
     sam_info_.is_first_mate = is_first_mate;
   }
 
-  bool SamIsMateMapped() const { return sam_info_.is_mate_mapped; }
-  void SetSamIsMateMapped(bool is_mate_mapped) {
+  bool IsMateSamMapped() const { return sam_info_.is_mate_mapped; }
+  void SetIsMateSamMapped(bool is_mate_mapped) {
     sam_info_.is_mate_mapped = is_mate_mapped;
   }
 

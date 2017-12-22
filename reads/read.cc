@@ -27,13 +27,35 @@
 using std::string;
 
 namespace reads {
-CoreInfo::CoreInfo(const string& new_fragment_id, const string& new_bases,
-                   const string& new_quals)
-    : fragment_id(new_fragment_id), bases(new_bases), quals(new_quals) {
+void Read::SetCoreInfo(const string& fragment_id, const string& bases,
+                       const string& quals) {
   if (bases.length() != quals.length()) {
     throw std::runtime_error("Bases " + bases + " and quals " + quals +
                              " must have the same length");
   }
+
+  core_info_.fragment_id = fragment_id;
+  core_info_.bases = bases;
+  core_info_.quals = quals;
+}
+
+const string& Read::FragmentId() const {
+  if (core_info_.fragment_id.empty()) {
+    throw std::logic_error("Cannot access fragment id that was not set");
+  }
+  return core_info_.fragment_id;
+}
+const string& Read::Bases() const {
+  if (core_info_.fragment_id.empty()) {
+    throw std::logic_error("Cannot access read sequence that was not set");
+  }
+  return core_info_.bases;
+}
+const string& Read::Quals() const {
+  if (core_info_.fragment_id.empty()) {
+    throw std::logic_error("Cannot access read quals that was not set");
+  }
+  return core_info_.quals;
 }
 
 const GraphMapping& Read::CanonicalMapping() const {
