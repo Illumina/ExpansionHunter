@@ -39,19 +39,10 @@ class AlignedReader {
 
   ~AlignedReader();
 
-  // bool Close();
-  // bool SetRegionToRange(const Region &gRange);
-  // bool CloseRegion();
-  // bool JumpToUnaligned();
-  // double CalcMedianDepth(Parameters &parameters, size_t read_len);
-
   // Returns false when the target region is exhausted. In this case, a new
   // target region must be set (with SetRegionToRange() or JumpToUnaligned())
   // before calling this method again.
   // bool GetRead(Read &read);
-
-  // Can also be used for shadows since they have alignment pos of mate.
-  // bool GetAlignedMate(const Align &align, Align &mateBAlign);
 
  private:
   struct Impl;

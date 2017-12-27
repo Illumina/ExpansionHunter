@@ -94,10 +94,16 @@ class Read {
     graph_info_.canonical_mapping_ptr = std::move(graph_mapping_ptr);
   }
 
+  bool HasCanonicalMapping() const {
+    return ((bool)graph_info_.canonical_mapping_ptr);
+  }
+
  private:
   CoreInfo core_info_;
   SamInfo sam_info_;
   GraphInfo graph_info_;
 };
+
+typedef std::shared_ptr<Read> ReadPtr;
 
 }  // namespace reads

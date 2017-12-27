@@ -47,8 +47,10 @@ TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
 TEST(ReadInitialization, TypicalGraphMapping_GraphMappingAddedToRead) {
   Read read;
   read.SetCoreInfo("frag1", "ATTC", "????");
+  ASSERT_FALSE(read.HasCanonicalMapping());
   GraphMappingPtr graph_mapping_ptr(new GraphMapping());
   read.SetCanonicalMapping(std::move(graph_mapping_ptr));
+  ASSERT_TRUE(read.HasCanonicalMapping());
 }
 
 TEST(ReadInitialization, UnsertCanonicalMapping_ExceptionThrownOnAccess) {
