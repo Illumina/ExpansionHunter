@@ -18,28 +18,12 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma once
+
+#include "graphs/gapless_aligner.h"
 #include "reads/read.h"
 
-#include "gtest/gtest.h"
+namespace reads {
 
-using namespace reads;
-
-TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
-  Read read;
-  read.SetCoreInfo("frag1", "ATTC", "????");
-  EXPECT_EQ("frag1", read.FragmentId());
-  EXPECT_EQ("ATTC", read.Bases());
-  EXPECT_EQ("????", read.Quals());
-}
-
-TEST(ReadInitialization, UnsetCoreInfo_ExceptionThrownOnAccess) {
-  Read read;
-  EXPECT_ANY_THROW(read.FragmentId());
-  EXPECT_ANY_THROW(read.Bases());
-  EXPECT_ANY_THROW(read.Quals());
-}
-
-TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  Read read;
-  EXPECT_ANY_THROW(read.SetCoreInfo("frag1", "ATT", "?"));
+void ReorientRead(const StrandClassifier& classifier, Read& read);
 }

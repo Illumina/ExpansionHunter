@@ -18,28 +18,26 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "reads/read.h"
+#include "reads/read_operations.h"
 
-#include "gtest/gtest.h"
+#include <algorithm>
+#include <string>
 
-using namespace reads;
+#include "common/seq_operations.h"
 
-TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
-  Read read;
-  read.SetCoreInfo("frag1", "ATTC", "????");
-  EXPECT_EQ("frag1", read.FragmentId());
-  EXPECT_EQ("ATTC", read.Bases());
-  EXPECT_EQ("????", read.Quals());
+using std::string;
+
+namespace reads {
+
+void ReorientRead(const StrandClassifier& classifier, Read& read) {
+  const bool is_orientation_correct =
+      classifier.IsForwardOriented(read.Bases());
+
+  if (!is_orientation_correct) {
+    const string oriented_bases = ReverseComplement(read.Bases());
+    string oriented_quals = read.Quals();
+    std::reverse(oriented_quals.begin(), oriented_quals.end());
+    read.SetCoreInfo(read.FragmentId(), oriented_bases, oriented_quals);
+  }
 }
-
-TEST(ReadInitialization, UnsetCoreInfo_ExceptionThrownOnAccess) {
-  Read read;
-  EXPECT_ANY_THROW(read.FragmentId());
-  EXPECT_ANY_THROW(read.Bases());
-  EXPECT_ANY_THROW(read.Quals());
-}
-
-TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  Read read;
-  EXPECT_ANY_THROW(read.SetCoreInfo("frag1", "ATT", "?"));
-}
+}  // namespace reads

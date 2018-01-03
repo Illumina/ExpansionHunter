@@ -18,28 +18,21 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "usecases/reads_operations.h"
 #include "reads/read.h"
 
-#include "gtest/gtest.h"
-
-using namespace reads;
-
-TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
-  Read read;
-  read.SetCoreInfo("frag1", "ATTC", "????");
-  EXPECT_EQ("frag1", read.FragmentId());
-  EXPECT_EQ("ATTC", read.Bases());
-  EXPECT_EQ("????", read.Quals());
+void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
+                  reads::ReadPairs& read_pairs) {
+  read_reader.SetRegion(target_region);
+  reads::ReadPtr read_ptr;
+  while ((read_ptr = read_reader.GetRead())) {
+    read_pairs.Add(read_ptr);
+  }
 }
 
-TEST(ReadInitialization, UnsetCoreInfo_ExceptionThrownOnAccess) {
-  Read read;
-  EXPECT_ANY_THROW(read.FragmentId());
-  EXPECT_ANY_THROW(read.Bases());
-  EXPECT_ANY_THROW(read.Quals());
-}
-
-TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  Read read;
-  EXPECT_ANY_THROW(read.SetCoreInfo("frag1", "ATT", "?"));
+void AlignReads(const std::shared_ptr<Graph>& graph_ptr, int32_t kmer_len,
+                std::vector<reads::ReadPtr>& reads) {
+  // GaplessAligner aligner(graph_ptr, kmer_len);
+  // for (ReadPtr& read_ptr : reads) {
+  //}
 }

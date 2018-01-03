@@ -18,28 +18,18 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "reads/read.h"
+#pragma once
 
-#include "gtest/gtest.h"
+#include <cstdint>
+#include <memory>
 
-using namespace reads;
+#include "common/genomic_region.h"
+#include "graphs/graph.h"
+#include "reads/read_pairs.h"
+#include "reads/read_reader.h"
 
-TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
-  Read read;
-  read.SetCoreInfo("frag1", "ATTC", "????");
-  EXPECT_EQ("frag1", read.FragmentId());
-  EXPECT_EQ("ATTC", read.Bases());
-  EXPECT_EQ("????", read.Quals());
-}
+void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
+                  reads::ReadPairs& read_pairs);
 
-TEST(ReadInitialization, UnsetCoreInfo_ExceptionThrownOnAccess) {
-  Read read;
-  EXPECT_ANY_THROW(read.FragmentId());
-  EXPECT_ANY_THROW(read.Bases());
-  EXPECT_ANY_THROW(read.Quals());
-}
-
-TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  Read read;
-  EXPECT_ANY_THROW(read.SetCoreInfo("frag1", "ATT", "?"));
-}
+void AlignReads(const std::shared_ptr<Graph>& graph_ptr, int32_t kmer_len,
+                std::vector<reads::ReadPtr>& reads);

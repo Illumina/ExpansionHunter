@@ -18,6 +18,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma once
+
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -35,6 +37,10 @@ class ReadPair {
   Read& FirstMate() { return *first_mate_ptr_; }
   Read& SecondMate() { return *second_mate_ptr_; }
   void Add(ReadPtr read_ptr);
+  bool operator==(const ReadPair& other) const {
+    return (first_mate_ptr_ == other.first_mate_ptr_ &&
+            second_mate_ptr_ == other.second_mate_ptr_);
+  }
 
   friend class ReadPairs;
 
@@ -62,6 +68,10 @@ class ReadPairs {
   int32_t NumReads() const { return num_reads_; }
 
   void GetReads(std::vector<ReadPtr>& read_ptrs) const;
+
+  bool operator==(const ReadPairs& other) const {
+    return (read_pairs_ == other.read_pairs_ && num_reads_ == other.num_reads_);
+  }
 
  private:
   std::unordered_map<std::string, ReadPair> read_pairs_;

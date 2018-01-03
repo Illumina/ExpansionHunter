@@ -32,6 +32,10 @@ struct CoreInfo {
   std::string fragment_id;
   std::string bases;
   std::string quals;
+  bool operator==(const CoreInfo& other) const {
+    return (fragment_id == other.fragment_id && bases == other.bases &&
+            quals == other.quals);
+  }
 };
 
 struct SamInfo {
@@ -43,10 +47,20 @@ struct SamInfo {
   bool is_mapped = false;
   bool is_first_mate = false;
   bool is_mate_mapped = false;
+  bool operator==(const SamInfo& other) const {
+    return (chrom_id == other.chrom_id && pos == other.pos &&
+            mapq == other.mapq && mate_chrom_id == other.mate_chrom_id &&
+            mate_pos == other.mate_pos && is_mapped == other.is_mapped &&
+            is_first_mate == other.is_first_mate &&
+            is_mate_mapped == other.is_mate_mapped);
+  }
 };
 
 struct GraphInfo {
-  GraphMappingPtr canonical_mapping_ptr;
+  GraphMapping canonical_mapping;
+  bool operator==(const GraphInfo& other) const {
+    return (canonical_mapping == other.canonical_mapping);
+  }
 };
 
 class Read {
@@ -90,12 +104,13 @@ class Read {
 
   // Provide access to graph-specific information.
   const GraphMapping& CanonicalMapping() const;
-  void SetCanonicalMapping(GraphMappingPtr graph_mapping_ptr) {
-    graph_info_.canonical_mapping_ptr = std::move(graph_mapping_ptr);
+  void SetCanonicalMapping(const GraphMapping& graph_mapping) {
+    graph_info_.canonical_mapping = graph_mapping;
   }
 
-  bool HasCanonicalMapping() const {
-    return ((bool)graph_info_.canonical_mapping_ptr);
+  bool operator==(const Read& other) const {
+    return (core_info_ == other.core_info_ && sam_info_ == other.sam_info_ &&
+            graph_info_ == other.graph_info_);
   }
 
  private:

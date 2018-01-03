@@ -59,11 +59,7 @@ const string& Read::Quals() const {
 }
 
 const GraphMapping& Read::CanonicalMapping() const {
-  if (!graph_info_.canonical_mapping_ptr) {
-    throw std::logic_error(
-        "Attempted access to uninitialized canonical mapping");
-  }
-  return *graph_info_.canonical_mapping_ptr;
+  return graph_info_.canonical_mapping;
 }
 
 }  // namespace reads
