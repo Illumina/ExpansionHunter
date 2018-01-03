@@ -46,15 +46,13 @@ using namespace testing;
 class TinyDeletionGraph : public ::testing::Test {
  public:
   void SetUp() {
-    graph = MakeDeletionGraph(left_flank, deletion, right_flank);
-    graph_ptr = std::make_shared<Graph>(graph);
+    graph_ptr = MakeDeletionGraph(left_flank, deletion, right_flank);
   }
 
   const string left_flank = "AC";
   const string deletion = "GG";
   const string right_flank = "CAG";
-  Graph graph;
-  std::shared_ptr<Graph> graph_ptr;
+  GraphSharedPtr graph_ptr;
 };
 
 class RepetitiveDoubleSwapGraph : public ::testing::Test {
@@ -67,11 +65,9 @@ class RepetitiveDoubleSwapGraph : public ::testing::Test {
     deletion2 = "TTT";
     insertion2 = "AAA";
     right_flank = "TTT";
-    graph = MakeDoubleSwapGraph(left_flank, deletion1, insertion1, mid,
-                                deletion2, insertion2, right_flank);
-    graph_ptr = std::make_shared<Graph>(graph);
+    graph_ptr = MakeDoubleSwapGraph(left_flank, deletion1, insertion1, mid,
+                                    deletion2, insertion2, right_flank);
   }
-  Graph graph;
   string left_flank;
   string deletion1;
   string insertion1;
@@ -80,7 +76,7 @@ class RepetitiveDoubleSwapGraph : public ::testing::Test {
   string insertion2;
   string right_flank;
 
-  std::shared_ptr<Graph> graph_ptr;
+  GraphSharedPtr graph_ptr;
 };
 
 TEST_F(TinyDeletionGraph, InitializeKmerIndexWith1mers) {

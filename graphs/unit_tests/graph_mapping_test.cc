@@ -121,10 +121,10 @@ TEST(Mapping, CalculatesQueryAndReferenceSpans) {
 }
 
 TEST(GraphMapping, CalculatesNumberOfMatches) {
-  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
+  GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+      DecodeFromString(0, "0[4M]1[2M3S]", query, *graph_ptr);
   EXPECT_EQ((int32_t)6, graph_mapping.NumMatches());
 }
 
@@ -136,37 +136,37 @@ TEST(Mapping, OutputsQueryAndReferenceSequences) {
 }
 
 TEST(GraphMapping, StitchesQueryAndReferenceSequences) {
-  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
+  GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+      DecodeFromString(0, "0[4M]1[2M3S]", query, *graph_ptr);
   EXPECT_EQ("AAAATT", graph_mapping.Query());
   EXPECT_EQ("AAAATT", graph_mapping.Reference());
 }
 
 TEST(GraphMapping, CalculatesQueryAndReferenceSpans) {
-  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
+  GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+      DecodeFromString(0, "0[4M]1[2M3S]", query, *graph_ptr);
   EXPECT_EQ((int32_t)9, graph_mapping.QuerySpan());
   EXPECT_EQ((int32_t)6, graph_mapping.ReferenceSpan());
 }
 
 TEST(GraphMapping, AllowsAccessingNodeMappingsByIndex) {
-  Graph graph = MakeDeletionGraph("AAAA", "TTGC", "TTTT");
+  GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGC", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
-      DecodeFromString(0, "0[4M]1[2M3S]", query, graph);
+      DecodeFromString(0, "0[4M]1[2M3S]", query, *graph_ptr);
   EXPECT_EQ(Mapping(0, "4M", "AAAA", "AAAA"), graph_mapping[0].mapping);
   EXPECT_EQ(Mapping(0, "2M3S", "TTCCC", "TTGG"), graph_mapping[1].mapping);
 }
 
 TEST(GettingIndexesOfNode, TypicalMapping_IndexesObtained) {
-  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  GraphUniquePtr graph_ptr = MakeStrGraph("AAAACC", "CCG", "ATTT");
   const string read = "CCCCGCCGAT";
   GraphMapping mapping =
-      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph);
+      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, *graph_ptr);
   const list<int32_t> left_flank_indexes = {0};
   const list<int32_t> repeat_unit_indexes = {1, 2};
   const list<int32_t> right_flank_indexes = {3};
@@ -176,18 +176,18 @@ TEST(GettingIndexesOfNode, TypicalMapping_IndexesObtained) {
 }
 
 TEST(GettingIndexesOfNode, NodeNotInMapping_EmptyListReturned) {
-  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  GraphUniquePtr graph_ptr = MakeStrGraph("AAAACC", "CCG", "ATTT");
   const string read = "ACCCCG";
-  GraphMapping mapping = DecodeFromString(3, "0[3M]1[3M]", read, graph);
+  GraphMapping mapping = DecodeFromString(3, "0[3M]1[3M]", read, *graph_ptr);
   const list<int32_t> empty_list;
   EXPECT_EQ(empty_list, mapping.GetIndexesOfNode(2));
   EXPECT_EQ(empty_list, mapping.GetIndexesOfNode(4));
 }
 
 TEST(CheckingIfMappingOverlapsNode, TypicalMapping_ChecksPerformed) {
-  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  GraphUniquePtr graph_ptr = MakeStrGraph("AAAACC", "CCG", "ATTT");
   const string read = "ACCCCG";
-  GraphMapping mapping = DecodeFromString(3, "0[3M]1[3M]", read, graph);
+  GraphMapping mapping = DecodeFromString(3, "0[3M]1[3M]", read, *graph_ptr);
   EXPECT_TRUE(mapping.OverlapsNode(0));
   EXPECT_TRUE(mapping.OverlapsNode(1));
   EXPECT_FALSE(mapping.OverlapsNode(2));

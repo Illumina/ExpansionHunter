@@ -26,9 +26,13 @@
 #include <string>
 
 class Region {
-public:
+ public:
   friend std::istream &operator>>(std::istream &istrm, Region &region);
   friend std::ostream &operator<<(std::ostream &ostrm, const Region &region);
+  bool operator==(const Region &other) const {
+    return (chrom_ == other.chrom_ && start_ == other.start_ &&
+            end_ == other.end_);
+  }
 
   Region();
   Region(const std::string &chrom, int64_t start, int64_t end,
@@ -54,7 +58,7 @@ public:
 
   const std::string ToString() const;
 
-private:
+ private:
   std::string chrom_;
   int64_t start_;
   int64_t end_;

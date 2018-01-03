@@ -18,34 +18,26 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "graphs/graph_mapping_operations.h"
+#include "reads/read_operations.h"
 
+#include <algorithm>
 #include <string>
 
-#include "gtest/gtest.h"
-
-#include "graphs/graph.h"
-#include "graphs/graph_builders.h"
+#include "common/seq_operations.h"
 
 using std::string;
 
-TEST(SplitNodeCigar, ExtractsCigarAndNodeId) {
-  const string node_cigar = "1[4M5S]";
-  string cigar;
-  int32_t node_id;
-  SplitNodeCigar(node_cigar, cigar, node_id);
-  EXPECT_EQ(1, node_id);
-  EXPECT_EQ("4M5S", cigar);
-}
+namespace reads {
 
-TEST(DecodeGraphMapping, DecodesTypicalGraphMappings) {
-  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
-  const string read = "AAAATTCCC";
-  GraphMapping graph_mapping =
-      DecodeFromString(0, "0[4M]1[2M3S]", read, *graph_ptr);
+void ReorientRead(const StrandClassifier& classifier, Read& read) {
+  const bool is_orientation_correct =
+      classifier.IsForwardOriented(read.Bases());
 
-  GraphMapping expected_graph_mapping(
-      {0, 1},
-      {Mapping(0, "4M", "AAAA", "AAAA"), Mapping(0, "2M3S", "TTCCC", "TTGG")});
-  EXPECT_EQ(expected_graph_mapping, graph_mapping);
+  if (!is_orientation_correct) {
+    const string oriented_bases = ReverseComplement(read.Bases());
+    string oriented_quals = read.Quals();
+    std::reverse(oriented_quals.begin(), oriented_quals.end());
+    read.SetCoreInfo(read.FragmentId(), oriented_bases, oriented_quals);
+  }
 }
+}  // namespace reads

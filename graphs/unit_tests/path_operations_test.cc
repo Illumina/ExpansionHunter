@@ -34,37 +34,23 @@ using std::list;
 using std::string;
 using std::vector;
 
-class DeletionGraphForOperations : public ::testing::Test {
- protected:
-  virtual void SetUp() {
-    left_flank = "AAAACC";
-    deletion = "TTTGG";
-    right_flank = "ATTT";
-    graph = MakeDeletionGraph(left_flank, deletion, right_flank);
-    graph_ptr = std::make_shared<Graph>(graph);
-  }
-  Graph graph;
-  string left_flank;
-  string deletion;
-  string right_flank;
-  std::shared_ptr<Graph> graph_ptr;
-};
-
-TEST_F(DeletionGraphForOperations,
-       SplittingSequenceByPathOfDifferentLengthCausesError) {
+TEST(SplittingSequenceByPath, SequenceOfDifferentLength_ExceptionRaised) {
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
   GraphPath path(graph_ptr, 3, {0, 1}, 2);
   const string sequence = "AA";
   EXPECT_ANY_THROW(SplitByPath(path, sequence));
 }
 
-TEST_F(DeletionGraphForOperations, SplittingSequenceBySingleNodePath) {
+TEST(SplittingSequenceByPath, SingleNodePath_SequenceSplit) {
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
   GraphPath path(graph_ptr, 1, {1}, 3);
   const string sequence = "AAT";
   const vector<string> expected_pieces = {sequence};
   EXPECT_EQ(expected_pieces, SplitByPath(path, sequence));
 }
 
-TEST_F(DeletionGraphForOperations, SplittingSequenceByMultiNodePath) {
+TEST(SplittingSequenceByPath, MultiNodePath_SequenceSplit) {
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
   {
     GraphPath path(graph_ptr, 1, {0, 1}, 3);
     const string sequence = "AAAAAGGGG";

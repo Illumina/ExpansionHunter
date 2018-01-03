@@ -73,7 +73,9 @@ add_subdirectory(rep_align)
 add_subdirectory(common)
 add_subdirectory(stats)
 add_subdirectory(graphs)
+add_subdirectory(reads)
 add_subdirectory(classification)
+add_subdirectory(region_analysis)
 
 file(GLOB SOURCES "src/*.cc")
 
@@ -83,4 +85,4 @@ target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 add_dependencies(htslib zlib)
 add_dependencies(common htslib)
 
-target_link_libraries(ExpansionHunter common genotyping purity rep_align stats graphs classification pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
+target_link_libraries(ExpansionHunter common genotyping purity rep_align stats graphs reads classification region_analysis pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})

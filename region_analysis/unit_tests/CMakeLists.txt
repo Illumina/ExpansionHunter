@@ -1,0 +1,5 @@
+add_executable(region_analysis_test region_analysis_test.cc)
+
+target_link_libraries(region_analysis_test region_analysis gtest gmock_main)
+
+add_test(NAME region_analysis_test COMMAND region_analysis_test)

@@ -51,38 +51,35 @@ TEST(AligningSequences, TypicalSequences_Aligned) {
 }
 
 TEST(AligningSequenceToPath, SingleNodePath_Aligned) {
-  Graph graph = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
   GraphPath path(graph_ptr, 1, {1}, 4);
   const string read = "ATGC";
 
   GraphMapping expected_graph_mapping =
-      DecodeFromString(1, "1[1X2M1X]", read, graph);
+      DecodeFromString(1, "1[1X2M1X]", read, *graph_ptr);
   GraphMapping graph_mapping = AlignWithoutGaps(path, read);
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
 }
 
 TEST(AligningSequenceToPath, MultiNodePath_Aligned) {
-  Graph graph = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
   GraphPath path(graph_ptr, 2, {0, 1, 2}, 1);
   const string read = "TTCCTTAGGAT";
 
   GraphMapping expected_graph_mapping =
-      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", read, graph);
+      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", read, *graph_ptr);
   GraphMapping graph_mapping = AlignWithoutGaps(path, read);
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
 }
 
 TEST(AligningSequenceToPath, TypicalStrPath_Aligned) {
-  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeStrGraph("AAAACC", "CCG", "ATTT");
   GraphPath path(graph_ptr, 2, {0, 1, 1, 1, 2}, 3);
   //                   FFFFRRRRRRRRRFFFF
   const string read = "AACCCCGCCGCCGATTT";
 
   GraphMapping expected_graph_mapping =
-      DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, graph);
+      DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", read, *graph_ptr);
   GraphMapping graph_mapping = AlignWithoutGaps(path, read);
   EXPECT_EQ(expected_graph_mapping, graph_mapping);
 }
@@ -97,21 +94,19 @@ TEST(KmerExtraction, TypicalSequence_KmersExtracted) {
 }
 
 TEST(AlignmentOfSequenceToShortPath, TypicalSequence_BestAlignmentObtained) {
-  Graph graph = MakeDeletionGraph("AAACC", "TTGGG", "TTAAA");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAACC", "TTGGG", "TTAAA");
   const GraphPath path(graph_ptr, 4, {0}, 4);
   const string sequence = "CCTTA";
 
   list<GraphMapping> mappings = GetBestAlignmentToShortPath(path, 1, sequence);
 
   list<GraphMapping> expected_mappings = {
-      DecodeFromString(3, "0[2M]2[3M]", sequence, graph)};
+      DecodeFromString(3, "0[2M]2[3M]", sequence, *graph_ptr)};
   ASSERT_EQ(expected_mappings, mappings);
 }
 
 TEST(AlignmentOfSequenceToGraph, TypicalSequence_BestAlignmentObtained) {
-  Graph graph = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
 
   const int32_t kmer_len = 3;
   GaplessAligner aligner(graph_ptr, kmer_len);
@@ -120,13 +115,12 @@ TEST(AlignmentOfSequenceToGraph, TypicalSequence_BestAlignmentObtained) {
   list<GraphMapping> mappings = aligner.GetBestAlignment(sequence);
 
   list<GraphMapping> expected_mappings = {
-      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", sequence, graph)};
+      DecodeFromString(2, "0[2X2M]1[2M1X2M]2[2M]", sequence, *graph_ptr)};
   ASSERT_EQ(expected_mappings, mappings);
 }
 
 TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
-  Graph graph = MakeStrGraph("AAAACG", "CCG", "ATTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeStrGraph("AAAACG", "CCG", "ATTT");
   const int32_t kmer_len = 3;
   GaplessAligner aligner(graph_ptr, kmer_len);
 
@@ -135,8 +129,8 @@ TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
     const string spanning_read = "AACGCCGCCGCCGATTT";
     list<GraphMapping> mappings = aligner.GetBestAlignment(spanning_read);
 
-    list<GraphMapping> expected_mappings = {
-        DecodeFromString(2, "0[4M]1[3M]1[3M]1[3M]2[4M]", spanning_read, graph)};
+    list<GraphMapping> expected_mappings = {DecodeFromString(
+        2, "0[4M]1[3M]1[3M]1[3M]2[4M]", spanning_read, *graph_ptr)};
     EXPECT_EQ(expected_mappings, mappings);
   }
 
@@ -145,8 +139,8 @@ TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
     const string repeat_read = "CGCCGCCGCCG";
     list<GraphMapping> mappings = aligner.GetBestAlignment(repeat_read);
     list<GraphMapping> expected_mappings = {
-        DecodeFromString(4, "0[2M]1[3M]1[3M]1[3M]", repeat_read, graph),
-        DecodeFromString(1, "1[2M]1[3M]1[3M]1[3M]", repeat_read, graph)};
+        DecodeFromString(4, "0[2M]1[3M]1[3M]1[3M]", repeat_read, *graph_ptr),
+        DecodeFromString(1, "1[2M]1[3M]1[3M]1[3M]", repeat_read, *graph_ptr)};
     EXPECT_EQ(expected_mappings, mappings);
   }
 
@@ -154,15 +148,14 @@ TEST(GraphAlignment, TypicalStrGraph_BestAlignmentObtained) {
     //                          RRRXRRRRXRRR
     const string repeat_read = "CCGACGCCTCCG";
     list<GraphMapping> mappings = aligner.GetBestAlignment(repeat_read);
-    list<GraphMapping> expected_mappings = {
-        DecodeFromString(0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, graph)};
+    list<GraphMapping> expected_mappings = {DecodeFromString(
+        0, "1[3M]1[1X2M]1[2M1X]1[3M]", repeat_read, *graph_ptr)};
     EXPECT_EQ(expected_mappings, mappings);
   }
 }
 
 TEST(StrandClassification, TypicalRead_StrandDetermined) {
-  Graph graph = MakeStrGraph("AAAACC", "CCG", "ATTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeStrGraph("AAAACC", "CCG", "ATTT");
   const int32_t kmer_len = 3;
   StrandClassifier classifier(graph_ptr, kmer_len);
   EXPECT_TRUE(classifier.IsForwardOriented("CCGCCGCCGCCG"));

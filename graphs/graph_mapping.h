@@ -24,6 +24,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <memory>
 #include <regex>
 #include <string>
 #include <utility>
@@ -175,3 +176,5 @@ class GraphMapping {
 };
 
 std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping);
+
+typedef std::unique_ptr<GraphMapping> GraphMappingPtr;
