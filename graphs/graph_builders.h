@@ -24,26 +24,28 @@
 
 #include "graphs/graph.h"
 
-Graph MakeDeletionGraph(const std::string& left_flank,
-                        const std::string& deletion,
-                        const std::string& right_flank);
+GraphUniquePtr MakeDeletionGraph(const std::string& left_flank,
+                                 const std::string& deletion,
+                                 const std::string& right_flank);
 
-Graph MakeSwapGraph(const std::string& left_flank, const std::string& deletion,
-                    const std::string& insertion,
-                    const std::string& right_flank);
+GraphUniquePtr MakeSwapGraph(const std::string& left_flank,
+                             const std::string& deletion,
+                             const std::string& insertion,
+                             const std::string& right_flank);
 
-Graph MakeDoubleSwapGraph(const std::string& left_flank,
-                          const std::string& deletion1,
-                          const std::string& insertion1,
-                          const std::string& middle,
-                          const std::string& deletion2,
-                          const std::string& insertion2,
-                          const std::string& right_flank);
+GraphUniquePtr MakeDoubleSwapGraph(const std::string& left_flank,
+                                   const std::string& deletion1,
+                                   const std::string& insertion1,
+                                   const std::string& middle,
+                                   const std::string& deletion2,
+                                   const std::string& insertion2,
+                                   const std::string& right_flank);
 
-Graph MakeLooplessStrGraph(int32_t read_len, const std::string& left_flank,
-                           const std::string& repeat_unit,
-                           const std::string& right_flank);
+GraphUniquePtr MakeLooplessStrGraph(int32_t read_len,
+                                    const std::string& left_flank,
+                                    const std::string& repeat_unit,
+                                    const std::string& right_flank);
 
-Graph MakeStrGraph(const std::string& left_flank,
-                   const std::string& repeat_unit,
-                   const std::string& right_flank);
+GraphUniquePtr MakeStrGraph(const std::string& left_flank,
+                            const std::string& repeat_unit,
+                            const std::string& right_flank);

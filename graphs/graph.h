@@ -21,6 +21,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <set>
 #include <string>
 #include <vector>
@@ -63,3 +64,6 @@ class Graph {
   AdjacencyList adjacency_list_;
   AdjacencyList reverse_adjacency_list_;
 };
+
+typedef std::unique_ptr<Graph> GraphUniquePtr;
+typedef std::shared_ptr<Graph> GraphSharedPtr;

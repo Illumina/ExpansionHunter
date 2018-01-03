@@ -28,15 +28,16 @@ TEST(DeletionGraph, IsCreatedFromNodeSequences) {
   const string left_flank = "AATT";
   const string deletion = "CCCC";
   const string right_flank = "GGGCC";
-  const Graph graph = MakeDeletionGraph(left_flank, deletion, right_flank);
+  GraphUniquePtr graph_ptr =
+      MakeDeletionGraph(left_flank, deletion, right_flank);
 
-  EXPECT_EQ(3, graph.NumNodes());
-  EXPECT_EQ(left_flank, graph.NodeSeq(0));
-  EXPECT_EQ(deletion, graph.NodeSeq(1));
-  EXPECT_EQ(right_flank, graph.NodeSeq(2));
-  EXPECT_TRUE(graph.HasEdge(0, 1));
-  EXPECT_TRUE(graph.HasEdge(0, 2));
-  EXPECT_TRUE(graph.HasEdge(1, 2));
+  EXPECT_EQ(3, graph_ptr->NumNodes());
+  EXPECT_EQ(left_flank, graph_ptr->NodeSeq(0));
+  EXPECT_EQ(deletion, graph_ptr->NodeSeq(1));
+  EXPECT_EQ(right_flank, graph_ptr->NodeSeq(2));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 1));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 2));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 2));
 }
 
 TEST(SwapGraph, IsCreatedFromNodeSequences) {
@@ -44,18 +45,18 @@ TEST(SwapGraph, IsCreatedFromNodeSequences) {
   const string deletion = "CCCC";
   const string insertion = "TTTT";
   const string right_flank = "GGGCC";
-  const Graph graph =
+  GraphUniquePtr graph_ptr =
       MakeSwapGraph(left_flank, deletion, insertion, right_flank);
 
-  EXPECT_EQ(4, graph.NumNodes());
-  EXPECT_EQ(left_flank, graph.NodeSeq(0));
-  EXPECT_EQ(deletion, graph.NodeSeq(1));
-  EXPECT_EQ(insertion, graph.NodeSeq(2));
-  EXPECT_EQ(right_flank, graph.NodeSeq(3));
-  EXPECT_TRUE(graph.HasEdge(0, 1));
-  EXPECT_TRUE(graph.HasEdge(0, 2));
-  EXPECT_TRUE(graph.HasEdge(1, 3));
-  EXPECT_TRUE(graph.HasEdge(2, 3));
+  EXPECT_EQ(4, graph_ptr->NumNodes());
+  EXPECT_EQ(left_flank, graph_ptr->NodeSeq(0));
+  EXPECT_EQ(deletion, graph_ptr->NodeSeq(1));
+  EXPECT_EQ(insertion, graph_ptr->NodeSeq(2));
+  EXPECT_EQ(right_flank, graph_ptr->NodeSeq(3));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 1));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 2));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 3));
+  EXPECT_TRUE(graph_ptr->HasEdge(2, 3));
 }
 
 TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
@@ -66,26 +67,26 @@ TEST(DoubleSwapGraph, IsCreatedFromNodeSequences) {
   const string deletion2 = "AAAA";
   const string insertion2 = "GGGG";
   const string right_flank = "GGGCC";
-  const Graph graph =
+  GraphUniquePtr graph_ptr =
       MakeDoubleSwapGraph(left_flank, deletion1, insertion1, middle, deletion2,
                           insertion2, right_flank);
 
-  EXPECT_EQ(7, graph.NumNodes());
-  EXPECT_EQ(left_flank, graph.NodeSeq(0));
-  EXPECT_EQ(deletion1, graph.NodeSeq(1));
-  EXPECT_EQ(insertion1, graph.NodeSeq(2));
-  EXPECT_EQ(middle, graph.NodeSeq(3));
-  EXPECT_EQ(deletion2, graph.NodeSeq(4));
-  EXPECT_EQ(insertion2, graph.NodeSeq(5));
-  EXPECT_EQ(right_flank, graph.NodeSeq(6));
-  EXPECT_TRUE(graph.HasEdge(0, 1));
-  EXPECT_TRUE(graph.HasEdge(0, 2));
-  EXPECT_TRUE(graph.HasEdge(1, 3));
-  EXPECT_TRUE(graph.HasEdge(2, 3));
-  EXPECT_TRUE(graph.HasEdge(3, 4));
-  EXPECT_TRUE(graph.HasEdge(3, 5));
-  EXPECT_TRUE(graph.HasEdge(4, 6));
-  EXPECT_TRUE(graph.HasEdge(5, 6));
+  EXPECT_EQ(7, graph_ptr->NumNodes());
+  EXPECT_EQ(left_flank, graph_ptr->NodeSeq(0));
+  EXPECT_EQ(deletion1, graph_ptr->NodeSeq(1));
+  EXPECT_EQ(insertion1, graph_ptr->NodeSeq(2));
+  EXPECT_EQ(middle, graph_ptr->NodeSeq(3));
+  EXPECT_EQ(deletion2, graph_ptr->NodeSeq(4));
+  EXPECT_EQ(insertion2, graph_ptr->NodeSeq(5));
+  EXPECT_EQ(right_flank, graph_ptr->NodeSeq(6));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 1));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 2));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 3));
+  EXPECT_TRUE(graph_ptr->HasEdge(2, 3));
+  EXPECT_TRUE(graph_ptr->HasEdge(3, 4));
+  EXPECT_TRUE(graph_ptr->HasEdge(3, 5));
+  EXPECT_TRUE(graph_ptr->HasEdge(4, 6));
+  EXPECT_TRUE(graph_ptr->HasEdge(5, 6));
 }
 
 TEST(ConstructionOfLooplessStrGraph, TypicalParameters_GraphConstructed) {
@@ -93,45 +94,45 @@ TEST(ConstructionOfLooplessStrGraph, TypicalParameters_GraphConstructed) {
   const string repeat_unit = "CGG";
   const string right_flank = "ATTT";
   const int32_t read_len = 10;
-  const Graph graph =
+  GraphUniquePtr graph_ptr =
       MakeLooplessStrGraph(read_len, left_flank, repeat_unit, right_flank);
 
-  ASSERT_EQ(6, graph.NumNodes());
-  EXPECT_EQ(left_flank, graph.NodeSeq(0));
-  EXPECT_EQ(repeat_unit, graph.NodeSeq(1));
-  EXPECT_EQ(repeat_unit, graph.NodeSeq(2));
-  EXPECT_EQ(repeat_unit, graph.NodeSeq(3));
-  EXPECT_EQ(repeat_unit, graph.NodeSeq(4));
-  EXPECT_EQ(right_flank, graph.NodeSeq(5));
+  ASSERT_EQ(6, graph_ptr->NumNodes());
+  EXPECT_EQ(left_flank, graph_ptr->NodeSeq(0));
+  EXPECT_EQ(repeat_unit, graph_ptr->NodeSeq(1));
+  EXPECT_EQ(repeat_unit, graph_ptr->NodeSeq(2));
+  EXPECT_EQ(repeat_unit, graph_ptr->NodeSeq(3));
+  EXPECT_EQ(repeat_unit, graph_ptr->NodeSeq(4));
+  EXPECT_EQ(right_flank, graph_ptr->NodeSeq(5));
 
-  EXPECT_TRUE(graph.HasEdge(0, 5));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 5));
 
-  EXPECT_TRUE(graph.HasEdge(0, 1));
-  EXPECT_TRUE(graph.HasEdge(1, 5));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 1));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 5));
 
-  EXPECT_TRUE(graph.HasEdge(1, 2));
-  EXPECT_TRUE(graph.HasEdge(2, 5));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 2));
+  EXPECT_TRUE(graph_ptr->HasEdge(2, 5));
 
-  EXPECT_TRUE(graph.HasEdge(2, 3));
-  EXPECT_TRUE(graph.HasEdge(3, 5));
+  EXPECT_TRUE(graph_ptr->HasEdge(2, 3));
+  EXPECT_TRUE(graph_ptr->HasEdge(3, 5));
 
-  EXPECT_TRUE(graph.HasEdge(3, 4));
-  EXPECT_TRUE(graph.HasEdge(4, 5));
+  EXPECT_TRUE(graph_ptr->HasEdge(3, 4));
+  EXPECT_TRUE(graph_ptr->HasEdge(4, 5));
 }
 
 TEST(ConstructionOfStrGraph, TypicalParameters_GraphConstructed) {
   const string left_flank = "AATT";
   const string repeat_unit = "CGG";
   const string right_flank = "ATTT";
-  const Graph graph = MakeStrGraph(left_flank, repeat_unit, right_flank);
+  GraphSharedPtr graph_ptr = MakeStrGraph(left_flank, repeat_unit, right_flank);
 
-  ASSERT_EQ(3, graph.NumNodes());
-  EXPECT_EQ(left_flank, graph.NodeSeq(0));
-  EXPECT_EQ(repeat_unit, graph.NodeSeq(1));
-  EXPECT_EQ(right_flank, graph.NodeSeq(2));
+  ASSERT_EQ(3, graph_ptr->NumNodes());
+  EXPECT_EQ(left_flank, graph_ptr->NodeSeq(0));
+  EXPECT_EQ(repeat_unit, graph_ptr->NodeSeq(1));
+  EXPECT_EQ(right_flank, graph_ptr->NodeSeq(2));
 
-  EXPECT_TRUE(graph.HasEdge(0, 1));
-  EXPECT_TRUE(graph.HasEdge(0, 2));
-  EXPECT_TRUE(graph.HasEdge(1, 1));
-  EXPECT_TRUE(graph.HasEdge(1, 2));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 1));
+  EXPECT_TRUE(graph_ptr->HasEdge(0, 2));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 1));
+  EXPECT_TRUE(graph_ptr->HasEdge(1, 2));
 }

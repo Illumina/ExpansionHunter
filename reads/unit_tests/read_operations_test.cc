@@ -34,8 +34,7 @@ TEST(ReorientingReads, CorrectlyOrientedRead_ReadIsUnchnaged) {
 
   Read expected_read = read;
 
-  Graph graph = MakeStrGraph("AAAA", "CG", "TCTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeStrGraph("AAAA", "CG", "TCTT");
   const int32_t kmer_len = 3;
   StrandClassifier classifier(graph_ptr, kmer_len);
 
@@ -47,8 +46,7 @@ TEST(ReorientingReads, CorrectlyOrientedRead_ReadIsUnchnaged) {
 TEST(ReorientingReads, IncorrectlyOrientedRead_BasesAndQualsReoriented) {
   Read read("frag1", "GACGTT", "?#?(((");
 
-  Graph graph = MakeStrGraph("AAAA", "CG", "TCTT");
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
+  GraphSharedPtr graph_ptr = MakeStrGraph("AAAA", "CG", "TCTT");
   const int32_t kmer_len = 3;
   StrandClassifier classifier(graph_ptr, kmer_len);
 

@@ -153,10 +153,9 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
   flanking_repaligns->clear();
 
   // Graph test.
-  Graph graph =
+  GraphSharedPtr graph_ptr =
       MakeStrGraph(repeat_spec.left_flank, repeat_spec.units_shifts[0][0],
                    repeat_spec.right_flank);
-  std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
   const int32_t kmer_len = 14;
   StrandClassifier strand_classifier(graph_ptr, kmer_len);
   GaplessAligner aligner(graph_ptr, kmer_len);

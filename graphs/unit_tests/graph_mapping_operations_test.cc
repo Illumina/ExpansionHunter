@@ -39,9 +39,10 @@ TEST(SplitNodeCigar, ExtractsCigarAndNodeId) {
 }
 
 TEST(DecodeGraphMapping, DecodesTypicalGraphMappings) {
-  Graph graph = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string read = "AAAATTCCC";
-  GraphMapping graph_mapping = DecodeFromString(0, "0[4M]1[2M3S]", read, graph);
+  GraphMapping graph_mapping =
+      DecodeFromString(0, "0[4M]1[2M3S]", read, *graph_ptr);
 
   GraphMapping expected_graph_mapping(
       {0, 1},
