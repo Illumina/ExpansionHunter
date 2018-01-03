@@ -37,6 +37,8 @@
 #include <utility>
 #include <vector>
 
+#include "third_party/spdlog/spdlog.h"
+
 #include "classification/mapping_classifier.h"
 #include "common/parameters.h"
 #include "common/ref_genome.h"
@@ -58,6 +60,8 @@
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
 #include "stats/counts.h"
+
+namespace spd = spdlog;
 
 using std::array;
 using std::cerr;
@@ -546,8 +550,11 @@ void EstimateRepeatSizes(const Parameters &parameters,
 }
 
 int main(int argc, char *argv[]) {
+  auto console = spd::stderr_color_mt("console");
+  spd::set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
   try {
     Parameters parameters;
+    console->info("Starting {}", kProgramVersion);
     cerr << kProgramVersion << endl;
 
     if (!parameters.Load(argc, argv)) {
