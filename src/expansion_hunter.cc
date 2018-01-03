@@ -552,55 +552,55 @@ void EstimateRepeatSizes(const Parameters &parameters,
 int main(int argc, char *argv[]) {
   auto console = spd::stderr_color_mt("console");
   spd::set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
+
   try {
     Parameters parameters;
     console->info("Starting {}", kProgramVersion);
-    cerr << kProgramVersion << endl;
 
     if (!parameters.Load(argc, argv)) {
       return 1;
     }
 
-    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name()
-         << "]" << endl;
+    console->info("Analyzing sample {}", parameters.sample_name());
 
-    Outputs outputs(parameters.vcf_path(), parameters.json_path(),
-                    parameters.log_path());
+    /*
+      Outputs outputs(parameters.vcf_path(), parameters.json_path(),
+                      parameters.log_path());
 
-    map<string, RepeatSpec> repeat_specs;
-    if (!LoadRepeatSpecs(parameters.repeat_specs_path(),
-                         parameters.genome_path(), parameters.min_wp(),
-                         &repeat_specs)) {
-      throw std::invalid_argument(
-          "Failed to load repeat table from disease specs in '" +
-          parameters.repeat_specs_path() + "'");
-    }
+      map<string, RepeatSpec> repeat_specs;
+      if (!LoadRepeatSpecs(parameters.repeat_specs_path(),
+                           parameters.genome_path(), parameters.min_wp(),
+                           &repeat_specs)) {
+        throw std::invalid_argument(
+            "Failed to load repeat table from disease specs in '" +
+            parameters.repeat_specs_path() + "'");
+      }
 
-    const int read_len = CalcReadLen(parameters.bam_path());
-    parameters.set_read_len(read_len);
+      const int read_len = CalcReadLen(parameters.bam_path());
+      parameters.set_read_len(read_len);
 
-    BamFile bam_file;
-    bam_file.Init(parameters.bam_path(), parameters.genome_path());
+      BamFile bam_file;
+      bam_file.Init(parameters.bam_path(), parameters.genome_path());
 
-    if (!parameters.depth_is_set()) {
-      cerr << TimeStamp() << ",[Calculating depth]" << endl;
-      const double depth =
-          bam_file.CalcMedianDepth(parameters, parameters.read_len());
-      parameters.set_depth(depth);
-    }
+      if (!parameters.depth_is_set()) {
+        cerr << TimeStamp() << ",[Calculating depth]" << endl;
+        const double depth =
+            bam_file.CalcMedianDepth(parameters, parameters.read_len());
+        parameters.set_depth(depth);
+      }
 
-    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
-         << endl;
-    cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
+      cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
+           << endl;
+      cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
 
-    if (parameters.depth() < parameters.kSmallestPossibleDepth) {
-      throw std::runtime_error("Estimated depth of " +
-                               lexical_cast<string>(parameters.depth()) +
-                               " is too low for a meaningful inference of "
-                               "repeat sizes");
-    }
+      if (parameters.depth() < parameters.kSmallestPossibleDepth) {
+        throw std::runtime_error("Estimated depth of " +
+                                 lexical_cast<string>(parameters.depth()) +
+                                 " is too low for a meaningful inference of "
+                                 "repeat sizes");
+      }
 
-    EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
+      EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs); */
   } catch (const std::exception &e) {
     cerr << e.what() << endl;
     return 1;
