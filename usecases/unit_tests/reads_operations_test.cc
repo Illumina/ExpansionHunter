@@ -41,11 +41,9 @@ class MockReader : public reads::ReadReader {
 TEST(ReadExtraction, TypicalRegion_ReadsExtracted) {
   Region target_region("chr1:1-100");
   MockReader mock_reader;
-  ReadPtr read1 = std::make_shared<Read>();
-  read1->SetCoreInfo("frag1", "ATCG", "####");
+  ReadPtr read1 = std::make_shared<Read>("frag1", "ATCG", "####");
   read1->SetIsFirstMate(true);
-  ReadPtr read2 = std::make_shared<Read>();
-  read2->SetCoreInfo("frag1", "GCTA", "####");
+  ReadPtr read2 = std::make_shared<Read>("frag1", "GCTA", "####");
   read2->SetIsFirstMate(false);
 
   EXPECT_CALL(mock_reader, SetRegion(target_region));

@@ -39,27 +39,17 @@ void Read::SetCoreInfo(const string& fragment_id, const string& bases,
   core_info_.quals = quals;
 }
 
-const string& Read::FragmentId() const {
-  if (core_info_.fragment_id.empty()) {
-    throw std::logic_error("Cannot access fragment id that was not set");
-  }
-  return core_info_.fragment_id;
-}
-const string& Read::Bases() const {
-  if (core_info_.fragment_id.empty()) {
-    throw std::logic_error("Cannot access read sequence that was not set");
-  }
-  return core_info_.bases;
-}
-const string& Read::Quals() const {
-  if (core_info_.fragment_id.empty()) {
-    throw std::logic_error("Cannot access read quals that was not set");
-  }
-  return core_info_.quals;
-}
+const string& Read::FragmentId() const { return core_info_.fragment_id; }
+const string& Read::Bases() const { return core_info_.bases; }
+const string& Read::Quals() const { return core_info_.quals; }
 
 const GraphMapping& Read::CanonicalMapping() const {
   return graph_info_.canonical_mapping;
+}
+
+std::ostream& operator<<(std::ostream& os, const Read& read) {
+  os << read.FragmentId() << " " << read.Bases() << " " << read.Quals();
+  return os;
 }
 
 }  // namespace reads

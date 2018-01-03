@@ -30,8 +30,7 @@
 using namespace reads;
 
 TEST(ReorientingReads, CorrectlyOrientedRead_ReadIsUnchnaged) {
-  Read read;
-  read.SetCoreInfo("frag1", "AAATCT", "(((???");
+  Read read("frag1", "AAATCT", "(((???");
 
   Read expected_read = read;
 
@@ -46,8 +45,7 @@ TEST(ReorientingReads, CorrectlyOrientedRead_ReadIsUnchnaged) {
 }
 
 TEST(ReorientingReads, IncorrectlyOrientedRead_BasesAndQualsReoriented) {
-  Read read;
-  read.SetCoreInfo("frag1", "GACGTT", "?#?(((");
+  Read read("frag1", "GACGTT", "?#?(((");
 
   Graph graph = MakeStrGraph("AAAA", "CG", "TCTT");
   std::shared_ptr<Graph> graph_ptr = std::make_shared<Graph>(graph);
@@ -56,8 +54,7 @@ TEST(ReorientingReads, IncorrectlyOrientedRead_BasesAndQualsReoriented) {
 
   ReorientRead(classifier, read);
 
-  Read expected_read;
-  expected_read.SetCoreInfo("chr1", "AACGTC", "(((?#?");
+  Read expected_read("frag1", "AACGTC", "(((?#?");
 
   ASSERT_EQ(expected_read, read);
 }

@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include "graphs/graph_mapping.h"
@@ -65,6 +66,10 @@ struct GraphInfo {
 
 class Read {
  public:
+  Read(const std::string& fragment_id, const std::string& bases,
+       const std::string& quals) {
+    SetCoreInfo(fragment_id, bases, quals);
+  }
   void SetCoreInfo(const std::string& fragment_id, const std::string& bases,
                    const std::string& quals);
   const std::string& FragmentId() const;
@@ -120,5 +125,7 @@ class Read {
 };
 
 typedef std::shared_ptr<Read> ReadPtr;
+
+std::ostream& operator<<(std::ostream& os, const Read& read);
 
 }  // namespace reads
