@@ -1,5 +1,0 @@
-add_executable(reads_operations_test reads_operations_test.cc)
-
-target_link_libraries(reads_operations_test reads_operations gtest gmock_main)
-
-add_test(NAME reads_operations_test COMMAND reads_operations_test)
