@@ -18,7 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "usecases/reads_operations.h"
+#include "region_analysis/region_analysis.h"
 
 #include "gmock/gmock.h"
 
