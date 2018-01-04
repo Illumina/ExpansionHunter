@@ -39,14 +39,6 @@ void Read::SetCoreInfo(const string& fragment_id, const string& bases,
   core_info_.quals = quals;
 }
 
-const string& Read::FragmentId() const { return core_info_.fragment_id; }
-const string& Read::Bases() const { return core_info_.bases; }
-const string& Read::Quals() const { return core_info_.quals; }
-
-const GraphMapping& Read::CanonicalMapping() const {
-  return graph_info_.canonical_mapping;
-}
-
 std::ostream& operator<<(std::ostream& os, const Read& read) {
   os << read.FragmentId() << " " << read.Bases() << " " << read.Quals();
   return os;

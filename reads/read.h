@@ -25,6 +25,7 @@
 #include <sstream>
 #include <string>
 
+#include "classification/mapping_classifier.h"
 #include "graphs/graph_mapping.h"
 
 namespace reads {
@@ -59,8 +60,10 @@ struct SamInfo {
 
 struct GraphInfo {
   GraphMapping canonical_mapping;
+  MappingType canonical_mapping_type = MappingType::kUnknown;
   bool operator==(const GraphInfo& other) const {
-    return (canonical_mapping == other.canonical_mapping);
+    return (canonical_mapping == other.canonical_mapping &&
+            canonical_mapping_type == other.canonical_mapping_type);
   }
 };
 
@@ -72,9 +75,9 @@ class Read {
   }
   void SetCoreInfo(const std::string& fragment_id, const std::string& bases,
                    const std::string& quals);
-  const std::string& FragmentId() const;
-  const std::string& Bases() const;
-  const std::string& Quals() const;
+  const std::string& FragmentId() const { return core_info_.fragment_id; }
+  const std::string& Bases() const { return core_info_.bases; }
+  const std::string& Quals() const { return core_info_.quals; }
 
   // Provide access to information fro SAM files.
   int32_t SamChromId() const { return sam_info_.chrom_id; }
@@ -108,9 +111,19 @@ class Read {
   }
 
   // Provide access to graph-specific information.
-  const GraphMapping& CanonicalMapping() const;
+  const GraphMapping& CanonicalMapping() const {
+    return graph_info_.canonical_mapping;
+  }
+
   void SetCanonicalMapping(const GraphMapping& graph_mapping) {
     graph_info_.canonical_mapping = graph_mapping;
+  }
+
+  MappingType CanonicalMappingType() const {
+    return graph_info_.canonical_mapping_type;
+  }
+  void SetCanonicalMappingType(MappingType mapping_type) {
+    graph_info_.canonical_mapping_type = mapping_type;
   }
 
   bool operator==(const Read& other) const {

@@ -37,6 +37,7 @@
 #include <utility>
 #include <vector>
 
+#include "third_party/spdlog/fmt/ostr.h"
 #include "third_party/spdlog/spdlog.h"
 
 #include "classification/mapping_classifier.h"
@@ -59,6 +60,7 @@
 #include "include/version.h"
 #include "purity/purity.h"
 #include "reads/aligned_reader.h"
+#include "reads/read_operations.h"
 #include "reads/read_pairs.h"
 #include "region_analysis/region_analysis.h"
 #include "rep_align/rep_align.h"
@@ -552,6 +554,29 @@ void EstimateRepeatSizes(const Parameters &parameters,
   cerr << TimeStamp() << ",[All done]" << endl;
 }
 
+void ReorientReads(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
+                   vector<reads::ReadPtr> &read_ptrs) {
+  StrandClassifier strand_classifier(graph_ptr, kmer_len);
+  for (reads::ReadPtr &read_ptr : read_ptrs) {
+    reads::ReorientRead(strand_classifier, *read_ptr);
+  }
+}
+
+void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
+                       vector<reads::ReadPtr> &read_ptrs) {
+  GaplessAligner aligner(graph_ptr, kmer_len);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+
+  for (reads::ReadPtr &read_ptr : read_ptrs) {
+    list<GraphMapping> mappings = aligner.GetBestAlignment(read_ptr->Bases());
+    GraphMapping canonical_mapping =
+        mapping_classifier.GetCanonicalMapping(mappings);
+    read_ptr->SetCanonicalMapping(canonical_mapping);
+    MappingType mapping_type = mapping_classifier.Classify(canonical_mapping);
+    read_ptr->SetCanonicalMappingType(mapping_type);
+  }
+}
+
 int main(int argc, char *argv[]) {
   auto console = spd::stderr_color_mt("console");
   spd::set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
@@ -586,10 +611,19 @@ int main(int argc, char *argv[]) {
                    aligned_reader, read_pairs);
       console->info("Extracted {} reads from {}", read_pairs.NumReads(),
                     repeat_spec.repeat_id);
+      vector<reads::ReadPtr> read_ptrs;
+      read_pairs.GetReads(read_ptrs);
+
+      GraphSharedPtr graph_ptr =
+          MakeStrGraph(repeat_spec.left_flank, repeat_spec.units_shifts[0][0],
+                       repeat_spec.right_flank);
+
+      const int32_t kmer_len = 14;
+      ReorientReads(graph_ptr, kmer_len, read_ptrs);
+      AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
     }
 
-    /*  BamFile bam_file;
-      bam_file.Init(parameters.bam_path(), parameters.genome_path());
+    /*
 
       if (!parameters.depth_is_set()) {
         cerr << TimeStamp() << ",[Calculating depth]" << endl;
