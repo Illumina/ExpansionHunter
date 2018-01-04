@@ -29,11 +29,15 @@ extern "C" {
 #include "htslib/sam.h"
 }
 
+#include "third_party/spdlog/spdlog.h"
+
 #include "common/genomic_region.h"
 #include "reads/hts_helpers.h"
 
 using std::string;
 using std::vector;
+
+namespace spd = spdlog;
 
 namespace reads {
 
@@ -271,7 +275,8 @@ bool AlignedReader::Impl::RecoverMate(const Read &read, Read &mate) {
 AlignedReader::AlignedReader(const std::string &bam_path,
                              const std::string &ref_path) {
   const string ref_index_path = ref_path + ".fai";
-  Impl(bam_path, ref_path, ref_index_path);
+
+  pimpl_.reset(new Impl(bam_path, ref_path, ref_index_path));
 }
 
 AlignedReader::~AlignedReader() {}

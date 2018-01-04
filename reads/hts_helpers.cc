@@ -24,7 +24,11 @@
 #include <memory>
 #include <string>
 
+#include "third_party/spdlog/spdlog.h"
+
 using std::string;
+
+namespace spd = spdlog;
 
 namespace htshelpers {
 
@@ -36,7 +40,7 @@ void DecodeQuals(bam1_t* hts_align_ptr, string& quals) {
   uint8_t* test_hts_quals_ptr = hts_quals_ptr;
 
   for (int32_t index = 0; index < read_len; ++index) {
-    quals[index] = 33 + test_hts_quals_ptr[index];
+    quals[index] = static_cast<char>(33 + test_hts_quals_ptr[index]);
   }
 }
 
@@ -55,9 +59,11 @@ void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr) {
 
   string bases;
   DecodeBases(hts_align_ptr, bases);
+  spd::get("console")->warn("Bases: {}", bases);
 
   string quals;
-  DecodeQuals(hts_align_ptr, bases);
+  DecodeQuals(hts_align_ptr, quals);
+  spd::get("console")->warn("Quals: {}", quals);
 
   read_ptr = std::make_shared<reads::Read>(name, bases, quals);
 
@@ -80,7 +86,7 @@ void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr) {
   DecodeBases(hts_align_ptr, bases);
 
   string quals;
-  DecodeQuals(hts_align_ptr, bases);
+  DecodeQuals(hts_align_ptr, quals);
 
   read_ptr = std::make_shared<reads::Read>(name, bases, quals);
 

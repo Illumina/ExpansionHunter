@@ -585,6 +585,7 @@ int main(int argc, char *argv[]) {
       ExtractReads(repeat_spec, parameters.region_extension_len(),
                    aligned_reader, read_pairs);
     }
+    console->info("Extracted {} reads", read_pairs.NumReads());
 
     /*  BamFile bam_file;
       bam_file.Init(parameters.bam_path(), parameters.genome_path());
