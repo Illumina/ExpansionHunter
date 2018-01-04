@@ -21,7 +21,9 @@
 
 #include <string>
 
+#include "common/genomic_region.h"
 #include "reads/read.h"
+#include "reads/read_reader.h"
 
 namespace reads {
 
@@ -29,13 +31,16 @@ namespace reads {
  * @brief Provides access to CRAM/BAM files
  *
  */
-class AlignedReader {
+class AlignedReader : public ReadReader {
  public:
   AlignedReader(const std::string &bam_path, const std::string &reference);
   AlignedReader(AlignedReader &&) noexcept;
   AlignedReader &operator=(AlignedReader &&) noexcept;
   AlignedReader(const AlignedReader &) = delete;
   AlignedReader &operator=(const AlignedReader &) = delete;
+
+  virtual ReadPtr GetRead() override;
+  virtual void SetRegion(const Region &region) override;
 
   ~AlignedReader();
 

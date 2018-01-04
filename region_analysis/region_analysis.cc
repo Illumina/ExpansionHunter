@@ -21,6 +21,12 @@
 #include "region_analysis/region_analysis.h"
 #include "reads/read.h"
 
+#include "third_party/spdlog/spdlog.h"
+
+namespace spd = spdlog;
+
+using std::vector;
+
 void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
                   reads::ReadPairs& read_pairs) {
   read_reader.SetRegion(target_region);
@@ -30,8 +36,37 @@ void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
   }
 }
 
+void ExtractReads(const vector<Region>& target_regions,
+                  reads::ReadReader& read_reader,
+                  reads::ReadPairs& read_pairs) {
+  for (const Region& target_region : target_regions) {
+    ExtractReads(target_region, read_reader, read_pairs);
+  }
+}
+
+static vector<Region> ExtendRegions(const vector<Region>& regions,
+                                    int32_t extension_len) {
+  vector<Region> extended_regions;
+  for (const Region& region : regions) {
+    extended_regions.push_back(region.Extend(extension_len));
+  }
+  return extended_regions;
+}
+
+void ExtractReads(const RepeatSpec& repeat_spec, int32_t extension_len,
+                  reads::ReadReader& read_reader,
+                  reads::ReadPairs& read_pairs) {
+  read_pairs.Clear();
+  vector<Region> regions_with_useful_reads = repeat_spec.offtarget_regions;
+  regions_with_useful_reads.push_back(repeat_spec.target_region);
+  regions_with_useful_reads =
+      ExtendRegions(regions_with_useful_reads, extension_len);
+
+  ExtractReads(regions_with_useful_reads, read_reader, read_pairs);
+}
+
 void AlignReads(const std::shared_ptr<Graph>& graph_ptr, int32_t kmer_len,
-                std::vector<reads::ReadPtr>& reads) {
+                vector<reads::ReadPtr>& reads) {
   // GaplessAligner aligner(graph_ptr, kmer_len);
   // for (ReadPtr& read_ptr : reads) {
   //}

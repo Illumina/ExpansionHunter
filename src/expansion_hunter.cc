@@ -59,6 +59,8 @@
 #include "include/version.h"
 #include "purity/purity.h"
 #include "reads/aligned_reader.h"
+#include "reads/read_pairs.h"
+#include "region_analysis/region_analysis.h"
 #include "rep_align/rep_align.h"
 #include "stats/counts.h"
 
@@ -576,6 +578,13 @@ int main(int argc, char *argv[]) {
 
     reads::AlignedReader aligned_reader(parameters.bam_path(),
                                         parameters.genome_path());
+
+    reads::ReadPairs read_pairs;
+    for (const auto &repeat_id_spec : repeat_specs) {
+      const RepeatSpec &repeat_spec = repeat_id_spec.second;
+      ExtractReads(repeat_spec, parameters.region_extension_len(),
+                   aligned_reader, read_pairs);
+    }
 
     /*  BamFile bam_file;
       bam_file.Init(parameters.bam_path(), parameters.genome_path());

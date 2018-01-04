@@ -37,7 +37,7 @@ enum SamFlags {
   kIsMateMapped = 0x0008
 };
 
-void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::Read& read);
-void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::Read& read);
+void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
+void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
 
 }  // namespace htshelpers
