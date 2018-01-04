@@ -58,6 +58,7 @@
 #include "include/vcf_output.h"
 #include "include/version.h"
 #include "purity/purity.h"
+#include "reads/aligned_reader.h"
 #include "rep_align/rep_align.h"
 #include "stats/counts.h"
 
@@ -572,6 +573,9 @@ int main(int argc, char *argv[]) {
 
     const int read_len = CalcReadLen(parameters.bam_path());
     parameters.set_read_len(read_len);
+
+    reads::AlignedReader aligned_reader(parameters.bam_path(),
+                                        parameters.genome_path());
 
     /*  BamFile bam_file;
       bam_file.Init(parameters.bam_path(), parameters.genome_path());

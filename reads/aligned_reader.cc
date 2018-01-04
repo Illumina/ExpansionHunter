@@ -265,4 +265,12 @@ bool AlignedReader::Impl::RecoverMate(const Read &read, Read &mate) {
   return false;
 }
 
+AlignedReader::AlignedReader(const std::string &bam_path,
+                             const std::string &ref_path) {
+  const string ref_index_path = ref_path + ".fai";
+  Impl(bam_path, ref_path, ref_index_path);
+}
+
+AlignedReader::~AlignedReader() {}
+
 }  // namespace reads

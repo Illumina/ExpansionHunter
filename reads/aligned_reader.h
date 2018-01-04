@@ -31,18 +31,13 @@ namespace reads {
  */
 class AlignedReader {
  public:
-  AlignedReader(const std::string &path, const std::string &reference);
+  AlignedReader(const std::string &bam_path, const std::string &reference);
   AlignedReader(AlignedReader &&) noexcept;
   AlignedReader &operator=(AlignedReader &&) noexcept;
   AlignedReader(const AlignedReader &) = delete;
   AlignedReader &operator=(const AlignedReader &) = delete;
 
   ~AlignedReader();
-
-  // Returns false when the target region is exhausted. In this case, a new
-  // target region must be set (with SetRegionToRange() or JumpToUnaligned())
-  // before calling this method again.
-  // bool GetRead(Read &read);
 
  private:
   struct Impl;
