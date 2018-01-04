@@ -59,11 +59,9 @@ void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr) {
 
   string bases;
   DecodeBases(hts_align_ptr, bases);
-  spd::get("console")->warn("Bases: {}", bases);
 
   string quals;
   DecodeQuals(hts_align_ptr, quals);
-  spd::get("console")->warn("Quals: {}", quals);
 
   read_ptr = std::make_shared<reads::Read>(name, bases, quals);
 

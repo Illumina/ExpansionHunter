@@ -43,7 +43,7 @@ void ReadPairs::Add(ReadPtr read_ptr) {
   const int32_t num_mates_after_add = (int32_t)read_pair.IsFirstMateSet() +
                                       (int32_t)read_pair.IsSecondMateSet();
 
-  num_reads_ += num_mates_original - num_mates_after_add;
+  num_reads_ += num_mates_after_add - num_mates_original;
 }
 
 const ReadPair& ReadPairs::operator[](const string& fragment_id) const {
