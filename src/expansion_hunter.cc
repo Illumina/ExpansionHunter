@@ -563,23 +563,17 @@ int main(int argc, char *argv[]) {
 
     console->info("Analyzing sample {}", parameters.sample_name());
 
-    /*
-      Outputs outputs(parameters.vcf_path(), parameters.json_path(),
-                      parameters.log_path());
+    Outputs outputs(parameters.vcf_path(), parameters.json_path(),
+                    parameters.log_path());
 
-      map<string, RepeatSpec> repeat_specs;
-      if (!LoadRepeatSpecs(parameters.repeat_specs_path(),
-                           parameters.genome_path(), parameters.min_wp(),
-                           &repeat_specs)) {
-        throw std::invalid_argument(
-            "Failed to load repeat table from disease specs in '" +
-            parameters.repeat_specs_path() + "'");
-      }
+    map<string, RepeatSpec> repeat_specs;
+    LoadRepeatSpecs(parameters.repeat_specs_path(), parameters.genome_path(),
+                    parameters.min_wp(), repeat_specs);
 
-      const int read_len = CalcReadLen(parameters.bam_path());
-      parameters.set_read_len(read_len);
+    const int read_len = CalcReadLen(parameters.bam_path());
+    parameters.set_read_len(read_len);
 
-      BamFile bam_file;
+    /*  BamFile bam_file;
       bam_file.Init(parameters.bam_path(), parameters.genome_path());
 
       if (!parameters.depth_is_set()) {
@@ -602,7 +596,7 @@ int main(int argc, char *argv[]) {
 
       EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs); */
   } catch (const std::exception &e) {
-    cerr << e.what() << endl;
+    console->error(e.what());
     return 1;
   }
 
