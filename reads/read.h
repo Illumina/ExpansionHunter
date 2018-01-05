@@ -61,9 +61,11 @@ struct SamInfo {
 struct GraphInfo {
   GraphMapping canonical_mapping;
   MappingType canonical_mapping_type = MappingType::kUnknown;
+  int32_t num_str_units_spanned = 0;
   bool operator==(const GraphInfo& other) const {
     return (canonical_mapping == other.canonical_mapping &&
-            canonical_mapping_type == other.canonical_mapping_type);
+            canonical_mapping_type == other.canonical_mapping_type &&
+            num_str_units_spanned == other.num_str_units_spanned);
   }
 };
 
@@ -122,8 +124,17 @@ class Read {
   MappingType CanonicalMappingType() const {
     return graph_info_.canonical_mapping_type;
   }
+
   void SetCanonicalMappingType(MappingType mapping_type) {
     graph_info_.canonical_mapping_type = mapping_type;
+  }
+
+  int32_t NumStrUnitsSpanned() const {
+    return graph_info_.num_str_units_spanned;
+  }
+
+  void SetNumStrUnitsSpanned(int32_t num_str_units_spanned) {
+    graph_info_.num_str_units_spanned = num_str_units_spanned;
   }
 
   bool operator==(const Read& other) const {
