@@ -37,6 +37,15 @@ TEST(StrOverlapQuantification, TypicalReads_StrOverlapComputed) {
   StrOverlapQuantifier str_overlap_quantifier(0, 1, 2, str_unit_len);
 
   {
+    const string non_repeat_read = "ATAT";
+    GraphMapping mapping =
+        DecodeFromString(0, "0[4M]", non_repeat_read, *graph_ptr);
+    const int32_t num_units =
+        str_overlap_quantifier.NumUnitsOverlapped(mapping);
+    ASSERT_EQ(0, num_units);
+  }
+
+  {
     const string spanning_read = "ATCCGCCGAT";
     GraphMapping mapping =
         DecodeFromString(2, "0[2M]1[3M]1[3M]2[2M]", spanning_read, *graph_ptr);
