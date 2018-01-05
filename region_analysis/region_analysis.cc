@@ -30,7 +30,6 @@ using std::vector;
 
 void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
                   reads::ReadPairs& read_pairs) {
-  spd::get("console")->warn("Collecting reads from {}", target_region);
   read_reader.SetRegion(target_region);
   reads::ReadPtr read_ptr;
   int32_t num_reads = 0;
@@ -38,7 +37,6 @@ void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
     read_pairs.Add(read_ptr);
     ++num_reads;
   }
-  spd::get("console")->warn("Processed {} reads", num_reads);
 }
 
 void ExtractReads(const vector<Region>& target_regions,
