@@ -17,3 +17,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+
+#pragma once
+
+#include <cstdint>
+
+#include "graphs/graph_mapping.h"
+
+class StrOverlapQuantifier {
+ public:
+  StrOverlapQuantifier(int32_t left_flank_id, int32_t repeat_unit_id,
+                       int32_t right_flank_id, int32_t str_unit_len)
+      : left_flank_id_(left_flank_id),
+        repeat_unit_id_(repeat_unit_id),
+        right_flank_id_(right_flank_id),
+        str_unit_len_(str_unit_len) {}
+
+  int32_t NumUnitsOverlapped(const GraphMapping& mapping) const;
+
+ private:
+  int32_t left_flank_id_;
+  int32_t repeat_unit_id_;
+  int32_t right_flank_id_;
+  int32_t str_unit_len_;
+};

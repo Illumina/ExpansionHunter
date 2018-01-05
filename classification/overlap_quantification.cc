@@ -17,3 +17,28 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
+
+#include "classification/overlap_quantification.h"
+
+#include <list>
+
+using std::list;
+
+int32_t StrOverlapQuantifier::NumUnitsOverlapped(
+    const GraphMapping& mapping) const {
+  const list<int32_t> repeat_unit_indexes =
+      mapping.GetIndexesOfNode(repeat_unit_id_);
+  int32_t num_units_overlapped =
+      static_cast<int32_t>(repeat_unit_indexes.size());
+  if (!repeat_unit_indexes.empty()) {
+    const int32_t last_index = repeat_unit_indexes.back();
+    const Mapping& last_mapping = mapping[last_index].mapping;
+    const int32_t alignment_span = last_mapping.ReferenceSpan();
+
+    if (str_unit_len_ != alignment_span) {
+      --num_units_overlapped;
+    }
+  }
+
+  return num_units_overlapped;
+}

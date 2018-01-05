@@ -18,6 +18,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include "classification/overlap_quantification.h"
+
 #include <string>
 
 #include "gtest/gtest.h"
@@ -31,7 +33,13 @@ using std::string;
 
 TEST(StrOverlapQuantification, FlankingRead_StrOverlapComputed) {
   GraphUniquePtr graph_ptr = MakeStrGraph("ATAT", "CCG", "ATTT");
-  const string read = "ATCCGCCG";
+  const string read = "ATCCGCCGCC";
   GraphMapping mapping =
-      DecodeFromString(2, "0[2M]1[3M]1[2M]", read, *graph_ptr);
+      DecodeFromString(2, "0[2M]1[3M]1[3M]1[2M]", read, *graph_ptr);
+
+  int32_t str_unit_len = 3;
+  StrOverlapQuantifier str_overlap_quantifier(0, 1, 2, str_unit_len);
+  const int32_t num_units = str_overlap_quantifier.NumUnitsOverlapped(mapping);
+
+  ASSERT_EQ(2, num_units);
 }
