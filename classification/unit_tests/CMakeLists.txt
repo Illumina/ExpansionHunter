@@ -5,4 +5,4 @@ target_link_libraries(mapping_classifier_test classification gtest_main)
 target_link_libraries(overlap_quantification_test classification gtest_main)
 
 add_test(NAME mapping_classifier_test COMMAND mapping_classifier_test)
-add_test(NAME overlap_quantification_test COMMAND mapping_classifier_test)
+add_test(NAME overlap_quantification_test COMMAND overlap_quantification_test)
