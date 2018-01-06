@@ -40,7 +40,9 @@
 #include "third_party/spdlog/fmt/ostr.h"
 #include "third_party/spdlog/spdlog.h"
 
+#include "classification/alignment_summary.h"
 #include "classification/mapping_classifier.h"
+#include "classification/overlap_quantification.h"
 #include "common/parameters.h"
 #include "common/ref_genome.h"
 #include "common/seq_operations.h"
@@ -566,15 +568,69 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
                        vector<reads::ReadPtr> &read_ptrs) {
   GaplessAligner aligner(graph_ptr, kmer_len);
   StrMappingClassifier mapping_classifier(0, 1, 2);
+  int32_t str_unit_len = graph_ptr->NodeSeq(1).length();
+  StrOverlapQuantifier str_overlap_quantifier(0, 1, 2, str_unit_len);
 
   for (reads::ReadPtr &read_ptr : read_ptrs) {
     list<GraphMapping> mappings = aligner.GetBestAlignment(read_ptr->Bases());
-    GraphMapping canonical_mapping =
+
+    const GraphMapping canonical_mapping =
         mapping_classifier.GetCanonicalMapping(mappings);
     read_ptr->SetCanonicalMapping(canonical_mapping);
-    MappingType mapping_type = mapping_classifier.Classify(canonical_mapping);
+
+    const MappingType mapping_type =
+        mapping_classifier.Classify(canonical_mapping);
     read_ptr->SetCanonicalMappingType(mapping_type);
+
+    const int32_t num_str_units_spanned =
+        str_overlap_quantifier.NumUnitsOverlapped(canonical_mapping);
+    read_ptr->SetNumStrUnitsSpanned(num_str_units_spanned);
   }
+}
+
+int32_t ComputeFlankingHaplotypeCandidate(
+    const map<int32_t, int32_t> &flanking_size_counts,
+    const map<int32_t, int32_t> &spanning_size_counts) {
+  int32_t longest_spanning = 0;
+  for (const auto &size_count : spanning_size_counts) {
+    if (size_count.second > longest_spanning) {
+      longest_spanning = size_count.second;
+    }
+  }
+
+  int32_t longest_flanking = 0;
+  for (const auto &size_count : flanking_size_counts) {
+    if (size_count.second > longest_flanking &&
+        size_count.second > longest_spanning) {
+      longest_flanking = size_count.second;
+    }
+  }
+
+  return longest_flanking;
+}
+
+vector<RepeatAllele> GenerateHaplotypeCandidates(
+    const vector<reads::ReadPtr> &read_ptrs) {
+  map<int32_t, int32_t> flanking_size_counts;
+  map<int32_t, int32_t> spanning_size_counts;
+  SummarizeAlignments(read_ptrs, flanking_size_counts, spanning_size_counts);
+
+  vector<RepeatAllele> haplotype_candidates;
+
+  for (const auto &size_count : spanning_size_counts) {
+    haplotype_candidates.push_back(
+        RepeatAllele(size_count.first, size_count.second, ReadType::kSpanning));
+  }
+
+  const int32_t flanking_haplotype_candidate =
+      ComputeFlankingHaplotypeCandidate(flanking_size_counts,
+                                        spanning_size_counts);
+  if (flanking_haplotype_candidate != 0) {
+    haplotype_candidates.push_back(
+        RepeatAllele(flanking_haplotype_candidate, 0, ReadType::kFlanking));
+  }
+
+  return haplotype_candidates;
 }
 
 int main(int argc, char *argv[]) {
@@ -621,6 +677,15 @@ int main(int argc, char *argv[]) {
       const int32_t kmer_len = 14;
       ReorientReads(graph_ptr, kmer_len, read_ptrs);
       AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
+      vector<RepeatAllele> haplotype_candidates =
+          GenerateHaplotypeCandidates(read_ptrs);
+
+      string candidates_encoding;
+      for (const RepeatAllele &repeat_allele : haplotype_candidates) {
+        candidates_encoding += std::to_string(repeat_allele.size_) + " ";
+      }
+      spd::get("console")->info("Haplotype candidates: {}",
+                                candidates_encoding);
     }
 
     /*

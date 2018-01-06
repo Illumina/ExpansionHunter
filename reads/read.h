@@ -75,8 +75,10 @@ class Read {
        const std::string& quals) {
     SetCoreInfo(fragment_id, bases, quals);
   }
+
   void SetCoreInfo(const std::string& fragment_id, const std::string& bases,
                    const std::string& quals);
+
   const std::string& FragmentId() const { return core_info_.fragment_id; }
   const std::string& Bases() const { return core_info_.bases; }
   const std::string& Quals() const { return core_info_.quals; }
