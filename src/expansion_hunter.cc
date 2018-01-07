@@ -610,9 +610,9 @@ int32_t ComputeFlankingHaplotypeCandidate(
 }
 
 vector<RepeatAllele> GenerateHaplotypeCandidates(
-    const vector<reads::ReadPtr> &read_ptrs) {
-  map<int32_t, int32_t> flanking_size_counts;
-  map<int32_t, int32_t> spanning_size_counts;
+    const vector<reads::ReadPtr> &read_ptrs,
+    map<int32_t, int32_t> &flanking_size_counts,
+    map<int32_t, int32_t> &spanning_size_counts) {
   SummarizeAlignments(read_ptrs, flanking_size_counts, spanning_size_counts);
 
   vector<RepeatAllele> haplotype_candidates;
@@ -631,6 +631,23 @@ vector<RepeatAllele> GenerateHaplotypeCandidates(
   }
 
   return haplotype_candidates;
+}
+
+void RunGenotyper(const Parameters &parameters, const RepeatSpec &repeat_spec,
+                  const vector<RepeatAllele> &haplotype_candidates,
+                  const map<int32_t, int32_t> &flanking_size_counts,
+                  const map<int32_t, int32_t> &spanning_size_counts,
+                  GenotypeType &genotype_type, RepeatGenotype &genotype) {
+  const string &repeat_unit = repeat_spec.units_shifts[0][0];
+  const int32_t unit_len = repeat_unit.length();
+  const double prop_correct_molecules = unit_len > 2 ? 0.97 : 0.70;
+  const double hap_depth = parameters.depth() / 2;
+  const int max_num_units_in_read =
+      (int)(std::ceil(parameters.read_len() / (double)unit_len));
+  GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
+                      parameters.read_len(), haplotype_candidates,
+                      flanking_size_counts, spanning_size_counts, genotype_type,
+                      genotype);
 }
 
 int main(int argc, char *argv[]) {
@@ -663,6 +680,23 @@ int main(int argc, char *argv[]) {
     reads::ReadPairs read_pairs;
     for (const auto &repeat_id_spec : repeat_specs) {
       const RepeatSpec &repeat_spec = repeat_id_spec.second;
+      GenotypeType genotype_type = GenotypeType::kDiploid;
+      const string chrom = repeat_spec.target_region.chrom();
+
+      const bool is_female_chrom_y =
+          parameters.sex() == Sex::kFemale && (chrom == "chrY" || chrom == "Y");
+
+      if (is_female_chrom_y) {
+        continue;
+      }
+
+      const bool is_sex_chrom =
+          chrom == "chrX" || chrom == "X" || chrom == "chrY" || chrom == "Y";
+
+      if (parameters.sex() == Sex::kMale && is_sex_chrom) {
+        genotype_type = GenotypeType::kHaploid;
+      }
+
       ExtractReads(repeat_spec, parameters.region_extension_len(),
                    aligned_reader, read_pairs);
       console->info("Extracted {} reads from {}", read_pairs.NumReads(),
@@ -677,8 +711,12 @@ int main(int argc, char *argv[]) {
       const int32_t kmer_len = 14;
       ReorientReads(graph_ptr, kmer_len, read_ptrs);
       AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
-      vector<RepeatAllele> haplotype_candidates =
-          GenerateHaplotypeCandidates(read_ptrs);
+
+      map<int32_t, int32_t> flanking_size_counts;
+      map<int32_t, int32_t> spanning_size_counts;
+
+      vector<RepeatAllele> haplotype_candidates = GenerateHaplotypeCandidates(
+          read_ptrs, flanking_size_counts, spanning_size_counts);
 
       string candidates_encoding;
       for (const RepeatAllele &repeat_allele : haplotype_candidates) {
@@ -686,10 +724,25 @@ int main(int argc, char *argv[]) {
       }
       spd::get("console")->info("Haplotype candidates: {}",
                                 candidates_encoding);
+
+      RepeatGenotype genotype;
+      RunGenotyper(parameters, repeat_spec, haplotype_candidates,
+                   flanking_size_counts, spanning_size_counts, genotype_type,
+                   genotype);
+
+      string genotype_encoding;
+      for (const RepeatAllele &allele : genotype) {
+        if (!genotype_encoding.empty()) {
+          genotype_encoding += "/";
+        }
+        genotype_encoding += std::to_string(allele.size_);
+      }
+
+      console->info("{}\t{}\t{}", parameters.sample_name(),
+                    repeat_spec.repeat_id, genotype_encoding);
     }
 
     /*
-
       if (!parameters.depth_is_set()) {
         cerr << TimeStamp() << ",[Calculating depth]" << endl;
         const double depth =
