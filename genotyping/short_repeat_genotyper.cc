@@ -34,18 +34,19 @@
 
 #include "common/common.h"
 
-using std::string;
-using std::map;
 using std::cerr;
 using std::endl;
+using std::map;
 using std::pair;
+using std::string;
 using std::vector;
 
 Allele::Allele(int num_units_haplotype, int max_num_units_in_read,
                double prop_correct_molecules)
     : num_units_haplotype_(num_units_haplotype),
       max_num_units_in_read_(max_num_units_in_read),
-      prop_correct_molecules_(prop_correct_molecules), max_deviation_(5) {
+      prop_correct_molecules_(prop_correct_molecules),
+      max_deviation_(5) {
   const double p = prop_correct_molecules_;
   norm_factor_ = 0;
   for (int num_units = 0; num_units <= max_num_units_in_read_; ++num_units) {
@@ -86,7 +87,6 @@ double Allele::propMoleculesShorterThan(int num_units_upper_bound) const {
 }
 
 double Allele::propMoleculesAtLeast(int num_units_lower_bound) const {
-
   return 1.0 - propMoleculesShorterThan(num_units_lower_bound);
 }
 
@@ -112,10 +112,10 @@ double ShortRepeatGenotyper::CalcSpanningLoglik(int num_units_in_read) const {
   return log(gen_spanning_lik);
 }
 
-double
-ShortRepeatGenotyper::CalcLogLik(const map<int, int> &flanking_size_counts,
-                                 const map<int, int> &spanning_size_counts,
-                                 std::vector<AlleleSupport> &support) const {
+double ShortRepeatGenotyper::CalcLogLik(
+    const map<int, int> &flanking_size_counts,
+    const map<int, int> &spanning_size_counts,
+    std::vector<AlleleSupport> &support) const {
   double genotype_loglik = 0;
   support.resize(alleles.size());
   for (int i = 0; i != support.size(); ++i) {
@@ -170,7 +170,6 @@ void GenotypeShortRepeat(int max_num_units_in_read,
                          const map<int, int> &flanking_size_count,
                          const map<int, int> &spanning_size_count,
                          GenotypeType genotype_type, RepeatGenotype &genotype) {
-
   bool is_first_pass = true;
   double max_loglik = std::numeric_limits<double>::lowest();
   RepeatGenotype most_likely_genotype;

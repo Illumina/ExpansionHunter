@@ -22,14 +22,22 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 #include "common/genomic_region.h"
+#include "common/repeat_spec.h"
 #include "graphs/graph.h"
 #include "reads/read_pairs.h"
 #include "reads/read_reader.h"
 
 void ExtractReads(const Region& target_region, reads::ReadReader& read_reader,
                   reads::ReadPairs& read_pairs);
+
+void ExtractReads(const std::vector<Region>& target_regions,
+                  reads::ReadReader& read_reader, reads::ReadPairs& read_pairs);
+
+void ExtractReads(const RepeatSpec& repeat_spec, int32_t extension_len,
+                  reads::ReadReader& read_reader, reads::ReadPairs& read_pairs);
 
 void AlignReads(const std::shared_ptr<Graph>& graph_ptr, int32_t kmer_len,
                 std::vector<reads::ReadPtr>& reads);

@@ -29,11 +29,15 @@ extern "C" {
 #include "htslib/sam.h"
 }
 
+#include "third_party/spdlog/spdlog.h"
+
 #include "common/genomic_region.h"
 #include "reads/hts_helpers.h"
 
 using std::string;
 using std::vector;
+
+namespace spd = spdlog;
 
 namespace reads {
 
@@ -54,7 +58,7 @@ struct AlignedReader::Impl {
   void CloseFile();
 
   void SetRegion(const Region &region);
-  bool GetRead(Read &read);
+  ReadPtr GetRead();
   int32_t ExtractNextPrimaryHtsAlignment();
   bool RecoverMate(const Read &read, Read &mate);
 
@@ -171,7 +175,7 @@ void AlignedReader::Impl::SetRegion(const Region &region) {
   at_file_end = false;
 }
 
-bool AlignedReader::Impl::GetRead(Read &read) {
+ReadPtr AlignedReader::Impl::GetRead() {
   if (!hts_file_ptr) {
     throw std::logic_error("Cannot extract reads from closed BAM file");
   }
@@ -181,7 +185,7 @@ bool AlignedReader::Impl::GetRead(Read &read) {
   }
 
   if (at_file_end) {
-    return false;
+    return nullptr;
   }
 
   if (!hts_bam_align_ptr) {
@@ -192,16 +196,17 @@ bool AlignedReader::Impl::GetRead(Read &read) {
 
   if (return_code == -1) {
     at_file_end = true;
-    return false;
+    return nullptr;
   }
 
   if (return_code < -1) {
     throw std::runtime_error("Failed to extract read from BAM file");
   }
 
-  htshelpers::DecodeAlignedRead(hts_bam_align_ptr, read);
+  ReadPtr read_ptr;
+  htshelpers::DecodeAlignedRead(hts_bam_align_ptr, read_ptr);
 
-  return true;
+  return read_ptr;
 }
 
 int32_t AlignedReader::Impl::ExtractNextPrimaryHtsAlignment() {
@@ -251,7 +256,9 @@ bool AlignedReader::Impl::RecoverMate(const Read &read, Read &mate) {
 
   while (sam_itr_next(hts_file_ptr, hts_mate_region_iter_ptr,
                       hts_possible_mate_align_ptr) >= 0) {
-    htshelpers::DecodeAlignedRead(hts_possible_mate_align_ptr, mate);
+    ReadPtr mate_ptr;
+    htshelpers::DecodeAlignedRead(hts_possible_mate_align_ptr, mate_ptr);
+    mate = *mate_ptr;
 
     if ((mate.FragmentId() == read.FragmentId()) &&
         (mate.IsFirstMate() != read.IsFirstMate())) {
@@ -263,6 +270,21 @@ bool AlignedReader::Impl::RecoverMate(const Read &read, Read &mate) {
   bam_destroy1(hts_possible_mate_align_ptr);
   hts_itr_destroy(hts_mate_region_iter_ptr);
   return false;
+}
+
+AlignedReader::AlignedReader(const std::string &bam_path,
+                             const std::string &ref_path) {
+  const string ref_index_path = ref_path + ".fai";
+
+  pimpl_.reset(new Impl(bam_path, ref_path, ref_index_path));
+}
+
+AlignedReader::~AlignedReader() {}
+
+ReadPtr AlignedReader::GetRead() { return pimpl_->GetRead(); }
+
+void AlignedReader::SetRegion(const Region &region) {
+  pimpl_->SetRegion(region);
 }
 
 }  // namespace reads

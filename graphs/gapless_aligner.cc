@@ -39,7 +39,6 @@ list<GraphMapping> GaplessAligner::GetBestAlignment(
   for (const string& kmer : kmers) {
     // Initiate alignment from a unique kmer.
     if (kmer_index_.NumPaths(kmer) == 1) {
-      std::cerr << "Kmer match " << kmer << std::endl;
       GraphPath kmer_path = kmer_index_.GetPaths(kmer).front();
       return GetBestAlignmentToShortPath(kmer_path, pos, sequence);
     }

@@ -20,24 +20,24 @@
 
 #pragma once
 
-extern "C" {
-#include "htslib/hts.h"
-#include "htslib/sam.h"
-}
+#include <cstdint>
 
-#include "reads/read.h"
+#include "graphs/graph_mapping.h"
 
-namespace htshelpers {
+class StrOverlapQuantifier {
+ public:
+  StrOverlapQuantifier(int32_t left_flank_id, int32_t repeat_unit_id,
+                       int32_t right_flank_id, int32_t str_unit_len)
+      : left_flank_id_(left_flank_id),
+        repeat_unit_id_(repeat_unit_id),
+        right_flank_id_(right_flank_id),
+        str_unit_len_(str_unit_len) {}
 
-enum SamFlags {
-  kSupplementaryAlign = 0x800,
-  kSecondaryAlign = 0x100,
-  kIsMapped = 0x0004,
-  kIsFirstMate = 0x0040,
-  kIsMateMapped = 0x0008
+  int32_t NumUnitsOverlapped(const GraphMapping& mapping) const;
+
+ private:
+  int32_t left_flank_id_;
+  int32_t repeat_unit_id_;
+  int32_t right_flank_id_;
+  int32_t str_unit_len_;
 };
-
-void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
-void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
-
-}  // namespace htshelpers

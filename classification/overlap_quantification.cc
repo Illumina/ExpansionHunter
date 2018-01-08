@@ -18,26 +18,27 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#pragma once
+#include "classification/overlap_quantification.h"
 
-extern "C" {
-#include "htslib/hts.h"
-#include "htslib/sam.h"
+#include <list>
+
+using std::list;
+
+int32_t StrOverlapQuantifier::NumUnitsOverlapped(
+    const GraphMapping& mapping) const {
+  const list<int32_t> repeat_unit_indexes =
+      mapping.GetIndexesOfNode(repeat_unit_id_);
+  int32_t num_units_overlapped =
+      static_cast<int32_t>(repeat_unit_indexes.size());
+  if (!repeat_unit_indexes.empty()) {
+    const int32_t last_index = repeat_unit_indexes.back();
+    const Mapping& last_mapping = mapping[last_index].mapping;
+    const int32_t alignment_span = last_mapping.ReferenceSpan();
+
+    if (str_unit_len_ != alignment_span) {
+      --num_units_overlapped;
+    }
+  }
+
+  return num_units_overlapped;
 }
-
-#include "reads/read.h"
-
-namespace htshelpers {
-
-enum SamFlags {
-  kSupplementaryAlign = 0x800,
-  kSecondaryAlign = 0x100,
-  kIsMapped = 0x0004,
-  kIsFirstMate = 0x0040,
-  kIsMateMapped = 0x0008
-};
-
-void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
-void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
-
-}  // namespace htshelpers

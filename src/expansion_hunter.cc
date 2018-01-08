@@ -37,7 +37,12 @@
 #include <utility>
 #include <vector>
 
+#include "third_party/spdlog/fmt/ostr.h"
+#include "third_party/spdlog/spdlog.h"
+
+#include "classification/alignment_summary.h"
 #include "classification/mapping_classifier.h"
+#include "classification/overlap_quantification.h"
 #include "common/parameters.h"
 #include "common/ref_genome.h"
 #include "common/seq_operations.h"
@@ -56,8 +61,14 @@
 #include "include/vcf_output.h"
 #include "include/version.h"
 #include "purity/purity.h"
+#include "reads/aligned_reader.h"
+#include "reads/read_operations.h"
+#include "reads/read_pairs.h"
+#include "region_analysis/region_analysis.h"
 #include "rep_align/rep_align.h"
 #include "stats/counts.h"
+
+namespace spd = spdlog;
 
 using std::array;
 using std::cerr;
@@ -545,57 +556,214 @@ void EstimateRepeatSizes(const Parameters &parameters,
   cerr << TimeStamp() << ",[All done]" << endl;
 }
 
+void ReorientReads(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
+                   vector<reads::ReadPtr> &read_ptrs) {
+  StrandClassifier strand_classifier(graph_ptr, kmer_len);
+  for (reads::ReadPtr &read_ptr : read_ptrs) {
+    reads::ReorientRead(strand_classifier, *read_ptr);
+  }
+}
+
+void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
+                       vector<reads::ReadPtr> &read_ptrs) {
+  GaplessAligner aligner(graph_ptr, kmer_len);
+  StrMappingClassifier mapping_classifier(0, 1, 2);
+  int32_t str_unit_len = graph_ptr->NodeSeq(1).length();
+  StrOverlapQuantifier str_overlap_quantifier(0, 1, 2, str_unit_len);
+
+  for (reads::ReadPtr &read_ptr : read_ptrs) {
+    list<GraphMapping> mappings = aligner.GetBestAlignment(read_ptr->Bases());
+
+    const GraphMapping canonical_mapping =
+        mapping_classifier.GetCanonicalMapping(mappings);
+    read_ptr->SetCanonicalMapping(canonical_mapping);
+
+    const MappingType mapping_type =
+        mapping_classifier.Classify(canonical_mapping);
+    read_ptr->SetCanonicalMappingType(mapping_type);
+
+    const int32_t num_str_units_spanned =
+        str_overlap_quantifier.NumUnitsOverlapped(canonical_mapping);
+    read_ptr->SetNumStrUnitsSpanned(num_str_units_spanned);
+  }
+}
+
+int32_t ComputeFlankingHaplotypeCandidate(
+    const map<int32_t, int32_t> &flanking_size_counts,
+    const map<int32_t, int32_t> &spanning_size_counts) {
+  int32_t longest_spanning = 0;
+  for (const auto &size_count : spanning_size_counts) {
+    if (size_count.second > longest_spanning) {
+      longest_spanning = size_count.second;
+    }
+  }
+
+  int32_t longest_flanking = 0;
+  for (const auto &size_count : flanking_size_counts) {
+    if (size_count.second > longest_flanking &&
+        size_count.second > longest_spanning) {
+      longest_flanking = size_count.second;
+    }
+  }
+
+  return longest_flanking;
+}
+
+vector<RepeatAllele> GenerateHaplotypeCandidates(
+    const vector<reads::ReadPtr> &read_ptrs,
+    map<int32_t, int32_t> &flanking_size_counts,
+    map<int32_t, int32_t> &spanning_size_counts) {
+  SummarizeAlignments(read_ptrs, flanking_size_counts, spanning_size_counts);
+
+  vector<RepeatAllele> haplotype_candidates;
+
+  for (const auto &size_count : spanning_size_counts) {
+    haplotype_candidates.push_back(
+        RepeatAllele(size_count.first, size_count.second, ReadType::kSpanning));
+  }
+
+  const int32_t flanking_haplotype_candidate =
+      ComputeFlankingHaplotypeCandidate(flanking_size_counts,
+                                        spanning_size_counts);
+  if (flanking_haplotype_candidate != 0) {
+    haplotype_candidates.push_back(
+        RepeatAllele(flanking_haplotype_candidate, 0, ReadType::kFlanking));
+  }
+
+  return haplotype_candidates;
+}
+
+void RunGenotyper(const Parameters &parameters, const RepeatSpec &repeat_spec,
+                  const vector<RepeatAllele> &haplotype_candidates,
+                  const map<int32_t, int32_t> &flanking_size_counts,
+                  const map<int32_t, int32_t> &spanning_size_counts,
+                  GenotypeType &genotype_type, RepeatGenotype &genotype) {
+  const string &repeat_unit = repeat_spec.units_shifts[0][0];
+  const int32_t unit_len = repeat_unit.length();
+  const double prop_correct_molecules = unit_len > 2 ? 0.97 : 0.70;
+  const double hap_depth = parameters.depth() / 2;
+  const int max_num_units_in_read =
+      (int)(std::ceil(parameters.read_len() / (double)unit_len));
+  GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
+                      parameters.read_len(), haplotype_candidates,
+                      flanking_size_counts, spanning_size_counts, genotype_type,
+                      genotype);
+}
+
 int main(int argc, char *argv[]) {
+  auto console = spd::stderr_color_mt("console");
+  spd::set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
+
   try {
     Parameters parameters;
-    cerr << kProgramVersion << endl;
+    console->info("Starting {}", kProgramVersion);
 
     if (!parameters.Load(argc, argv)) {
       return 1;
     }
 
-    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name()
-         << "]" << endl;
+    console->info("Analyzing sample {}", parameters.sample_name());
 
     Outputs outputs(parameters.vcf_path(), parameters.json_path(),
                     parameters.log_path());
 
     map<string, RepeatSpec> repeat_specs;
-    if (!LoadRepeatSpecs(parameters.repeat_specs_path(),
-                         parameters.genome_path(), parameters.min_wp(),
-                         &repeat_specs)) {
-      throw std::invalid_argument(
-          "Failed to load repeat table from disease specs in '" +
-          parameters.repeat_specs_path() + "'");
-    }
+    LoadRepeatSpecs(parameters.repeat_specs_path(), parameters.genome_path(),
+                    parameters.min_wp(), repeat_specs);
 
     const int read_len = CalcReadLen(parameters.bam_path());
     parameters.set_read_len(read_len);
 
-    BamFile bam_file;
-    bam_file.Init(parameters.bam_path(), parameters.genome_path());
+    reads::AlignedReader aligned_reader(parameters.bam_path(),
+                                        parameters.genome_path());
 
-    if (!parameters.depth_is_set()) {
-      cerr << TimeStamp() << ",[Calculating depth]" << endl;
-      const double depth =
-          bam_file.CalcMedianDepth(parameters, parameters.read_len());
-      parameters.set_depth(depth);
+    reads::ReadPairs read_pairs;
+    for (const auto &repeat_id_spec : repeat_specs) {
+      const RepeatSpec &repeat_spec = repeat_id_spec.second;
+      GenotypeType genotype_type = GenotypeType::kDiploid;
+      const string chrom = repeat_spec.target_region.chrom();
+
+      const bool is_female_chrom_y =
+          parameters.sex() == Sex::kFemale && (chrom == "chrY" || chrom == "Y");
+
+      if (is_female_chrom_y) {
+        continue;
+      }
+
+      const bool is_sex_chrom =
+          chrom == "chrX" || chrom == "X" || chrom == "chrY" || chrom == "Y";
+
+      if (parameters.sex() == Sex::kMale && is_sex_chrom) {
+        genotype_type = GenotypeType::kHaploid;
+      }
+
+      ExtractReads(repeat_spec, parameters.region_extension_len(),
+                   aligned_reader, read_pairs);
+      console->info("Extracted {} reads from {}", read_pairs.NumReads(),
+                    repeat_spec.repeat_id);
+      vector<reads::ReadPtr> read_ptrs;
+      read_pairs.GetReads(read_ptrs);
+
+      GraphSharedPtr graph_ptr =
+          MakeStrGraph(repeat_spec.left_flank, repeat_spec.units_shifts[0][0],
+                       repeat_spec.right_flank);
+
+      const int32_t kmer_len = 14;
+      ReorientReads(graph_ptr, kmer_len, read_ptrs);
+      AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
+
+      map<int32_t, int32_t> flanking_size_counts;
+      map<int32_t, int32_t> spanning_size_counts;
+
+      vector<RepeatAllele> haplotype_candidates = GenerateHaplotypeCandidates(
+          read_ptrs, flanking_size_counts, spanning_size_counts);
+
+      string candidates_encoding;
+      for (const RepeatAllele &repeat_allele : haplotype_candidates) {
+        candidates_encoding += std::to_string(repeat_allele.size_) + " ";
+      }
+      spd::get("console")->info("Haplotype candidates: {}",
+                                candidates_encoding);
+
+      RepeatGenotype genotype;
+      RunGenotyper(parameters, repeat_spec, haplotype_candidates,
+                   flanking_size_counts, spanning_size_counts, genotype_type,
+                   genotype);
+
+      string genotype_encoding;
+      for (const RepeatAllele &allele : genotype) {
+        if (!genotype_encoding.empty()) {
+          genotype_encoding += "/";
+        }
+        genotype_encoding += std::to_string(allele.size_);
+      }
+
+      console->info("{}\t{}\t{}", parameters.sample_name(),
+                    repeat_spec.repeat_id, genotype_encoding);
     }
 
-    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
-         << endl;
-    cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
+    /*
+      if (!parameters.depth_is_set()) {
+        cerr << TimeStamp() << ",[Calculating depth]" << endl;
+        const double depth =
+            bam_file.CalcMedianDepth(parameters, parameters.read_len());
+        parameters.set_depth(depth);
+      }
 
-    if (parameters.depth() < parameters.kSmallestPossibleDepth) {
-      throw std::runtime_error("Estimated depth of " +
-                               lexical_cast<string>(parameters.depth()) +
-                               " is too low for a meaningful inference of "
-                               "repeat sizes");
-    }
+      cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
+           << endl;
+      cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
 
-    EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
+      if (parameters.depth() < parameters.kSmallestPossibleDepth) {
+        throw std::runtime_error("Estimated depth of " +
+                                 lexical_cast<string>(parameters.depth()) +
+                                 " is too low for a meaningful inference of "
+                                 "repeat sizes");
+      }
+
+      EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs); */
   } catch (const std::exception &e) {
-    cerr << e.what() << endl;
+    console->error(e.what());
     return 1;
   }
 

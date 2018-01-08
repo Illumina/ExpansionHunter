@@ -43,7 +43,7 @@ void ReadPairs::Add(ReadPtr read_ptr) {
   const int32_t num_mates_after_add = (int32_t)read_pair.IsFirstMateSet() +
                                       (int32_t)read_pair.IsSecondMateSet();
 
-  num_reads_ += num_mates_original - num_mates_after_add;
+  num_reads_ += num_mates_after_add - num_mates_original;
 }
 
 const ReadPair& ReadPairs::operator[](const string& fragment_id) const {
@@ -53,14 +53,15 @@ const ReadPair& ReadPairs::operator[](const string& fragment_id) const {
   return read_pairs_.at(fragment_id);
 }
 
-void ReadPairs::GetReads(vector<ReadPtr>& reads) const {
+void ReadPairs::GetReads(vector<ReadPtr>& read_ptrs) const {
+  read_ptrs.clear();
   for (const auto& kv : read_pairs_) {
     ReadPair read_pair = kv.second;
     if (read_pair.IsFirstMateSet()) {
-      reads.push_back(read_pair.first_mate_ptr_);
+      read_ptrs.push_back(read_pair.first_mate_ptr_);
     }
     if (read_pair.IsSecondMateSet()) {
-      reads.push_back(read_pair.second_mate_ptr_);
+      read_ptrs.push_back(read_pair.second_mate_ptr_);
     }
   }
 }

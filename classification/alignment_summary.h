@@ -20,24 +20,12 @@
 
 #pragma once
 
-extern "C" {
-#include "htslib/hts.h"
-#include "htslib/sam.h"
-}
+#include <cstdint>
+#include <map>
+#include <vector>
 
 #include "reads/read.h"
 
-namespace htshelpers {
-
-enum SamFlags {
-  kSupplementaryAlign = 0x800,
-  kSecondaryAlign = 0x100,
-  kIsMapped = 0x0004,
-  kIsFirstMate = 0x0040,
-  kIsMateMapped = 0x0008
-};
-
-void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
-void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr);
-
-}  // namespace htshelpers
+void SummarizeAlignments(const std::vector<reads::ReadPtr> &read_ptrs,
+                         std::map<int32_t, int32_t> &flanking_size_counts,
+                         std::map<int32_t, int32_t> &spanning_size_counts);

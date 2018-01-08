@@ -21,9 +21,14 @@
 #include "reads/hts_helpers.h"
 
 #include <cstdint>
+#include <memory>
 #include <string>
 
+#include "third_party/spdlog/spdlog.h"
+
 using std::string;
+
+namespace spd = spdlog;
 
 namespace htshelpers {
 
@@ -35,7 +40,7 @@ void DecodeQuals(bam1_t* hts_align_ptr, string& quals) {
   uint8_t* test_hts_quals_ptr = hts_quals_ptr;
 
   for (int32_t index = 0; index < read_len; ++index) {
-    quals[index] = 33 + test_hts_quals_ptr[index];
+    quals[index] = static_cast<char>(33 + test_hts_quals_ptr[index]);
   }
 }
 
@@ -49,47 +54,47 @@ void DecodeBases(bam1_t* hts_align_ptr, string& bases) {
   }
 }
 
-void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::Read& read) {
+void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr) {
   const string name = bam_get_qname(hts_align_ptr);
 
   string bases;
   DecodeBases(hts_align_ptr, bases);
 
   string quals;
-  DecodeQuals(hts_align_ptr, bases);
+  DecodeQuals(hts_align_ptr, quals);
 
-  read.SetCoreInfo(name, bases, quals);
+  read_ptr = std::make_shared<reads::Read>(name, bases, quals);
 
-  read.SetSamChromId(hts_align_ptr->core.tid);
-  read.SetSamPos(hts_align_ptr->core.pos);
-  read.SetSamMapq(hts_align_ptr->core.qual);
-  read.SetSamMateChromId(hts_align_ptr->core.mtid);
-  read.SetSamMatePos(hts_align_ptr->core.mpos);
+  read_ptr->SetSamChromId(hts_align_ptr->core.tid);
+  read_ptr->SetSamPos(hts_align_ptr->core.pos);
+  read_ptr->SetSamMapq(hts_align_ptr->core.qual);
+  read_ptr->SetSamMateChromId(hts_align_ptr->core.mtid);
+  read_ptr->SetSamMatePos(hts_align_ptr->core.mpos);
 
   uint32_t sam_flag = hts_align_ptr->core.flag;
-  read.SetIsSamMapped(sam_flag & SamFlags::kIsMapped);
-  read.SetIsFirstMate(sam_flag & SamFlags::kIsFirstMate);
-  read.SetIsMateSamMapped(sam_flag & SamFlags::kIsMateMapped);
+  read_ptr->SetIsSamMapped(sam_flag & SamFlags::kIsMapped);
+  read_ptr->SetIsFirstMate(sam_flag & SamFlags::kIsFirstMate);
+  read_ptr->SetIsMateSamMapped(sam_flag & SamFlags::kIsMateMapped);
 }
 
-void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::Read& read) {
+void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::ReadPtr& read_ptr) {
   const string name = bam_get_qname(hts_align_ptr);
 
   string bases;
   DecodeBases(hts_align_ptr, bases);
 
   string quals;
-  DecodeQuals(hts_align_ptr, bases);
+  DecodeQuals(hts_align_ptr, quals);
 
-  read.SetCoreInfo(name, bases, quals);
+  read_ptr = std::make_shared<reads::Read>(name, bases, quals);
 
-  read.SetSamChromId(-1);
-  read.SetIsSamMapped(false);
-  read.SetSamPos(-1);
-  read.SetSamMapq(0);
-  read.SetIsMateSamMapped(false);
-  read.SetSamMateChromId(-1);
-  read.SetSamMatePos(-1);
+  read_ptr->SetSamChromId(-1);
+  read_ptr->SetIsSamMapped(false);
+  read_ptr->SetSamPos(-1);
+  read_ptr->SetSamMapq(0);
+  read_ptr->SetIsMateSamMapped(false);
+  read_ptr->SetSamMateChromId(-1);
+  read_ptr->SetSamMatePos(-1);
 }
 
 }  // namespace htshelpers
