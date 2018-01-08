@@ -29,7 +29,7 @@
 
 using std::string;
 
-TEST(SplitNodeCigar, ExtractsCigarAndNodeId) {
+TEST(SplitingNodeCigarEncoding, TypicalCigarEncoding_CigarAndNodeIdExtracted) {
   const string node_cigar = "1[4M5S]";
   string cigar;
   int32_t node_id;
@@ -38,7 +38,7 @@ TEST(SplitNodeCigar, ExtractsCigarAndNodeId) {
   EXPECT_EQ("4M5S", cigar);
 }
 
-TEST(DecodeGraphMapping, DecodesTypicalGraphMappings) {
+TEST(DecodingGraphMapping, TypicalGraphMappingEncoding_Decoded) {
   GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string read = "AAAATTCCC";
   GraphMapping graph_mapping =
