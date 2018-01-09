@@ -62,3 +62,19 @@ TEST(EncodingGraphMapping, MatchMistmatchMapping_EncodedAsString) {
 
   ASSERT_EQ(expected_encoding, encoding);
 }
+
+TEST(EncodingGraphMapping, MatchMistmatchMapping_EncodedAsPaddedString) {
+  GraphSharedPtr graph_ptr = MakeStrGraph("AAAA", "CGG", "TTTT");
+  GraphMapping mapping =
+      DecodeFromString(0, "1[3M]1[1X2M]", "CGGTGG", *graph_ptr);
+
+  const int32_t padding = 3;
+  const string encoding = EncodeGraphMapping(mapping, padding);
+
+  const string expected_encoding =
+      "   CGG-TGG\n"
+      "   |||- ||\n"
+      "   CGG-CGG";
+
+  ASSERT_EQ(expected_encoding, encoding);
+}

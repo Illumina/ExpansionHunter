@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 #include "graphs/graph.h"
@@ -32,4 +33,5 @@ GraphMapping DecodeFromString(int32_t first_node_start,
                               const std::string& graph_cigar,
                               const std::string& query, const Graph& graph);
 
-std::string EncodeGraphMapping(const GraphMapping& graph_mapping);
+std::string EncodeGraphMapping(const GraphMapping& graph_mapping,
+                               int32_t padding = 0);

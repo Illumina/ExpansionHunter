@@ -133,10 +133,17 @@ static string GetMatchPattern(const Mapping& mapping) {
   return encoding;
 }
 
-string EncodeGraphMapping(const GraphMapping& graph_mapping) {
+string EncodeGraphMapping(const GraphMapping& graph_mapping, int32_t padding) {
   string query_encoding, match_pattern, reference_encoding;
+
+  const string padding_spaces(padding, ' ');
+
   for (const NodeMapping& node_mapping : graph_mapping) {
-    if (!query_encoding.empty()) {
+    if (query_encoding.empty()) {
+      query_encoding = padding_spaces;
+      match_pattern = padding_spaces;
+      reference_encoding = padding_spaces;
+    } else {
       query_encoding += '-';
       match_pattern += '-';
       reference_encoding += '-';
