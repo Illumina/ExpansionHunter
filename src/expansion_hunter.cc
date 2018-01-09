@@ -51,6 +51,7 @@
 #include "graphs/gapless_aligner.h"
 #include "graphs/graph.h"
 #include "graphs/graph_builders.h"
+#include "graphs/graph_mapping_operations.h"
 #include "graphs/path.h"
 #include "include/bam_file.h"
 #include "include/bam_index.h"
@@ -588,6 +589,29 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
   }
 }
 
+void OutputGraphAlignments(const RepeatSpec &repeat_spec,
+                           const vector<reads::ReadPtr> &read_ptrs,
+                           std::ostream &out) {
+  out << repeat_spec.repeat_id << ":" << endl;
+  const int32_t indentation_size = 2;
+  const string spacer(indentation_size, ' ');
+  for (const reads::ReadPtr &read_ptr : read_ptrs) {
+    if (read_ptr->CanonicalMappingType() == MappingType::kUnmapped) {
+      continue;
+    }
+    out << spacer << "- name: " << read_ptr->FragmentId() << endl;
+    out << spacer << spacer << "type: " << read_ptr->CanonicalMappingType()
+        << endl;
+    out << spacer << spacer
+        << "graph_cigar: " << read_ptr->CanonicalMapping().GetCigarString()
+        << endl;
+    out << spacer << spacer << "alignment: |" << endl;
+    out << EncodeGraphMapping(read_ptr->CanonicalMapping(),
+                              3 * indentation_size)
+        << endl;
+  }
+}
+
 int32_t ComputeFlankingHaplotypeCandidate(
     const map<int32_t, int32_t> &flanking_size_counts,
     const map<int32_t, int32_t> &spanning_size_counts) {
@@ -711,6 +735,7 @@ int main(int argc, char *argv[]) {
       const int32_t kmer_len = 14;
       ReorientReads(graph_ptr, kmer_len, read_ptrs);
       AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
+      OutputGraphAlignments(repeat_spec, read_ptrs, outputs.log());
 
       map<int32_t, int32_t> flanking_size_counts;
       map<int32_t, int32_t> spanning_size_counts;

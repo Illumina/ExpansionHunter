@@ -30,13 +30,34 @@ using std::list;
 using std::string;
 using std::vector;
 
-TEST(Operation, InitializesFromString) {
+TEST(OperationInitialization, EncodingOfMatchOperation_OperationCreated) {
   Operation operation("3M", "ATC", "ATC");
   Operation expected_operation('M', 3, "ATC", "ATC");
   ASSERT_EQ(expected_operation, operation);
 }
 
-TEST(Operation, OutputsQueryAndReferenceSpans) {
+TEST(OperationInitialization, TypicalIncorrectEncodings_ExceptionThrown) {
+  EXPECT_ANY_THROW(Operation("4M", "AAAA", "ATCG"));
+  EXPECT_ANY_THROW(Operation("4M", "AAAA", "ATC"));
+  EXPECT_ANY_THROW(Operation("4M", "AAA", "AAA"));
+
+  EXPECT_ANY_THROW(Operation("4N", "NNN", "NNN"));
+  EXPECT_ANY_THROW(Operation("3N", "NN", "NNN"));
+  EXPECT_ANY_THROW(Operation("2N", "NT", "NT"));
+
+  EXPECT_ANY_THROW(Operation("2X", "AT", "TT"));
+  EXPECT_ANY_THROW(Operation("2X", "AT", "A"));
+
+  EXPECT_ANY_THROW(Operation("4D", "AAA", ""));
+  EXPECT_ANY_THROW(Operation("4D", "", ""));
+
+  EXPECT_ANY_THROW(Operation("2I", "AA", "T"));
+
+  EXPECT_ANY_THROW(Operation("2S", "TTT", ""));
+  EXPECT_ANY_THROW(Operation("2S", "TT", "T"));
+}
+
+TEST(GettingOperationSpans, TypicalOperations_QueryAndReferenceSpansObtained) {
   {
     Operation operation("3M", "AAA", "AAA");
     EXPECT_EQ((int32_t)3, operation.QuerySpan());
@@ -74,28 +95,38 @@ TEST(Operation, OutputsQueryAndReferenceSpans) {
   }
 }
 
-TEST(Operation, ErrorsOutOnUnexpectedSequences) {
-  EXPECT_ANY_THROW(Operation("4M", "AAAA", "ATCG"));
-  EXPECT_ANY_THROW(Operation("4M", "AAAA", "ATC"));
-  EXPECT_ANY_THROW(Operation("4M", "AAA", "AAA"));
-
-  EXPECT_ANY_THROW(Operation("4N", "NNN", "NNN"));
-  EXPECT_ANY_THROW(Operation("3N", "NN", "NNN"));
-  EXPECT_ANY_THROW(Operation("2N", "NT", "NT"));
-
-  EXPECT_ANY_THROW(Operation("2X", "AT", "TT"));
-  EXPECT_ANY_THROW(Operation("2X", "AT", "A"));
-
-  EXPECT_ANY_THROW(Operation("4D", "AAA", ""));
-  EXPECT_ANY_THROW(Operation("4D", "", ""));
-
-  EXPECT_ANY_THROW(Operation("2I", "AA", "T"));
-
-  EXPECT_ANY_THROW(Operation("2S", "TTT", ""));
-  EXPECT_ANY_THROW(Operation("2S", "TT", "T"));
+TEST(EncodingOperation, TypicalOperations_CigarStringObtained) {
+  {
+    Operation operation("3M", "AAA", "AAA");
+    EXPECT_EQ("3M", operation.GetCigarString());
+  }
+  {
+    Operation operation("4X", "AAAA", "TTTT");
+    EXPECT_EQ("4X", operation.GetCigarString());
+  }
+  {
+    Operation operation("5D", "", "AAAAA");
+    EXPECT_EQ("5D", operation.GetCigarString());
+  }
+  {
+    Operation operation("7I", "AAAAAAA", "");
+    EXPECT_EQ("7I", operation.GetCigarString());
+  }
+  {
+    Operation operation("10S", "AAAAAAAAAA", "");
+    EXPECT_EQ("10S", operation.GetCigarString());
+  }
+  {
+    Operation operation("7N", "NNNNNNN", "NNNNNNN");
+    EXPECT_EQ("7N", operation.GetCigarString());
+  }
+  {
+    Operation operation("3N", "NCN", "CNN");
+    EXPECT_EQ("3N", operation.GetCigarString());
+  }
 }
 
-TEST(Mapping, InitializesFromCigar) {
+TEST(MappingInitialization, TypicalCigarString_MappingCreated) {
   // query: ---TTCGTT--TTGGGTCCCCCCCCCC
   //           ||| ||  ||   |
   //   ref: CCCTTCCNNAATT---T----------
@@ -113,14 +144,38 @@ TEST(Mapping, InitializesFromCigar) {
   ASSERT_EQ(expected_mapping, mapping);
 }
 
-TEST(Mapping, CalculatesQueryAndReferenceSpans) {
+TEST(GettingMappingSpans, TypicalMapping_QueryAndReferenceSpansObtained) {
   Mapping mapping(3, "3M1X2M2D2M3I1M10S", "TTCGTTTTGGGTCCCCCCCCCC",
                   "CCCTTCCTTAATTT");
   EXPECT_EQ((int32_t)22, mapping.QuerySpan());
   EXPECT_EQ((int32_t)11, mapping.ReferenceSpan());
 }
 
-TEST(GraphMapping, CalculatesNumberOfMatches) {
+TEST(GettingMappingSeqs, TypicalMapping_QueryAndReferenceObtained) {
+  Mapping mapping(3, "3M1X2M2D2M3I1M10S", "TTCGTTTTGGGTCCCCCCCCCC",
+                  "CCCTTCCTTAATTT");
+  EXPECT_EQ("TTCGTTTTGGGT", mapping.Query());
+  EXPECT_EQ("TTCCTTAATTT", mapping.Reference());
+}
+
+TEST(EncodingMapping, TypicalMapping_CigarStringObtained) {
+  string query = "TTCGTTTTGGGTCCCCCCCCCC";
+  string reference = "CCCTTCCNNAATTT";
+  const std::string cigar_string = "3M1X2N2D2M3I1M10S";
+
+  Mapping mapping(3, cigar_string, query, reference);
+
+  EXPECT_EQ(cigar_string, mapping.GetCigarString());
+}
+
+TEST(EncodingNodeMapping, TypicalNodeMapping_CigarStringObtained) {
+  NodeMapping node_mapping;
+  node_mapping.node_id = 1;
+  node_mapping.mapping = Mapping(0, "2M1X1M", "AATT", "AAGT");
+  ASSERT_EQ("1[2M1X1M]", node_mapping.GetCigarString());
+}
+
+TEST(GettingNumMatchesInGraphMapping, TypicalGraphMapping_GotNumMatches) {
   GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
@@ -128,14 +183,7 @@ TEST(GraphMapping, CalculatesNumberOfMatches) {
   EXPECT_EQ((int32_t)6, graph_mapping.NumMatches());
 }
 
-TEST(Mapping, OutputsQueryAndReferenceSequences) {
-  Mapping mapping(3, "3M1X2M2D2M3I1M10S", "TTCGTTTTGGGTCCCCCCCCCC",
-                  "CCCTTCCTTAATTT");
-  EXPECT_EQ("TTCGTTTTGGGT", mapping.Query());
-  EXPECT_EQ("TTCCTTAATTT", mapping.Reference());
-}
-
-TEST(GraphMapping, StitchesQueryAndReferenceSequences) {
+TEST(GettingGraphMappingSeqs, TypicalGraphMapping_GotQueryAndReference) {
   GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
@@ -144,7 +192,7 @@ TEST(GraphMapping, StitchesQueryAndReferenceSequences) {
   EXPECT_EQ("AAAATT", graph_mapping.Reference());
 }
 
-TEST(GraphMapping, CalculatesQueryAndReferenceSpans) {
+TEST(GettingGraphMappingSpans, TypicalGraphMapping_GotQueryAndReferenceSpans) {
   GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGG", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
@@ -153,7 +201,7 @@ TEST(GraphMapping, CalculatesQueryAndReferenceSpans) {
   EXPECT_EQ((int32_t)6, graph_mapping.ReferenceSpan());
 }
 
-TEST(GraphMapping, AllowsAccessingNodeMappingsByIndex) {
+TEST(AccessingNodeMappingsByIndex, TypicalGraphMapping_NodeMappingsAccessed) {
   GraphUniquePtr graph_ptr = MakeDeletionGraph("AAAA", "TTGC", "TTTT");
   const string query = "AAAATTCCC";
   GraphMapping graph_mapping =
@@ -192,4 +240,13 @@ TEST(CheckingIfMappingOverlapsNode, TypicalMapping_ChecksPerformed) {
   EXPECT_TRUE(mapping.OverlapsNode(1));
   EXPECT_FALSE(mapping.OverlapsNode(2));
   EXPECT_FALSE(mapping.OverlapsNode(3));
+}
+
+TEST(EncodingGraphMapping, TypicalGraphMapping_CigarStringObtained) {
+  GraphUniquePtr graph_ptr = MakeStrGraph("AAAACC", "CCG", "ATTT");
+  const string read = "CCCCGCCGAT";
+  const string cigar_string = "0[2M]1[3M]1[3M]2[2M]";
+  GraphMapping mapping = DecodeFromString(4, cigar_string, read, *graph_ptr);
+
+  ASSERT_EQ(cigar_string, mapping.GetCigarString());
 }

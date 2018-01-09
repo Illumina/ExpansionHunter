@@ -61,6 +61,7 @@ class Operation {
            query_ == other.query_ && reference_ == other.reference_;
   }
   char AsSymbol() const;
+  std::string GetCigarString() const;
 
  private:
   void DecodeOperation(char op_char, int length, std::string query_seq,
@@ -106,6 +107,7 @@ class Mapping {
   size_t NumClipped() const { return clipped_; }
   size_t NumInserted() const { return inserted_; }
   size_t NumDeleted() const { return deleted_; }
+  std::string GetCigarString() const;
 
  protected:
   void DecodeOperations(int32_t reference_start, const std::string& encoding,
@@ -132,6 +134,7 @@ struct NodeMapping {
   bool operator==(const NodeMapping& other) const {
     return node_id == other.node_id && mapping == other.mapping;
   }
+  std::string GetCigarString() const;
 };
 
 class GraphMapping {
@@ -164,10 +167,11 @@ class GraphMapping {
   const NodeMapping& operator[](size_t index) const {
     return node_mappings_[index];
   }
-
   bool operator==(const GraphMapping& other) const {
     return node_mappings_ == other.node_mappings_;
   }
+  std::string GetCigarString() const;
+
   friend std::ostream& operator<<(std::ostream& os,
                                   const GraphMapping& graph_mapping);
 
