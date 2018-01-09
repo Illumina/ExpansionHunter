@@ -68,3 +68,85 @@ void SplitNodeCigar(const string& node_cigar, string& cigar, int32_t& node_id) {
     nodeid_encoding += node_cigar[index];
   }
 }
+
+static string GetQuerySequence(const Operation& operation) {
+  string encoding;
+  switch (operation.type()) {
+    case Operation::Type::kMatch:
+    case Operation::Type::kMismatch:
+      return operation.Query();
+    default:
+      return "";
+  }
+}
+
+static string GetReferenceSequence(const Operation& operation) {
+  string encoding;
+  switch (operation.type()) {
+    case Operation::Type::kMatch:
+    case Operation::Type::kMismatch:
+      return operation.Reference();
+    default:
+      return "";
+  }
+}
+
+static string GetMatchPattern(const Operation& operation) {
+  string encoding;
+  switch (operation.type()) {
+    case Operation::Type::kMatch:
+      return string(operation.Length(), '|');
+    case Operation::Type::kMismatch:
+      return string(operation.Length(), ' ');
+    default:
+      return "";
+  }
+}
+
+static string GetQuerySequence(const Mapping& mapping) {
+  string encoding;
+  for (size_t index = 0; index != mapping.NumOperations(); ++index) {
+    const Operation& operation = mapping[index];
+    encoding += GetQuerySequence(operation);
+  }
+
+  return encoding;
+}
+
+static string GetReferenceSequence(const Mapping& mapping) {
+  string encoding;
+  for (size_t index = 0; index != mapping.NumOperations(); ++index) {
+    const Operation& operation = mapping[index];
+    encoding += GetReferenceSequence(operation);
+  }
+
+  return encoding;
+}
+
+static string GetMatchPattern(const Mapping& mapping) {
+  string encoding;
+  for (size_t index = 0; index != mapping.NumOperations(); ++index) {
+    const Operation& operation = mapping[index];
+    encoding += GetMatchPattern(operation);
+  }
+
+  return encoding;
+}
+
+string EncodeGraphMapping(const GraphMapping& graph_mapping) {
+  string query_encoding, match_pattern, reference_encoding;
+  for (const NodeMapping& node_mapping : graph_mapping) {
+    if (!query_encoding.empty()) {
+      query_encoding += '-';
+      match_pattern += '-';
+      reference_encoding += '-';
+    }
+    query_encoding += GetQuerySequence(node_mapping.mapping);
+    match_pattern += GetMatchPattern(node_mapping.mapping);
+    reference_encoding += GetReferenceSequence(node_mapping.mapping);
+  }
+
+  const string encoding =
+      query_encoding + "\n" + match_pattern + "\n" + reference_encoding;
+  return encoding;
+}
