@@ -150,6 +150,12 @@ char Operation::AsSymbol() const {
   return kOperationToChar.at(type_);
 }
 
+std::string Operation::GetCigarString() const {
+  string cigar_string = std::to_string(length_);
+  cigar_string += AsSymbol();
+  return cigar_string;
+}
+
 std::ostream& operator<<(std::ostream& os, const Operation& operation) {
   os << operation.Length() << operation.AsSymbol() << "("
      << operation.Reference() << "->" << operation.Query() << ")";
@@ -279,6 +285,14 @@ int32_t Mapping::ReferenceSpan() const {
   return reference_span;
 }
 
+string Mapping::GetCigarString() const {
+  string cigar_string;
+  for (const auto& operation : operations_) {
+    cigar_string += operation.GetCigarString();
+  }
+  return cigar_string;
+}
+
 std::ostream& operator<<(std::ostream& os, const Mapping& mapping) {
   os << "Ref start: " << mapping.ReferenceStart() << ", ";
   for (size_t index = 0; index != mapping.NumOperations(); ++index) {
@@ -286,6 +300,12 @@ std::ostream& operator<<(std::ostream& os, const Mapping& mapping) {
   }
 
   return os;
+}
+
+string NodeMapping::GetCigarString() const {
+  string cigar_string = std::to_string(node_id);
+  cigar_string += "[" + mapping.GetCigarString() + "]";
+  return cigar_string;
 }
 
 string GraphMapping::Query() const {
@@ -346,6 +366,14 @@ list<int32_t> GraphMapping::GetIndexesOfNode(int32_t node_id) const {
     }
   }
   return indexes;
+}
+
+string GraphMapping::GetCigarString() const {
+  string cigar_string;
+  for (const auto& node_mapping : node_mappings_) {
+    cigar_string += node_mapping.GetCigarString();
+  }
+  return cigar_string;
 }
 
 std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping) {
