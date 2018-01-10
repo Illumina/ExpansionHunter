@@ -273,7 +273,7 @@ ostream& operator<<(ostream& os, const GraphPath& path) {
   return os << path.Encode();
 }
 
-GraphPath GraphPath::MoveStartPositionBy(int32_t move_by) const {
+GraphPath GraphPath::MoveStartBy(int32_t move_by) const {
   const int32_t updated_first_node_pos = pimpl_->start_position_ - move_by;
   GraphPath extended_path(pimpl_->graph_ptr_, updated_first_node_pos,
                           pimpl_->nodes_, pimpl_->end_position_);
@@ -284,7 +284,7 @@ GraphPath GraphPath::MoveStartPositionBy(int32_t move_by) const {
   return extended_path;
 }
 
-GraphPath GraphPath::MoveEndPositionBy(int32_t move_by) const {
+GraphPath GraphPath::MoveEndBy(int32_t move_by) const {
   int32_t extended_last_node_pos = pimpl_->end_position_ + move_by;
   GraphPath extended_path(pimpl_->graph_ptr_, pimpl_->start_position_,
                           pimpl_->nodes_, extended_last_node_pos);
@@ -295,21 +295,33 @@ GraphPath GraphPath::MoveEndPositionBy(int32_t move_by) const {
   return extended_path;
 }
 
-GraphPath GraphPath::ExtendStartNodeTo(int32_t node_id) const {
+GraphPath GraphPath::ExtendStartToNode(int32_t node_id) const {
   vector<int32_t> extended_nodes = pimpl_->nodes_;
   extended_nodes.insert(extended_nodes.begin(), node_id);
   int32_t new_node_seq_len = pimpl_->graph_ptr_->NodeSeq(node_id).length();
   GraphPath extended_path(pimpl_->graph_ptr_, new_node_seq_len - 1,
                           extended_nodes, pimpl_->end_position_);
   if (!extended_path.IsValid()) {
-    throw std::logic_error("Cannot extend " + Encode() + " left to node %i" +
+    throw std::logic_error("Cannot extend " + Encode() + " to node " +
                            to_string(node_id));
   }
 
   return extended_path;
 }
 
-GraphPath GraphPath::ExtendEndNodeTo(int32_t node_id) const {
+GraphPath GraphPath::RemoveStartNode() const {
+  vector<int32_t> shrank_nodes = pimpl_->nodes_;
+  shrank_nodes.erase(shrank_nodes.begin());
+  GraphPath shrank_path(pimpl_->graph_ptr_, 0, shrank_nodes,
+                        pimpl_->end_position_);
+  if (!shrank_path.IsValid()) {
+    throw std::logic_error("Cannot remove start node of " + Encode());
+  }
+
+  return shrank_path;
+}
+
+GraphPath GraphPath::ExtendEndToNode(int32_t node_id) const {
   vector<int32_t> extended_nodes = pimpl_->nodes_;
   extended_nodes.push_back(node_id);
   GraphPath extended_path(pimpl_->graph_ptr_, pimpl_->start_position_,
@@ -322,22 +334,36 @@ GraphPath GraphPath::ExtendEndNodeTo(int32_t node_id) const {
   return extended_path;
 }
 
+GraphPath GraphPath::RemoveEndNode() const {
+  vector<int32_t> shrank_nodes = pimpl_->nodes_;
+  shrank_nodes.erase(shrank_nodes.end() - 1);
+
+  int32_t new_last_node_id = shrank_nodes.back();
+  int32_t new_last_node_len =
+      pimpl_->graph_ptr_->NodeSeq(new_last_node_id).length();
+  GraphPath extended_path(pimpl_->graph_ptr_, pimpl_->start_position_,
+                          shrank_nodes, new_last_node_len - 1);
+  if (!extended_path.IsValid()) {
+    throw std::logic_error("Cannot remove end node of  " + Encode());
+  }
+
+  return extended_path;
+}
+
 list<GraphPath> GraphPath::ExtendStartBy(int32_t extension_len) const {
   list<GraphPath> extended_paths;
 
   const int32_t start_node_id = pimpl_->nodes_.front();
-  // const int32_t start_node_length =
-  // graph_ptr_->node(start_node_id)->sequence().length();
 
   // Start position gives the maximum extension.
   if (extension_len <= pimpl_->start_position_) {
-    extended_paths.push_back(MoveStartPositionBy(extension_len));
+    extended_paths.push_back(MoveStartBy(extension_len));
   } else {
     const set<int32_t> pred_node_ids =
         pimpl_->graph_ptr_->Predecessors(start_node_id);
     const int32_t leftover_length = extension_len - pimpl_->start_position_ - 1;
     for (int32_t pred_node_id : pred_node_ids) {
-      const GraphPath path_with_this_node = ExtendStartNodeTo(pred_node_id);
+      const GraphPath path_with_this_node = ExtendStartToNode(pred_node_id);
       list<GraphPath> extensions_of_path_with_this_node =
           path_with_this_node.ExtendStartBy(leftover_length);
       extended_paths.splice(extended_paths.end(),
@@ -358,14 +384,14 @@ list<GraphPath> GraphPath::ExtendEndBy(int32_t extension_len) const {
       end_node_length - pimpl_->end_position_ - 1;
 
   if (extension_len <= max_extension_at_end_node) {
-    extended_paths.push_back(MoveEndPositionBy(extension_len));
+    extended_paths.push_back(MoveEndBy(extension_len));
   } else {
     const set<int32_t> succ_node_ids =
         pimpl_->graph_ptr_->Successors(end_node_id);
     const int32_t leftover_length =
         extension_len - max_extension_at_end_node - 1;
     for (int32_t succ_node_id : succ_node_ids) {
-      const GraphPath path_with_this_node = ExtendEndNodeTo(succ_node_id);
+      const GraphPath path_with_this_node = ExtendEndToNode(succ_node_id);
       list<GraphPath> extensions_of_path_with_this_node =
           path_with_this_node.ExtendEndBy(leftover_length);
       extended_paths.splice(extended_paths.end(),
@@ -385,4 +411,47 @@ list<GraphPath> GraphPath::ExtendBy(int32_t start_extension_len,
     extended_paths.splice(extended_paths.end(), end_extended_paths);
   }
   return extended_paths;
+}
+
+GraphPath GraphPath::ShrinkStartBy(int32_t start_shrink_len) const {
+  const int32_t start_node_id = pimpl_->nodes_.front();
+  const int32_t start_node_len =
+      pimpl_->graph_ptr_->NodeSeq(start_node_id).length();
+  const int32_t node_len_left = start_node_len - pimpl_->start_position_ - 1;
+
+  if (start_shrink_len <= node_len_left) {
+    return MoveStartBy(-start_shrink_len);
+  }
+  const GraphPath path_without_start_node = RemoveStartNode();
+  const int32_t leftover_len = start_shrink_len - node_len_left - 1;
+
+  if (leftover_len == 0) {
+    return path_without_start_node;
+  }
+
+  return path_without_start_node.ShrinkStartBy(leftover_len);
+}
+
+GraphPath GraphPath::ShrinkEndBy(int32_t end_shrink_len) const {
+  const int32_t end_node_id = pimpl_->nodes_.back();
+  const int32_t node_len_left = pimpl_->end_position_;
+
+  if (end_shrink_len <= node_len_left) {
+    return MoveStartBy(end_shrink_len);
+  }
+  const GraphPath path_without_end_node = RemoveEndNode();
+  const int32_t leftover_len = end_shrink_len - node_len_left - 1;
+
+  if (leftover_len == 0) {
+    return path_without_end_node;
+  }
+
+  return path_without_end_node.ShrinkStartBy(leftover_len);
+}
+
+GraphPath GraphPath::ShrinkBy(int32_t start_shrink_len,
+                              int32_t end_shrink_len) const {
+  const GraphPath start_shrank_path = ShrinkStartBy(start_shrink_len);
+  const GraphPath shrank_path = start_shrank_path.ShrinkEndBy(end_shrink_len);
+  return shrank_path;
 }

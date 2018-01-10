@@ -55,16 +55,21 @@ class GraphPath {
   int32_t EndPosition() const;
   size_t Length() const;
   size_t GetOverlapWithNodeByIndex(int32_t node_index) const;
-  GraphPath MoveStartPositionBy(int32_t move_by) const;
-  GraphPath MoveEndPositionBy(int32_t move_by) const;
-  GraphPath ExtendStartNodeTo(int32_t node_id) const;
-  GraphPath ExtendEndNodeTo(int32_t node_id) const;
+  GraphPath MoveStartBy(int32_t move_by) const;
+  GraphPath MoveEndBy(int32_t move_by) const;
+  GraphPath ExtendStartToNode(int32_t node_id) const;
+  GraphPath RemoveStartNode() const;
+  GraphPath ExtendEndToNode(int32_t node_id) const;
+  GraphPath RemoveEndNode() const;
   std::list<GraphPath> ExtendStartBy(int32_t extension_len) const;
   std::list<GraphPath> ExtendEndBy(int32_t extension_len) const;
   // Computes all possible extensions of the path by the specified length in
   // both directions.
   std::list<GraphPath> ExtendBy(int32_t start_extension_len,
                                 int32_t end_extension_len) const;
+  GraphPath ShrinkStartBy(int32_t start_shrink_len) const;
+  GraphPath ShrinkEndBy(int32_t end_shrink_len) const;
+  GraphPath ShrinkBy(int32_t start_shrink_len, int32_t end_shrink_len) const;
 
  private:
   struct Impl;

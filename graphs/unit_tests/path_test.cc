@@ -171,8 +171,8 @@ TEST(MovePathAlongNode, TypicalPath_StartPositionMoved) {
   GraphPath shorter_path(graph_ptr, 2, {0, 1}, 1);
   GraphPath longer_path(graph_ptr, 0, {0, 1}, 1);
 
-  EXPECT_EQ(longer_path, shorter_path.MoveStartPositionBy(2));
-  EXPECT_EQ(shorter_path, longer_path.MoveStartPositionBy(-2));
+  EXPECT_EQ(longer_path, shorter_path.MoveStartBy(2));
+  EXPECT_EQ(shorter_path, longer_path.MoveStartBy(-2));
 }
 
 TEST(MovePathAlongNode, TypicalPath_EndPositionMoved) {
@@ -180,33 +180,48 @@ TEST(MovePathAlongNode, TypicalPath_EndPositionMoved) {
   GraphPath shorter_path(graph_ptr, 1, {0, 1, 1}, 0);
   GraphPath longer_path(graph_ptr, 1, {0, 1, 1}, 1);
 
-  EXPECT_EQ(longer_path, shorter_path.MoveEndPositionBy(1));
-  EXPECT_EQ(shorter_path, longer_path.MoveEndPositionBy(-1));
+  EXPECT_EQ(longer_path, shorter_path.MoveEndBy(1));
+  EXPECT_EQ(shorter_path, longer_path.MoveEndBy(-1));
 }
 
 TEST(MovePathAlongNode, ExtensionPastNodeBoundaries_ExceptionRaised) {
   GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AT", "CCCCC");
 
   GraphPath path(graph_ptr, 2, {0, 1}, 1);
-  EXPECT_ANY_THROW(path.MoveStartPositionBy(3));
-  EXPECT_ANY_THROW(path.MoveStartPositionBy(-1));
-  EXPECT_ANY_THROW(path.MoveEndPositionBy(1));
-  EXPECT_ANY_THROW(path.MoveEndPositionBy(-2));
+  EXPECT_ANY_THROW(path.MoveStartBy(3));
+  EXPECT_ANY_THROW(path.MoveStartBy(-1));
+  EXPECT_ANY_THROW(path.MoveEndBy(1));
+  EXPECT_ANY_THROW(path.MoveEndBy(-2));
 }
 
-TEST(ExtendingPathToNode, TypicalPathInSwapGraph_PathExtended) {
+TEST(ExtendingPathToNode, TypicalPathInSwapGraph_StartPositionMoved) {
   GraphSharedPtr graph_ptr = MakeSwapGraph("TTT", "AT", "GG", "CCCCC");
 
+  GraphPath path(graph_ptr, 1, {1, 3}, 2);
+
   {
-    GraphPath path(graph_ptr, 1, {1, 3}, 2);
     GraphPath expected_path(graph_ptr, 2, {0, 1, 3}, 2);
-    ASSERT_EQ(expected_path, path.ExtendStartNodeTo(0));
+    EXPECT_EQ(expected_path, path.ExtendStartToNode(0));
   }
 
   {
-    GraphPath path(graph_ptr, 1, {0}, 2);
-    GraphPath expected_path(graph_ptr, 1, {0, 1}, 0);
-    ASSERT_EQ(expected_path, path.ExtendEndNodeTo(1));
+    GraphPath expected_path(graph_ptr, 0, {3}, 2);
+    EXPECT_EQ(expected_path, path.RemoveStartNode());
+  }
+}
+
+TEST(ExtendingPathToNode, TypicalPathInSwapGraph_EndPositionMoved) {
+  GraphSharedPtr graph_ptr = MakeSwapGraph("TTT", "AT", "GG", "CCCCC");
+
+  GraphPath path(graph_ptr, 1, {0, 2}, 1);
+  {
+    GraphPath expected_path(graph_ptr, 1, {0, 2, 3}, 0);
+    ASSERT_EQ(expected_path, path.ExtendEndToNode(3));
+  }
+
+  {
+    GraphPath expected_path(graph_ptr, 1, {0}, 2);
+    ASSERT_EQ(expected_path, path.RemoveEndNode());
   }
 }
 
@@ -215,11 +230,12 @@ TEST(ExtendingPathToNode, ExtendingPathToNonadjacentNode_ExceptionThrown) {
 
   {
     GraphPath path(graph_ptr, 1, {2, 3}, 1);
-    EXPECT_ANY_THROW(path.ExtendStartNodeTo(1));
+    EXPECT_ANY_THROW(path.ExtendStartToNode(1));
   }
+
   {
     GraphPath path(graph_ptr, 1, {0}, 2);
-    EXPECT_ANY_THROW(path.ExtendEndNodeTo(3));
+    EXPECT_ANY_THROW(path.ExtendEndToNode(3));
   }
 }
 
@@ -273,4 +289,16 @@ TEST(ExtendingPathsByGivenLength, TypicalPathInHomopolymerGraph_PathExtended) {
       GraphPath(graph_ptr, 0, {1, 1, 1, 1, 1, 1, 1}, 0),
       GraphPath(graph_ptr, 0, {1, 1, 1, 1, 1, 1, 2}, 0)};
   ASSERT_EQ(expected_path_extensions, path_extensions);
+}
+
+TEST(ShrinkingPathsByGivenLength, TypicalPathInStrGraph_PathShrank) {
+  GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AC", "CCC");
+
+  GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 2);
+  const int32_t start_shrink_len = 5;
+  const int32_t start_end_len = 3;
+  const GraphPath shrank_path = path.ShrinkBy(start_shrink_len, start_end_len);
+
+  const GraphPath expected_path(graph_ptr, 1, {1}, 1);
+  ASSERT_EQ(expected_path, shrank_path);
 }
