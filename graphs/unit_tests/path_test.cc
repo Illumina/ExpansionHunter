@@ -184,12 +184,14 @@ TEST(MovePathAlongNode, TypicalPath_EndPositionMoved) {
   EXPECT_EQ(shorter_path, longer_path.MoveEndPositionBy(-1));
 }
 
-TEST(ResizePathAlongNode, ExtensionPastNodeBoundaries_ExceptionRaised) {
+TEST(MovePathAlongNode, ExtensionPastNodeBoundaries_ExceptionRaised) {
   GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AT", "CCCCC");
 
   GraphPath path(graph_ptr, 2, {0, 1}, 1);
   EXPECT_ANY_THROW(path.MoveStartPositionBy(3));
+  EXPECT_ANY_THROW(path.MoveStartPositionBy(-1));
   EXPECT_ANY_THROW(path.MoveEndPositionBy(1));
+  EXPECT_ANY_THROW(path.MoveEndPositionBy(-2));
 }
 
 TEST(ExtendingPathToNode, TypicalPathInSwapGraph_PathExtended) {
