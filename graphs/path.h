@@ -55,8 +55,8 @@ class GraphPath {
   int32_t EndPosition() const;
   size_t Length() const;
   size_t GetOverlapWithNodeByIndex(int32_t node_index) const;
-  GraphPath ExtendStartPosition(int32_t extension_len) const;
-  GraphPath ExtendEndPosition(int32_t extension_len) const;
+  GraphPath MoveStartPositionBy(int32_t move_by) const;
+  GraphPath MoveEndPositionBy(int32_t move_by) const;
   GraphPath ExtendStartNodeTo(int32_t node_id) const;
   GraphPath ExtendEndNodeTo(int32_t node_id) const;
   std::list<GraphPath> ExtendStartBy(int32_t extension_len) const;

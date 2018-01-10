@@ -273,25 +273,24 @@ ostream& operator<<(ostream& os, const GraphPath& path) {
   return os << path.Encode();
 }
 
-GraphPath GraphPath::ExtendStartPosition(int32_t extension_len) const {
-  const int32_t extended_first_node_pos =
-      pimpl_->start_position_ - extension_len;
-  GraphPath extended_path(pimpl_->graph_ptr_, extended_first_node_pos,
+GraphPath GraphPath::MoveStartPositionBy(int32_t move_by) const {
+  const int32_t updated_first_node_pos = pimpl_->start_position_ - move_by;
+  GraphPath extended_path(pimpl_->graph_ptr_, updated_first_node_pos,
                           pimpl_->nodes_, pimpl_->end_position_);
   if (!extended_path.IsValid()) {
-    throw std::logic_error("Cannot extend " + Encode() + " left by " +
-                           to_string(extension_len));
+    throw std::logic_error("Cannot move " + Encode() + " by " +
+                           to_string(move_by));
   }
   return extended_path;
 }
 
-GraphPath GraphPath::ExtendEndPosition(int32_t extension_len) const {
-  int32_t extended_last_node_pos = pimpl_->end_position_ + extension_len;
+GraphPath GraphPath::MoveEndPositionBy(int32_t move_by) const {
+  int32_t extended_last_node_pos = pimpl_->end_position_ + move_by;
   GraphPath extended_path(pimpl_->graph_ptr_, pimpl_->start_position_,
                           pimpl_->nodes_, extended_last_node_pos);
   if (!extended_path.IsValid()) {
-    throw std::logic_error("Cannot extend " + Encode() + " right by " +
-                           to_string(extension_len));
+    throw std::logic_error("Cannot move " + Encode() + " by " +
+                           to_string(move_by));
   }
   return extended_path;
 }
@@ -332,7 +331,7 @@ list<GraphPath> GraphPath::ExtendStartBy(int32_t extension_len) const {
 
   // Start position gives the maximum extension.
   if (extension_len <= pimpl_->start_position_) {
-    extended_paths.push_back(ExtendStartPosition(extension_len));
+    extended_paths.push_back(MoveStartPositionBy(extension_len));
   } else {
     const set<int32_t> pred_node_ids =
         pimpl_->graph_ptr_->Predecessors(start_node_id);
@@ -359,7 +358,7 @@ list<GraphPath> GraphPath::ExtendEndBy(int32_t extension_len) const {
       end_node_length - pimpl_->end_position_ - 1;
 
   if (extension_len <= max_extension_at_end_node) {
-    extended_paths.push_back(ExtendEndPosition(extension_len));
+    extended_paths.push_back(MoveEndPositionBy(extension_len));
   } else {
     const set<int32_t> succ_node_ids =
         pimpl_->graph_ptr_->Successors(end_node_id);
