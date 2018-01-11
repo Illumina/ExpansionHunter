@@ -29,6 +29,18 @@ using std::list;
 using std::string;
 using std::vector;
 
+TEST(TraversingPath, TypicalPath_NodeIdsTraversed) {
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
+  GraphPath path(graph_ptr, 3, {1, 2}, 1);
+
+  vector<int32_t> node_ids;
+  for (int32_t node_id : path) {
+    node_ids.push_back(node_id);
+  }
+
+  ASSERT_EQ(path.NodeIds(), node_ids);
+}
+
 TEST(GettingPathSequence, TypicalPathOnDeletionGraph_SequenceReturned) {
   GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
 

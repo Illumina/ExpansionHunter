@@ -34,6 +34,7 @@
 // 0-based and form a closed interval.
 class GraphPath {
  public:
+  typedef std::vector<int32_t>::const_iterator const_iterator;
   // The constructor does not check if the inputs define a well-formed path;
   // isValid() method can be used to do this.
   GraphPath(std::shared_ptr<Graph> wgraph_ptr, int32_t start_position,
@@ -43,6 +44,8 @@ class GraphPath {
   GraphPath(GraphPath&& other) noexcept;
   GraphPath& operator=(const GraphPath& other);
   GraphPath& operator=(GraphPath&& other) noexcept;
+  const_iterator begin() const;
+  const_iterator end() const;
   std::vector<int32_t> NodeIds() const;
   size_t NumNodes() const;
   std::string Seq() const;

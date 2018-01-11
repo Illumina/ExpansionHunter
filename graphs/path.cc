@@ -176,6 +176,13 @@ GraphPath& GraphPath::operator=(const GraphPath& other) {
   return *this;
 }
 
+GraphPath::const_iterator GraphPath::begin() const {
+  return pimpl_->nodes_.begin();
+}
+GraphPath::const_iterator GraphPath::end() const {
+  return pimpl_->nodes_.end();
+}
+
 GraphPath& GraphPath::operator=(GraphPath&& other) noexcept {
   pimpl_ = std::move(other.pimpl_);
   return *this;
