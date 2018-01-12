@@ -32,14 +32,14 @@
 using std::string;
 
 TEST(StrOverlapQuantification, TypicalReads_StrOverlapComputed) {
-  GraphUniquePtr graph_ptr = MakeStrGraph("ATAT", "CCG", "ATTT");
+  GraphSharedPtr graph_ptr = MakeStrGraph("ATAT", "CCG", "ATTT");
   int32_t str_unit_len = 3;
   StrOverlapQuantifier str_overlap_quantifier(0, 1, 2, str_unit_len);
 
   {
     const string non_repeat_read = "ATAT";
     GraphMapping mapping =
-        DecodeFromString(0, "0[4M]", non_repeat_read, *graph_ptr);
+        DecodeFromString(0, "0[4M]", non_repeat_read, graph_ptr);
     const int32_t num_units =
         str_overlap_quantifier.NumUnitsOverlapped(mapping);
     ASSERT_EQ(0, num_units);
@@ -48,7 +48,7 @@ TEST(StrOverlapQuantification, TypicalReads_StrOverlapComputed) {
   {
     const string spanning_read = "ATCCGCCGAT";
     GraphMapping mapping =
-        DecodeFromString(2, "0[2M]1[3M]1[3M]2[2M]", spanning_read, *graph_ptr);
+        DecodeFromString(2, "0[2M]1[3M]1[3M]2[2M]", spanning_read, graph_ptr);
     const int32_t num_units =
         str_overlap_quantifier.NumUnitsOverlapped(mapping);
     ASSERT_EQ(2, num_units);
@@ -57,7 +57,7 @@ TEST(StrOverlapQuantification, TypicalReads_StrOverlapComputed) {
   {
     const string flanking_read = "ATCCGCCGCC";
     GraphMapping mapping =
-        DecodeFromString(2, "0[2M]1[3M]1[3M]1[2M]", flanking_read, *graph_ptr);
+        DecodeFromString(2, "0[2M]1[3M]1[3M]1[2M]", flanking_read, graph_ptr);
     const int32_t num_units =
         str_overlap_quantifier.NumUnitsOverlapped(mapping);
     ASSERT_EQ(2, num_units);
@@ -66,7 +66,7 @@ TEST(StrOverlapQuantification, TypicalReads_StrOverlapComputed) {
   {
     const string inrepeat_read = "CCGCCGCCGCC";
     GraphMapping mapping =
-        DecodeFromString(0, "1[3M]1[3M]1[3M]1[2M]", inrepeat_read, *graph_ptr);
+        DecodeFromString(0, "1[3M]1[3M]1[3M]1[2M]", inrepeat_read, graph_ptr);
     const int32_t num_units =
         str_overlap_quantifier.NumUnitsOverlapped(mapping);
     ASSERT_EQ(3, num_units);

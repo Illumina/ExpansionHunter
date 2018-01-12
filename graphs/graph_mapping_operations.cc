@@ -25,31 +25,46 @@
 using std::string;
 using std::vector;
 
-GraphMapping DecodeFromString(int32_t first_node_start,
-                              const string& graph_cigar, const string& query,
-                              const Graph& graph) {
-  vector<int32_t> node_ids;
-  vector<Mapping> node_mappings;
-  int32_t query_pos = 0;
+static vector<string> SplitGraphCigar(const string& graph_cigar) {
+  vector<string> node_cigars;
   string node_cigar;
   for (size_t index = 0; index != graph_cigar.length(); ++index) {
     node_cigar += graph_cigar[index];
     if (node_cigar.back() == ']') {
-      string query_piece = query.substr((size_t)query_pos);
-      int32_t ref_pos = node_mappings.empty() ? first_node_start : 0;
-
-      string cigar;
-      int32_t node_id;
-      SplitNodeCigar(node_cigar, cigar, node_id);
-      node_ids.push_back(node_id);
-      const string& node_seq = graph.NodeSeq(node_id);
-      Mapping node_mapping(ref_pos, cigar, query_piece, node_seq);
-      node_mappings.push_back(node_mapping);
-      query_pos += node_mapping.QuerySpan();
+      node_cigars.push_back(node_cigar);
       node_cigar.clear();
     }
   }
-  return GraphMapping(node_ids, node_mappings);
+
+  return node_cigars;
+}
+
+GraphMapping DecodeFromString(int32_t first_node_start,
+                              const string& graph_cigar, const string& query,
+                              GraphSharedPtr graph_ptr) {
+  vector<int32_t> node_ids;
+  vector<Mapping> mappings;
+  int32_t query_pos = 0;
+  vector<string> node_cigars = SplitGraphCigar(graph_cigar);
+  for (const string& node_cigar : node_cigars) {
+    string query_piece = query.substr((size_t)query_pos);
+    int32_t ref_pos = mappings.empty() ? first_node_start : 0;
+
+    string cigar;
+    int32_t node_id;
+    SplitNodeCigar(node_cigar, cigar, node_id);
+    node_ids.push_back(node_id);
+    const string& node_seq = graph_ptr->NodeSeq(node_id);
+    Mapping mapping(ref_pos, cigar, query_piece, node_seq);
+    mappings.push_back(mapping);
+    query_pos += mapping.QuerySpan();
+  }
+
+  // Convert to 0-based coordinates
+  int32_t last_node_end =
+      mappings.back().ReferenceStart() + mappings.back().ReferenceSpan() - 1;
+  GraphPath path(graph_ptr, first_node_start, node_ids, last_node_end);
+  return GraphMapping(path, mappings);
 }
 
 void SplitNodeCigar(const string& node_cigar, string& cigar, int32_t& node_id) {
@@ -138,7 +153,7 @@ string EncodeGraphMapping(const GraphMapping& graph_mapping, int32_t padding) {
 
   const string padding_spaces(padding, ' ');
 
-  for (const NodeMapping& node_mapping : graph_mapping) {
+  for (const Mapping& mapping : graph_mapping) {
     if (query_encoding.empty()) {
       query_encoding = padding_spaces;
       match_pattern = padding_spaces;
@@ -148,9 +163,9 @@ string EncodeGraphMapping(const GraphMapping& graph_mapping, int32_t padding) {
       match_pattern += '-';
       reference_encoding += '-';
     }
-    query_encoding += GetQuerySequence(node_mapping.mapping);
-    match_pattern += GetMatchPattern(node_mapping.mapping);
-    reference_encoding += GetReferenceSequence(node_mapping.mapping);
+    query_encoding += GetQuerySequence(mapping);
+    match_pattern += GetMatchPattern(mapping);
+    reference_encoding += GetReferenceSequence(mapping);
   }
 
   const string encoding =

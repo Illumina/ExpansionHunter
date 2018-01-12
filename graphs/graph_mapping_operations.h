@@ -31,7 +31,8 @@ void SplitNodeCigar(const std::string& node_cigar, std::string& cigar,
 
 GraphMapping DecodeFromString(int32_t first_node_start,
                               const std::string& graph_cigar,
-                              const std::string& query, const Graph& graph);
+                              const std::string& query,
+                              GraphSharedPtr graph_ptr);
 
 std::string EncodeGraphMapping(const GraphMapping& graph_mapping,
                                int32_t padding = 0);

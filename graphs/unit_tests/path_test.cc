@@ -29,6 +29,18 @@ using std::list;
 using std::string;
 using std::vector;
 
+TEST(TraversingPath, TypicalPath_NodeIdsTraversed) {
+  GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
+  GraphPath path(graph_ptr, 3, {1, 2}, 1);
+
+  vector<int32_t> node_ids;
+  for (int32_t node_id : path) {
+    node_ids.push_back(node_id);
+  }
+
+  ASSERT_EQ(path.NodeIds(), node_ids);
+}
+
 TEST(GettingPathSequence, TypicalPathOnDeletionGraph_SequenceReturned) {
   GraphSharedPtr graph_ptr = MakeDeletionGraph("AAAACC", "TTTGG", "ATTT");
 
@@ -52,6 +64,13 @@ TEST(GettingPathSequence, TypicalPathOnStrGraph_SequenceReturned) {
   GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AT", "CCCCC");
   GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 0);
   EXPECT_EQ("TTATATC", path.Seq());
+}
+
+TEST(CheckingIfPathOverlapsNode, TypicalPath_OverlapChecked) {
+  GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AT", "CCCCC");
+  GraphPath path(graph_ptr, 1, {1, 1, 2}, 0);
+  EXPECT_TRUE(path.OverlapsNode(1));
+  EXPECT_FALSE(path.OverlapsNode(0));
 }
 
 TEST(GettingLengthOfPathOverEachNode, TypicalPathOnStrGraph_LengthReturned) {
