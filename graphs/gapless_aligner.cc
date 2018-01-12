@@ -73,7 +73,7 @@ list<GraphMapping> GetBestAlignmentToShortPath(const GraphPath& path,
 
 GraphMapping AlignWithoutGaps(const GraphPath& path, const string& sequence) {
   vector<string> sequence_pieces = SplitByPath(path, sequence);
-  vector<Mapping> node_mappings;
+  vector<Mapping> mappings;
 
   std::shared_ptr<Graph> graph_ptr = path.GraphPtr();
   size_t index = 0;
@@ -81,12 +81,11 @@ GraphMapping AlignWithoutGaps(const GraphPath& path, const string& sequence) {
     const string node_seq = graph_ptr->NodeSeq(node_id);
     const string sequence_piece = sequence_pieces[index];
     const int32_t ref_start = index == 0 ? path.StartPosition() : 0;
-    node_mappings.push_back(
-        AlignWithoutGaps(sequence_piece, ref_start, node_seq));
+    mappings.push_back(AlignWithoutGaps(sequence_piece, ref_start, node_seq));
     ++index;
   }
 
-  return GraphMapping(path.NodeIds(), node_mappings);
+  return GraphMapping(path, mappings);
 }
 
 Mapping AlignWithoutGaps(const std::string& query, int32_t ref_start,

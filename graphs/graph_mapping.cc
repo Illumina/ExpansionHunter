@@ -18,6 +18,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <sstream>
 #include <stdexcept>
 #include <typeindex>
 
@@ -28,66 +29,73 @@ using std::map;
 using std::string;
 using std::to_string;
 
-string NodeMapping::GetCigarString() const {
-  string cigar_string = std::to_string(node_id);
-  cigar_string += "[" + mapping.GetCigarString() + "]";
-  return cigar_string;
+void GraphMapping::AssertValidity() const {
+  const int32_t mapping_reference_start = mappings_.front().ReferenceStart();
+
+  const Mapping& last_mapping = mappings_.back();
+  const int32_t mapping_reference_end =
+      last_mapping.ReferenceSpan() + last_mapping.ReferenceStart() - 1;
+
+  if (mapping_reference_start != path_.StartPosition() ||
+      mapping_reference_end != path_.EndPosition()) {
+    std::ostringstream graph_mapping_encoding;
+    graph_mapping_encoding << *this;
+    throw std::logic_error("Path " + path_.Encode() +
+                           " is not compatible with graph mapping " +
+                           graph_mapping_encoding.str());
+  }
 }
 
 string GraphMapping::Query() const {
   string query;
-  for (const auto& node_mapping : node_mappings_) {
-    query += node_mapping.mapping.Query();
+  for (const auto& mapping : mappings_) {
+    query += mapping.Query();
   }
   return query;
 }
 
 string GraphMapping::Reference() const {
   string reference;
-  for (const auto& node_mapping : node_mappings_) {
-    reference += node_mapping.mapping.Reference();
+  for (const auto& mapping : mappings_) {
+    reference += mapping.Reference();
   }
   return reference;
 }
 
 int32_t GraphMapping::QuerySpan() const {
   int32_t query_span = 0;
-  for (const auto& node_mapping : node_mappings_) {
-    query_span += node_mapping.mapping.QuerySpan();
+  for (const auto& mapping : mappings_) {
+    query_span += mapping.QuerySpan();
   }
   return query_span;
 }
 
 int32_t GraphMapping::ReferenceSpan() const {
   int32_t reference_span = 0;
-  for (const auto& node_mapping : node_mappings_) {
-    reference_span += node_mapping.mapping.ReferenceSpan();
+  for (const auto& mapping : mappings_) {
+    reference_span += mapping.ReferenceSpan();
   }
   return reference_span;
 }
 
 int32_t GraphMapping::NumMatches() const {
   int32_t num_matches = 0;
-  for (const auto& node_mapping : node_mappings_) {
-    num_matches += node_mapping.mapping.NumMatched();
+  for (const auto& mapping : mappings_) {
+    num_matches += mapping.NumMatched();
   }
   return num_matches;
 }
 
 bool GraphMapping::OverlapsNode(int32_t node_id) const {
-  for (const auto& node_mapping : node_mappings_) {
-    if (node_mapping.node_id == node_id) {
-      return true;
-    }
-  }
-  return false;
+  return path_.OverlapsNode(node_id);
 }
 
 list<int32_t> GraphMapping::GetIndexesOfNode(int32_t node_id) const {
   list<int32_t> indexes;
-  for (int32_t node_index = 0; node_index != (int32_t)node_mappings_.size();
-       ++node_index) {
-    if (node_mappings_[node_index].node_id == node_id) {
+  const int32_t num_mappings = static_cast<int32_t>(mappings_.size());
+  for (int32_t node_index = 0; node_index != num_mappings; ++node_index) {
+    const int32_t cur_node_id = path_.GetNodeIdByIndex(node_index);
+    if (cur_node_id == node_id) {
       indexes.push_back(node_index);
     }
   }
@@ -95,16 +103,21 @@ list<int32_t> GraphMapping::GetIndexesOfNode(int32_t node_id) const {
 }
 
 string GraphMapping::GetCigarString() const {
-  string cigar_string;
-  for (const auto& node_mapping : node_mappings_) {
-    cigar_string += node_mapping.GetCigarString();
+  string graph_cigar;
+  for (int32_t index = 0; index != size(); ++index) {
+    const int32_t node_id = path_.GetNodeIdByIndex(index);
+    graph_cigar += std::to_string(node_id);
+    const Mapping& mapping = mappings_[index];
+    graph_cigar += "[" + mapping.GetCigarString() + "]";
   }
-  return cigar_string;
+  return graph_cigar;
 }
 
-std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping) {
-  for (const NodeMapping& node_mapping : graph_mapping) {
-    os << node_mapping.node_id << "[" << node_mapping.mapping << "]";
+std::ostream& operator<<(std::ostream& out, const GraphMapping& graph_mapping) {
+  for (int32_t node_index = 0; node_index != graph_mapping.size();
+       ++node_index) {
+    const int32_t node_id = graph_mapping.GetNodeIdByIndex(node_index);
+    out << node_id << "[" << graph_mapping[node_index] << "]";
   }
-  return os;
+  return out;
 }

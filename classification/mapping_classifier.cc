@@ -43,18 +43,18 @@ ostream& operator<<(ostream& os, const MappingType& read_class) {
 
 GraphMapping StrMappingClassifier::GetCanonicalMapping(
     const list<GraphMapping>& mappings) const {
-  GraphMapping canonical_mapping;
+  const GraphMapping* canonical_mapping_ptr = nullptr;
   for (const GraphMapping& mapping : mappings) {
     MappingType mapping_type = Classify(mapping);
-    if (canonical_mapping.size() == 0) {
-      canonical_mapping = mapping;
+    if (!canonical_mapping_ptr) {
+      canonical_mapping_ptr = &mapping;
     } else if (mapping_type == MappingType::kInsideRepeat) {
       return mapping;
     } else if (mapping_type == MappingType::kFlanksRepeat) {
-      canonical_mapping = mapping;
+      canonical_mapping_ptr = &mapping;
     }
   }
-  return canonical_mapping;
+  return *canonical_mapping_ptr;
 }
 
 MappingType StrMappingClassifier::Classify(const GraphMapping& mapping) const {

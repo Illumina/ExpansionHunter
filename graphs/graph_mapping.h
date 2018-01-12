@@ -32,30 +32,16 @@
 
 #include "graphs/graph.h"
 #include "graphs/linear_mapping.h"
-
-struct NodeMapping {
-  int32_t node_id;
-  Mapping mapping;
-  bool operator==(const NodeMapping& other) const {
-    return node_id == other.node_id && mapping == other.mapping;
-  }
-  std::string GetCigarString() const;
-};
+#include "graphs/path.h"
 
 class GraphMapping {
  public:
   typedef size_t size_type;
-  typedef std::vector<NodeMapping> NodeMappings;
+  typedef std::vector<Mapping> NodeMappings;
   typedef NodeMappings::const_iterator const_iterator;
-  GraphMapping() = default;
-  GraphMapping(const std::vector<int32_t>& node_ids,
-               const std::vector<Mapping>& mappings) {
-    for (size_t index = 0; index != node_ids.size(); ++index) {
-      NodeMapping node_mapping;
-      node_mapping.node_id = node_ids[index];
-      node_mapping.mapping = mappings[index];
-      node_mappings_.push_back(node_mapping);
-    }
+  GraphMapping(const GraphPath& path, const std::vector<Mapping>& mappings)
+      : path_(path), mappings_(mappings) {
+    AssertValidity();
   }
   std::string Query() const;
   std::string Reference() const;
@@ -63,17 +49,18 @@ class GraphMapping {
   int32_t ReferenceSpan() const;
   int32_t NumMatches() const;
   bool OverlapsNode(int32_t node_id) const;
-  std::list<int32_t> GetIndexesOfNode(int32_t node_id) const;
-  const_iterator begin() const { return node_mappings_.begin(); }
-  const_iterator end() const { return node_mappings_.end(); }
-  const NodeMapping& front() const { return node_mappings_.front(); }
-  const NodeMapping& back() const { return node_mappings_.back(); }
-  size_type size() const { return node_mappings_.size(); }
-  const NodeMapping& operator[](size_t index) const {
-    return node_mappings_[index];
+  int32_t GetNodeIdByIndex(int32_t node_index) const {
+    return path_.GetNodeIdByIndex(node_index);
   }
+  std::list<int32_t> GetIndexesOfNode(int32_t node_id) const;
+  const_iterator begin() const { return mappings_.begin(); }
+  const_iterator end() const { return mappings_.end(); }
+  const Mapping& front() const { return mappings_.front(); }
+  const Mapping& back() const { return mappings_.back(); }
+  size_type size() const { return mappings_.size(); }
+  const Mapping& operator[](size_t index) const { return mappings_[index]; }
   bool operator==(const GraphMapping& other) const {
-    return node_mappings_ == other.node_mappings_;
+    return path_ == other.path_ && mappings_ == other.mappings_;
   }
   std::string GetCigarString() const;
 
@@ -81,9 +68,11 @@ class GraphMapping {
                                   const GraphMapping& graph_mapping);
 
  private:
-  NodeMappings node_mappings_;
+  void AssertValidity() const;
+  std::vector<Mapping> mappings_;
+  GraphPath path_;
 };
 
 std::ostream& operator<<(std::ostream& os, const GraphMapping& graph_mapping);
 
-typedef std::unique_ptr<GraphMapping> GraphMappingPtr;
+typedef std::unique_ptr<GraphMapping> GraphMappingUPtr;

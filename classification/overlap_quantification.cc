@@ -32,7 +32,7 @@ int32_t StrOverlapQuantifier::NumUnitsOverlapped(
       static_cast<int32_t>(repeat_unit_indexes.size());
   if (!repeat_unit_indexes.empty()) {
     const int32_t last_index = repeat_unit_indexes.back();
-    const Mapping& last_mapping = mapping[last_index].mapping;
+    const Mapping& last_mapping = mapping[last_index];
     const int32_t alignment_span = last_mapping.ReferenceSpan();
 
     if (str_unit_len_ != alignment_span) {

@@ -20,6 +20,7 @@
 
 #include "graphs/path.h"
 
+#include <algorithm>
 #include <cassert>
 #include <set>
 #include <sstream>
@@ -197,6 +198,15 @@ std::shared_ptr<Graph> GraphPath::GraphPtr() const {
 vector<int32_t> GraphPath::NodeIds() const { return pimpl_->nodes_; }
 
 size_t GraphPath::NumNodes() const { return pimpl_->nodes_.size(); }
+
+int32_t GraphPath::GetNodeIdByIndex(int32_t node_index) const {
+  return pimpl_->nodes_[node_index];
+}
+
+bool GraphPath::OverlapsNode(int32_t node_id) const {
+  const vector<int32_t>& nodes = pimpl_->nodes_;
+  return std::find(nodes.begin(), nodes.end(), node_id) != nodes.end();
+}
 
 size_t GraphPath::GetOverlapWithNodeByIndex(int32_t node_index) const {
   pimpl_->AssertThatIndexIsValid(node_index);

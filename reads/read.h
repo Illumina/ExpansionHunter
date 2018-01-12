@@ -59,13 +59,42 @@ struct SamInfo {
 };
 
 struct GraphInfo {
-  GraphMapping canonical_mapping;
+  GraphInfo() = default;
+  GraphInfo(const GraphInfo& other)
+      : canonical_mapping_type(other.canonical_mapping_type),
+        num_str_units_spanned(other.num_str_units_spanned) {
+    if (other.canonical_mapping_ptr) {
+      canonical_mapping_ptr.reset(
+          new GraphMapping(*other.canonical_mapping_ptr));
+    }
+  }
+  GraphInfo& operator=(const GraphInfo& other) {
+    if (other.canonical_mapping_ptr) {
+      canonical_mapping_ptr.reset(
+          new GraphMapping(*other.canonical_mapping_ptr));
+    }
+    canonical_mapping_type = other.canonical_mapping_type;
+    num_str_units_spanned = other.num_str_units_spanned;
+    return *this;
+  }
+  std::unique_ptr<GraphMapping> canonical_mapping_ptr;
   MappingType canonical_mapping_type = MappingType::kUnknown;
   int32_t num_str_units_spanned = 0;
   bool operator==(const GraphInfo& other) const {
-    return (canonical_mapping == other.canonical_mapping &&
-            canonical_mapping_type == other.canonical_mapping_type &&
-            num_str_units_spanned == other.num_str_units_spanned);
+    if (canonical_mapping_type != other.canonical_mapping_type ||
+        num_str_units_spanned != other.num_str_units_spanned) {
+      return false;
+    }
+
+    if (!canonical_mapping_ptr && !other.canonical_mapping_ptr) {
+      return true;
+    }
+
+    if (!canonical_mapping_ptr || !other.canonical_mapping_ptr) {
+      return false;
+    }
+
+    return (*canonical_mapping_ptr == *other.canonical_mapping_ptr);
   }
 };
 
@@ -116,11 +145,11 @@ class Read {
 
   // Provide access to graph-specific information.
   const GraphMapping& CanonicalMapping() const {
-    return graph_info_.canonical_mapping;
+    return *graph_info_.canonical_mapping_ptr;
   }
 
   void SetCanonicalMapping(const GraphMapping& graph_mapping) {
-    graph_info_.canonical_mapping = graph_mapping;
+    graph_info_.canonical_mapping_ptr.reset(new GraphMapping(graph_mapping));
   }
 
   MappingType CanonicalMappingType() const {

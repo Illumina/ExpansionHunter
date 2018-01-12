@@ -41,14 +41,14 @@ TEST(MappingClassificaton, SpanningMapping_Classified) {
   {  //                  FFRRRRRRFF
     const string read = "CCCCGCCGAT";
     GraphMapping mapping =
-        DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, *graph_ptr);
+        DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph_ptr);
 
     EXPECT_EQ(MappingType::kSpansRepeat, mapping_classifier.Classify(mapping));
   }
 
   {  //                  FFFF
     const string read = "CCAT";
-    GraphMapping mapping = DecodeFromString(4, "0[2M]2[2M]", read, *graph_ptr);
+    GraphMapping mapping = DecodeFromString(4, "0[2M]2[2M]", read, graph_ptr);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
     EXPECT_EQ(MappingType::kSpansRepeat, mapping_classifier.Classify(mapping));
@@ -61,14 +61,14 @@ TEST(MappingClassificaton, FlankingMapping_Classified) {
 
   {  //                  FFFFRRR
     const string read = "AACCCCG";
-    GraphMapping mapping = DecodeFromString(2, "0[4M]1[3M]", read, *graph_ptr);
+    GraphMapping mapping = DecodeFromString(2, "0[4M]1[3M]", read, graph_ptr);
 
     EXPECT_EQ(MappingType::kFlanksRepeat, mapping_classifier.Classify(mapping));
   }
 
   {  //                  RRRFFF
     const string read = "CCGATT";
-    GraphMapping mapping = DecodeFromString(0, "1[3M]2[3M]", read, *graph_ptr);
+    GraphMapping mapping = DecodeFromString(0, "1[3M]2[3M]", read, graph_ptr);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
     EXPECT_EQ(MappingType::kFlanksRepeat, mapping_classifier.Classify(mapping));
@@ -82,7 +82,7 @@ TEST(MappingClassificaton, RepeatMapping_Classified) {
   {  //                  RRRRRRRR
     const string read = "CCGCCGCC";
     GraphMapping mapping =
-        DecodeFromString(0, "1[3M]1[3M]1[2M]", read, *graph_ptr);
+        DecodeFromString(0, "1[3M]1[3M]1[2M]", read, graph_ptr);
 
     EXPECT_EQ(MappingType::kInsideRepeat, mapping_classifier.Classify(mapping));
   }
@@ -90,7 +90,7 @@ TEST(MappingClassificaton, RepeatMapping_Classified) {
   {  //                  RRRRRRRR
     const string read = "CGCCGCCG";
     GraphMapping mapping =
-        DecodeFromString(1, "1[2M]1[3M]1[3M]", read, *graph_ptr);
+        DecodeFromString(1, "1[2M]1[3M]1[3M]", read, graph_ptr);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
     EXPECT_EQ(MappingType::kInsideRepeat, mapping_classifier.Classify(mapping));
@@ -103,7 +103,7 @@ TEST(MappingClassificaton, OutsideRepeatMapping_Classified) {
 
   {  //                  FFFFF
     const string read = "AAAAC";
-    GraphMapping mapping = DecodeFromString(0, "0[5M]", read, *graph_ptr);
+    GraphMapping mapping = DecodeFromString(0, "0[5M]", read, graph_ptr);
 
     EXPECT_EQ(MappingType::kOutsideRepeat,
               mapping_classifier.Classify(mapping));
@@ -111,7 +111,7 @@ TEST(MappingClassificaton, OutsideRepeatMapping_Classified) {
 
   {  //                  FFF
     const string read = "TTT";
-    GraphMapping mapping = DecodeFromString(1, "2[3M]", read, *graph_ptr);
+    GraphMapping mapping = DecodeFromString(1, "2[3M]", read, graph_ptr);
 
     StrMappingClassifier mapping_classifier(0, 1, 2);
     EXPECT_EQ(MappingType::kOutsideRepeat,
@@ -126,9 +126,9 @@ TEST(ObtainingCanonicalMapping, FlankingAndInrepeatRead_ClassifiedAsInrepeat) {
   //                   FFFFFFFF
   const string read = "CGCCGCCG";
   const GraphMapping flanking_mapping =
-      DecodeFromString(4, "0[2M]1[3M]1[3M]", read, *graph_ptr);
+      DecodeFromString(4, "0[2M]1[3M]1[3M]", read, graph_ptr);
   const GraphMapping irr_mapping =
-      DecodeFromString(1, "1[2M]1[3M]1[3M]", read, *graph_ptr);
+      DecodeFromString(1, "1[2M]1[3M]1[3M]", read, graph_ptr);
 
   const list<GraphMapping> mappings = {flanking_mapping, irr_mapping};
 
@@ -142,9 +142,9 @@ TEST(ObtainingCanonicalMapping, FlankingAndSpanningRead_ClassifiedAsFlanking) {
   //                   FFFFFFFFFF
   const string read = "CGCCGCCGAT";
   const GraphMapping spanning_mapping =
-      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, *graph_ptr);
+      DecodeFromString(4, "0[2M]1[3M]1[3M]2[2M]", read, graph_ptr);
   const GraphMapping flanking_mapping =
-      DecodeFromString(1, "1[2M]1[3M]1[3M]2[2M]", read, *graph_ptr);
+      DecodeFromString(1, "1[2M]1[3M]1[3M]2[2M]", read, graph_ptr);
 
   const list<GraphMapping> mappings = {spanning_mapping, flanking_mapping};
 

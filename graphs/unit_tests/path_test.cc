@@ -66,6 +66,13 @@ TEST(GettingPathSequence, TypicalPathOnStrGraph_SequenceReturned) {
   EXPECT_EQ("TTATATC", path.Seq());
 }
 
+TEST(CheckingIfPathOverlapsNode, TypicalPath_OverlapChecked) {
+  GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AT", "CCCCC");
+  GraphPath path(graph_ptr, 1, {1, 1, 2}, 0);
+  EXPECT_TRUE(path.OverlapsNode(1));
+  EXPECT_FALSE(path.OverlapsNode(0));
+}
+
 TEST(GettingLengthOfPathOverEachNode, TypicalPathOnStrGraph_LengthReturned) {
   GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AT", "CCCCC");
 

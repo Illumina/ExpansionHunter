@@ -38,6 +38,8 @@ void SummarizeAlignments(const vector<reads::ReadPtr> &read_ptrs,
         break;
       case MappingType::kSpansRepeat:
         spanning_size_counts[num_str_units_spanned] += 1;
+      default:
+        break;
     }
   }
 }
