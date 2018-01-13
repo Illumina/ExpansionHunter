@@ -572,11 +572,24 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
   int32_t str_unit_len = graph_ptr->NodeSeq(1).length();
   StrOverlapQuantifier str_overlap_quantifier(0, 1, 2, str_unit_len);
 
+  int32_t num_reads_aligned = 0;
+  int32_t num_reads_passed_filter = 0;
   for (reads::ReadPtr &read_ptr : read_ptrs) {
     list<GraphMapping> mappings = aligner.GetBestAlignment(read_ptr->Bases());
+    ++num_reads_aligned;
 
     const GraphMapping canonical_mapping =
         mapping_classifier.GetCanonicalMapping(mappings);
+
+    const int32_t num_matches = canonical_mapping.NumMatches();
+    const int32_t reference_span = canonical_mapping.ReferenceSpan();
+    const double prop_matches =
+        static_cast<double>(num_matches) / reference_span;
+    if (prop_matches <= 0.8) {
+      continue;
+    }
+    ++num_reads_passed_filter;
+
     read_ptr->SetCanonicalMapping(canonical_mapping);
 
     const MappingType mapping_type =
@@ -587,6 +600,9 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
         str_overlap_quantifier.NumUnitsOverlapped(canonical_mapping);
     read_ptr->SetNumStrUnitsSpanned(num_str_units_spanned);
   }
+
+  spd::get("console")->info("{} out of {} reads passed filter",
+                            num_reads_passed_filter, num_reads_aligned);
 }
 
 void OutputGraphAlignments(const RepeatSpec &repeat_spec,
