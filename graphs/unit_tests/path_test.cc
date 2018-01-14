@@ -310,13 +310,23 @@ TEST(ExtendingPathsByGivenLength, TypicalPathInHomopolymerGraph_PathExtended) {
   ASSERT_EQ(expected_path_extensions, path_extensions);
 }
 
+TEST(ShrinkingPathEnds, TypicalPathInStrGraph_EndShrank) {
+  GraphSharedPtr graph_ptr = MakeStrGraph("ATAT", "C", "CCTT");
+  GraphPath path(graph_ptr, 2, {0, 1, 2}, 2);
+
+  GraphPath shrank_path = path.ShrinkEndBy(4);
+
+  GraphPath expected_path(graph_ptr, 2, {0}, 3);
+  ASSERT_EQ(expected_path, shrank_path);
+}
+
 TEST(ShrinkingPathsByGivenLength, TypicalPathInStrGraph_PathShrank) {
   GraphSharedPtr graph_ptr = MakeStrGraph("TTT", "AC", "CCC");
 
   GraphPath path(graph_ptr, 1, {0, 1, 1, 2}, 2);
   const int32_t start_shrink_len = 5;
-  const int32_t start_end_len = 3;
-  const GraphPath shrank_path = path.ShrinkBy(start_shrink_len, start_end_len);
+  const int32_t end_shrink_len = 3;
+  const GraphPath shrank_path = path.ShrinkBy(start_shrink_len, end_shrink_len);
 
   const GraphPath expected_path(graph_ptr, 1, {1}, 1);
   ASSERT_EQ(expected_path, shrank_path);

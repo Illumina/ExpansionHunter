@@ -39,3 +39,24 @@ vector<string> SplitByPath(const GraphPath& path, const std::string& sequence) {
   }
   return split_seq;
 }
+
+list<GraphPath> ComputeRightEndings(const GraphPath& path,
+                                    int32_t dist_from_right_end) {
+  GraphPath shortened_path = path.ShrinkEndBy(dist_from_right_end);
+  const int32_t last_node_index = shortened_path.NumNodes() - 1;
+  const int32_t last_node_id = shortened_path.GetNodeIdByIndex(last_node_index);
+  const int32_t end_position = shortened_path.EndPosition();
+  GraphPath seed_path(path.GraphPtr(), end_position, {last_node_id},
+                      end_position);
+  return seed_path.ExtendEndBy(dist_from_right_end);
+}
+
+list<GraphPath> ComputeLeftEndings(const GraphPath& path,
+                                   int32_t dist_from_left_end) {
+  GraphPath shortened_path = path.ShrinkStartBy(dist_from_left_end);
+  const int32_t first_node_id = shortened_path.GetNodeIdByIndex(0);
+  const int32_t start_position = shortened_path.StartPosition();
+  GraphPath seed_path(path.GraphPtr(), start_position, {first_node_id},
+                      start_position);
+  return seed_path.ExtendStartBy(dist_from_left_end);
+}

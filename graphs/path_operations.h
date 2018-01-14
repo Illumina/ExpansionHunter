@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include <list>
 #include <string>
 #include <vector>
 
@@ -34,3 +35,9 @@
  */
 std::vector<std::string> SplitByPath(const GraphPath& path,
                                      const std::string& sequence);
+
+std::list<GraphPath> ComputeRightEndings(const GraphPath& path,
+                                         int32_t dist_from_right_end);
+
+std::list<GraphPath> ComputeLeftEndings(const GraphPath& path,
+                                        int32_t dist_from_left_end);

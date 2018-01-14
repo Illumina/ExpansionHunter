@@ -463,7 +463,7 @@ GraphPath GraphPath::ShrinkEndBy(int32_t end_shrink_len) const {
     return path_without_end_node;
   }
 
-  return path_without_end_node.ShrinkStartBy(leftover_len);
+  return path_without_end_node.ShrinkEndBy(leftover_len);
 }
 
 GraphPath GraphPath::ShrinkBy(int32_t start_shrink_len,
