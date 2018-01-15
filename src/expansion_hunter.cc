@@ -694,6 +694,15 @@ void RunGenotyper(const Parameters &parameters, const RepeatSpec &repeat_spec,
                       genotype);
 }
 
+string EncodeCounts(const map<int32_t, int32_t> &size_counts) {
+  string encoding;
+  for (const auto &size_count : size_counts) {
+    encoding += "(" + std::to_string(size_count.first) + ", " +
+                std::to_string(size_count.second) + ") ";
+  }
+  return encoding;
+}
+
 int main(int argc, char *argv[]) {
   auto console = spd::stderr_color_mt("console");
   spd::set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
@@ -768,12 +777,14 @@ int main(int argc, char *argv[]) {
       vector<RepeatAllele> haplotype_candidates = GenerateHaplotypeCandidates(
           read_ptrs, flanking_size_counts, spanning_size_counts);
 
+      console->info("Flanking counts: {}", EncodeCounts(flanking_size_counts));
+      console->info("Spanning counts: {}", EncodeCounts(spanning_size_counts));
+
       string candidates_encoding;
       for (const RepeatAllele &repeat_allele : haplotype_candidates) {
         candidates_encoding += std::to_string(repeat_allele.size_) + " ";
       }
-      spd::get("console")->info("Haplotype candidates: {}",
-                                candidates_encoding);
+      console->info("Haplotype candidates: {}", candidates_encoding);
 
       console->info("Genotyping the repeat");
       RepeatGenotype genotype;
