@@ -688,6 +688,13 @@ void RunGenotyper(const Parameters &parameters, const RepeatSpec &repeat_spec,
   const double hap_depth = parameters.depth() / 2;
   const int max_num_units_in_read =
       (int)(std::ceil(parameters.read_len() / (double)unit_len));
+
+  spd::get("console")->warn("max_num_units_in_read: {}", max_num_units_in_read);
+  spd::get("console")->warn("prop_correct_molecules: {}",
+                            prop_correct_molecules);
+  spd::get("console")->warn("hap_depth: {}", hap_depth);
+  spd::get("console")->warn("parameters.read_len(): {}", parameters.read_len());
+
   GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
                       parameters.read_len(), haplotype_candidates,
                       flanking_size_counts, spanning_size_counts, genotype_type,
