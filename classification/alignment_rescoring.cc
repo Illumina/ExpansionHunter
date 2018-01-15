@@ -17,25 +17,3 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
-
-#include "reads/read.h"
-
-#include "gtest/gtest.h"
-
-using namespace reads;
-
-TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
-  Read read("frag1", "ATTC", "????");
-  EXPECT_EQ("frag1", read.FragmentId());
-  EXPECT_EQ("ATTC", read.Bases());
-  EXPECT_EQ("????", read.Quals());
-}
-
-TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  EXPECT_ANY_THROW(Read read("frag1", "ATT", "?"));
-}
-
-TEST(ReadInitialization, UnsertCanonicalMapping_ExceptionThrownOnAccess) {
-  Read read("frag1", "ATTC", "????");
-  ASSERT_ANY_THROW(read.CanonicalMapping());
-}

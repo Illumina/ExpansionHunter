@@ -18,24 +18,25 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "reads/read.h"
+#include "classification/alignment_rescoring.h"
+
+#include <string>
 
 #include "gtest/gtest.h"
 
-using namespace reads;
+#include "graphs/graph.h"
+#include "graphs/graph_builders.h"
+#include "graphs/path.h"
+//#include "graphs/graph_mapping.h"
+//#include "graphs/graph_mapping_operations.h"
 
-TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead) {
-  Read read("frag1", "ATTC", "????");
-  EXPECT_EQ("frag1", read.FragmentId());
-  EXPECT_EQ("ATTC", read.Bases());
-  EXPECT_EQ("????", read.Quals());
-}
+using std::string;
 
-TEST(ReadInitialization, BasesAndQualsOfUnequalLength_ExceptionThrown) {
-  EXPECT_ANY_THROW(Read read("frag1", "ATT", "?"));
-}
+TEST(AlignmentRescoring, Test_Test) {
+  //                   FFRRFFF
+  // const string read = "ATCCCCT";
+  // GraphMapping mapping =
+  //    DecodeFromString(2, "0[2M]1[1M]1[1M]2[3M]", read, graph_ptr);
 
-TEST(ReadInitialization, UnsertCanonicalMapping_ExceptionThrownOnAccess) {
-  Read read("frag1", "ATTC", "????");
-  ASSERT_ANY_THROW(read.CanonicalMapping());
+  // RescoreRightEnd(mapping, 5)
 }

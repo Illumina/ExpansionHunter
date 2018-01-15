@@ -144,8 +144,10 @@ class Read {
   }
 
   // Provide access to graph-specific information.
-  const GraphMapping& CanonicalMapping() const {
-    return *graph_info_.canonical_mapping_ptr;
+  const GraphMapping& CanonicalMapping() const;
+
+  bool HasCanonicalMapping() const {
+    return ((bool)graph_info_.canonical_mapping_ptr);
   }
 
   void SetCanonicalMapping(const GraphMapping& graph_mapping) {

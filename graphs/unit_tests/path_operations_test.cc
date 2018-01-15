@@ -75,7 +75,6 @@ TEST(ComputingAlternativeEndings, TypicalPath_RigthEndingsComputed) {
   GraphSharedPtr graph_ptr = MakeStrGraph("ATAT", "C", "CCTT");
   GraphPath path(graph_ptr, 2, {0, 1, 2}, 2);
 
-  // Retract by 4 nucs
   list<GraphPath> right_endings = ComputeRightEndings(path, 4);
 
   list<GraphPath> expected_right_endings = {
@@ -92,7 +91,6 @@ TEST(ComputingAlternativeEndings, TypicalPath_LeftEndingsComputed) {
   GraphSharedPtr graph_ptr = MakeStrGraph("ATAT", "CG", "CCTT");
   GraphPath path(graph_ptr, 2, {0, 1, 1}, 1);
 
-  // Retract by 4 nucs
   list<GraphPath> left_endings = ComputeLeftEndings(path, 2);
 
   list<GraphPath> expected_left_endings = {GraphPath(graph_ptr, 2, {0, 1}, 0),

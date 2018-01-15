@@ -586,6 +586,7 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
     const double prop_matches =
         static_cast<double>(num_matches) / reference_span;
     if (prop_matches <= 0.8) {
+      read_ptr->SetCanonicalMappingType(MappingType::kUnmapped);
       continue;
     }
     ++num_reads_passed_filter;

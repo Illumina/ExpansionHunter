@@ -39,6 +39,13 @@ void Read::SetCoreInfo(const string& fragment_id, const string& bases,
   core_info_.quals = quals;
 }
 
+const GraphMapping& Read::CanonicalMapping() const {
+  if (!graph_info_.canonical_mapping_ptr) {
+    throw std::logic_error("Access to unset canonical mapping is forbidden");
+  }
+  return *graph_info_.canonical_mapping_ptr;
+}
+
 std::ostream& operator<<(std::ostream& os, const Read& read) {
   os << read.FragmentId() << " " << read.Bases() << " " << read.Quals();
   return os;
