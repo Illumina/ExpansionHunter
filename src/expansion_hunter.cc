@@ -745,15 +745,20 @@ int main(int argc, char *argv[]) {
       vector<reads::ReadPtr> read_ptrs;
       read_pairs.GetReads(read_ptrs);
 
+      console->info("Constructing STR graph");
       GraphSharedPtr graph_ptr =
           MakeStrGraph(repeat_spec.left_flank, repeat_spec.units_shifts[0][0],
                        repeat_spec.right_flank);
 
+      console->info("Reorienting reads");
       const int32_t kmer_len = 14;
       ReorientReads(graph_ptr, kmer_len, read_ptrs);
+      console->info("Alignming reads to graph");
       AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
+      console->info("Writing alignments to log file");
       OutputGraphAlignments(repeat_spec, read_ptrs, outputs.log());
 
+      console->info("Generating haplotype candidates");
       map<int32_t, int32_t> flanking_size_counts;
       map<int32_t, int32_t> spanning_size_counts;
 
@@ -767,6 +772,7 @@ int main(int argc, char *argv[]) {
       spd::get("console")->info("Haplotype candidates: {}",
                                 candidates_encoding);
 
+      console->info("Genotyping the repeat");
       RepeatGenotype genotype;
       RunGenotyper(parameters, repeat_spec, haplotype_candidates,
                    flanking_size_counts, spanning_size_counts, genotype_type,
