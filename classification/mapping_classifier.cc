@@ -35,8 +35,7 @@ ostream& operator<<(ostream& os, const MappingType& read_class) {
       {MappingType::kFlanksRepeat, "kFlanksRepeat"},
       {MappingType::kInsideRepeat, "kInsideRepeat"},
       {MappingType::kOutsideRepeat, "kOutsideRepeat"},
-      {MappingType::kUnmapped, "kUnmapped"},
-      {MappingType::kUnknown, "kUnknown"}};
+      {MappingType::kUnmapped, "kUnmapped"}};
   os << class_to_string.at(read_class);
   return os;
 }

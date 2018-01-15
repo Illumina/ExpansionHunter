@@ -31,8 +31,7 @@ enum class MappingType {
   kFlanksRepeat,
   kInsideRepeat,
   kOutsideRepeat,
-  kUnmapped,
-  kUnknown
+  kUnmapped
 };
 
 std::ostream& operator<<(std::ostream& os, const MappingType& read_class);

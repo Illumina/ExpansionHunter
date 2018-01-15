@@ -578,6 +578,10 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
     list<GraphMapping> mappings = aligner.GetBestAlignment(read_ptr->Bases());
     ++num_reads_aligned;
 
+    if (mappings.empty()) {
+      continue;
+    }
+
     const GraphMapping canonical_mapping =
         mapping_classifier.GetCanonicalMapping(mappings);
 
@@ -586,7 +590,6 @@ void AlignReadsToGraph(const GraphSharedPtr &graph_ptr, int32_t kmer_len,
     const double prop_matches =
         static_cast<double>(num_matches) / reference_span;
     if (prop_matches <= 0.8) {
-      read_ptr->SetCanonicalMappingType(MappingType::kUnmapped);
       continue;
     }
     ++num_reads_passed_filter;
@@ -753,7 +756,7 @@ int main(int argc, char *argv[]) {
       console->info("Reorienting reads");
       const int32_t kmer_len = 14;
       ReorientReads(graph_ptr, kmer_len, read_ptrs);
-      console->info("Alignming reads to graph");
+      console->info("Aligning reads to graph");
       AlignReadsToGraph(graph_ptr, kmer_len, read_ptrs);
       console->info("Writing alignments to log file");
       OutputGraphAlignments(repeat_spec, read_ptrs, outputs.log());
