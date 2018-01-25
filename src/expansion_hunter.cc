@@ -503,7 +503,7 @@ int main(int argc, char *argv[]) {
     cerr << kProgramVersion << endl;
 
     if (!parameters.Load(argc, argv)) {
-      return 1;
+      return 0;
     }
 
     cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name()
