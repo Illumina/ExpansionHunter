@@ -31,25 +31,29 @@
 #include "genotyping/short_repeat_genotyper.h"
 
 class Outputs {
-public:
+ public:
   Outputs(const std::string vcf_path, const std::string json_path,
           const std::string log_path);
   std::ostream &vcf() { return vcf_; }
   std::ostream &json() { return json_; }
   std::ostream &log() { return log_; }
 
-private:
+ private:
   std::ofstream vcf_;
   std::ofstream json_;
   std::ofstream log_;
 };
 
 class Parameters {
-public:
+ public:
   const double kSmallestPossibleDepth = 5.0;
   Parameters()
-      : region_extension_len_(1000), min_wp_(0.90), min_baseq_(20),
-        min_anchor_mapq_(60), skip_unaligned_(false), depth_(0.0),
+      : region_extension_len_(1000),
+        min_wp_(0.90),
+        min_baseq_(20),
+        min_anchor_mapq_(60),
+        skip_unaligned_(false),
+        depth_(0.0),
         sex_(Sex::kFemale) {}
   bool Load(int argc, char **argv);
   std::string bam_path() const { return bam_path_; }
@@ -73,7 +77,7 @@ public:
   bool depth_is_set() const { return depth_ >= kSmallestPossibleDepth; }
   Sex sex() const { return sex_; }
 
-private:
+ private:
   std::string bam_path_;
   std::string genome_path_;
   // Maximum distance from a region to search for relevant reads.
