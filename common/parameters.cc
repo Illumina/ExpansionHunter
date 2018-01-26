@@ -36,12 +36,12 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/program_options.hpp>
 
-using boost::lexical_cast;
-using boost::format;
 using boost::assign::list_of;
-using std::string;
+using boost::format;
+using boost::lexical_cast;
 using std::cerr;
 using std::endl;
+using std::string;
 using std::vector;
 
 namespace po = boost::program_options;
@@ -119,7 +119,7 @@ bool Parameters::Load(int argc, char **argv) {
 
   if (argc == 1) {
     std::cerr << usage << std::endl;
-    return false;
+    throw std::invalid_argument("");
   }
 
   po::variables_map arg_map;
