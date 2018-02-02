@@ -31,18 +31,17 @@
 
 #include <boost/algorithm/string/join.hpp>
 
-using std::vector;
-using std::ostream;
-using std::string;
-using std::map;
 using std::cerr;
 using std::endl;
+using std::map;
+using std::ostream;
+using std::string;
+using std::vector;
 
 void WriteVcf(const Parameters &parameters,
               const std::map<std::string, RepeatSpec> &repeat_specs,
               const std::vector<RegionFindings> &sample_findings,
               std::ostream &out) {
-
   std::stringstream vcf_header, vcf_body;
   // clang-format off
   vcf_header <<
@@ -55,11 +54,11 @@ void WriteVcf(const Parameters &parameters,
       "##INFO=<ID=REPID,Number=1,Type=String,Description=\"Repeat identifier from the repeat specification file\">\n"
       "##FORMAT=<ID=GT,Number=1,Type=String,Description=\"Genotype\">\n"
       "##FORMAT=<ID=SO,Number=1,Type=String,Description=\"Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat\">\n"
-      "##FORMAT=<ID=CN,Number=1,Type=String,Description=\"Allele copy number\">\n"
-      "##FORMAT=<ID=CI,Number=1,Type=String,Description=\"Confidence interval for CN\">\n"
-      "##FORMAT=<ID=AD_FL,Number=1,Type=String,Description=\"Number of flanking reads consistent with the allele\">\n"
-      "##FORMAT=<ID=AD_SP,Number=1,Type=String,Description=\"Number of spanning reads consistent with the allele\">\n"
-      "##FORMAT=<ID=AD_IR,Number=1,Type=String,Description=\"Number of in-repeat reads consistent with the allele\">\n";
+      "##FORMAT=<ID=REPCN,Number=1,Type=String,Description=\"Number of repeat units spanned by the allele\">\n"
+      "##FORMAT=<ID=REPCI,Number=1,Type=String,Description=\"Confidence interval for REPCN\">\n"
+      "##FORMAT=<ID=ADFL,Number=1,Type=String,Description=\"Number of flanking reads consistent with the allele\">\n"
+      "##FORMAT=<ID=ADSP,Number=1,Type=String,Description=\"Number of spanning reads consistent with the allele\">\n"
+      "##FORMAT=<ID=ADIR,Number=1,Type=String,Description=\"Number of in-repeat reads consistent with the allele\">\n";
   // clang-format on
 
   std::set<int> alt_sizes;
@@ -81,7 +80,6 @@ void WriteVcf(const Parameters &parameters,
         sample_ad_fl, sample_ad_ir;
 
     for (const RepeatAllele allele : region_findings.genotype) {
-
       const int allele_len = allele.size_ * unit_len;
       const string source = kReadTypeToString.at(allele.type_);
 
@@ -141,17 +139,17 @@ void WriteVcf(const Parameters &parameters,
       }
     }
     const Region &region = repeat_spec.target_region;
-    const string info = "SVTYPE=STR;END=" + std::to_string(region.end()) +
-                        ";REF=" + std::to_string(reference_size) + ";RL=" +
-                        std::to_string(reference_size * unit_len) + ";RU=" +
-                        unit_encoding + ";REPID=" + region_id;
+    const string info = "END=" + std::to_string(region.end()) +
+                        ";REF=" + std::to_string(reference_size) +
+                        ";RL=" + std::to_string(reference_size * unit_len) +
+                        ";RU=" + unit_encoding + ";REPID=" + region_id;
     if (alt.empty()) {
       alt = ".";
     }
 
     vcf_body << region.chrom() << "\t" << region.start() - 1 << "\t.\t"
              << ref_field << "\t" << alt << "\t.\tPASS\t" << info
-             << "\tGT:SO:CN:CI:AD_SP:AD_FL:AD_IR\t" << sample_gt << ":"
+             << "\tGT:SO:REPCN:REPCI:ADSP:ADFL:ADIR\t" << sample_gt << ":"
              << sample_so << ":" << sample_cn << ":" << sample_ci << ":"
              << sample_ad_sp << ":" << sample_ad_fl << ":" << sample_ad_ir
              << endl;
