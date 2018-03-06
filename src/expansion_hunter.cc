@@ -480,8 +480,16 @@ int main(int argc, char *argv[]) {
           parameters.repeat_specs_path() + "'");
     }
 
-    const int read_len = CalcReadLen(parameters.bam_path());
-    parameters.set_read_len(read_len);
+    if (!parameters.read_len_is_set()) {
+      const int read_len = CalcReadLen(parameters.bam_path());
+      if (read_len < parameters.minReadLength) {
+        throw std::runtime_error("Read length=" +
+                                 lexical_cast<string>(read_len) +
+                                 " determined from first alignment" +
+                                 " is too small.");
+      }
+      parameters.set_read_len(read_len);
+    }
 
     BamFile bam_file;
     bam_file.Init(parameters.bam_path(), parameters.genome_path());
