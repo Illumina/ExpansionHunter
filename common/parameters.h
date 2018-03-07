@@ -47,6 +47,7 @@ class Outputs {
 class Parameters {
  public:
   const double kSmallestPossibleDepth = 5.0;
+  const int minReadLength = 10;
   Parameters()
       : region_extension_len_(1000),
         min_wp_(0.90),
@@ -54,6 +55,7 @@ class Parameters {
         min_anchor_mapq_(60),
         skip_unaligned_(false),
         depth_(0.0),
+        read_len_(0),
         sex_(Sex::kFemale) {}
   bool Load(int argc, char **argv);
   std::string bam_path() const { return bam_path_; }
@@ -76,6 +78,7 @@ class Parameters {
   std::string log_path() const { return log_path_; }
   bool depth_is_set() const { return depth_ >= kSmallestPossibleDepth; }
   Sex sex() const { return sex_; }
+  bool read_len_is_set() const { return read_len_ >= minReadLength; }
 
  private:
   std::string bam_path_;

@@ -114,7 +114,8 @@ bool Parameters::Load(int argc, char **argv) {
       ("min-anchor-mapq", po::value<int>()->default_value(60), "Minimum MAPQ of a read anchor")
       ("skip-unaligned", po::bool_switch()->default_value(false), "Skip unaligned reads when searching for IRRs")
       ("read-depth", po::value<double>()->default_value(0.0, "calculated if not set"), "Read depth")
-      ("sex", po::value<string>()->default_value("female"), "Sex of the sample; must be either male or female");
+      ("sex", po::value<string>()->default_value("female"), "Sex of the sample; must be either male or female")
+      ("read-length",po::value<int>()->default_value(0, "calculated if not set"), "Read sequence length");
   // clang-format on
 
   if (argc == 1) {
@@ -200,5 +201,13 @@ bool Parameters::Load(int argc, char **argv) {
         " is invalid for sex; must be either male or female");
   }
 
+  if (!arg_map["read-length"].defaulted()) {
+    read_len_ = arg_map["read-length"].as<int>();
+
+    if (read_len_ < minReadLength) {
+      throw std::invalid_argument("read-length must be at least " +
+                                  std::to_string(minReadLength));
+    }
+  }
   return true;
 }
