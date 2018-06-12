@@ -311,7 +311,6 @@ static size_t FindTopRightFlankLen(size_t min_baseq,
   size_t unit_len = units[0].length();
   double top_wp = 0;
   size_t top_right_len = 0;
-  size_t top_size = 0;
 
   for (size_t test_size = 1; test_size != cur_size + 1; ++test_size) {
     const size_t test_repeat_len = test_size * unit_len;
@@ -322,7 +321,6 @@ static size_t FindTopRightFlankLen(size_t min_baseq,
         ScoreSpanningAlign(min_baseq, units, left_flank, right_flank, bases,
                            quals, cur_left_len, test_right_len);
     if (test_wp > top_wp) {
-      top_size = test_size;
       top_right_len = test_right_len;
       top_wp = test_wp;
     }

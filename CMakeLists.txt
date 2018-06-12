@@ -53,7 +53,7 @@ ExternalProject_Add(htslib
 	LOG_DOWNLOAD 1
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic-errors -std=c++11")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic-errors -std=c++11")
 
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/zlib/include)
 set(zlib_static ${CMAKE_BINARY_DIR}/thirdparty/zlib/lib/libz.a)
