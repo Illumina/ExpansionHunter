@@ -53,10 +53,10 @@ class Parameters {
         min_wp_(0.90),
         min_baseq_(20),
         min_anchor_mapq_(60),
-        skip_unaligned_(false),
-        depth_(0.0),
         read_len_(0),
-        sex_(Sex::kFemale) {}
+        depth_(0.0),
+        sex_(Sex::kFemale),
+        skip_unaligned_(false) {}
   bool Load(int argc, char **argv);
   std::string bam_path() const { return bam_path_; }
   std::string genome_path() const { return genome_path_; }

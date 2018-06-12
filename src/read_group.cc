@@ -56,10 +56,14 @@ using boost::property_tree::ptree;
 // using boost::algorithm::split;
 // using boost::algorithm::is_any_of;
 
+bool CompareReadGroupsBySize(const RepeatReadGroup &a1,
+                             const RepeatReadGroup &a2) {
+  return a1.size < a2.size;
+}
+
 void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
                            vector<RepeatReadGroup> &repeats,
                            vector<RepeatAlign> *flanking_repaligns,
-                           const int read_len, const double hap_depth,
                            int motif_len,
                            const vector<vector<string>> &units_shifts,
                            int min_baseq, double min_wp_score) {
@@ -75,20 +79,20 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
     }
   }
 
-  //cerr << "\t[Longest spanning allele has size " << longest_spanning << "]"
+  // cerr << "\t[Longest spanning allele has size " << longest_spanning << "]"
   //     << endl;
 
   bool good_repeat_exists = false;
   int num_reads_from_unseen_allele = 0;
   int longest_flanking = 0;
 
-  //cerr << "\t[There are " << flanking_repaligns->size() << " flanking reads]"
+  // cerr << "\t[There are " << flanking_repaligns->size() << " flanking reads]"
   //     << endl;
 
   vector<RepeatAlign> good_flanking_repaligns;
 
   for (const auto &rep_align : *flanking_repaligns) {
-    if (rep_align.size > longest_spanning) {
+    if ((int)rep_align.size > longest_spanning) {
       ++num_reads_from_unseen_allele;
 
       string piece_bases, piece_quals;
@@ -105,14 +109,14 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
             left_flank.substr(left_flank.length() - rep_align.left_flank_len,
                               rep_align.left_flank_len);
         const vector<string> left_flank_pref_units = {left_flank_pref};
-        double flank_score = MatchUnits(
-            left_flank_pref_units, bases_prefix.begin(), bases_prefix.end(),
-            quals_prefix.begin(), quals_prefix.end(), min_baseq);
+        double flank_score =
+            MatchUnits(left_flank_pref_units, bases_prefix.begin(),
+                       bases_prefix.end(), quals_prefix.begin(), min_baseq);
         flank_wp = flank_score / rep_align.left_flank_len;
 
         const int piece_start =
             rep_align.left_flank_len + longest_spanning * motif_len;
-        assert(piece_start < rep_align.read.bases.length());
+        assert(piece_start < (int)rep_align.read.bases.length());
         piece_bases = rep_align.read.bases.substr(
             piece_start, rep_align.read.bases.length() - piece_start);
         piece_quals = rep_align.read.quals.substr(
@@ -131,9 +135,9 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
         const string right_flank_pref =
             right_flank.substr(0, rep_align.right_flank_len);
         const vector<string> right_flank_pref_units = {right_flank_pref};
-        double flank_score = MatchUnits(
-            right_flank_pref_units, bases_suffix.begin(), bases_suffix.end(),
-            quals_suffix.begin(), quals_suffix.end(), min_baseq);
+        double flank_score =
+            MatchUnits(right_flank_pref_units, bases_suffix.begin(),
+                       bases_suffix.end(), quals_suffix.begin(), min_baseq);
         flank_wp = flank_score / rep_align.right_flank_len;
 
         const int piece_end =
@@ -150,7 +154,7 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
             MatchRepeat(units, piece_bases, piece_quals, min_baseq);
       }
 
-      //if (0.7 > flank_wp || flank_wp > 1.0) {
+      // if (0.7 > flank_wp || flank_wp > 1.0) {
       //  cerr << "[WARNING: flank_wp = " << flank_wp << "]" << endl;
       //}
 
@@ -159,11 +163,11 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
       if (piece_wp_score >= min_wp_score && flank_wp >= min_wp_score) {
         good_flanking_repaligns.push_back(rep_align);
         good_repeat_exists = true;
-        if (rep_align.size > longest_flanking) {
+        if ((int)rep_align.size > longest_flanking) {
           longest_flanking = rep_align.size;
         }
       } else {
-        //cerr << "\t[Discarding flanking read " << rep_align.read.name << " "
+        // cerr << "\t[Discarding flanking read " << rep_align.read.name << " "
         //     << rep_align.read.bases << "]" << endl;
       }
     } else {
@@ -177,7 +181,7 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
     vector<RepeatAlign> short_aligns;
     vector<RepeatAlign> supporting_aligns;
     for (const RepeatAlign &rep_align : *flanking_repaligns) {
-      if (rep_align.size > longest_spanning) {
+      if ((int)rep_align.size > longest_spanning) {
         supporting_aligns.push_back(rep_align);
       } else {
         short_aligns.push_back(rep_align);
@@ -185,9 +189,9 @@ void CoalesceFlankingReads(const RepeatSpec &repeat_spec,
     }
     *flanking_repaligns = short_aligns;
 
-    //cerr << "\t[Found " << num_reads_from_unseen_allele
+    // cerr << "\t[Found " << num_reads_from_unseen_allele
     //     << " flanking reads longer with long repeat]" << endl;
-    //cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
+    // cerr << "\t[longest_flanking = " << longest_flanking << "]" << endl;
 
     RepeatReadGroup read_group;
     read_group.read_type = ReadType::kFlanking;
@@ -215,7 +219,7 @@ typedef vector<PlotColumn> Plot;
 static void PlotGaplessAlign(Plot &plot, const string &top, const string &bot,
                              const bool add_bars = true) {
   assert(top.length() == bot.length());
-  for (int i = 0; i < top.length(); ++i) {
+  for (int i = 0; i < (int)top.length(); ++i) {
     plot.push_back(PlotColumn(
         top[i], add_bars && std::toupper(top[i]) == bot[i] ? '|' : ' ',
         bot[i]));
@@ -224,15 +228,15 @@ static void PlotGaplessAlign(Plot &plot, const string &top, const string &bot,
 
 static void PlotToStream(std::ostream &ostrm, Plot &plot) {
   // Write the rows one by one.
-  for (int i = 0; i < plot.size(); ++i) {
+  for (int i = 0; i < (int)plot.size(); ++i) {
     ostrm << plot[i].top;
   }
   ostrm << std::endl;
-  for (int i = 0; i < plot.size(); ++i) {
+  for (int i = 0; i < (int)plot.size(); ++i) {
     ostrm << plot[i].mid;
   }
   ostrm << std::endl;
-  for (int i = 0; i < plot.size(); ++i) {
+  for (int i = 0; i < (int)plot.size(); ++i) {
     ostrm << plot[i].bot;
   }
   ostrm << std::endl;
@@ -253,7 +257,7 @@ static string LowerLowqualBases(const string &bases, const string &quals,
                                 int lowqual_cutoff) {
   assert(bases.length() == quals.length());
   string cased_bases;
-  for (int i = 0; i != bases.length(); ++i) {
+  for (int i = 0; i != (int)bases.length(); ++i) {
     if (quals[i] - 33 < lowqual_cutoff) {
       cased_bases += std::tolower(bases[i]);
     } else {
@@ -351,7 +355,7 @@ void DistributeFlankingReads(const Parameters &parameters,
     const string &quals = rep_align.read.quals;
     const int non_rep_len =
         rep_align.left_flank_len + rep_align.right_flank_len;
-    assert(bases.length() >= non_rep_len);
+    assert((int)bases.length() >= non_rep_len);
     const int repeat_len = bases.length() - non_rep_len;
 
     bool found_align = false;
@@ -372,14 +376,15 @@ void DistributeFlankingReads(const Parameters &parameters,
           const vector<string> right_flank_ref_units = {right_flank_ref};
           float right_flank_score = MatchUnits(
               right_flank_ref_units, bases_suffix.begin(), bases_suffix.end(),
-              quals_suffix.begin(), quals_suffix.end(), parameters.min_baseq());
+              quals_suffix.begin(), parameters.min_baseq());
           if (right_flank_score / bases_suffix.length() >= kWpCutoff) {
             // cerr << "[Reasign flanking to spanning]" << endl;
             // Plot plot;
             // const string cased_bases =
             //     LowerLowqualBases(bases, quals, parameters.min_baseq());
             // PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
-            //                   rep_align.left_flank_len, bases_suffix.length());
+            //                   rep_align.left_flank_len,
+            //                   bases_suffix.length());
             // PlotToStream(cerr, plot);
             // cerr << endl;
 
@@ -400,17 +405,18 @@ void DistributeFlankingReads(const Parameters &parameters,
           const vector<string> left_flank_ref_units = {left_flank_ref};
           double left_flank_score = MatchUnits(
               left_flank_ref_units, bases_prefix.begin(), bases_prefix.end(),
-              quals_prefix.begin(), quals_prefix.end(), parameters.min_baseq());
+              quals_prefix.begin(), parameters.min_baseq());
 
           if (left_flank_score / bases_prefix.length() >= kWpCutoff) {
-            //cerr << "[Reasign flanking to spanning]" << endl;
-            //Plot plot;
-            //const string cased_bases =
+            // cerr << "[Reasign flanking to spanning]" << endl;
+            // Plot plot;
+            // const string cased_bases =
             //    LowerLowqualBases(bases, quals, parameters.min_baseq());
-            //PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
-            //                  bases_prefix.length(), rep_align.right_flank_len);
-            //PlotToStream(cerr, plot);
-            //cerr << endl;
+            // PlotSpanningAlign(plot, cased_bases, left_flank, right_flank,
+            //                  bases_prefix.length(),
+            //                  rep_align.right_flank_len);
+            // PlotToStream(cerr, plot);
+            // cerr << endl;
 
             found_align = true;
             rep_align.left_flank_len = bases_prefix.length();

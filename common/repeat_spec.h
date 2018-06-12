@@ -22,11 +22,11 @@
 
 #pragma once
 
-#include <string>
-#include <iostream>
-#include <vector>
-#include <map>
 #include <fstream>
+#include <iostream>
+#include <map>
+#include <string>
+#include <vector>
 
 #include "common/genomic_region.h"
 
@@ -34,7 +34,7 @@ class RepeatSpec {
  public:
   RepeatSpec() {}
   explicit RepeatSpec(const std::string& json_path);
-  const char LeftFlankBase() const;
+  char LeftFlankBase() const;
   bool is_common_unit() const { return is_common_unit_; }
 
   std::string repeat_id;
@@ -53,4 +53,3 @@ class RepeatSpec {
 bool LoadRepeatSpecs(const std::string& specs_path,
                      const std::string& genome_path, double min_wp,
                      std::map<std::string, RepeatSpec>* repeat_specs);
-

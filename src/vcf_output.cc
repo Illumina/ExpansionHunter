@@ -80,7 +80,6 @@ void WriteVcf(const Parameters &parameters,
         sample_ad_fl, sample_ad_ir;
 
     for (const RepeatAllele allele : region_findings.genotype) {
-      const int allele_len = allele.size_ * unit_len;
       const string source = kReadTypeToString.at(allele.type_);
 
       if (allele.size_ != reference_size) {

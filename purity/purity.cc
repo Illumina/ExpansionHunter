@@ -22,11 +22,11 @@
 
 #include "purity/purity.h"
 
+#include <algorithm>
 #include <iostream>
+#include <limits>
 #include <string>
 #include <vector>
-#include <limits>
-#include <algorithm>
 
 #include "common/parameters.h"
 
@@ -121,15 +121,15 @@ double MatchRepeat(const vector<string>& units, const string& bases,
   double score = 0;
   size_t pos = 0;
   while (pos + unit_len <= bases.length()) {
-    score += MatchUnits(units, bases.begin() + pos,
-                        bases.begin() + pos + unit_len, quals.begin() + pos,
-                        quals.begin() + pos + unit_len, min_baseq);
+    score +=
+        MatchUnits(units, bases.begin() + pos, bases.begin() + pos + unit_len,
+                   quals.begin() + pos, min_baseq);
     pos += unit_len;
   }
 
   if (pos != bases.length()) {
     score += MatchUnits(units, bases.begin() + pos, bases.end(),
-                        quals.begin() + pos, quals.end(), min_baseq);
+                        quals.begin() + pos, min_baseq);
   }
 
   return score;
@@ -138,8 +138,7 @@ double MatchRepeat(const vector<string>& units, const string& bases,
 double MatchUnits(const vector<string>& units,
                   string::const_iterator bases_first,
                   string::const_iterator bases_last,
-                  string::const_iterator quals_first,
-                  string::const_iterator quals_last, size_t min_baseq) {
+                  string::const_iterator quals_first, size_t min_baseq) {
   double max_match_count = std::numeric_limits<double>::lowest();
   const size_t kBaseQualOffset = 33;
   const double kMatchScore = 1.0;

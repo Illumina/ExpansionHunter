@@ -7,6 +7,8 @@ enable_testing()
 
 include(ExternalProject)
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic-errors")
+
 ######################### Google Test ############################
 # Download and unpack googletest at configure time
 configure_file(cmake/google_test.cmake googletest-download/CMakeLists.txt)

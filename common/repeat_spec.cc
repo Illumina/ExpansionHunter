@@ -55,7 +55,7 @@ using boost::algorithm::join;
 
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 
-const char RepeatSpec::LeftFlankBase() const {
+char RepeatSpec::LeftFlankBase() const {
   if (left_flank.empty()) {
     return '.';
   }
@@ -106,7 +106,7 @@ RepeatSpec::RepeatSpec(const string &json_path) {
   if (confusion_node) {
     offtarget_regions.clear();
     for (const ptree::value_type &region_node : *confusion_node) {
-      assert(region_node.first.empty()); // array elements have no names
+      assert(region_node.first.empty());  // array elements have no names
       offtarget_regions.push_back(Region(region_node.second.data()));
     }
   }
