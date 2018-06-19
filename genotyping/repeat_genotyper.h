@@ -31,6 +31,7 @@
 #include "common/repeat_spec.h"
 #include "genotyping/short_repeat_genotyper.h"
 
+namespace ehunter {
 void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
                     int max_num_units_in_read, double prop_correct_molecules,
                     double hap_depth, int read_len,
@@ -38,3 +39,4 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
                     const std::map<int, int> &flanking_size_count,
                     const std::map<int, int> &spanning_size_count,
                     GenotypeType genotype_type, RepeatGenotype &genotype);
+}

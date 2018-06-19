@@ -43,6 +43,7 @@ using std::endl;
 
 using json = nlohmann::json;
 
+namespace ehunter {
 void WriteJson(const Parameters &parameters,
                const map<string, RepeatSpec> &repeat_specs,
                const vector<RegionFindings> &sample_findings, ostream &out) {
@@ -121,3 +122,4 @@ void WriteJson(const Parameters &parameters,
 
   out << results_json.dump(4);
 }
+}  // namespace ehunter

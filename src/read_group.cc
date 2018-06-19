@@ -56,6 +56,7 @@ using boost::property_tree::ptree;
 // using boost::algorithm::split;
 // using boost::algorithm::is_any_of;
 
+namespace ehunter {
 bool CompareReadGroupsBySize(const RepeatReadGroup &a1,
                              const RepeatReadGroup &a2) {
   return a1.size < a2.size;
@@ -437,3 +438,4 @@ void DistributeFlankingReads(const Parameters &parameters,
   }
   *flanking_repaligns = filtered_flanking_repaligns;
 }
+}  // namespace ehunter

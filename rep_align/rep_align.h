@@ -29,6 +29,7 @@
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
 
+namespace ehunter {
 struct RepeatAlign {
   enum class Type {
     kSpanning,
@@ -87,3 +88,4 @@ bool IsSpanningOrFlankingReadRc(const Parameters &params,
 bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
                const std::string &bases, const std::string &quals,
                RepeatAlign *rep_align);
+}  // namespace ehunter

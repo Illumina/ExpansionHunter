@@ -25,6 +25,7 @@
 #include <iostream>
 #include <string>
 
+namespace ehunter {
 class Region {
  public:
   friend std::istream &operator>>(std::istream &istrm, Region &region);
@@ -63,3 +64,4 @@ class Region {
 
 std::istream &operator>>(std::istream &istrm, Region &region);
 std::ostream &operator<<(std::ostream &ostrm, const Region &region);
+}  // namespace ehunter

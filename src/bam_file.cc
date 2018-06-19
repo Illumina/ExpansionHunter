@@ -54,6 +54,7 @@ using std::endl;
 using std::vector;
 using std::sort;
 
+namespace ehunter {
 BamFile::BamFile()
     : format_(kUnknownFormat),
       hts_file_ptr_(0),
@@ -74,7 +75,7 @@ BamFile::~BamFile() {
 }
 
 void BamFile::Init(const string &path, const string &reference) {
-  (void) reference;
+  (void)reference;
 
   path_ = path;
   // Open a BAM file for reading.
@@ -528,3 +529,4 @@ bool CramFile::GetUnalignedRead(Align &align) {
   }
   return true;
 }
+}  // namespace ehunter

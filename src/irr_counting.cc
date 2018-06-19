@@ -43,6 +43,7 @@ using std::vector;
 using std::map;
 using std::array;
 
+namespace ehunter {
 // Check if two alignments are same.
 static bool SameAlign(Align &al1, Align &al2) {
   return (al1.name == al2.name && al1.mate_pos == al2.mate_pos &&
@@ -402,3 +403,4 @@ void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
     }
   }
 }
+}  // namespace ehunter

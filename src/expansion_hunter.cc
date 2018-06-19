@@ -60,6 +60,7 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
+namespace ehunter {
 // Returns the length of the first read in a BAM file.
 size_t CalcReadLen(const string &bam_path) {
   // Open a BAM file for reading.
@@ -449,27 +450,28 @@ void EstimateRepeatSizes(const Parameters &parameters,
   WriteVcf(parameters, repeat_specs, sample_findings, outputs->vcf());
   cerr << TimeStamp() << ",[All done]" << endl;
 }
+}  // namespace ehunter
 
 #ifdef LIBRARY_TARGET
-int expansionHunter(int argc, char* argv[] ) {
+int expansionHunter(int argc, char *argv[]) {
 #else
 int main(int argc, char *argv[]) {
 #endif
   try {
-    Parameters parameters;
-    cerr << kProgramVersion << endl;
+    ehunter::Parameters parameters;
+    cerr << ehunter::kProgramVersion << endl;
 
     if (!parameters.Load(argc, argv)) {
       return 0;
     }
 
-    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name()
-         << "]" << endl;
+    cerr << ehunter::TimeStamp() << ",[Starting Logging for "
+         << parameters.sample_name() << "]" << endl;
 
-    Outputs outputs(parameters.vcf_path(), parameters.json_path(),
-                    parameters.log_path());
+    ehunter::Outputs outputs(parameters.vcf_path(), parameters.json_path(),
+                             parameters.log_path());
 
-    map<string, RepeatSpec> repeat_specs;
+    map<string, ehunter::RepeatSpec> repeat_specs;
     if (!LoadRepeatSpecs(parameters.repeat_specs_path(),
                          parameters.genome_path(), parameters.min_wp(),
                          &repeat_specs)) {
@@ -479,7 +481,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (!parameters.read_len_is_set()) {
-      const int read_len = CalcReadLen(parameters.bam_path());
+      const int read_len = ehunter::CalcReadLen(parameters.bam_path());
       if (read_len < parameters.minReadLength) {
         throw std::runtime_error(
             "Read length=" + lexical_cast<string>(read_len) +
@@ -488,19 +490,20 @@ int main(int argc, char *argv[]) {
       parameters.set_read_len(read_len);
     }
 
-    BamFile bam_file;
+    ehunter::BamFile bam_file;
     bam_file.Init(parameters.bam_path(), parameters.genome_path());
 
     if (!parameters.depth_is_set()) {
-      cerr << TimeStamp() << ",[Calculating depth]" << endl;
+      cerr << ehunter::TimeStamp() << ",[Calculating depth]" << endl;
       const double depth =
           bam_file.CalcMedianDepth(parameters, parameters.read_len());
       parameters.set_depth(depth);
     }
 
-    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
+    cerr << ehunter::TimeStamp() << ",[Read length: " << parameters.read_len()
+         << "]" << endl;
+    cerr << ehunter::TimeStamp() << ",[Depth: " << parameters.depth() << "]"
          << endl;
-    cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
 
     if (parameters.depth() < parameters.kSmallestPossibleDepth) {
       throw std::runtime_error("Estimated depth of " +
@@ -509,7 +512,7 @@ int main(int argc, char *argv[]) {
                                "repeat sizes");
     }
 
-    EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
+    ehunter::EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
   } catch (const std::exception &e) {
     cerr << e.what() << endl;
     return 1;

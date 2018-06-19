@@ -16,6 +16,8 @@
 
 #include "common/timestamp.h"
 
+namespace ehunter {
+
 std::string TimeStamp() {
   std::time_t now = time(0);
   const size_t timestamp_size = 80;
@@ -23,3 +25,5 @@ std::string TimeStamp() {
   std::strftime(timestamp_buf, timestamp_size, "%FT%T", std::localtime(&now));
   return std::string(timestamp_buf);
 }
+
+}  // namespace ehunter

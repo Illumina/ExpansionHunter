@@ -30,6 +30,7 @@
 #include "common/repeat_spec.h"
 #include "genotyping/short_repeat_genotyper.h"
 
+namespace ehunter {
 class Outputs {
  public:
   Outputs(const std::string vcf_path, const std::string json_path,
@@ -98,3 +99,4 @@ class Parameters {
   std::string json_path_;
   std::string log_path_;
 };
+}  // namespace ehunter

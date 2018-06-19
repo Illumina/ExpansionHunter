@@ -34,6 +34,8 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
+namespace ehunter {
+
 size_t CountUnitsAtOffset(const vector<string> &units, const string &bases,
                           size_t offset) {
   const size_t unit_len = units[0].length();
@@ -399,3 +401,4 @@ bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
   }
   return true;
 }
+}  // namespace ehunter

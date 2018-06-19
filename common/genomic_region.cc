@@ -22,15 +22,15 @@
 
 #include "common/genomic_region.h"
 
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <vector>
-#include <string>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 using boost::algorithm::split;
 using boost::algorithm::is_any_of;
@@ -42,6 +42,8 @@ using std::istream;
 using std::endl;
 using std::cerr;
 using std::string;
+
+namespace ehunter {
 
 Region::Region() : chrom_("chr0"), start_(0), end_(0) {}
 
@@ -123,4 +125,6 @@ ostream &operator<<(ostream &ostrm, const Region &region) {
   }
 
   return ostrm;
+}
+
 }

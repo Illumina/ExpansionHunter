@@ -30,6 +30,7 @@
 
 #include "common/genomic_region.h"
 
+namespace ehunter {
 class RepeatSpec {
  public:
   RepeatSpec() {}
@@ -53,3 +54,4 @@ class RepeatSpec {
 bool LoadRepeatSpecs(const std::string& specs_path,
                      const std::string& genome_path, double min_wp,
                      std::map<std::string, RepeatSpec>* repeat_specs);
+}  // namespace ehunter

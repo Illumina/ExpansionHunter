@@ -34,6 +34,8 @@ using boost::lexical_cast;
 
 #include "common/genomic_region.h"
 
+namespace ehunter {
+
 enum ReadStatus { kNoCheck, kFlankingRead };
 
 struct Align {
@@ -100,3 +102,4 @@ bool GetAlignFromHtsAlign(bam1_t* hts_align_ptr, Align& align,
 
 bool GetQualsFromHtsAlign(bam1_t* hts_align_ptr, std::string& quals);
 bool GetBasesFromHtsAlign(bam1_t* hts_align_ptr, std::string& bases);
+}  // namespace ehunter

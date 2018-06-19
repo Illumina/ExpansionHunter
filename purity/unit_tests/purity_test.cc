@@ -31,6 +31,8 @@ using std::endl;
 #include <vector>
 using std::vector;
 
+using namespace ehunter;
+
 TEST(TestUnitMatching, MatchesUnitToItself) {
   char qual_chars[] = {40, 40, 40, 40, 40, 40};
   string quals = qual_chars;

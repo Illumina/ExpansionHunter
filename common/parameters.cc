@@ -46,6 +46,7 @@ using std::vector;
 
 namespace po = boost::program_options;
 
+namespace ehunter {
 Outputs::Outputs(const string vcf_path, const string json_path,
                  const string log_path) {
   vcf_.open(vcf_path.c_str());
@@ -211,3 +212,4 @@ bool Parameters::Load(int argc, char **argv) {
   }
   return true;
 }
+}  // namespace ehunter

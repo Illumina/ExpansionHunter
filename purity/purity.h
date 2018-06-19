@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+namespace ehunter {
 std::vector<std::vector<std::string>> shift_units(
     const std::vector<std::string>& units);
 
@@ -45,3 +46,4 @@ double MatchUnits(const std::vector<std::string>& units,
                   std::string::const_iterator bases_end,
                   std::string::const_iterator quals_start,
                   size_t min_baseq = 20);
+}  // namespace ehunter

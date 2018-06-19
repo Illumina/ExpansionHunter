@@ -29,15 +29,16 @@ using std::cerr;
 using std::endl;
 #include <vector>
 using std::vector;
-#include <utility>
 #include <algorithm>
-#include <stdexcept>
 #include <cstdint>
+#include <stdexcept>
 #include <string>
+#include <utility>
 using std::string;
 
 #include "htslib/sam.h"
 
+namespace ehunter {
 BamIndex::BamIndex(const string& bam_path) : bam_path_(bam_path) {
   // Set up hts_file_ptr_ (BAM/CRAM file pointer)
   hts_file_ptr_ = sam_open(bam_path_.c_str(), "r");
@@ -104,3 +105,4 @@ bool BamIndex::GetChrReadCounts(vector<string>& chrom_names,
 
   return true;
 }
+}  // namespace ehunter

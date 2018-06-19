@@ -53,6 +53,8 @@ using boost::property_tree::ptree;
 using boost::lexical_cast;
 using boost::algorithm::join;
 
+namespace ehunter {
+
 typedef boost::tokenizer<boost::char_separator<char>> Tokenizer;
 
 char RepeatSpec::LeftFlankBase() const {
@@ -182,3 +184,5 @@ bool LoadRepeatSpecs(const string &specs_path, const string &genome_path,
 
   return true;
 }
+
+}  // namespace ehunter

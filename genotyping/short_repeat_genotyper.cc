@@ -41,6 +41,7 @@ using std::endl;
 using std::pair;
 using std::vector;
 
+namespace ehunter {
 Allele::Allele(int num_units_haplotype, int max_num_units_in_read,
                double prop_correct_molecules)
     : num_units_haplotype_(num_units_haplotype),
@@ -219,3 +220,4 @@ void GenotypeShortRepeat(int max_num_units_in_read,
   }
   genotype = most_likely_genotype;
 };
+}  // namespace ehunter

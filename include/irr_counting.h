@@ -35,6 +35,8 @@
 #include "include/read_alignment.h"
 #include "rep_align/rep_align.h"
 
+namespace ehunter {
+
 // Represents fragment alignments as pairs of read alignments.
 typedef std::array<Align, 2> AlignPair;
 
@@ -75,3 +77,4 @@ int CountAlignedIrr(const Parameters &parameters, const AlignPairs &align_pairs,
                     std::map<std::string, int> &num_irrs_per_offtarget_region,
                     const std::vector<std::vector<std::string>> &units_shifts,
                     std::vector<RepeatAlign> *irr_rep_aligns);
+}  // namespace ehunter

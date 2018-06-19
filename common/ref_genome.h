@@ -22,12 +22,13 @@
 
 #pragma once
 
-#include <string>
 #include <iostream>
+#include <string>
 
 // Include the fai class from samtools
 #include "htslib/faidx.h"
 
+namespace ehunter {
 class RefGenome {
  public:
   explicit RefGenome(const std::string& genome_path);
@@ -39,3 +40,4 @@ class RefGenome {
   std::string genome_path_;
   faidx_t* fai_ptr_;
 };
+}  // namespace ehunter

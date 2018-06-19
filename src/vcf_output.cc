@@ -38,6 +38,7 @@ using std::ostream;
 using std::string;
 using std::vector;
 
+namespace ehunter {
 void WriteVcf(const Parameters &parameters,
               const std::map<std::string, RepeatSpec> &repeat_specs,
               const std::vector<RegionFindings> &sample_findings,
@@ -163,3 +164,4 @@ void WriteVcf(const Parameters &parameters,
              << parameters.sample_name() << endl;
   out << vcf_header.str() << vcf_body.str();
 }
+}  // namespace ehunter

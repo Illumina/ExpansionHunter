@@ -39,6 +39,8 @@ using std::cerr;
 using std::endl;
 using std::array;
 
+using namespace ehunter;
+
 TEST(CalculateMoleculeProportions, TypicalHaplotypeProportionsCalculated) {
   const int num_units_haplotype = 2;
   const int max_num_units_in_read = 25;
@@ -69,27 +71,27 @@ TEST(CalcGenotypeLoglik, ShortGenotypesLoglikelihoodsCalculated) {
   vector<AlleleSupport> genotype_support;
 
   ShortRepeatGenotyper genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
-  EXPECT_DOUBLE_EQ(-48.468337669679954,
-                   genotype_3_5.CalcLogLik(flanking_size_counts,
-                                           spanning_size_counts,
-                                           genotype_support));
+  EXPECT_DOUBLE_EQ(
+      -48.468337669679954,
+      genotype_3_5.CalcLogLik(flanking_size_counts, spanning_size_counts,
+                              genotype_support));
 
   const vector<AlleleSupport> expected_3_5_support = {{4, 5, 0}, {5, 5, 0}};
   EXPECT_EQ(expected_3_5_support, genotype_support);
 
   ShortRepeatGenotyper genotype_3_10(25, 0.97, 25.0, 150, 3, 10);
-  EXPECT_DOUBLE_EQ(-69.444360064064853,
-                   genotype_3_10.CalcLogLik(flanking_size_counts,
-                                            spanning_size_counts,
-                                            genotype_support));
+  EXPECT_DOUBLE_EQ(
+      -69.444360064064853,
+      genotype_3_10.CalcLogLik(flanking_size_counts, spanning_size_counts,
+                               genotype_support));
   const vector<AlleleSupport> expected_3_10_support = {{4, 5, 0}, {0, 6, 0}};
   EXPECT_EQ(expected_3_10_support, genotype_support);
 
   ShortRepeatGenotyper genotype_10_10(25, 0.97, 25.0, 150, 10, 10);
-  EXPECT_DOUBLE_EQ(-185.24122167420646,
-                   genotype_10_10.CalcLogLik(flanking_size_counts,
-                                             spanning_size_counts,
-                                             genotype_support));
+  EXPECT_DOUBLE_EQ(
+      -185.24122167420646,
+      genotype_10_10.CalcLogLik(flanking_size_counts, spanning_size_counts,
+                                genotype_support));
   const vector<AlleleSupport> expected_10_10_support = {{0, 6, 0}, {0, 6, 0}};
   EXPECT_EQ(expected_10_10_support, genotype_support);
 }
@@ -100,10 +102,10 @@ TEST(CalcGenotypeLoglik, LongGenotypesLoglikelihoodsCalculated) {
   vector<AlleleSupport> genotype_support;
 
   ShortRepeatGenotyper genotype_3_5(25, 0.97, 25.0, 150, 3, 5);
-  EXPECT_DOUBLE_EQ(-48.468337669679954,
-                   genotype_3_5.CalcLogLik(flanking_size_counts,
-                                           spanning_size_counts,
-                                           genotype_support));
+  EXPECT_DOUBLE_EQ(
+      -48.468337669679954,
+      genotype_3_5.CalcLogLik(flanking_size_counts, spanning_size_counts,
+                              genotype_support));
 }
 
 TEST(CalcDiploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
@@ -112,10 +114,10 @@ TEST(CalcDiploidGenotypeLoglik, TypicalGenotypeLoglikelihoodsCalculated) {
   vector<AlleleSupport> genotype_support;
 
   ShortRepeatGenotyper diploid_genotype(25, 0.97, 25.0, 150, 5, 25);
-  EXPECT_DOUBLE_EQ(-34.260255045398637,
-                   diploid_genotype.CalcLogLik(flanking_size_counts,
-                                               spanning_size_counts,
-                                               genotype_support));
+  EXPECT_DOUBLE_EQ(
+      -34.260255045398637,
+      diploid_genotype.CalcLogLik(flanking_size_counts, spanning_size_counts,
+                                  genotype_support));
 
   const vector<AlleleSupport> expected_5_25_support = {{5, 5, 0}, {0, 5, 10}};
   EXPECT_EQ(expected_5_25_support, genotype_support);

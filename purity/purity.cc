@@ -35,6 +35,8 @@ using std::endl;
 using std::string;
 using std::vector;
 
+namespace ehunter {
+
 static const string Rc(const string& seqStr) {
   std::string revComplStr(seqStr);
   typedef string::reverse_iterator ChRIter;
@@ -172,3 +174,4 @@ double MatchUnits(const vector<string>& units,
 
   return max_match_count;
 }
+}  // namespace ehunter

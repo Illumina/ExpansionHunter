@@ -26,6 +26,7 @@
 #include <ostream>
 #include <string>
 
+namespace ehunter {
 enum class ReadType { kSpanning, kFlanking, kInrepeat, kOther };
 const std::map<ReadType, std::string> kReadTypeToString = {
     {ReadType::kInrepeat, "INREPEAT"},
@@ -105,3 +106,4 @@ struct RepeatAllele {
 };
 
 typedef std::vector<RepeatAllele> RepeatGenotype;
+}  // namespace ehunter

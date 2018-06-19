@@ -36,6 +36,8 @@
 #include "common/repeat_spec.h"
 #include "rep_align/rep_align.h"
 
+namespace ehunter {
+
 struct RepeatReadGroup {
   ReadType read_type;
   std::vector<RepeatAlign> rep_aligns;
@@ -63,3 +65,5 @@ void DistributeFlankingReads(const Parameters &parameters,
                              const RepeatSpec &repeat_spec,
                              std::vector<RepeatReadGroup> *read_groups,
                              std::vector<RepeatAlign> *flanking_repaligns);
+
+}  // namespace ehunter

@@ -23,12 +23,14 @@
 #pragma once
 
 #include <map>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "common/genomic_region.h"
-#include "include/read_group.h"
 #include "genotyping/short_repeat_genotyper.h"
+#include "include/read_group.h"
+
+namespace ehunter {
 
 class RegionFindings {
  public:
@@ -43,3 +45,4 @@ class RegionFindings {
   std::vector<int> offtarget_irr_counts;
   RepeatGenotype genotype;
 };
+}  // namespace ehunter

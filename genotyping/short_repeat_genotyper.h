@@ -31,11 +31,12 @@
 
 #include "common/common.h"
 
+namespace ehunter {
 enum class Sex { kMale, kFemale };
 enum class GenotypeType { kHaploid, kDiploid };
 
 class Allele {
-public:
+ public:
   Allele(int num_units_haplotype, int max_num_units_in_read,
          double prop_correct_molecules);
   double propMolecules(int num_units_upper_bound) const;
@@ -43,7 +44,7 @@ public:
   double propMoleculesAtLeast(int num_units_lower_bound) const;
   int num_units() const { return num_units_haplotype_; }
 
-private:
+ private:
   int num_units_haplotype_;
   int max_num_units_in_read_;
   double prop_correct_molecules_;
@@ -52,12 +53,13 @@ private:
 };
 
 class ShortRepeatGenotyper {
-public:
+ public:
   ShortRepeatGenotyper() {}
   ShortRepeatGenotyper(int max_num_units_in_read, double prop_correct_molecules,
                        double hap_depth, int read_len, int num_units_hap1,
                        int num_units_hap2)
-      : max_num_units_in_read_(max_num_units_in_read), hap_depth_(hap_depth),
+      : max_num_units_in_read_(max_num_units_in_read),
+        hap_depth_(hap_depth),
         read_len_(read_len) {
     alleles.push_back(
         Allele(num_units_hap1, max_num_units_in_read, prop_correct_molecules));
@@ -66,7 +68,8 @@ public:
   }
   ShortRepeatGenotyper(int max_num_units_in_read, double prop_correct_molecules,
                        double hap_depth, int read_len, int num_units_hap)
-      : max_num_units_in_read_(max_num_units_in_read), hap_depth_(hap_depth),
+      : max_num_units_in_read_(max_num_units_in_read),
+        hap_depth_(hap_depth),
         read_len_(read_len) {
     alleles.push_back(
         Allele(num_units_hap, max_num_units_in_read, prop_correct_molecules));
@@ -77,7 +80,7 @@ public:
                     const std::map<int, int> &spanning_size_counts,
                     std::vector<AlleleSupport> &support) const;
 
-private:
+ private:
   int max_num_units_in_read_;
   double hap_depth_;
   int read_len_;
@@ -91,3 +94,4 @@ void GenotypeShortRepeat(int max_num_units_in_read,
                          const std::map<int, int> &flanking_size_count,
                          const std::map<int, int> &spanning_size_count,
                          GenotypeType genotype_type, RepeatGenotype &genotype);
+}  // namespace ehunter

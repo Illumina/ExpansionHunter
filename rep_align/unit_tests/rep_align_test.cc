@@ -20,23 +20,23 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include <string>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
+#include "gtest/gtest.h"
 #include "include/read_group.h"
 #include "purity/purity.h"
 #include "rep_align/rep_align.h"
-#include "gtest/gtest.h"
 
 using std::cerr;
 using std::endl;
 using std::string;
 using std::vector;
 
-//**** CountUnitsAtOffset ****
+using namespace ehunter;
 
 TEST(CountUnitsAtOffset, UnitlessSeq_CountZero) {
   const vector<string> units = {"AT"};
