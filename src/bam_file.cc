@@ -74,6 +74,8 @@ BamFile::~BamFile() {
 }
 
 void BamFile::Init(const string &path, const string &reference) {
+  (void) reference;
+
   path_ = path;
   // Open a BAM file for reading.
   hts_file_ptr_ = sam_open(path.c_str(), "r");
@@ -87,6 +89,7 @@ void BamFile::Init(const string &path, const string &reference) {
     format_ = kBamFile;
   }
 
+#ifndef DISABLE_CRAM
   if (hts_file_ptr_->format.format == cram) {
     format_ = kCramFile;
 
@@ -100,12 +103,15 @@ void BamFile::Init(const string &path, const string &reference) {
       throw std::runtime_error("Failed to set reference index");
     }
   }
+#endif
 
   string input_format = "Unknown";
   if (format_ == kBamFile) {
     input_format = "BAM";
+#ifndef DISABLE_CRAM
   } else if (format_ == kCramFile) {
     input_format = "CRAM";
+#endif
   }
 
   cerr << TimeStamp() << ",[Input format: " << input_format << "]" << endl;
@@ -220,8 +226,10 @@ bool BamFile::JumpToUnaligned() {
     }
 
     jump_to_unaligned_ = true;
+#ifndef DISABLE_CRAM
   } else if (hts_file_ptr_->format.format == cram) {
     jump_to_unaligned_ = true;
+#endif
   } else {
     throw std::logic_error("Unknown format");
   }
@@ -233,8 +241,10 @@ bool BamFile::GetRead(Align &align) {
   if (jump_to_unaligned_) {
     if (hts_file_ptr_->format.format == bam) {
       return GetUnalignedPrRead(align);
+#ifndef DISABLE_CRAM
     } else if (hts_file_ptr_->format.format == cram) {
       return cram_suppliment.GetUnalignedRead(align);
+#endif
     } else {
       throw std::logic_error("Unknown format");
     }
@@ -410,6 +420,7 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
 
   const int chrom_count = chrom_names.size();
 
+#ifndef DISABLE_CRAM
   if (format_ == kCramFile) {
     mapped_read_counts =
         cram_suppliment.CountAlignedReads(parameters.bam_path(), chrom_count);
@@ -418,6 +429,7 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
            << mapped_read_counts[i] << endl;
     }
   }
+#endif
 
   typedef std::pair<int, double> ChromIndDepth;
   typedef vector<ChromIndDepth> ChromIndDepths;
@@ -476,9 +488,11 @@ vector<int64_t> CramFile::CountAlignedReads(const string &cram_path,
     throw std::runtime_error("Failed to read the input file");
   }
 
+#ifndef DISABLE_CRAM
   if (file_ptr_->format.format != cram) {
     throw std::runtime_error(cram_path + " is not a CRAM file");
   }
+#endif
 
   header_ptr_ = sam_hdr_read(file_ptr_);
   if (!header_ptr_) {

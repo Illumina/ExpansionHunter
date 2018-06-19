@@ -450,7 +450,11 @@ void EstimateRepeatSizes(const Parameters &parameters,
   cerr << TimeStamp() << ",[All done]" << endl;
 }
 
+#ifdef LIBRARY_TARGET
+int expansionHunter(int argc, char* argv[] ) {
+#else
 int main(int argc, char *argv[]) {
+#endif
   try {
     Parameters parameters;
     cerr << kProgramVersion << endl;
