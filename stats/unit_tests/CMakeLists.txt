@@ -1,3 +1,3 @@
-add_executable(count_test count_test.cc)
-target_link_libraries(count_test stats gmock_main gtest)
-add_test(NAME count_test COMMAND count_test)
+add_executable(ReadSupportCalculatorTest ReadSupportCalculatorTest.cc)
+target_link_libraries(ReadSupportCalculatorTest stats gtest_main)
+add_test(NAME ReadSupportCalculatorTest COMMAND ReadSupportCalculatorTest)

@@ -1,0 +1,156 @@
+[
+{
+    "RepeatStatus": "common",
+    "RepeatId": "AFF2",
+    "RepeatUnit": "GCC",
+    "ReferenceLocus": "chrX:147582152-147582211"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "AR",
+    "RepeatUnit": "GCA",
+    "ReferenceLocus": "chrX:66765159-66765227"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "ATN1",
+    "RepeatUnit": "CAG",
+    "ReferenceLocus": "chr12:7045880-7045936"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "ATXN10",
+    "RepeatUnit": "ATTCT",
+    "ReferenceLocus": "chr22:46191235-46191304"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "ATXN1",
+    "RepeatUnit": "TGC",
+    "ReferenceLocus": "chr6:16327865-16327954"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "ATXN2",
+    "RepeatUnit": "GCT",
+    "ReferenceLocus": "chr12:112036754-112036822"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "ATXN3",
+    "RepeatUnit": "GCT",
+    "ReferenceLocus": "chr14:92537354-92537386"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "PHOX2B",
+    "RepeatUnit": "GCN",
+    "ReferenceLocus": "chr4:41747990-41748049"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "ATXN7",
+    "RepeatUnit": "GCA",
+    "ReferenceLocus": "chr3:63898361-63898390"
+},
+{
+    "RegionId": "ATXN8OS",
+    "RepeatIds": ["ATXN8OS_CTA", "ATXN8OS_CTG"],
+    "RegionStructure": "(CTA)(CTG)",
+    "ReferenceLoci": ["chr13:70713486-70713515", "chr13:70713516-70713560"],
+    "RepeatStatuses": ["common", "common"]
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "C9ORF72",
+    "RepeatUnit": "GGCCCC",
+    "ReferenceLocus": "chr9:27573527-27573544"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "CACNA1A",
+    "RepeatUnit": "CTG",
+    "ReferenceLocus": "chr19:13318673-13318711"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "CBL",
+    "RepeatUnit": "CGG",
+    "ReferenceLocus": "chr11:119077000-119077032"
+},
+{
+    "RegionId": "CNBP",
+    "RepeatIds": ["CNBP_CAGG", "CNBP_CAGA", "CNBP_CA"],
+    "RegionStructure": "(CAGG)(CAGA)(CA)",
+    "ReferenceLoci": ["chr3:128891420-128891499", "chr3:128891500-128891539", "chr3:128891540-128891575"],
+    "RepeatStatuses": ["common", "common", "common"]
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "CSTB",
+    "RepeatUnit": "CGCGGGGCGGGG",
+    "ReferenceLocus": "chr21:45196325-45196360"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "DIP2B",
+    "RepeatUnit": "GGC",
+    "ReferenceLocus": "chr12:50898785-50898805"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "DMPK",
+    "RepeatUnit": "CAG",
+    "ReferenceLocus": "chr19:46273463-46273522"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "FMR1",
+    "RepeatUnit": "CGG",
+    "ReferenceLocus": "chrX:146993569-146993628"
+},
+{
+    "RegionId": "FXN",
+    "RepeatIds": ["FXN_A", "FXN_GAA"],
+    "RegionStructure": "(A)(GAA)",
+    "ReferenceLoci": ["chr9:71652178-71652202", "chr9:71652203-71652220"],
+    "RepeatStatuses": ["common", "common"]
+},
+{
+    "RegionId": "HTT",
+    "RepeatIds": ["HTT_CAG", "HTT_CCG"],
+    "RegionStructure": "(CAG)CAACAG(CCG)",
+    "ReferenceLoci": ["chr4:3076604-3076660", "chr4:3076667-3076693"],
+    "RepeatStatuses": ["common", "common"]
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "JPH3",
+    "RepeatUnit": "CTG",
+    "ReferenceLocus": "chr16:87637894-87637935"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "NOP56",
+    "RepeatUnit": "GGCCTG",
+    "ReferenceLocus": "chr20:2633380-2633403"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "PPP2R2B",
+    "RepeatUnit": "GCT",
+    "ReferenceLocus": "chr5:146258291-146258320"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "TBP",
+    "RepeatUnit": "GCA",
+    "ReferenceLocus": "chr6:170870995-170871105"
+},
+{
+    "RepeatStatus": "common",
+    "RepeatId": "TCF4",
+    "RepeatUnit": "CAG",
+    "ReferenceLocus": "chr18:53253387-53253458"
+}
+]

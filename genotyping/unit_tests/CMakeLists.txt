@@ -1,3 +1,7 @@
-add_executable(short_repeat_genotyper_test short_repeat_genotyper_test.cc)
-target_link_libraries(short_repeat_genotyper_test genotyping gtest_main)
-add_test(NAME short_repeat_genotyper_test COMMAND short_repeat_genotyper_test)
+add_executable(ShortRepeatGenotyperTest ShortRepeatGenotyperTest.cc)
+target_link_libraries(ShortRepeatGenotyperTest genotyping gtest_main)
+add_test(NAME ShortRepeatGenotyperTest COMMAND ShortRepeatGenotyperTest)
+
+add_executable(RepeatGenotypeTest RepeatGenotypeTest.cc)
+target_link_libraries(RepeatGenotypeTest genotyping gtest_main)
+add_test(NAME RepeatGenotypeTest COMMAND RepeatGenotypeTest)

@@ -1,0 +1,3 @@
+add_executable(OrientationPredictorTest OrientationPredictorTest.cc)
+target_link_libraries(OrientationPredictorTest filtering gtest_main)
+add_test(NAME OrientationPredictorTest COMMAND OrientationPredictorTest)

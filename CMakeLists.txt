@@ -4,6 +4,7 @@ project(ExpansionHunter CXX)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 enable_testing()
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(ExternalProject)
 
@@ -61,26 +62,32 @@ set(htslib_static ${CMAKE_BINARY_DIR}/thirdparty/htslib/lib/libhts.a)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Boost 1.4 COMPONENTS program_options filesystem regex date_time system REQUIRED)
+find_package(Boost 1.4 REQUIRED COMPONENTS program_options filesystem regex date_time system)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
+include_directories(thirdparty/graph-tools-GT-506/include)
 
-add_subdirectory(genotyping)
-add_subdirectory(purity)
-add_subdirectory(rep_align)
+add_subdirectory(thirdparty/graph-tools-master)
+add_compile_options(-Werror -pedantic -Wall -Wextra)
 add_subdirectory(common)
-add_subdirectory(stats)
-add_subdirectory(graphs)
+add_subdirectory(genotyping)
+add_subdirectory(reads)
 add_subdirectory(classification)
+add_subdirectory(region_spec)
+add_subdirectory(region_analysis)
+add_subdirectory(sample_analysis)
+add_subdirectory(output)
+add_subdirectory(alignment)
+add_subdirectory(stats)
+add_subdirectory(filtering)
 
 file(GLOB SOURCES "src/*.cc")
-
 add_executable(ExpansionHunter ${SOURCES})
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
+target_link_libraries(ExpansionHunter common genotyping graphtools region_analysis region_spec sample_analysis output alignment filtering stats pthread ${Boost_LIBRARIES})
+install (TARGETS ExpansionHunter DESTINATION bin)
 
 add_dependencies(htslib zlib)
 add_dependencies(common htslib)
-
-target_link_libraries(ExpansionHunter common genotyping purity rep_align stats graphs classification pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})

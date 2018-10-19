@@ -22,20 +22,24 @@
 
 #pragma once
 
-#include <string>
 #include <iostream>
+#include <string>
 
 // Include the fai class from samtools
 #include "htslib/faidx.h"
 
-class RefGenome {
- public:
-  explicit RefGenome(const std::string& genome_path);
-  ~RefGenome();
+#include "common/genomic_region.h"
 
-  void ExtractSeq(const std::string& region, std::string* sequence) const;
+class RefGenome
+{
+public:
+    explicit RefGenome(const std::string& genome_path);
+    ~RefGenome();
 
- private:
-  std::string genome_path_;
-  faidx_t* fai_ptr_;
+    void ExtractSeq(const std::string& region, std::string* sequence) const;
+    std::string ExtractSeq(const Region& region) const;
+
+private:
+    std::string genome_path_;
+    faidx_t* fai_ptr_;
 };

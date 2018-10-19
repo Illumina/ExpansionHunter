@@ -1,5 +1,11 @@
-add_executable(mapping_classifier_test mapping_classifier_test.cc)
+add_executable(alignment_classifier_test alignment_classifier_test.cc)
+target_link_libraries(alignment_classifier_test classification gtest_main)
+add_test(NAME alignment_classifier_test COMMAND alignment_classifier_test)
 
-target_link_libraries(mapping_classifier_test classification gtest_main)
+add_executable(alignment_summary_test alignment_summary_test.cc)
+target_link_libraries(alignment_summary_test classification gtest_main)
+add_test(NAME alignment_summary_test COMMAND alignment_summary_test)
 
-add_test(NAME mapping_classifier_test COMMAND mapping_classifier_test)
+add_executable(InrepeatReadDetectionTest InrepeatReadDetectionTest.cc)
+target_link_libraries(InrepeatReadDetectionTest classification gtest gmock_main)
+add_test(NAME InrepeatReadDetectionTest COMMAND InrepeatReadDetectionTest)

@@ -24,42 +24,43 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
-class Region {
+class Region
+{
 public:
-  friend std::istream &operator>>(std::istream &istrm, Region &region);
-  friend std::ostream &operator<<(std::ostream &ostrm, const Region &region);
+    friend std::ostream& operator<<(std::ostream& out, const Region& region);
 
-  Region();
-  Region(const std::string &chrom, int64_t start, int64_t end,
-         const std::string &labelStr = std::string());
-  Region(const std::string &rangeStr,
-         const std::string &labelStr = std::string());
+    Region(const std::string chrom, int64_t start, int64_t end);
+    Region(const std::string encoding);
 
-  bool is_set() const { return (chrom_ != "chr0"); }
-  bool operator<(const Region &other_region) const;
+    bool operator<(const Region& other) const;
 
-  bool Overlaps(const Region &other_region) const;
+    bool Overlaps(const Region& other) const;
+    int64_t Distance(const Region& other) const;
 
-  Region Extend(int extension_len) const;
+    const std::string& chrom() const { return chrom_; }
+    int64_t start() const { return start_; }
+    int64_t end() const { return end_; }
+    int64_t length() const { return end_ - start_ + 1; }
 
-  const std::string &chrom() const { return chrom_; }
-  const int64_t start() const { return start_; }
-  const int64_t end() const { return end_; }
-  const std::string &label() const { return label_; }
+    void setChrom(const std::string& chrom) { chrom_ = chrom; }
+    void setStart(int64_t start) { start_ = start; }
+    void setEnd(int64_t end) { end_ = end; }
+    bool operator==(const Region& other) const
+    {
+        return chrom_ == other.chrom_ && start_ == other.start_ && end_ == other.end_;
+    }
+    bool operator!=(const Region& other) const { return !(*this == other); }
 
-  void set_start(int64_t start) { start_ = start; }
-  void set_end(int64_t end) { end_ = end; }
-  void set_label(const std::string &label) { label_ = label; }
-
-  const std::string ToString() const;
+    Region Extend(int length) const;
+    const std::string ToString() const;
 
 private:
-  std::string chrom_;
-  int64_t start_;
-  int64_t end_;
-  std::string label_;
+    std::string chrom_;
+    int64_t start_;
+    int64_t end_;
 };
 
-std::istream &operator>>(std::istream &istrm, Region &region);
-std::ostream &operator<<(std::ostream &ostrm, const Region &region);
+std::vector<Region> merge(std::vector<Region> regions, int maxMergeDist = 500);
+std::ostream& operator<<(std::ostream& out, const Region& region);

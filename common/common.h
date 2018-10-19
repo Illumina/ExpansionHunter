@@ -25,80 +25,78 @@
 #include <map>
 #include <ostream>
 #include <string>
+#include <vector>
 
-
-enum class ReadType { kSpanning, kFlanking, kInrepeat, kOther };
-const std::map<ReadType, std::string> kReadTypeToString = {
-    {ReadType::kInrepeat, "INREPEAT"},
-    {ReadType::kSpanning, "SPANNING"},
-    {ReadType::kFlanking, "FLANKING"},
-    {ReadType::kOther, "OTHER"}};
-
-struct Read {
-  std::string name;
-  std::string bases;
-  std::string quals;
+enum class ReadType
+{
+    kSpanning,
+    kFlanking,
+    kRepeat,
+    kOther
 };
 
-class AlleleSupport {
+enum class Sex
+{
+    kMale,
+    kFemale
+};
+
+enum class AlleleCount
+{
+    kZero,
+    kOne,
+    kTwo
+};
+
+class NumericInterval
+{
 public:
-  AlleleSupport() : num_spanning_(0), num_flanking_(0), num_inrepeat_(0) {}
-  AlleleSupport(int num_spanning, int num_flanking, int num_inrepeat)
-      : num_spanning_(num_spanning), num_flanking_(num_flanking),
-        num_inrepeat_(num_inrepeat) {}
+    NumericInterval()
+        : start_(0)
+        , end_(0)
+    {
+    }
 
-  int num_spanning() const { return num_spanning_; }
-  int num_flanking() const { return num_flanking_; }
-  int num_inrepeat() const { return num_inrepeat_; }
+    NumericInterval(int start, int end)
+        : start_(start)
+        , end_(end)
+    {
+    }
 
-  void set_num_spanning(int num_spanning) { num_spanning_ = num_spanning; }
-  void set_num_flanking(int num_flanking) { num_flanking_ = num_flanking; }
-  void set_num_inrepeat(int num_inrepeat) { num_inrepeat_ = num_inrepeat; }
+    int start() const { return start_; }
+    int end() const { return end_; }
 
-  std::string ToString() const {
-    return std::to_string(num_spanning_) + "-" + std::to_string(num_flanking_) +
-           "-" + std::to_string(num_inrepeat_);
-  }
+    NumericInterval& operator=(const NumericInterval& other)
+    {
+        start_ = other.start_;
+        end_ = other.end_;
+        return *this;
+    }
 
-  bool operator==(const AlleleSupport &rhs) const {
-    return num_spanning_ == rhs.num_spanning_ &&
-           num_flanking_ == rhs.num_flanking_ &&
-           num_inrepeat_ == rhs.num_inrepeat_;
-  }
+    bool operator==(const NumericInterval& other) const { return start_ == other.start_ && end_ == other.end_; }
 
 private:
-  int num_spanning_;
-  int num_flanking_;
-  int num_inrepeat_;
+    int start_;
+    int end_;
 };
 
-struct Interval {
-  Interval() : lower_bound_(-1), upper_bound_(-1) {}
-  int lower_bound_;
-  int upper_bound_;
-  bool operator==(const Interval &rhs) const {
-    return lower_bound_ == rhs.lower_bound_ && upper_bound_ == rhs.upper_bound_;
-  }
-  std::string ToString() const {
-    return std::to_string(lower_bound_) + "-" + std::to_string(upper_bound_);
-  }
+template <typename T> struct LabeledSequence
+{
+    LabeledSequence(const std::string sequence, T label)
+        : sequence(sequence)
+        , label(label)
+    {
+    }
+
+    bool operator==(const LabeledSequence<T>& other) const
+    {
+        return sequence == other.sequence && label == other.label;
+    }
+
+    std::string sequence;
+    T label;
 };
 
-struct RepeatAllele {
-  RepeatAllele(int size, int num_supporting_reads, ReadType type)
-      : size_(size), num_supporting_reads_(num_supporting_reads), type_(type) {}
-  RepeatAllele(int size, ReadType type, AlleleSupport support)
-      : size_(size), type_(type), num_supporting_reads_(-1), support_(support) {}
-  bool operator==(const RepeatAllele &rhs) const {
-    return size_ == rhs.size_ && ci_ == rhs.ci_ && support_ == rhs.support_ &&
-           type_ == rhs.type_ &&
-           num_supporting_reads_ == rhs.num_supporting_reads_;
-  }
-  int size_;
-  Interval ci_;
-  AlleleSupport support_; // TODO: Rename to "consistent".
-  int num_supporting_reads_;
-  ReadType type_;
-};
-
-typedef std::vector<RepeatAllele> RepeatGenotype;
+std::ostream& operator<<(std::ostream& out, ReadType readType);
+std::ostream& operator<<(std::ostream& out, AlleleCount alleleCount);
+std::ostream& operator<<(std::ostream& out, NumericInterval numericInterval);

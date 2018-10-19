@@ -23,32 +23,42 @@
 #include "common/ref_genome.h"
 
 #include <algorithm>
-#include <string>
 #include <stdexcept>
+#include <string>
 
 using std::string;
 
-RefGenome::RefGenome(const string& genome_path) : genome_path_(genome_path) {
-  fai_ptr_ = fai_load(genome_path_.c_str());
+RefGenome::RefGenome(const string& genome_path)
+    : genome_path_(genome_path)
+{
+    fai_ptr_ = fai_load(genome_path_.c_str());
 }
 
 RefGenome::~RefGenome() { fai_destroy(fai_ptr_); }
 
 // Load reference sequence specified by region.
-void RefGenome::ExtractSeq(const string& region, string* sequence) const {
-  int len;  // throwaway...
+void RefGenome::ExtractSeq(const string& region, string* sequence) const
+{
+    int len; // throwaway...
 
-  char* ref_tmp = fai_fetch(fai_ptr_, region.c_str(), &len);
+    char* ref_tmp = fai_fetch(fai_ptr_, region.c_str(), &len);
 
-  if (!ref_tmp || len == -1 || len == -2) {
-    throw std::runtime_error("ERROR: can't extract " + region + " from "
-        + genome_path_ + "; in particular, chromosome names must match "
-        "exactly (e.g. \"chr1\" and \"1\" are distinct names)");
-  }
+    if (!ref_tmp || len == -1 || len == -2)
+    {
+        throw std::runtime_error(
+            "ERROR: can't extract " + region + " from " + genome_path_
+            + "; in particular, chromosome names must match "
+              "exactly (e.g. \"chr1\" and \"1\" are distinct names)");
+    }
 
-  sequence->assign(ref_tmp);
-  free(ref_tmp);
+    sequence->assign(ref_tmp);
+    free(ref_tmp);
 
-  std::transform(sequence->begin(), sequence->end(), sequence->begin(),
-                 ::toupper);
+    std::transform(sequence->begin(), sequence->end(), sequence->begin(), ::toupper);
+}
+
+string RefGenome::ExtractSeq(const Region& region) const
+{
+    int length;
+    return faidx_fetch_seq(fai_ptr_, region.chrom().c_str(), region.start(), region.end(), &length);
 }

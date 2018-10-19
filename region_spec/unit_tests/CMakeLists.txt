@@ -1,0 +1,7 @@
+add_executable(region_spec_test region_spec_test.cc)
+target_link_libraries(region_spec_test region_spec gtest gmock_main)
+add_test(NAME region_spec_test COMMAND region_spec_test)
+
+add_executable(region_graph_test region_graph_test.cc)
+target_link_libraries(region_graph_test region_spec gtest gmock_main)
+add_test(NAME region_graph_test COMMAND region_graph_test)

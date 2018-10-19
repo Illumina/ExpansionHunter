@@ -22,105 +22,148 @@
 
 #include "common/genomic_region.h"
 
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/lexical_cast.hpp>
 
-#include <vector>
-#include <string>
-#include <iostream>
+#include <limits>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
-using boost::algorithm::split;
-using boost::algorithm::is_any_of;
-using boost::lexical_cast;
-
-using std::vector;
-using std::ostream;
 using std::istream;
-using std::endl;
-using std::cerr;
+using std::ostream;
 using std::string;
+using std::vector;
 
-Region::Region() : chrom_("chr0"), start_(0), end_(0) {}
+using boost::lexical_cast;
+using boost::algorithm::is_any_of;
+using boost::algorithm::split;
 
-Region::Region(const string &chrom, int64_t start, int64_t end,
-               const string &label)
-    : chrom_(chrom), start_(start), end_(end), label_(label) {}
-
-Region::Region(const string &encoding, const string &label) : label_(label) {
-  vector<string> components;
-  split(components, encoding, is_any_of(":-"));
-
-  if (components.size() != 3) {
-    throw std::logic_error("Unexpected range format: " + encoding);
-  }
-
-  chrom_ = components[0];
-  start_ = lexical_cast<int64_t>(components[1]);
-  end_ = lexical_cast<int64_t>(components[2]);
+Region::Region(const std::string chrom, int64_t start, int64_t end)
+    : chrom_(chrom)
+    , start_(start)
+    , end_(end)
+{
 }
 
-bool Region::operator<(const Region &other_region) const {
-  if (chrom_ != other_region.chrom_) {
-    return chrom_ < other_region.chrom_;
-  }
+Region::Region(const std::string encoding)
+{
+    vector<string> components;
+    boost::algorithm::split(components, encoding, is_any_of(":-"));
 
-  if (start_ != other_region.start_) {
-    return start_ < other_region.start_;
-  }
+    if (components.size() != 3)
+    {
+        throw std::logic_error("Unexpected range format: " + encoding);
+    }
 
-  return end_ < other_region.end_;
+    chrom_ = components[0];
+    start_ = lexical_cast<int64_t>(components[1]);
+    end_ = lexical_cast<int64_t>(components[2]);
 }
 
-bool Region::Overlaps(const Region &other_region) const {
-  if (chrom_ != other_region.chrom_) {
-    return false;
-  }
+bool Region::operator<(const Region& other) const
+{
+    if (chrom_ != other.chrom_)
+    {
+        return chrom_ < other.chrom_;
+    }
 
-  const int64_t left_bound =
-      start_ > other_region.start_ ? start_ : other_region.start_;
-  const int64_t right_bound =
-      end_ < other_region.end_ ? end_ : other_region.end_;
+    if (start_ != other.start_)
+    {
+        return start_ < other.start_;
+    }
 
-  return left_bound <= right_bound;
+    return end_ < other.end_;
+}
+
+bool Region::Overlaps(const Region& other) const
+{
+    if (chrom_ != other.chrom_)
+    {
+        return false;
+    }
+
+    const int64_t leftBound = start_ > other.start_ ? start_ : other.start_;
+    const int64_t rightBound = end_ < other.end_ ? end_ : other.end_;
+
+    return leftBound <= rightBound;
+}
+
+int64_t Region::Distance(const Region& other) const
+{
+    if (chrom_ != other.chrom_)
+    {
+        return std::numeric_limits<int64_t>::max();
+    }
+
+    if (end_ < other.start_)
+    {
+        return other.start_ - end_;
+    }
+
+    if (other.end_ < start_)
+    {
+        return start_ - other.end_;
+    }
+
+    return 0;
+}
+
+vector<Region> merge(vector<Region> regions, int maxMergeDist)
+{
+    if (regions.empty())
+    {
+        return regions;
+    }
+
+    std::sort(regions.begin(), regions.end());
+
+    Region mergedRegion = regions.front();
+    vector<Region> mergedRegions;
+
+    for (const auto& currentRegion : regions)
+    {
+        if (currentRegion.Distance(mergedRegion) <= maxMergeDist)
+        {
+            const int64_t furthestEnd = std::max<int64_t>(mergedRegion.end(), currentRegion.end());
+            mergedRegion.setEnd(furthestEnd);
+        }
+        else
+        {
+            mergedRegions.push_back(mergedRegion);
+            mergedRegion = currentRegion;
+        }
+    }
+
+    if (mergedRegions.empty() || (mergedRegions.back() != mergedRegion))
+    {
+        mergedRegions.push_back(mergedRegion);
+    }
+
+    return mergedRegions;
+}
+
+const string Region::ToString() const
+{
+    std::ostringstream out;
+    out << *this;
+    return out.str();
 }
 
 // Returns the range extended by flankSize upstream and downstream.
 // NOTE: The right boundary of the extended region may stick past chromosome
 // end.
-Region Region::Extend(int extension_len) const {
-  const int64_t new_start =
-      start_ > extension_len ? (start_ - extension_len) : 1;
-  const int64_t new_end = end_ + extension_len;
-  return Region(chrom_, new_start, new_end);
+Region Region::Extend(int length) const
+{
+    const int64_t new_start = start_ > length ? (start_ - length) : 1;
+    const int64_t new_end = end_ + length;
+    return Region(chrom_, new_start, new_end);
 }
 
-const string Region::ToString() const {
-  std::ostringstream ostrm;
-  ostrm << *this;
-  return ostrm.str();
-}
-
-istream &operator>>(istream &istrm, Region &region) {
-  string encoding;
-  istrm >> encoding;
-  region = Region(encoding);
-
-  return istrm;
-}
-
-ostream &operator<<(ostream &ostrm, const Region &region) {
-  ostrm << region.chrom_ << ':' << region.start_;
-
-  if (region.end_ != region.start_) {
-    ostrm << '-' << region.end_;
-  }
-
-  if (!region.label_.empty()) {
-    ostrm << " " << region.label_;
-  }
-
-  return ostrm;
+std::ostream& operator<<(std::ostream& out, const Region& region)
+{
+    out << region.chrom_ << ":" << region.start_ << "-" << region.end_;
+    return out;
 }
