@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -69,12 +71,40 @@ static char complementBase(char base)
     {
     case 'A':
         return 'T';
+    case 'a':
+        return 't';
     case 'C':
         return 'G';
+    case 'c':
+        return 'g';
     case 'G':
         return 'C';
+    case 'g':
+        return 'c';
     case 'T':
         return 'A';
+    case 't':
+        return 'a';
+    case 'R':
+        return 'Y';
+    case 'Y':
+        return 'R';
+    case 'K':
+        return 'M';
+    case 'M':
+        return 'K';
+    case 'S':
+        return 'S';
+    case 'W':
+        return 'W';
+    case 'B':
+        return 'V';
+    case 'D':
+        return 'H';
+    case 'H':
+        return 'D';
+    case 'V':
+        return 'B';
     default:
         return 'N';
     }

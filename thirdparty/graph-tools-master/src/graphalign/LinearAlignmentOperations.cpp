@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -49,11 +51,6 @@ bool checkConsistency(const Alignment& alignment, const string& reference, const
 
     if (!does_alignment_span_whole_query || !is_alignment_within_reference)
     {
-        // std::cerr << "does_alignment_span_whole_query=" << does_alignment_span_whole_query << std::endl;
-        // std::cerr << "is_alignment_within_reference=" << is_alignment_within_reference << std::endl;
-        // std::cerr << "alignment.referenceStart()=" << alignment.referenceStart() << std::endl;
-        // std::cerr << "alignment.referenceLength()=" << alignment.referenceLength() << std::endl;
-        // std::cerr << "reference.length()=" << reference.length() << std::endl;
         return false;
     }
 
@@ -67,10 +64,6 @@ bool checkConsistency(const Alignment& alignment, const string& reference, const
 
         if (!checkConsistency(operation, reference_piece, query_piece))
         {
-            // std::cerr << "operation=" << operation << std::endl;
-            // std::cerr << "reference_piece=" << reference_piece << std::endl;
-            // std::cerr << "query_piece=" << query_piece << std::endl;
-
             return false;
         }
 

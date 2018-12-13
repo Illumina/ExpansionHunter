@@ -29,49 +29,55 @@ extern "C"
 #include "htslib/sam.h"
 }
 
-#include "common/genomic_region.h"
-#include "reads/read.h"
+#include "common/GenomicRegion.hh"
+#include "reads/Read.hh"
+
+namespace ehunter
+{
 
 namespace htshelpers
 {
 
-class HtsFileSeeker
-{
-public:
-    HtsFileSeeker(const std::string& htsFilePath);
-    ~HtsFileSeeker();
-    void setRegion(const Region& region);
-    bool trySeekingToNextPrimaryAlignment();
-
-    int32_t currentReadChromIndex() const;
-    const std::string& currentReadChrom() const;
-    int32_t currentReadPosition() const;
-    int32_t currentMateChromIndex() const;
-    const std::string& currentMateChrom() const;
-    int32_t currentMatePosition() const;
-
-    reads::Read decodeRead(reads::LinearAlignmentStats& alignmentStats) const;
-
-private:
-    enum class Status
+    class HtsFileSeeker
     {
-        kStreamingReads,
-        kFinishedStreaming
+    public:
+        HtsFileSeeker(const std::string& htsFilePath);
+        ~HtsFileSeeker();
+        void setRegion(const Region& region);
+        bool trySeekingToNextPrimaryAlignment();
+
+        int32_t currentReadChromIndex() const;
+        const std::string& currentReadChrom() const;
+        int32_t currentReadPosition() const;
+        int32_t currentMateChromIndex() const;
+        const std::string& currentMateChrom() const;
+        int32_t currentMatePosition() const;
+
+        reads::Read decodeRead(reads::LinearAlignmentStats& alignmentStats) const;
+
+    private:
+        enum class Status
+        {
+            kStreamingReads,
+            kFinishedStreaming
+        };
+
+        void openFile();
+        void loadHeader();
+        void loadIndex();
+        void closeRegion();
+
+        const std::string htsFilePath_;
+        std::vector<std::string> contigNames_;
+        Status status_ = Status::kFinishedStreaming;
+
+        htsFile* htsFilePtr_ = nullptr;
+        bam_hdr_t* htsHeaderPtr_ = nullptr;
+        hts_idx_t* htsIndexPtr_ = nullptr;
+        hts_itr_t* htsRegionPtr_ = nullptr;
+        bam1_t* htsAlignmentPtr_ = nullptr;
     };
 
-    void openFile();
-    void loadHeader();
-    void loadIndex();
-    void closeRegion();
+}
 
-    const std::string htsFilePath_;
-    std::vector<std::string> contigNames_;
-    Status status_ = Status::kFinishedStreaming;
-
-    htsFile* htsFilePtr_ = nullptr;
-    bam_hdr_t* htsHeaderPtr_ = nullptr;
-    hts_idx_t* htsIndexPtr_ = nullptr;
-    hts_itr_t* htsRegionPtr_ = nullptr;
-    bam1_t* htsAlignmentPtr_ = nullptr;
-};
 }

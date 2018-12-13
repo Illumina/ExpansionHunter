@@ -18,55 +18,58 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#pragma once
+
+#include <memory>
 #include <string>
 #include <vector>
 
 #include <boost/optional.hpp>
 
+#include "thirdparty/spdlog/fmt/ostr.h"
+#include "thirdparty/spdlog/spdlog.h"
+
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
 
-#include "classification/alignment_classifier.h"
-#include "common/common.h"
+#include "classification/AlignmentClassifier.hh"
 #include "genotyping/RepeatGenotype.hh"
-#include "reads/read.h"
-#include "region_analysis/RepeatFindings.hh"
+#include "reads/Read.hh"
+#include "region_analysis/VariantAnalyzer.hh"
 
-class RepeatAnalyzer
+namespace ehunter
+{
+
+class RepeatAnalyzer : public VariantAnalyzer
 {
 public:
     RepeatAnalyzer(
-        const std::string& repeatId, graphtools::Graph graph, AlleleCount expectedAlleleCount,
+        std::string variantId, AlleleCount expectedAlleleCount, const graphtools::Graph& graph,
         graphtools::NodeId repeatNodeId, double haplotypeDepth, int32_t maxNumUnitsInRead)
-        : repeatId_(repeatId)
-        , expectedAlleleCount_(expectedAlleleCount)
-        , repeatNodeId_(repeatNodeId)
+        : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, { repeatNodeId })
         , maxNumUnitsInRead_(maxNumUnitsInRead)
         , haplotypeDepth_(haplotypeDepth)
-        , repeatUnit_(graph.nodeSeq(repeatNodeId_))
+        , repeatUnit_(graph.nodeSeq(repeatNodeId))
         , alignmentClassifier_(graph, repeatNodeId)
     {
+        verboseLogger_ = spdlog::get("verbose");
     }
 
-    const std::string& repeatId() const { return repeatId_; }
+    ~RepeatAnalyzer() = default;
+
     void processMates(
-        const std::string& readName, const std::string& readSequence,
-        boost::optional<graphtools::GraphAlignment> readAlignment, const std::string& mateName,
-        const std::string& mateSequence, boost::optional<graphtools::GraphAlignment> mateAlignment);
+        const reads::Read& read, const graphtools::GraphAlignment& readAlignment, const reads::Read& mate,
+        const graphtools::GraphAlignment& mateAlignment) override;
 
-    RepeatFindings analyzeCommonRepeat() const;
-
-    bool operator==(const RepeatAnalyzer& other) const;
+    std::unique_ptr<VariantFindings> analyze() const override;
 
 private:
+    graphtools::NodeId repeatNodeId() const { return nodeIds_.front(); }
     boost::optional<RepeatGenotype> genotypeCommonRepeat(const std::vector<int32_t>& candidateAlleleSizes) const;
     reads::RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
     void summarizeAlignmentsToReadCounts(const reads::RepeatAlignmentStats& repeatAlignmentStats);
     std::vector<int32_t> generateCandidateAlleleSizes() const;
 
-    const std::string repeatId_;
-    const AlleleCount expectedAlleleCount_;
-    const graphtools::NodeId repeatNodeId_;
     const int32_t maxNumUnitsInRead_;
     const double haplotypeDepth_;
 
@@ -75,5 +78,9 @@ private:
 
     CountTable countsOfSpanningReads_;
     CountTable countsOfFlankingReads_;
-    CountTable countsOfRepeatReads_;
+    CountTable countsOfInrepeatReads_;
+
+    std::shared_ptr<spdlog::logger> verboseLogger_;
 };
+
+}

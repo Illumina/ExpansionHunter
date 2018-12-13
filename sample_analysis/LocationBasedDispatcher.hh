@@ -23,9 +23,12 @@
 #include <memory>
 #include <string>
 
-#include "reads/read.h"
+#include "reads/Read.hh"
 #include "region_analysis/RegionAnalyzer.hh"
 #include "sample_analysis/LocationBasedAnalyzerFinder.hh"
+
+namespace ehunter
+{
 
 class LocationBasedDispatcher
 {
@@ -41,3 +44,5 @@ private:
     using ReadCatalog = std::unordered_map<std::string, reads::Read>;
     ReadCatalog unpairedReads_;
 };
+
+}

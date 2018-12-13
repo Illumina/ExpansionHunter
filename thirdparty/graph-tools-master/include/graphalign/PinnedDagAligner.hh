@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Roman Petrovski <RPetrovski@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -35,6 +37,7 @@
 #include "graphalign/DagAlignerAffine.hh"
 #include "graphalign/GraphAlignment.hh"
 #include "graphalign/Operation.hh"
+#include "graphalign/dagAligner/BaseMatchingPenaltyMatrix.hh"
 #include "graphcore/Graph.hh"
 #include "graphcore/Path.hh"
 
@@ -43,10 +46,30 @@ namespace graphtools
 
 using PathAndAlignment = std::pair<Path, Alignment>;
 
-inline std::ostream& operator<<(std::ostream& os, const std::pair<int, int>& edge)
+template <bool penalizeMove, bool clipFront = true>
+class BaseMatchingDagAligner : public graphalign::dagAligner::Aligner<
+                                   graphalign::dagAligner::AffineAlignMatrixVectorized<
+                                       graphalign::dagAligner::BaseMatchingPenaltyMatrix, penalizeMove>,
+                                   clipFront>
 {
-    return os << "{" << edge.first << "," << edge.second << "}";
-}
+    typedef graphalign::dagAligner::BaseMatchingPenaltyMatrix PenaltyMatrix;
+    typedef graphalign::dagAligner::Score Score;
+
+public:
+    BaseMatchingDagAligner(const PenaltyMatrix& penaltyMatrix, Score gapOpen, Score gapExt)
+        : graphalign::dagAligner::Aligner<
+              graphalign::dagAligner::AffineAlignMatrixVectorized<PenaltyMatrix, penalizeMove>, clipFront>(
+              penaltyMatrix, gapOpen, gapExt)
+    {
+    }
+
+    BaseMatchingDagAligner(graphalign::dagAligner::Score match, Score mismatch, Score gapOpen, Score gapExt)
+        : graphalign::dagAligner::Aligner<
+              graphalign::dagAligner::AffineAlignMatrixVectorized<PenaltyMatrix, penalizeMove>, clipFront>(
+              PenaltyMatrix(match, mismatch), gapOpen, gapExt)
+    {
+    }
+};
 
 /**
  * Performs alignment of query pieces that start or end at the seed in the graph
@@ -55,7 +78,7 @@ class PinnedDagAligner
 {
     typedef std::pair<int, int> Edge;
     typedef std::vector<Edge> Edges;
-    graphalign::DagAligner<true, false, false, true> aligner_;
+    BaseMatchingDagAligner<true, false> aligner_;
 
     static void appendOperation(OperationType type, uint32_t length, std::list<Operation>& operations)
     {
@@ -73,19 +96,7 @@ class PinnedDagAligner
     static void parseGraphCigar(
         const GraphT& graph, const graphalign::dagAligner::Cigar& cigar, PathT& path, std::list<Operation>& operations)
     {
-        //        std::cerr << "cigar:" << cigar << std::endl;
-
         using namespace graphalign::dagAligner;
-        //        std::cerr << "path.lastNodeId()=" << path.lastNodeId() <<
-        // std::endl;
-        //        std::cerr << "path.endPosition()=" << path.endPosition() <<
-        // std::endl;
-        // this nonsense is here to deal with the fact that once we start on node,
-        // it is assumed
-        // that we already cover the first base. Or in other words because path end
-        // position
-        // points to the last base covered, not one behind it...
-        int nodeStarting = 0;
         for (const Cigar::Operation& op : cigar)
         {
             if (Cigar::NODE_START == op.code_)
@@ -93,10 +104,7 @@ class PinnedDagAligner
                 if (path.lastNodeId() != op.value_
                     || std::size_t(path.endPosition()) == graph.nodeSeq(op.value_).length())
                 {
-                    //                    std::cerr << "extendEndToNode:" << op.value_ <<
-                    // std::endl;
                     path.extendEndToNode(op.value_);
-                    // nodeStarting = 1;
                 }
             }
             else if (Cigar::NODE_END == op.code_)
@@ -108,19 +116,13 @@ class PinnedDagAligner
                 case Cigar::MATCH:
                 {
                     appendOperation(OperationType::kMatch, op.value_, operations);
-                    //                        std::cerr << "shiftEndAlongNode:" <<
-                    // op.value_ << std::endl;
-                    path.shiftEndAlongNode(op.value_ - nodeStarting);
-                    nodeStarting = 0;
+                    path.shiftEndAlongNode(op.value_);
                     break;
                 }
                 case Cigar::MISMATCH:
                 {
                     appendOperation(OperationType::kMismatch, op.value_, operations);
-                    //                        std::cerr << "shiftEndAlongNode:" <<
-                    // op.value_ << std::endl;
-                    path.shiftEndAlongNode(op.value_ - nodeStarting);
-                    nodeStarting = 0;
+                    path.shiftEndAlongNode(op.value_);
                     break;
                 }
                 case Cigar::INSERT:
@@ -136,10 +138,7 @@ class PinnedDagAligner
                 case Cigar::DELETE:
                 {
                     appendOperation(OperationType::kDeletionFromRef, op.value_, operations);
-                    //                        std::cerr << "shiftEndAlongNode:" <<
-                    // op.value_ << std::endl;
-                    path.shiftEndAlongNode(op.value_ - nodeStarting);
-                    nodeStarting = 0;
+                    path.shiftEndAlongNode(op.value_);
                     break;
                 }
                 default:
@@ -220,42 +219,30 @@ public:
             target, originalIds);
         edges.push_back(Edge(target.length(), target.length()));
 
-        const EdgeMap alignerEdges(edges, nodeIds);
-        // std::cerr << "alignerEdges:" << alignerEdges << std::endl;
-
-        aligner_.align(queryPiece.begin(), queryPiece.end(), target.begin(), target.end(), alignerEdges);
-
         std::list<PathAndAlignment> ret;
-        std::vector<Cigar> cigars;
-        Score secondBestScore = 0;
-        Score bestScore = aligner_.backtrackAllPaths<false>(alignerEdges, cigars, secondBestScore);
-
-        score = bestScore;
-        for (Cigar& cigar : cigars)
+        if (!target.empty())
         {
-            fixFirstNodeExpansion(nodeIds, originalIds, seedPath, cigar);
+            const EdgeMap alignerEdges(edges, nodeIds);
 
-            unmapNodeIds(originalIds, cigar);
+            aligner_.align(queryPiece.begin(), queryPiece.end(), target.begin(), target.end(), alignerEdges);
 
-            // std::cerr << "prefixAlign unmapped: " << cigar << std::endl;
+            std::vector<Cigar> cigars;
+            Score secondBestScore = 0;
+            Score bestScore = aligner_.backtrackAllPaths<false>(alignerEdges, cigars, secondBestScore);
 
-            Path path = seedPath;
-            std::list<Operation> operations;
-            parseGraphCigar(*seedPath.graphRawPtr(), cigar, path, operations);
+            score = bestScore;
+            for (Cigar& cigar : cigars)
+            {
+                fixFirstNodeExpansion(nodeIds, originalIds, seedPath, cigar);
 
-            // std::cerr << seedPath << "(" << seedPath.seq() << ")" << std::endl;
-            ret.push_back(PathAndAlignment(path, Alignment(seedPath.seq().length(), operations)));
+                unmapNodeIds(originalIds, cigar);
 
-            //            // first alignment position is either one after seed path end position or
-            //            // the position 0 of the next node
-            //            ret.push_back(PathAndAlignment(
-            //                path,
-            //                Alignment(seedPath.seq().length(),
-            ////                    seedPath.graphRawPtr()->nodeSeq(seedPath.nodeIds().back()).length()
-            ////                            == std::size_t(seedPath.endPosition())
-            ////                        ? 0
-            ////                        : seedPath.seq().length(),
-            //                    operations)));
+                Path path = seedPath;
+                std::list<Operation> operations;
+                parseGraphCigar(*seedPath.graphRawPtr(), cigar, path, operations);
+
+                ret.push_back(PathAndAlignment(path, Alignment(seedPath.seq().length(), operations)));
+            }
         }
 
         return ret;
@@ -280,37 +267,35 @@ public:
             ConstReversePath(seedPath).endPosition(), extensionLen, nodeIds, edges, target, originalIds);
         edges.push_back(Edge(target.length(), target.length()));
 
-        const EdgeMap alignerEdges(edges, nodeIds);
-        // std::cerr << "alignerEdges:" << alignerEdges << std::endl;
-
-        std::reverse(queryPiece.begin(), queryPiece.end());
-        aligner_.align(queryPiece.begin(), queryPiece.end(), target.begin(), target.end(), alignerEdges);
-
         std::list<PathAndAlignment> ret;
-        std::vector<Cigar> cigars;
-        Score secondBestScore = 0;
-        Score bestScore = aligner_.backtrackAllPaths<false>(alignerEdges, cigars, secondBestScore);
-
-        score = bestScore;
-        for (Cigar& cigar : cigars)
+        if (!target.empty())
         {
-            // std::cerr << "suffixAlign: " << cigar << std::endl;
+            const EdgeMap alignerEdges(edges, nodeIds);
 
-            fixFirstNodeExpansion(nodeIds, originalIds, ConstReversePath(seedPath), cigar);
+            std::reverse(queryPiece.begin(), queryPiece.end());
+            aligner_.align(queryPiece.begin(), queryPiece.end(), target.begin(), target.end(), alignerEdges);
 
-            unmapNodeIds(originalIds, cigar);
+            std::vector<Cigar> cigars;
+            Score secondBestScore = 0;
+            Score bestScore = aligner_.backtrackAllPaths<false>(alignerEdges, cigars, secondBestScore);
 
-            // std::cerr << "suffixAlign unmapped: " << cigar << std::endl;
+            score = bestScore;
+            for (Cigar& cigar : cigars)
+            {
+                fixFirstNodeExpansion(nodeIds, originalIds, ConstReversePath(seedPath), cigar);
 
-            Path path = seedPath;
-            ReversePath rp(path);
-            std::list<Operation> operations;
-            parseGraphCigar(rg, cigar, rp, operations);
-            operations.reverse();
+                unmapNodeIds(originalIds, cigar);
 
-            // reversed alignments always start at the beginning of the path because
-            // the seed path gets start-extended to incorporate them
-            ret.push_back(PathAndAlignment(path, Alignment(0, operations)));
+                Path path = seedPath;
+                ReversePath rp(path);
+                std::list<Operation> operations;
+                parseGraphCigar(rg, cigar, rp, operations);
+                operations.reverse();
+
+                // reversed alignments always start at the beginning of the path because
+                // the seed path gets start-extended to incorporate them
+                ret.push_back(PathAndAlignment(path, Alignment(0, operations)));
+            }
         }
 
         return ret;
@@ -323,12 +308,8 @@ private:
     {
         std::map<NodeId, int> nodeStartSeqOffset;
 
-        // std::cerr << "extractSubgraph seqLen=" << seqLen << std::endl;
-
         if (graph.nodeSeq(startNodeId).length() == startNodeOffset)
         {
-            // std::cerr << "empty startNodeId=" << startNodeId << std::endl;
-
             // flag empty start node in a special way
             nodeStartSeqOffset[startNodeId] = -1;
         }
@@ -342,18 +323,14 @@ private:
         std::deque<NodeId> shouldVisit(1, startNodeId);
 
         // extract longest subgraph of nodes such that each node begins within
-        // seqLen from the
-        // start of the start node
+        // seqLen from the start of the start node
         while (!shouldVisit.empty())
         {
             const NodeId currentNodeId = shouldVisit.front();
             shouldVisit.pop_front();
-            // std::cerr << "extractSubgraph currentNodeId=" << currentNodeId << std::endl;
 
             const std::string& currentNodeSeq = graph.nodeSeq(currentNodeId);
             const int currentNodeSeqOffset = nodeStartSeqOffset[currentNodeId];
-            //            std::cerr << "extractSubgraph currentNodeSeqOffset=" <<
-            // currentNodeSeqOffset << std::endl;
 
             // avoid dealing with individual node startNodeOffset (only start node has it)
             // by pretending the sequence starts at the start node start
@@ -365,23 +342,14 @@ private:
                 const std::set<NodeId>& successors = graph.successors(currentNodeId);
                 for (const NodeId successorId : successors)
                 {
-                    // std::cerr << "successor:" << currentNodeId << "(" << currentNodeSeq.substr(0, seqLen) << "...)"
-                    //           << "->" << successorId << std::endl;
-
                     const auto seenSuccessor = nodeStartSeqOffset.find(successorId);
                     if (nodeStartSeqOffset.end() == seenSuccessor || seenSuccessor->second > successorSeqOffset)
                     {
-                        // some successors will end up listed in shouldVisit more than once
-                        // at a time
+                        // some successors will end up listed in shouldVisit more than once at a time
                         shouldVisit.push_back(successorId);
                         nodeStartSeqOffset[successorId] = successorSeqOffset;
                     }
                 }
-            }
-            else
-            {
-                // std::cerr << "terminal:" << currentNodeId << "(" << currentNodeSeq.substr(0, seqLen) << "...)"
-                //           << std::endl;
             }
         }
 
@@ -404,8 +372,6 @@ private:
         IdEdges idEdges;
         for (const auto& nodeIdOffset : nodeStartSeqOffset)
         {
-            // std::cerr << "unrollRepeats nodeIdOffset.first=" << nodeIdOffset.first << std::endl;
-            // std::cerr << "unrollRepeats nodeIdOffset.second=" << nodeIdOffset.second << std::endl;
             if (int(seqLen) <= nodeIdOffset.second)
             {
                 throw std::logic_error("node should not be in the subgraph");
@@ -494,15 +460,11 @@ private:
     {
         for (MappedId mappedId = 0; MappedId(mappedIds.size()) != mappedId;)
         {
-            //            std::cerr << "mappedId=" << mappedId << std::endl;
             const NodeId originalId = originalIds.at(mappedId);
 
             bool selfRepeat = false;
             for (const NodeId& predecessorId : graph.predecessors(originalId))
             {
-                // std::cerr << "originalId=" << originalId << std::endl;
-                // std::cerr << "predecessorId=" << predecessorId << std::endl;
-
                 if (predecessorId != originalId)
                 {
                     auto mappedPredIds = mappedIds.equal_range(predecessorId);
@@ -551,8 +513,6 @@ private:
             MappedId lastId = -1;
             for (const IdEdge& edge : idEdges)
             {
-                // std::cerr << "idEdge=" << edge << std::endl;
-
                 while (lastId != edge.second)
                 {
                     index.push_back(index.back());
@@ -573,10 +533,9 @@ private:
 
     template <typename GraphT>
     static std::string buildTargetSequence(
-        const GraphT& graph, const std::size_t startNodeOffset, const std::size_t seqLen,
-        const std::vector<MappedId>& nodeIds, const std::map<MappedId, NodeId>& originalIds,
-        const std::map<NodeId, int>& nodeStartSeqOffset, const std::vector<std::size_t>& idEdgesIndex,
-        const IdEdges& idEdges, std::vector<Edge>& edges)
+        const GraphT& graph, const std::size_t startNodeOffset, const std::vector<MappedId>& nodeIds,
+        const std::map<MappedId, NodeId>& originalIds, const std::map<NodeId, int>& nodeStartSeqOffset,
+        const std::vector<std::size_t>& idEdgesIndex, const IdEdges& idEdges, std::vector<Edge>& edges)
     {
         std::string target;
         std::vector<int> mappedIdEndOffset(nodeIds.size(), 0);
@@ -585,46 +544,26 @@ private:
         std::size_t startOffset = startNodeOffset;
         for (const MappedId mappedId : nodeIds)
         {
-            // std::cerr << "mappedId " << mappedId << std::endl;
             const NodeId originalId = originalIds.at(mappedId);
             const std::string& nodeSeq = graph.nodeSeq(originalId);
-            // std::cerr << "nodePartLen " << nodePartLen << std::endl;
             if (!startOffset || -1 != nodeStartSeqOffset.at(originalId))
             {
-                const std::size_t nodePartLen
-                    = std::min(
-                          nodeSeq.length(),
-                          // don't forget special offset -1 which is processed only
-                          // for the first instance of the first node expansion
-                          startNodeOffset + seqLen - std::max(0, nodeStartSeqOffset.at(originalId)))
-                    - startOffset;
+                const std::size_t nodePartLen = nodeSeq.length() - startOffset;
                 if (!nodePartLen)
                 {
                     throw std::logic_error("Empty node in expanded subgraph and it is not the first one");
                 }
-                //            std::cerr << "startOffset " << startOffset << std::endl;
-                //            std::cerr << "startNodeOffset + seqLen -
-                // nodeStartSeqOffset[originalId] " << (startNodeOffset
-                // + seqLen - nodeStartSeqOffset[originalId]) << std::endl;
-                //            std::cerr << "nodeSeq.length() " << nodeSeq.length() <<
-                // std::endl;
-                //            std::cerr << "bfsDiscoverEdges mappedId=" << mappedId <<
-                // std::endl;
 
                 for (std::size_t predOffset = idEdgesIndex[mappedId]; idEdgesIndex[mappedId + 1] != predOffset;
                      ++predOffset)
                 {
-                    // std::cerr << "predOffset " << predOffset << " " << idEdges[predOffset] << std::endl;
-
                     if (idEdges[predOffset].second != mappedId)
                     {
                         throw std::logic_error("bfsDiscoverEdges: Invalid edge");
                     }
                     Edge edge(mappedIdEndOffset.at(idEdges[predOffset].first), target.length());
                     edges.push_back(edge);
-                    // std::cerr << "bfsDiscoverEdges " << edges.back() << std::endl;
                 }
-                //            std::cerr << "originalId " << originalId << std::endl;
                 target += nodeSeq.substr(startOffset, nodePartLen);
             }
             mappedIdEndOffset[mappedId] = target.length() - 1;
@@ -645,19 +584,8 @@ private:
         std::vector<MappedId>& nodeIds, std::vector<Edge>& edges, std::string& target,
         std::map<MappedId, NodeId>& originalIds)
     {
-        // std::cerr << "seqLen=" << seqLen << std::endl;
-        // std::cerr << "startNodeId=" << startNodeId << std::endl;
-        // std::cerr << "startNodeOffset=" << startNodeOffset << std::endl;
-        // std::cerr << "graph.nodeSeq(startNodeId).length()=" << graph.nodeSeq(startNodeId).length() << std::endl;
         // length of shortest path to the first node character
         const std::map<NodeId, int> nodeStartSeqOffset = extractSubgraph(graph, startNodeId, startNodeOffset, seqLen);
-        // for (const auto kv : nodeStartSeqOffset)
-        // {
-        //     std::cerr << "nodeStartSeqOffset: " << kv << std::endl;
-        // }
-
-        //        std::cerr << "extractSubgraph done" << std::endl;
-        // std::cerr << "nodeStartSeqOffset.size()=" << nodeStartSeqOffset.size() << std::endl;
 
         // Repeat expansions need to be unrolled, so we create unique id for each unrolled instance and map
         // them to original ids
@@ -665,28 +593,9 @@ private:
         const IdEdges idEdges
             = unrollRepeats(graph, startNodeOffset + seqLen, nodeStartSeqOffset, originalIds, mappedIds);
 
-        // for (const auto kv : originalIds)
-        // {
-        //    std::cerr << "originalIds: " << kv << std::endl;
-        // }
-
-        // index the edge array such that for each mappedId there is a pair of entries index[mappedId],
-        // index[mappedId+1]
-        // which contains offsets of all predecessor edges in the idEdges;
+        // index the edge array so that for each mappedId there is a pair of entries index[mappedId],
+        // index[mappedId+1] which contains offsets of all predecessor edges in the idEdges;
         const std::vector<std::size_t> idEdgesIndex = indexEdges(idEdges, originalIds);
-        // if (index.size() - 1 != mappedIds.size())
-        // {
-        // throw std::logic_error("Invalid number of index entries " + std::to_string(index.size() - 1) + " expected "
-        // + std::to_string(mappedIds.size()));
-        // }
-
-        //         for (const auto i : index)
-        //         {
-        //         std::cerr << "index i=" << i << std::endl;
-        //         }
-
-        //        std::cerr << "index done" << std::endl;
-        //        std::cerr << "index.size()=" << index.size() << std::endl;
 
         nodeIds = extractOrderedNodeIds(idEdges, idEdgesIndex);
         if (nodeIds.size() != mappedIds.size())
@@ -703,12 +612,9 @@ private:
             throw std::logic_error("First expansion of start node must be the first node");
         }
 
-        //        std::cerr << "nodeIds.size()=" << nodeIds.size() << std::endl;
-        //        std::cerr << "extractOrderedNodeIds done" << std::endl;
-
         // extract target sequence in the proper order
         target = buildTargetSequence(
-            graph, startNodeOffset, seqLen, nodeIds, originalIds, nodeStartSeqOffset, idEdgesIndex, idEdges, edges);
+            graph, startNodeOffset, nodeIds, originalIds, nodeStartSeqOffset, idEdgesIndex, idEdges, edges);
 
         if (-1 == nodeStartSeqOffset.at(startNodeId))
         {
@@ -716,8 +622,6 @@ private:
             // corresponding sequence in the target.
             nodeIds.erase(nodeIds.begin());
         }
-
-        // std::cerr << "bfsDiscoverEdges target=" << target << std::endl;
     }
 };
 }

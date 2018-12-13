@@ -1,4 +1,4 @@
-file(GLOB SOURCES "*.cc")
+file(GLOB SOURCES "*.cpp")
 add_library(common ${SOURCES})
-target_link_libraries(common ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
-add_subdirectory(unit_tests)
+target_link_libraries(common region_spec ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
+add_subdirectory(tests)

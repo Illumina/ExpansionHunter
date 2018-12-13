@@ -25,31 +25,60 @@
 #include <set>
 #include <string>
 
-#include "region_analysis/RepeatFindings.hh"
-#include "region_spec/RegionBlueprint.hh"
-#include "region_spec/RegionSpec.hh"
+#include "common/Reference.hh"
+#include "region_analysis/VariantFindings.hh"
+#include "region_spec/LocusSpecification.hh"
+
+namespace ehunter
+{
+
+class VariantVcfWriter : public VariantFindingsVisitor
+{
+public:
+    VariantVcfWriter(
+        const LocusSpecification& regionSpec, const VariantSpecification& variantSpec, int readLength,
+        Reference& reference, std::ostream& out)
+        : regionSpec_(regionSpec)
+        , variantSpec_(variantSpec)
+        , readLength_(readLength)
+        , reference_(reference)
+        , out_(out)
+    {
+    }
+
+    ~VariantVcfWriter() = default;
+    void visit(const RepeatFindings* repeatFindingsPtr) override;
+    void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
+
+private:
+    const LocusSpecification& regionSpec_;
+    const VariantSpecification& variantSpec_;
+    const int readLength_;
+    Reference& reference_;
+    std::ostream& out_;
+};
 
 // TODO: Document the code after multi-unit repeat format is finalized (GT-598)
 class VcfWriter
 {
 public:
     VcfWriter(
-        const std::string& sampleName, int readLength, const RegionCatalog& regionSpecs,
-        const SampleFindings& sampleFindings);
+        const std::string& sampleName, int readLength, const RegionCatalog& regionCatalog,
+        const SampleFindings& sampleFindings, Reference& reference);
 
     friend std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
 
 private:
     void writeHeader(std::ostream& out);
     void writeBody(std::ostream& out);
-    void writeRegionFindings(const std::string& regionId, const RegionFindings& regionFindings, std::ostream& out);
-    void writeRepeatFindings(
-        const RegionBlueprintComponent& repeatBlueprint, const RepeatFindings& repeatFindings, std::ostream& out);
 
     const std::string sampleName_;
     const int readLength_;
-    const RegionCatalog& regionSpecs_;
+    const RegionCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
+    Reference& reference_;
 };
 
 std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
+
+}

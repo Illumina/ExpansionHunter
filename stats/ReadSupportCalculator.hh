@@ -23,7 +23,10 @@
 
 #include <cassert>
 
-#include "common/count_table.h"
+#include "common/CountTable.hh"
+
+namespace ehunter
+{
 
 // Determines counts of informative reads consistent with a given repeat length
 class ReadSupportCalculator
@@ -51,3 +54,5 @@ private:
     const CountTable& spanningReadCounts_;
     const CountTable& flankingReadCounts_;
 };
+
+}

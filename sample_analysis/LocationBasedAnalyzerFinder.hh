@@ -28,8 +28,11 @@
 
 #include "thirdparty/intervaltree/IntervalTree.h"
 
-#include "reads/read.h"
+#include "reads/Read.hh"
 #include "region_analysis/RegionAnalyzer.hh"
+
+namespace ehunter
+{
 
 enum class LocusType
 {
@@ -65,3 +68,5 @@ private:
 
     AnalyzerIntervalTrees intervalTrees_;
 };
+
+}

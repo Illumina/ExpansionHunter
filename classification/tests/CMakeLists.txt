@@ -1,0 +1,11 @@
+add_executable(AlignmentClassifierTest AlignmentClassifierTest.cpp)
+target_link_libraries(AlignmentClassifierTest classification gtest_main)
+add_test(NAME AlignmentClassifierTest COMMAND AlignmentClassifierTest)
+
+add_executable(AlignmentSummaryTest AlignmentSummaryTest.cpp)
+target_link_libraries(AlignmentSummaryTest classification gtest_main)
+add_test(NAME AlignmentSummaryTest COMMAND AlignmentSummaryTest)
+
+add_executable(ClassifierOfAlignmentsToVariantTest ClassifierOfAlignmentsToVariantTest.cpp)
+target_link_libraries(ClassifierOfAlignmentsToVariantTest classification gtest_main)
+add_test(NAME ClassifierOfAlignmentsToVariantTest COMMAND ClassifierOfAlignmentsToVariantTest)

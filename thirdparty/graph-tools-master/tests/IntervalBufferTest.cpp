@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
-// Copyright (c) 2017 Illumina, Inc.
+// GraphTools library
+// Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Peter Krusche <pkrusche@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -23,16 +25,6 @@
 // CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 // OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-/**
- * \brief Test cases for interval buffers
- *
- *
- * \file test_refvar.cpp
- * \author Peter Krusche
- * \email pkrusche@illumina.com
- *
- */
 
 #include "graphutils/IntervalBuffer.hh"
 #include "gtest/gtest.h"

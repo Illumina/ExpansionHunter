@@ -20,42 +20,23 @@
 
 #pragma once
 
-#include <iostream>
 #include <string>
 #include <utility>
 
-// Performs search for stretches of high-quality bases
-class HighQualityBaseRunFinder
+namespace ehunter
 {
-public:
-    using StringIterPair = std::pair<std::string::const_iterator, std::string::const_iterator>;
 
-    /**
-     * @param windowSize: size of the window used for scanning an input sequence
-     * @param minHighQualityBasesInGoodWindow: a window containing this many high-quality bases or more is deemed "good"
-     * @param minLengthOfFullSizeRun: number bases in a run that is sufficent for the run to be reported
-     */
-    HighQualityBaseRunFinder(int windowSize, int minHighQualityBasesInGoodWindow, int minLengthOfFullSizeRun)
-        : windowSize_(windowSize)
-        , minHighQualityBasesInGoodWindow_(minHighQualityBasesInGoodWindow)
-        , minLengthOfFullSizeRun_(minLengthOfFullSizeRun)
-    {
-    }
+using StringIterPair = std::pair<std::string::const_iterator, std::string::const_iterator>;
 
-    /**
-     * Searches for the first sufficiently-long run of high-quality bases
-     *
-     * @param query: any query sequence
-     * @return pair of iterators delineating the run
-     */
-    StringIterPair find(const std::string& query) const;
+/**
+ * Searches for the first sufficiently-long run of high-quality bases
+ *
+ * @param query: any query sequence
+ * @param probOfGoodBaseInBadRun: probability of observing a high-quality base in a low quality stretch of bases
+ * @param probOfGoodBaseInGoodRun: probability of observing a high-quality base in a good quality stretch of bases
+ * @return pair of iterators delineating a substring consisting of high quality bases
+ */
+StringIterPair findHighQualityBaseRun(
+    const std::string& query, double probOfGoodBaseInBadRun = 0.1, double probOfGoodBaseInGoodRun = 0.8);
 
-private:
-    std::string::const_iterator getStartOfNextBadWindow(
-        std::string::const_iterator windowStartIter, std::string::const_iterator windowEndIter) const;
-    bool isStartOfGoodWindow(std::string::const_iterator windowStartIter) const;
-
-    const int windowSize_;
-    const int minHighQualityBasesInGoodWindow_;
-    const int minLengthOfFullSizeRun_;
-};
+}

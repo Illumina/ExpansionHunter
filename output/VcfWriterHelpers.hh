@@ -25,9 +25,12 @@
 #include <string>
 #include <utility>
 
-#include "common/common.h"
-#include "region_analysis/RepeatFindings.hh"
-#include "region_spec/RegionSpec.hh"
+#include "common/Common.hh"
+#include "region_analysis/VariantFindings.hh"
+#include "region_spec/LocusSpecification.hh"
+
+namespace ehunter
+{
 
 class VcfSampleFields
 {
@@ -62,4 +65,4 @@ private:
     std::deque<int> repeatReadCounts_;
 };
 
-std::set<int> computeAltRepeatSizes(const RegionCatalog& regionSpecs, const SampleFindings& sampleFindings);
+}

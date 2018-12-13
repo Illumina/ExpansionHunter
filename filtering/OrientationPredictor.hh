@@ -29,6 +29,9 @@
 #include "graphcore/Graph.hh"
 #include "graphcore/GraphOperations.hh"
 
+namespace ehunter
+{
+
 enum class OrientationPrediction
 {
     kAlignsInOriginalOrientation,
@@ -77,3 +80,5 @@ private:
     const graphtools::Graph reverseComplementedGraph_;
     graphtools::KmerIndex kmerIndexForReverseComplementedGraph_;
 };
+
+}

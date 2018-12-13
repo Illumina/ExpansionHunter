@@ -23,9 +23,15 @@
 #include <iostream>
 #include <string>
 
-#include "region_analysis/RepeatFindings.hh"
-#include "region_spec/RegionSpec.hh"
+#include "common/Parameters.hh"
+#include "region_analysis/VariantFindings.hh"
+#include "region_spec/LocusSpecification.hh"
+
+namespace ehunter
+{
 
 SampleFindings htsSeekingSampleAnalysis(
-    const std::string& htsFilePath, double haplotypeDepth, int readLength, const RegionCatalog& regionCatalog,
-    const std::string& alignerName, std::ostream& alignmentStream);
+    const InputPaths& inputPaths, SampleParameters& sampleParams, const HeuristicParameters& heuristicParams,
+    const RegionCatalog& regionCatalog, std::ostream& alignmentStream);
+
+}

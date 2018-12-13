@@ -1,8 +1,11 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
+//         Roman Petrovski <RPetrovski@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -198,66 +201,6 @@ list<GraphAlignment> GappedGraphAligner::extendKmerMatchToFullAlignments(
     return top_graph_alignments;
 }
 
-// bool comparePnA(const PathAndAlignment& left, const PathAndAlignment& right)
-//{
-//    return left.first.encode() < right.first.encode()
-//        || ((left.first.encode() == right.first.encode() && left.first.seq() < right.first.seq())
-//            || (left.first.seq() == right.first.seq() && (left.second.generateCigar() <
-//            right.second.generateCigar())));
-//}
-//
-// bool pathLess(const PathAndAlignment& left, const PathAndAlignment& right)
-//{
-//    return left.first.encode() < right.first.encode();
-//}
-//
-// bool pathMatch(const PathAndAlignment& left, const PathAndAlignment& right)
-//{
-//    return left.first.encode() == right.first.encode();
-//}
-//
-// void traceDiff(
-//    const std::list<PathAndAlignment>& left, const std::list<PathAndAlignment>& right, int32_t leftScore,
-//    int32_t rightScore)
-//{
-//    std::vector<PathAndAlignment> vLeft(left.begin(), left.end());
-//    std::vector<PathAndAlignment> vRight(right.begin(), right.end());
-//
-//    std::sort(vLeft.begin(), vLeft.end(), comparePnA);
-//    std::sort(vRight.begin(), vRight.end(), comparePnA);
-//
-//    auto leftIt = vLeft.begin(), rightIt = vRight.begin();
-//    for (; vLeft.end() != leftIt || vRight.end() != rightIt;)
-//    {
-//        if (vLeft.end() == leftIt || (vRight.end() != rightIt && pathLess(*rightIt, *leftIt)))
-//        {
-//            std::cerr << "missing vs " << rightIt->second.referenceStart() << ":" << rightIt->second.generateCigar()
-//                      << "(" << rightScore << ") on " << rightIt->first.encode() << ":" << rightIt->first.seq()
-//                      << std::endl;
-//            ++rightIt;
-//        }
-//        else if (vRight.end() == rightIt || (vLeft.end() != leftIt && pathLess(*leftIt, *rightIt)))
-//        {
-//            std::cerr << leftIt->second.referenceStart() << ":" << leftIt->second.generateCigar() << "(" << leftScore
-//                      << ") on " << leftIt->first.encode() << ":" << leftIt->first.seq() << " vs missing" <<
-//                      std::endl;
-//            ++leftIt;
-//        }
-//        else
-//        {
-//            if (!pathMatch(*leftIt, *rightIt))
-//            {
-//                throw std::logic_error("Unexpected path mismatch");
-//            }
-//            std::cerr << leftIt->second.referenceStart() << ":" << leftIt->second.generateCigar() << "(" << leftScore
-//                      << ") vs " << rightIt->second.referenceStart() << ":" << rightIt->second.generateCigar() << "("
-//                      << rightScore << ") on " << rightIt->first.encode() << ":" << rightIt->first.seq() << std::endl;
-//            ++leftIt;
-//            ++rightIt;
-//        }
-//    }
-//}
-
 list<PathAndAlignment>
 GappedGraphAligner::extendAlignmentPrefix(const Path& seed_path, const string& query_piece, size_t extension_len) const
 {
@@ -266,8 +209,6 @@ GappedGraphAligner::extendAlignmentPrefix(const Path& seed_path, const string& q
     int32_t top_alignment_score = INT32_MIN;
     list<PathAndAlignment> top_paths_and_alignments
         = aligner_.suffixAlign(seed_path, query_piece, extension_len, top_alignment_score);
-
-    //    traceDiff(dag_paths_and_alignments, top_paths_and_alignments, top_dag_score, top_alignment_score);
 
     for (PathAndAlignment& path_and_alignment : top_paths_and_alignments)
     {
@@ -280,8 +221,6 @@ GappedGraphAligner::extendAlignmentPrefix(const Path& seed_path, const string& q
 
         if (!checkConsistency(path_and_alignment.second, path.seq(), query_piece))
         {
-            // std::cerr << " alignment = " << path_and_alignment.second << " is inconsistent  with";
-            // std::cerr << "path = " << path << " having sequence " << path.seq() << std::endl;
             throw std::logic_error("Inconsistent prefix");
         }
     }
@@ -297,8 +236,6 @@ GappedGraphAligner::extendAlignmentSuffix(const Path& seed_path, const string& q
     int32_t top_alignment_score = INT32_MIN;
     list<PathAndAlignment> top_paths_and_alignments
         = aligner_.prefixAlign(seed_path, query_piece, extension_len, top_alignment_score);
-
-    //    traceDiff(dag_paths_and_alignments, top_paths_and_alignments, top_dag_score, top_alignment_score);
 
     for (PathAndAlignment& path_and_alignment : top_paths_and_alignments)
     {

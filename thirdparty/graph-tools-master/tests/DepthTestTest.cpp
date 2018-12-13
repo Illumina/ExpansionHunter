@@ -1,8 +1,11 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Sai Chen <schen6@illumina.com>,
+//         Egor Dolzhenko <edolzhenko@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 

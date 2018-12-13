@@ -1,7 +1,0 @@
-add_executable(RepeatAnalyzerTest RepeatAnalyzerTest.cc)
-target_link_libraries(RepeatAnalyzerTest region_analysis gtest gmock_main)
-add_test(NAME RepeatAnalyzerTest COMMAND RepeatAnalyzerTest)
-
-add_executable(RegionAnalyzerTest RegionAnalyzerTest.cc)
-target_link_libraries(RegionAnalyzerTest region_analysis gtest gmock_main)
-add_test(NAME RegionAnalyzerTest COMMAND RegionAnalyzerTest)

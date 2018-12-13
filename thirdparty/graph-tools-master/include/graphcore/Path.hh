@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -147,8 +149,20 @@ public:
         return path_.graphRawPtr()->nodeSeq(path_.firstNodeId()).length() - path_.startPosition();
     }
 
+    std::string seq() const
+    {
+        std::string ret = path_.seq();
+        std::reverse(ret.begin(), ret.end());
+        return ret;
+    }
+
     void shiftEndAlongNode(int32_t shift_len) { path_.shiftStartAlongNode(shift_len); }
     void extendEndToNode(NodeId node_id) { path_.extendStartToNode(node_id); }
+
+    friend std::ostream& operator<<(std::ostream& os, const ReversePath& path)
+    {
+        return os << "reverse path of: " << path.path_;
+    }
 };
 
 class ConstReversePath
@@ -177,7 +191,6 @@ public:
     }
 
     const Graph* graphRawPtr() const { return path_.graphRawPtr(); }
-
 };
 
 }

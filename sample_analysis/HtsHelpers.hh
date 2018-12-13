@@ -26,21 +26,28 @@ extern "C"
 #include "htslib/sam.h"
 }
 
-#include "reads/read.h"
+#include "reads/Read.hh"
+
+namespace ehunter
+{
 
 namespace htshelpers
 {
 
-enum SamFlags
-{
-    kSupplementaryAlign = 0x800,
-    kSecondaryAlign = 0x100,
-    kIsMapped = 0x0004,
-    kIsFirstMate = 0x0040,
-    kIsMateMapped = 0x0008
-};
+    enum SamFlags
+    {
+        kIsUnmapped = 0x4,
+        kIsMateUnmapped = 0x8,
+        kIsFirstMate = 0x40,
+        kIsSecondMate = 0x80,
+        // kSecondaryAlign = 0x100,
+        // kSupplementaryAlignment = 0x800,
+        kIsNotPrimaryLine = 0x900
+    };
 
-void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::Read& read, reads::LinearAlignmentStats& alignment_stats);
-void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::Read& read);
+    void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::Read& read, reads::LinearAlignmentStats& alignment_stats);
+    void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::Read& read);
 
 } // namespace htshelpers
+
+}

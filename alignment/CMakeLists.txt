@@ -1,5 +1,5 @@
-file(GLOB SOURCES "*.cc")
+file(GLOB SOURCES "*.cpp")
 add_library(alignment ${SOURCES})
-target_link_libraries(alignment common graphtools region_spec)
+target_link_libraries(alignment common graphtools input region_spec)
 
-add_subdirectory(unit_tests)
+add_subdirectory(tests)

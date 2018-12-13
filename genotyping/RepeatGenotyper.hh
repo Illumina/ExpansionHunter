@@ -29,11 +29,14 @@
 
 #include <boost/optional.hpp>
 
-#include "common/common.h"
-#include "common/count_table.h"
-#include "common/parameters.h"
+#include "common/Common.hh"
+#include "common/CountTable.hh"
+#include "common/Parameters.hh"
 #include "genotyping/RepeatGenotype.hh"
-#include "region_spec/RegionSpec.hh"
+#include "region_spec/LocusSpecification.hh"
+
+namespace ehunter
+{
 
 class RepeatGenotyper
 {
@@ -49,7 +52,7 @@ public:
         , propCorrectMolecules_(propCorrectMolecules)
         , countsOfSpanningReads_(countsOfSpanningReads)
         , countsOfFlankingReads_(countsOfFlankingReads)
-        , countsOfRepeatReads_(countsOfRepeatReads)
+        , countsOfInrepeatReads_(countsOfRepeatReads)
     {
     }
 
@@ -76,5 +79,10 @@ private:
     const double propCorrectMolecules_;
     const CountTable countsOfSpanningReads_;
     const CountTable countsOfFlankingReads_;
-    const CountTable countsOfRepeatReads_;
+    const CountTable countsOfInrepeatReads_;
 };
+
+int countFullLengthRepeatReads(
+    int maxNumUnitsInRead, const CountTable& countsOfFlankingReads, const CountTable& countsOfInrepeatReads);
+
+}

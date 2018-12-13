@@ -30,9 +30,12 @@
 #include <string>
 #include <vector>
 
-#include "common/common.h"
-#include "common/count_table.h"
+#include "common/Common.hh"
+#include "common/CountTable.hh"
 #include "genotyping/RepeatGenotype.hh"
+
+namespace ehunter
+{
 
 class QuantifierOfMoleculesGeneratedByAllele
 {
@@ -97,3 +100,5 @@ private:
     int32_t max_repeat_size_in_units_;
     double prop_correct_molecules_;
 };
+
+}

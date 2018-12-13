@@ -27,33 +27,19 @@
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
 
-class GraphAlignmentHeuristicsParameters
+namespace ehunter
 {
-public:
-    GraphAlignmentHeuristicsParameters(int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLen = 5)
-        : kmerLenForAlignment_(kmerLenForAlignment)
-        , paddingLength_(paddingLength)
-        , seedAffixTrimLen_(seedAffixTrimLen)
-    {
-    }
-    int kmerLenForAlignment() const { return kmerLenForAlignment_; }
-    int paddingLength() const { return paddingLength_; }
-    int seedAffixTrimLen() const { return seedAffixTrimLen_; }
-
-private:
-    int kmerLenForAlignment_;
-    int paddingLength_;
-    int seedAffixTrimLen_;
-};
 
 class SoftclippingAligner
 {
 public:
     SoftclippingAligner(
-        graphtools::Graph* graphPtr, const std::string& alignerName,
-        const GraphAlignmentHeuristicsParameters& alignmentHeuristicsParameters);
+        const graphtools::Graph* graphPtr, const std::string& alignerName, int kmerLenForAlignment, int paddingLength,
+        int seedAffixTrimLength);
     std::list<graphtools::GraphAlignment> align(const std::string& query) const;
 
 private:
     graphtools::GappedGraphAligner aligner_;
 };
+
+}

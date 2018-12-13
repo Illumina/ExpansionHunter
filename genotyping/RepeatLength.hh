@@ -24,5 +24,10 @@
 
 #include <cstdint>
 
+namespace ehunter
+{
+
 void estimateRepeatLen(
     int32_t numIrrs, int32_t readLen, double hapDepth, int32_t& lenEstimate, int32_t& lowerBound, int32_t& upperBound);
+
+}

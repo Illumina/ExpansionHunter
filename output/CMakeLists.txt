@@ -1,3 +1,3 @@
-file(GLOB SOURCES "*.cc")
+file(GLOB SOURCES "*.cpp")
 add_library(output ${SOURCES})
-target_link_libraries(output common stats region_spec)
+target_link_libraries(output common stats genotyping region_spec)

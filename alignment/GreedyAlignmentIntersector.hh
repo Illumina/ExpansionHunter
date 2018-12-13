@@ -24,6 +24,9 @@
 
 #include "graphalign/GraphAlignment.hh"
 
+namespace ehunter
+{
+
 class GreedyAlignmentIntersector
 {
 public:
@@ -62,3 +65,5 @@ private:
     int intersectionStart_ = -1;
     int intersectionEnd_ = -1;
 };
+
+}

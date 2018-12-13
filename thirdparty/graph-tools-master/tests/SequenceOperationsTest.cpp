@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -88,4 +90,11 @@ TEST(SplittingStrings, WordsDelimitedBySlashes_StringVector)
     const string string_with_words = "a/b/cd";
     const vector<string> expected_words = { "a", "b", "cd" };
     ASSERT_EQ(expected_words, splitStringByDelimiter(string_with_words, '/'));
+}
+
+TEST(ReverseComplementingSequences, TypicalQueryAndReferenceSequences_ReverseComplemented)
+{
+    EXPECT_EQ("AAGGCGAT", reverseComplement("ATCGCCTT"));
+    EXPECT_EQ("aaggcgat", reverseComplement("atcgcctt"));
+    EXPECT_EQ("RYKMSWBDHVN", reverseComplement("NBDHVWSKMRY"));
 }

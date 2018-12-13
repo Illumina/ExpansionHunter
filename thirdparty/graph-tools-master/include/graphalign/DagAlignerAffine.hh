@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Roman Petrovski <RPetrovski@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -33,13 +35,9 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/assert.hpp>
 
-// avoid boost lambda issues with boost::adaptors::transformed on boost 1.53
-#define BOOST_RESULT_OF_USE_DECLTYPE
-
-#include <boost/range/adaptor/transformed.hpp>
-
 #include "dagAligner/AffineAlignMatrix.hh"
 #include "dagAligner/AffineAlignMatrixVectorized.hh"
+#include "dagAligner/PenaltyMatrix.hh"
 
 namespace graphalign
 {
@@ -70,7 +68,6 @@ namespace dagAligner
         void __attribute((noinline))
         align(QueryIt queryBegin, QueryIt queryEnd, TargetIt targetBegin, TargetIt targetEnd, const EdgeMap& edgeMap)
         {
-            // std::cerr << "query: " << std::string(queryBegin, queryEnd) << std::endl;
             alignMatrix_.init(queryBegin, queryEnd, targetBegin, targetEnd, edgeMap);
         }
 
@@ -97,7 +94,6 @@ namespace dagAligner
         Score __attribute((noinline))
         backtrackAllPaths(const EdgeMap& edgeMap, std::vector<Cigar>& cigars, Score& secondBestScore) const
         {
-            // std::cerr << "backtrackAll" << std::endl;
             Score bestScore = SCORE_MIN;
             secondBestScore = SCORE_MIN;
             typename AlignMatrix::const_iterator bestCell
@@ -105,13 +101,10 @@ namespace dagAligner
             for (; alignMatrix_.alignEnd() != bestCell && bestScore <= secondBestScore;
                  bestCell = alignMatrix_.template nextBestAlign<localAlign>(bestCell + 1, secondBestScore))
             {
-                // std::cerr << "bestScore=" << bestScore << std::endl;
                 bestScore = secondBestScore;
                 const int t = alignMatrix_.targetOffset(bestCell);
                 const int q = alignMatrix_.queryOffset(bestCell);
                 const int softClip = alignMatrix_.queryLen() - 1 - q;
-
-                // std::cerr << "q:" << q << " t:" << t << std::endl;
 
                 std::size_t firstNodeId = edgeMap.getNodeId(t);
                 Cigar start;
@@ -136,12 +129,10 @@ namespace dagAligner
             }
             else if (alignMatrix_.alignEnd() == bestCell)
             {
-                // std::cerr << "end bestScore=" << bestScore << std::endl;
                 // one candidate only, no second best. Might had some duplicates, reset secondBestScore
                 secondBestScore = SCORE_MIN;
             }
             // else scondBest is set properly
-            // std::cerr << "bestScore=" << bestScore << " secondBestScore=" << secondBestScore << std::endl;
             return bestScore;
         }
 
@@ -149,7 +140,6 @@ namespace dagAligner
         Cigar __attribute((noinline))
         backtrackBestPath(const EdgeMap& edgeMap, Score& bestScore, Score& secondBestScore) const
         {
-            // std::cerr << "backtrackAll" << std::endl;
             bestScore = SCORE_MIN;
             secondBestScore = SCORE_MIN;
             typename AlignMatrix::const_iterator bestCell
@@ -159,12 +149,9 @@ namespace dagAligner
                 throw std::logic_error("No best path available");
             }
             std::vector<Cigar> ret;
-            // std::cerr << "bestScore=" << bestScore << std::endl;
             const int t = alignMatrix_.targetOffset(bestCell);
             const int q = alignMatrix_.queryOffset(bestCell);
             const int softClip = alignMatrix_.queryLen() - 1 - q;
-
-            // std::cerr << "q:" << q << " t:" << t << std::endl;
 
             std::size_t firstNodeId = edgeMap.getNodeId(t);
             Cigar start;
@@ -271,7 +258,6 @@ namespace dagAligner
             Cigar ret = base;
             while (-1 != q && -1 != t)
             {
-                // std::cerr << "q:" << q << " t:" << t << std::endl;
                 const std::size_t curNodeId = edgeMap.getNodeId(t);
                 if (lastNodeId != curNodeId)
                 {
@@ -291,9 +277,6 @@ namespace dagAligner
                 q = step.q_;
                 t = step.t_;
             }
-
-            // std::cerr << "backtrackPath: t=" << t << std::endl;
-            // std::cerr << "backtrackPath: q=" << q << std::endl;
 
             if (-1 != q)
             {
@@ -331,7 +314,6 @@ namespace dagAligner
 
             ret.collapseLastEmptyNode();
             ret.reverse();
-            // std::cerr << "backtrackPath:" << ret << std::endl;
             if (cigars.size() == maxRepeats_ && !removeDuplicateCigars(cigars))
             {
                 return false;
@@ -342,8 +324,6 @@ namespace dagAligner
 
         friend std::ostream& operator<<(std::ostream& os, const Aligner& aligner)
         {
-            // return os << "Aligner(" << aligner.gapOpen_ << "," << aligner.gapExt_ << ","
-            // << aligner.penaltyMatrix_ << aligner.v_ << ")";
             return os << "Aligner(" << aligner.alignMatrix_ << ")";
         }
     };

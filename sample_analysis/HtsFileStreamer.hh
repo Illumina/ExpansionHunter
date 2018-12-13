@@ -29,53 +29,58 @@ extern "C"
 #include "htslib/sam.h"
 }
 
-#include "reads/read.h"
+#include "reads/Read.hh"
+
+namespace ehunter
+{
 
 namespace htshelpers
 {
 
-class HtsFileStreamer
-{
-public:
-    HtsFileStreamer(const std::string& htsFilePath)
-        : htsFilePath_(htsFilePath)
+    class HtsFileStreamer
     {
-        openHtsFile();
-        loadHeader();
-        prepareForStreamingAlignments();
-    }
-    ~HtsFileStreamer();
+    public:
+        HtsFileStreamer(const std::string& htsFilePath)
+            : htsFilePath_(htsFilePath)
+        {
+            openHtsFile();
+            loadHeader();
+            prepareForStreamingAlignments();
+        }
+        ~HtsFileStreamer();
 
-    bool trySeekingToNextPrimaryAlignment();
+        bool trySeekingToNextPrimaryAlignment();
 
-    int32_t currentReadChromIndex() const;
-    const std::string& currentReadChrom() const;
-    int32_t currentReadPosition() const;
-    int32_t currentMateChromIndex() const;
-    const std::string& currentMateChrom() const;
-    int32_t currentMatePosition() const;
+        int32_t currentReadChromIndex() const;
+        const std::string& currentReadChrom() const;
+        int32_t currentReadPosition() const;
+        int32_t currentMateChromIndex() const;
+        const std::string& currentMateChrom() const;
+        int32_t currentMatePosition() const;
 
-    bool isStreamingAlignedReads() const;
+        bool isStreamingAlignedReads() const;
 
-    reads::Read decodeRead() const;
+        reads::Read decodeRead() const;
 
-private:
-    enum class Status
-    {
-        kStreamingReads,
-        kFinishedStreaming
+    private:
+        enum class Status
+        {
+            kStreamingReads,
+            kFinishedStreaming
+        };
+
+        void openHtsFile();
+        void loadHeader();
+        void prepareForStreamingAlignments();
+
+        const std::string htsFilePath_;
+        std::vector<std::string> chromNames_;
+        Status status_ = Status::kStreamingReads;
+
+        htsFile* htsFilePtr_ = nullptr;
+        bam1_t* htsAlignmentPtr_ = nullptr;
+        bam_hdr_t* htsHeaderPtr_ = nullptr;
     };
 
-    void openHtsFile();
-    void loadHeader();
-    void prepareForStreamingAlignments();
-
-    const std::string htsFilePath_;
-    std::vector<std::string> chromNames_;
-    Status status_ = Status::kStreamingReads;
-
-    htsFile* htsFilePtr_ = nullptr;
-    bam1_t* htsAlignmentPtr_ = nullptr;
-    bam_hdr_t* htsHeaderPtr_ = nullptr;
-};
+}
 }

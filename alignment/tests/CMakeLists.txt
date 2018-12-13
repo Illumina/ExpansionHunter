@@ -1,0 +1,19 @@
+add_executable(HighQualityBaseRunFinderTest HighQualityBaseRunFinderTest.cpp)
+target_link_libraries(HighQualityBaseRunFinderTest alignment gtest gmock_main)
+add_test(NAME HighQualityBaseRunFinderTest COMMAND HighQualityBaseRunFinderTest)
+
+add_executable(GraphAlignmentOperationsTest GraphAlignmentOperationsTest.cpp)
+target_link_libraries(GraphAlignmentOperationsTest alignment gtest gmock_main)
+add_test(NAME GraphAlignmentOperationsTest COMMAND GraphAlignmentOperationsTest)
+
+add_executable(SoftclippingAlignerTest SoftclippingAlignerTest.cpp)
+target_link_libraries(SoftclippingAlignerTest alignment gtest gmock_main)
+add_test(NAME SoftclippingAlignerTest COMMAND SoftclippingAlignerTest)
+
+add_executable(GreedyAlignmentIntersectorTest GreedyAlignmentIntersectorTest.cpp)
+target_link_libraries(GreedyAlignmentIntersectorTest alignment gtest gmock_main)
+add_test(NAME GreedyAlignmentIntersectorTest COMMAND GreedyAlignmentIntersectorTest)
+
+add_executable(AlignmentTweakersTest AlignmentTweakersTest.cpp)
+target_link_libraries(AlignmentTweakersTest alignment gtest gmock_main)
+add_test(NAME AlignmentTweakersTest COMMAND AlignmentTweakersTest)

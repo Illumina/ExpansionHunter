@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -63,11 +65,11 @@ namespace codes
 
     const int maxBaseAscii = 255;
 
-    // Currently, low-quality (lowercase) bases get the same encoding as their high-quality counterparts. We should
+    // Currently, low-quality (lower case) bases get the same encoding as their high-quality counterparts. We should
     // extend the coding scheme when we are ready to deal with base-quality in the alignment.
 
-    // Core bases A, C, G, T and degenerate bases B, D, H, K, M, N, S, R, V, W, Y all recieve distinct codes. All other
-    // base symbols are coded as X, which is the code indended to mismatch everything.
+    // Core bases A, C, G, T and degenerate bases B, D, H, K, M, N, S, R, V, W, Y all receive distinct codes. All other
+    // base symbols are coded as X, which is the code intended to mismatch everything.
     const std::array<BaseCode, maxBaseAscii + 1> kReferenceBaseEncodingTable
         = { X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,
             X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X, X,

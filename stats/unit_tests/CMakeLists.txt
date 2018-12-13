@@ -1,3 +1,0 @@
-add_executable(ReadSupportCalculatorTest ReadSupportCalculatorTest.cc)
-target_link_libraries(ReadSupportCalculatorTest stats gtest_main)
-add_test(NAME ReadSupportCalculatorTest COMMAND ReadSupportCalculatorTest)

@@ -28,7 +28,10 @@
 #include <string>
 #include <vector>
 
-#include "common/common.h"
+#include "common/Common.hh"
+
+namespace ehunter
+{
 
 class RepeatGenotype
 {
@@ -101,3 +104,5 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& out, const RepeatGenotype& genotype);
+
+}

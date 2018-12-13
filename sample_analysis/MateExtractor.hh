@@ -29,29 +29,35 @@ extern "C"
 #include "htslib/sam.h"
 }
 
-#include "reads/read.h"
+#include "reads/Read.hh"
+
+namespace ehunter
+{
 
 namespace htshelpers
 {
-class MateExtractor
-{
-public:
-    MateExtractor(const std::string& htsFilePath);
-    ~MateExtractor();
+    class MateExtractor
+    {
+    public:
+        MateExtractor(const std::string& htsFilePath);
+        ~MateExtractor();
 
-    reads::Read extractMate(const reads::Read& read, const reads::LinearAlignmentStats& alignmentStats);
+        reads::Read extractMate(const reads::Read& read, const reads::LinearAlignmentStats& alignmentStats);
 
-private:
-    void openFile();
-    void loadHeader();
-    void loadIndex();
+    private:
+        void openFile();
+        void loadHeader();
+        void loadIndex();
 
-    const std::string htsFilePath_;
-    std::vector<std::string> contigNames_;
+        const std::string htsFilePath_;
+        std::vector<std::string> contigNames_;
 
-    htsFile* htsFilePtr_ = nullptr;
-    bam_hdr_t* htsHeaderPtr_ = nullptr;
-    hts_idx_t* htsIndexPtr_ = nullptr;
-    bam1_t* htsAlignmentPtr_ = nullptr;
-};
+        htsFile* htsFilePtr_ = nullptr;
+        bam_hdr_t* htsHeaderPtr_ = nullptr;
+        hts_idx_t* htsIndexPtr_ = nullptr;
+        bam1_t* htsAlignmentPtr_ = nullptr;
+    };
+
+}
+
 }

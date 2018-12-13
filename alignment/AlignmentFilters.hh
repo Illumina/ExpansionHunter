@@ -26,6 +26,9 @@
 
 #include "graphalign/GraphAlignment.hh"
 
+namespace ehunter
+{
+
 /**
  * Checks if a read pair is likely to have originated in the alignment region
  *
@@ -46,3 +49,5 @@ bool checkIfUpstreamAlignmentIsGood(graphtools::NodeId nodeId, graphtools::Graph
 
 // Checks if alignment downstream of a given node is high quality
 bool checkIfDownstreamAlignmentIsGood(graphtools::NodeId nodeId, graphtools::GraphAlignment alignment);
+
+}

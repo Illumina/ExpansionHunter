@@ -26,6 +26,9 @@
 
 #include "graphalign/GraphAlignment.hh"
 
+namespace ehunter
+{
+
 /**
  * Softclips unreliable prefix of an alignment
  *
@@ -48,3 +51,5 @@ void shrinkUncertainPrefix(int referenceLength, const std::string& query, grapht
  * @param alignment: Any graph alignment
  */
 void shrinkUncertainSuffix(int referenceLength, const std::string& query, graphtools::GraphAlignment& alignment);
+
+}

@@ -20,32 +20,52 @@
 
 #pragma once
 
-#include "region_analysis/RepeatFindings.hh"
-#include "region_spec/RegionBlueprint.hh"
-#include "region_spec/RegionSpec.hh"
+#include "region_analysis/VariantFindings.hh"
+#include "region_spec/LocusSpecification.hh"
 
 #include "thirdparty/json/json.hpp"
+
+namespace ehunter
+{
+
+class VariantJsonWriter : public VariantFindingsVisitor
+{
+public:
+    VariantJsonWriter(const LocusSpecification& regionSpec, const VariantSpecification& variantSpec, int readLength)
+        : regionSpec_(regionSpec)
+        , variantSpec_(variantSpec)
+        , readLength_(readLength)
+    {
+    }
+
+    ~VariantJsonWriter() = default;
+    void visit(const RepeatFindings* repeatFindingsPtr);
+    void visit(const SmallVariantFindings* smallVariantFindingsPtr);
+    nlohmann::json record() const { return record_; }
+
+private:
+    const LocusSpecification& regionSpec_;
+    const VariantSpecification& variantSpec_;
+    const int readLength_;
+    nlohmann::json record_;
+};
 
 class JsonWriter
 {
 public:
     JsonWriter(
-        const std::string& sampleName, int readLength, const RegionCatalog& regionSpecs,
+        const std::string& sampleName, int readLength, const RegionCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     void write(std::ostream& out);
 
 private:
-    void addRegionFindings(const std::string& regionId, const RegionFindings& regionFindings, nlohmann::json& array);
-    void addRepeatFindings(
-        const RegionBlueprintComponent& repeatBlueprint, const RepeatFindings& repeatFindings, nlohmann::json& array);
-
-    std::string encodeRepeatAlleleSupport(const std::string& repeatUnit, const RepeatFindings& repeatFindings);
-
     const std::string sampleName_;
     const int readLength_;
-    const RegionCatalog& regionSpecs_;
+    const RegionCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 
 std::ostream& operator<<(std::ostream& out, JsonWriter& jsonWriter);
+
+}

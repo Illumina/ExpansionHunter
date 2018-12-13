@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Roman Petrovski <RPetrovski@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -50,8 +52,6 @@ TEST(SimpleAlignment, Short_to_short)
 
     const string reference = "TGCAGTCCCGCCCCGTCCC";
     aligner.align(query.begin(), query.end(), reference.begin(), reference.end(), edges);
-
-    //    std::cerr << aligner << std::endl;
 
     Score secondBestScore = 0;
     std::vector<Cigar> cigars;

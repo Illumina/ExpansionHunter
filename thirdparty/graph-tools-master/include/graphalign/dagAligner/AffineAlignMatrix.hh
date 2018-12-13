@@ -1,8 +1,10 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Roman Petrovski <RPetrovski@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -42,6 +44,7 @@ namespace dagAligner
     {
     public:
         typedef PenaltyMatrixT PenaltyMatrix;
+
     private:
         const PenaltyMatrix penaltyMatrix_;
         const Score gapOpen_;
@@ -85,7 +88,6 @@ namespace dagAligner
             reset(edgeMap);
 
             fill(edgeMap);
-            // std::cerr << *this << std::endl;
         }
 
         typedef AlignMatrix::const_iterator const_iterator;
@@ -105,7 +107,6 @@ namespace dagAligner
         {
             const Score insExtScore = v_.at(q, t) - f_.at(q - 1, t);
             const Score insOpenScore = v_.at(q, t) - v_.at(q - 1, t);
-            // std::cerr << "Score " << v_.at(q, t) << std::endl;
             return gapExt_ == insExtScore || gapOpen_ + gapExt_ == insOpenScore;
         }
 
@@ -121,7 +122,7 @@ namespace dagAligner
             typename PenaltyMatrix::QueryChar queryChar = query_[q];
             typename PenaltyMatrix::TargetChar targetChar = target_[t];
             const Score alnScore = v_.at(q, t) - v_.at(q - 1, p);
-            return penaltyMatrix_.isMatch(queryChar, targetChar) && penaltyMatrix_(queryChar, queryChar) == alnScore;
+            return penaltyMatrix_.isMatch(queryChar, targetChar) && penaltyMatrix_(queryChar, targetChar) == alnScore;
         }
 
         bool isMismatch(int q, int t, int p) const

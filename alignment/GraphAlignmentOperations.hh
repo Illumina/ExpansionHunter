@@ -23,6 +23,9 @@
 #include "graphalign/GraphAlignment.hh"
 #include "graphalign/LinearAlignmentParameters.hh"
 
+namespace ehunter
+{
+
 /**
  * Adds softclips to the ends of the alignment
  *
@@ -49,3 +52,5 @@ int scoreAlignmentToNonloopNodes(
 int countFullOverlaps(graphtools::NodeId nodeId, graphtools::GraphAlignment alignment);
 
 graphtools::GraphAlignment computeCanonicalAlignment(const std::list<graphtools::GraphAlignment>& alignments);
+
+}

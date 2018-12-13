@@ -1,8 +1,11 @@
-// -*- mode: c++; indent-tabs-mode: nil; -*-
 //
+// GraphTools library
 // Copyright (c) 2018 Illumina, Inc.
 // All rights reserved.
-
+//
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
+//         Roman Petrovski <RPetrovski@illumina.com>
+//
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions are met:
 
@@ -127,6 +130,7 @@ private:
     {
         std::shared_ptr<PinnedPathAligner> ptrPathAligner_;
         mutable std::shared_ptr<PinnedDagAligner> ptrDagAligner_;
+
     public:
         AlignerSelector(const std::string& alignerName, const LinearAlignmentParameters& alignerParameters)
         {
@@ -160,7 +164,6 @@ private:
             return ptrPathAligner_ ? ptrPathAligner_->prefixAlign(seed_path, query_piece, extension_len, score)
                                    : ptrDagAligner_->prefixAlign(seed_path, query_piece, extension_len, score);
         }
-
 
     } aligner_;
 };
