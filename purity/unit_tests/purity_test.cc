@@ -20,8 +20,8 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
-#include "gtest/gtest.h"
 #include "purity/purity.h"
+#include "gtest/gtest.h"
 
 #include <string>
 using std::string;
@@ -31,15 +31,16 @@ using std::endl;
 #include <vector>
 using std::vector;
 
+using namespace ehunter;
+
 TEST(TestUnitMatching, MatchesUnitToItself) {
   char qual_chars[] = {40, 40, 40, 40, 40, 40};
   string quals = qual_chars;
   string bases = "GGCCCC";
   vector<string> units = {"GGCCCC"};
 
-  EXPECT_DOUBLE_EQ(
-      MatchUnits(units, bases.begin(), bases.end(), quals.begin(), quals.end()),
-      6.0);
+  EXPECT_DOUBLE_EQ(MatchUnits(units, bases.begin(), bases.end(), quals.begin()),
+                   6.0);
 }
 
 TEST(TestUnitMatching, MatchesMultipleUnits) {
@@ -47,9 +48,8 @@ TEST(TestUnitMatching, MatchesMultipleUnits) {
   string bases = "AACTCC";
   vector<string> units = {"GGCCCC", "AACTCC"};
 
-  EXPECT_DOUBLE_EQ(
-      MatchUnits(units, bases.begin(), bases.end(), quals.begin(), quals.end()),
-      6.0);
+  EXPECT_DOUBLE_EQ(MatchUnits(units, bases.begin(), bases.end(), quals.begin()),
+                   6.0);
 }
 
 TEST(TestUnitMatching, MatchesShortSequence) {
@@ -57,9 +57,8 @@ TEST(TestUnitMatching, MatchesShortSequence) {
   string bases = "AAC";
   vector<string> units = {"GGCCCC", "AACTCC"};
 
-  EXPECT_DOUBLE_EQ(
-      MatchUnits(units, bases.begin(), bases.end(), quals.begin(), quals.end()),
-      3.0);
+  EXPECT_DOUBLE_EQ(MatchUnits(units, bases.begin(), bases.end(), quals.begin()),
+                   3.0);
 }
 
 TEST(TestUnitMatching, MatchesLowqualBases) {
@@ -67,9 +66,8 @@ TEST(TestUnitMatching, MatchesLowqualBases) {
   string bases = "AACCGG";
   vector<string> units = {"GGCCCC", "AACTCC"};
 
-  EXPECT_DOUBLE_EQ(
-      MatchUnits(units, bases.begin(), bases.end(), quals.begin(), quals.end()),
-      4.5);
+  EXPECT_DOUBLE_EQ(MatchUnits(units, bases.begin(), bases.end(), quals.begin()),
+                   4.5);
 }
 
 TEST(TestUnitMatching, ScoreCanBeNegative) {
@@ -77,9 +75,8 @@ TEST(TestUnitMatching, ScoreCanBeNegative) {
   string bases = "AACCGG";
   vector<string> units = {"ATTTTT", "AATTTT"};
 
-  EXPECT_DOUBLE_EQ(
-      MatchUnits(units, bases.begin(), bases.end(), quals.begin(), quals.end()),
-      -2.0);
+  EXPECT_DOUBLE_EQ(MatchUnits(units, bases.begin(), bases.end(), quals.begin()),
+                   -2.0);
 }
 
 TEST(TestRepeatMatching, RepeatMatches) {

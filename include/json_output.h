@@ -31,7 +31,10 @@
 #include "common/repeat_spec.h"
 #include "include/region_findings.h"
 
+namespace ehunter {
+
 void WriteJson(const Parameters &parameters,
                const std::map<std::string, RepeatSpec> &repeat_specs,
                const std::vector<RegionFindings> &sample_findings,
                std::ostream &out);
+}

@@ -23,6 +23,7 @@
 #include "include/irr_counting.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <map>
@@ -42,6 +43,7 @@ using std::vector;
 using std::map;
 using std::array;
 
+namespace ehunter {
 // Check if two alignments are same.
 static bool SameAlign(Align &al1, Align &al2) {
   return (al1.name == al2.name && al1.mate_pos == al2.mate_pos &&
@@ -56,7 +58,8 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
   // is "*" then jump to unaligned reads.
   if (region.chrom() == "*") {
     if (!(*bam_file).JumpToUnaligned()) {
-      cerr << TimeStamp() << ",\t[Warning: there appears to be no aligned reads]" << endl;
+      cerr << TimeStamp()
+           << ",\t[Warning: there appears to be no aligned reads]" << endl;
       return;
     }
   } else {
@@ -74,7 +77,7 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
       Align dummy_align;
 
       align.region = region.ToString();
-      array<Align, 2> pair = {align, dummy_align};
+      array<Align, 2> pair = {{align, dummy_align}};
       if (!align.IsFirstMate()) {
         std::reverse(pair.begin(), pair.end());
       }
@@ -132,8 +135,7 @@ void CacheReadsFromRegion(const Region &region, const WhatToCache whatToCache,
 
 bool CheckAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
                        const Region &target_neighborhood,
-                       const RepeatSpec &repeat_spec, const Align &read_align,
-                       const Align &mate_align,
+                       const Align &read_align, const Align &mate_align,
                        const vector<vector<string>> &units_shifts) {
   const int min_mapq = parameters.min_anchor_mapq();
   // Check if the read has low mapping quality and it is an off-target
@@ -217,7 +219,7 @@ void FillinMates(BamFile &bam_file, AlignPairs &align_pairs,
         // which a read was cached. Since this read was not cached
         // from anywhere, we store its position in the region field.
         const vector<string> &refVec = bam_file.ref_vec();
-        assert(missing_al.chrom_id < refVec.size());
+        assert(missing_al.chrom_id < (int)refVec.size());
         missing_al.region = Region(refVec[missing_al.chrom_id],
                                    missing_al.pos + 1, missing_al.pos + 2)
                                 .ToString();
@@ -230,7 +232,7 @@ void FillinMates(BamFile &bam_file, AlignPairs &align_pairs,
 }
 
 // TODO(edolzhenko): Move cache creation out of the function.
-bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
+void CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
                         int &numUnalignedIRRs,
                         const vector<vector<string>> &units_shifts,
                         vector<RepeatAlign> *irr_rep_aligns) {
@@ -303,13 +305,11 @@ bool CountUnalignedIrrs(BamFile &bam_file, const Parameters &parameters,
   }
 }
 
-int CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
-                    const AlignPairs &align_pairs,
+int CountAlignedIrr(const Parameters &parameters, const AlignPairs &align_pairs,
                     map<string, int> &numIrrConfRegion,
                     const vector<vector<string>> &units_shifts,
                     vector<RepeatAlign> *irr_rep_aligns) {
   int irr_count = 0;
-  bool isFwdKmer = false;
   for (AlignPairs::const_iterator it = align_pairs.begin();
        it != align_pairs.end(); ++it) {
     const AlignPair &frag = it->second;
@@ -354,7 +354,7 @@ int CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
 }
 
 void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
-                       const Region &targetNhood, const RepeatSpec &repeat_spec,
+                       const Region &targetNhood,
                        const unordered_set<string> &ontarget_frag_names,
                        AlignPairs &align_pairs, int &numAnchoredIrrs,
                        const vector<vector<string>> &units_shifts,
@@ -374,13 +374,13 @@ void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
 
       const bool is_mate1_anchored_irr =
           (al1.status != kFlankingRead) &&
-          CheckAnchoredIrrs(bam_file, parameters, targetNhood, repeat_spec, al1,
-                            al2, units_shifts);
+          CheckAnchoredIrrs(bam_file, parameters, targetNhood, al1, al2,
+                            units_shifts);
 
       const bool is_mate2_anchored_irr =
           (al2.status != kFlankingRead) &&
-          CheckAnchoredIrrs(bam_file, parameters, targetNhood, repeat_spec, al2,
-                            al1, units_shifts);
+          CheckAnchoredIrrs(bam_file, parameters, targetNhood, al2, al1,
+                            units_shifts);
 
       if (is_mate1_anchored_irr || is_mate2_anchored_irr) {
         const Align &irr = is_mate1_anchored_irr ? al1 : al2;
@@ -403,3 +403,4 @@ void CountAnchoredIrrs(const BamFile &bam_file, const Parameters &parameters,
     }
   }
 }
+}  // namespace ehunter

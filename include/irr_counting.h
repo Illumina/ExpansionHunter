@@ -35,6 +35,8 @@
 #include "include/read_alignment.h"
 #include "rep_align/rep_align.h"
 
+namespace ehunter {
+
 // Represents fragment alignments as pairs of read alignments.
 typedef std::array<Align, 2> AlignPair;
 
@@ -52,7 +54,7 @@ void CacheReadsFromRegion(
 
 void CountAnchoredIrrs(
     const BamFile &bam_file, const Parameters &parameters,
-    const Region &target_neighborhood, const RepeatSpec &repeat_spec,
+    const Region &target_neighborhood,
     const std::unordered_set<std::string> &ontarget_frag_names,
     AlignPairs &align_pairs, int &num_anchored_irrs,
     const std::vector<std::vector<std::string>> &units_shifts,
@@ -66,13 +68,13 @@ void FillinMates(BamFile &bam_file, AlignPairs &align_pairs,
 // Count the number of in-repeat reads stored in an AlignPairs object.
 // A fragment is in-repeat if both of the reads fuzzy match to the repeat
 // sequence.
-bool CountUnalignedIrrs(
+void CountUnalignedIrrs(
     BamFile &bam_file, const Parameters &parameters, int &numInRepeatReads,
     const std::vector<std::vector<std::string>> &units_shifts,
     std::vector<RepeatAlign> *irr_rep_aligns);
 
-int CountAlignedIrr(const BamFile &bam_file, const Parameters &parameters,
-                    const AlignPairs &align_pairs,
+int CountAlignedIrr(const Parameters &parameters, const AlignPairs &align_pairs,
                     std::map<std::string, int> &num_irrs_per_offtarget_region,
                     const std::vector<std::vector<std::string>> &units_shifts,
                     std::vector<RepeatAlign> *irr_rep_aligns);
+}  // namespace ehunter

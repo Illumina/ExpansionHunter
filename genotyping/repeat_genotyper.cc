@@ -33,6 +33,7 @@ using std::string;
 using std::cerr;
 using std::endl;
 
+namespace ehunter {
 void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
                     int max_num_units_in_read, double prop_correct_molecules,
                     double hap_depth, int read_len,
@@ -40,7 +41,6 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
                     const map<int, int> &flanking_size_count,
                     const map<int, int> &spanning_size_count,
                     GenotypeType genotype_type, RepeatGenotype &genotype) {
-
   GenotypeShortRepeat(max_num_units_in_read, prop_correct_molecules, hap_depth,
                       read_len, haplotype_candidates, flanking_size_count,
                       spanning_size_count, genotype_type, genotype);
@@ -48,7 +48,7 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
   const int unit_len = repeat_spec.units[0].length();
   const double haplotype_depth = parameters.depth() / 2;
 
-  for (RepeatAllele& allele : genotype) {
+  for (RepeatAllele &allele : genotype) {
     if (allele.type_ == ReadType::kSpanning) {
       allele.ci_.lower_bound_ = allele.size_;
       allele.ci_.upper_bound_ = allele.size_;
@@ -62,7 +62,6 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
 
     if (short_allele.type_ == ReadType::kInrepeat &&
         long_allele.type_ == ReadType::kInrepeat) {
-
       assert(flanking_size_count.at(max_num_units_in_read) ==
              long_allele.num_supporting_reads_);
       int num_irrs = long_allele.num_supporting_reads_;
@@ -196,8 +195,8 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
       int upper_bound = 0;
       // Haplotype depth should be twice as high because flanking reads
       // are coming from both flanks.
-      EstimateRepeatLen(allele.num_supporting_reads_, read_len,
-                        2 * hap_depth, len_estimate, lower_bound, upper_bound);
+      EstimateRepeatLen(allele.num_supporting_reads_, read_len, 2 * hap_depth,
+                        len_estimate, lower_bound, upper_bound);
 
       // estimateRepeatLen adds read_len to size estimates so we need to
       // subtract it.
@@ -227,3 +226,4 @@ void GenotypeRepeat(const Parameters &parameters, const RepeatSpec &repeat_spec,
     }
   }
 }
+}  // namespace ehunter

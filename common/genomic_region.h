@@ -25,8 +25,9 @@
 #include <iostream>
 #include <string>
 
+namespace ehunter {
 class Region {
-public:
+ public:
   friend std::istream &operator>>(std::istream &istrm, Region &region);
   friend std::ostream &operator<<(std::ostream &ostrm, const Region &region);
 
@@ -44,8 +45,8 @@ public:
   Region Extend(int extension_len) const;
 
   const std::string &chrom() const { return chrom_; }
-  const int64_t start() const { return start_; }
-  const int64_t end() const { return end_; }
+  int64_t start() const { return start_; }
+  int64_t end() const { return end_; }
   const std::string &label() const { return label_; }
 
   void set_start(int64_t start) { start_ = start; }
@@ -54,7 +55,7 @@ public:
 
   const std::string ToString() const;
 
-private:
+ private:
   std::string chrom_;
   int64_t start_;
   int64_t end_;
@@ -63,3 +64,4 @@ private:
 
 std::istream &operator>>(std::istream &istrm, Region &region);
 std::ostream &operator<<(std::ostream &ostrm, const Region &region);
+}  // namespace ehunter

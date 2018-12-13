@@ -28,8 +28,8 @@
 #include <string>
 #include <vector>
 
-#include "third_party/json/json.hpp"
 #include <boost/algorithm/string/join.hpp>
+#include "third_party/json/json.hpp"
 
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
@@ -43,6 +43,7 @@ using std::endl;
 
 using json = nlohmann::json;
 
+namespace ehunter {
 void WriteJson(const Parameters &parameters,
                const map<string, RepeatSpec> &repeat_specs,
                const vector<RegionFindings> &sample_findings, ostream &out) {
@@ -90,7 +91,7 @@ void WriteJson(const Parameters &parameters,
              region_findings.offtarget_irr_counts.size());
       auto &offtarget_section =
           results_json[region_findings.region_id]["OffTargetRegionIrrCounts"];
-      for (int i = 0; i != repeat_spec.offtarget_regions.size(); ++i) {
+      for (int i = 0; i != (int)repeat_spec.offtarget_regions.size(); ++i) {
         offtarget_section[repeat_spec.offtarget_regions[i].ToString()] =
             region_findings.offtarget_irr_counts[i];
       }
@@ -121,3 +122,4 @@ void WriteJson(const Parameters &parameters,
 
   out << results_json.dump(4);
 }
+}  // namespace ehunter

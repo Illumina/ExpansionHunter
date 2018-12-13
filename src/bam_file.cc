@@ -54,10 +54,16 @@ using std::endl;
 using std::vector;
 using std::sort;
 
+namespace ehunter {
 BamFile::BamFile()
-    : hts_file_ptr_(0), hts_bam_hdr_ptr_(0), hts_idx_ptr_(0), hts_itr_ptr_(0),
-      hts_bam_align_ptr_(0), jump_to_unaligned_(false), at_file_end_(false),
-      format_(kUnknownFormat) {}
+    : format_(kUnknownFormat),
+      hts_file_ptr_(0),
+      hts_bam_hdr_ptr_(0),
+      hts_idx_ptr_(0),
+      hts_itr_ptr_(0),
+      hts_bam_align_ptr_(0),
+      jump_to_unaligned_(false),
+      at_file_end_(false) {}
 
 BamFile::~BamFile() {
   if (hts_bam_align_ptr_) {
@@ -69,6 +75,8 @@ BamFile::~BamFile() {
 }
 
 void BamFile::Init(const string &path, const string &reference) {
+  (void)reference;
+
   path_ = path;
   // Open a BAM file for reading.
   hts_file_ptr_ = sam_open(path.c_str(), "r");
@@ -82,6 +90,7 @@ void BamFile::Init(const string &path, const string &reference) {
     format_ = kBamFile;
   }
 
+#ifndef DISABLE_CRAM
   if (hts_file_ptr_->format.format == cram) {
     format_ = kCramFile;
 
@@ -95,12 +104,15 @@ void BamFile::Init(const string &path, const string &reference) {
       throw std::runtime_error("Failed to set reference index");
     }
   }
+#endif
 
   string input_format = "Unknown";
   if (format_ == kBamFile) {
     input_format = "BAM";
+#ifndef DISABLE_CRAM
   } else if (format_ == kCramFile) {
     input_format = "CRAM";
+#endif
   }
 
   cerr << TimeStamp() << ",[Input format: " << input_format << "]" << endl;
@@ -215,8 +227,10 @@ bool BamFile::JumpToUnaligned() {
     }
 
     jump_to_unaligned_ = true;
+#ifndef DISABLE_CRAM
   } else if (hts_file_ptr_->format.format == cram) {
     jump_to_unaligned_ = true;
+#endif
   } else {
     throw std::logic_error("Unknown format");
   }
@@ -228,8 +242,10 @@ bool BamFile::GetRead(Align &align) {
   if (jump_to_unaligned_) {
     if (hts_file_ptr_->format.format == bam) {
       return GetUnalignedPrRead(align);
+#ifndef DISABLE_CRAM
     } else if (hts_file_ptr_->format.format == cram) {
       return cram_suppliment.GetUnalignedRead(align);
+#endif
     } else {
       throw std::logic_error("Unknown format");
     }
@@ -252,7 +268,7 @@ bool BamFile::GetRead(Align &align) {
   readRet = GetNextGoodRead();
 
   if (readRet == -1) {
-    at_file_end_ = true; // EOF
+    at_file_end_ = true;  // EOF
     return false;
   }
 
@@ -334,7 +350,7 @@ bool BamFile::GetUnalignedPrRead(Align &align) {
 
   // Have retrieved an unaligned read. Copy the bits needed to align.
   if (!GetAlignFromHtsAlign(hts_bam_align_ptr_, align,
-                            true)) { // assumeUnaligned=T
+                            true)) {  // assumeUnaligned=T
     throw std::runtime_error("Failed to process read from BAM file.");
   }
 
@@ -360,7 +376,7 @@ int BamFile::GetNextGoodRead() {
   return return_value;
 }
 
-const size_t CountValidBases(const string &bases) {
+size_t CountValidBases(const string &bases) {
   const size_t n_count = std::count(bases.begin(), bases.end(), 'N');
   const size_t valid_base_count = bases.length() - n_count;
 
@@ -405,14 +421,16 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
 
   const int chrom_count = chrom_names.size();
 
+#ifndef DISABLE_CRAM
   if (format_ == kCramFile) {
     mapped_read_counts =
         cram_suppliment.CountAlignedReads(parameters.bam_path(), chrom_count);
-    for (int i = 0; i < chrom_names.size(); ++i) {
+    for (int i = 0; i < (int)chrom_names.size(); ++i) {
       cerr << chrom_names[i] << " " << chrom_lens[i] << " "
            << mapped_read_counts[i] << endl;
     }
   }
+#endif
 
   typedef std::pair<int, double> ChromIndDepth;
   typedef vector<ChromIndDepth> ChromIndDepths;
@@ -440,8 +458,9 @@ double BamFile::CalcMedianDepth(Parameters &parameters, size_t read_len) {
   }
 
   if (chrom_ind_depths.empty()) {
-    throw std::runtime_error("Error: No contigs named chr1-chr22 or 1-22 "
-                             "found; consider setting the depth manually");
+    throw std::runtime_error(
+        "Error: No contigs named chr1-chr22 or 1-22 "
+        "found; consider setting the depth manually");
   }
 
   sort(chrom_ind_depths.begin(), chrom_ind_depths.end(),
@@ -470,9 +489,11 @@ vector<int64_t> CramFile::CountAlignedReads(const string &cram_path,
     throw std::runtime_error("Failed to read the input file");
   }
 
+#ifndef DISABLE_CRAM
   if (file_ptr_->format.format != cram) {
     throw std::runtime_error(cram_path + " is not a CRAM file");
   }
+#endif
 
   header_ptr_ = sam_hdr_read(file_ptr_);
   if (!header_ptr_) {
@@ -484,7 +505,7 @@ vector<int64_t> CramFile::CountAlignedReads(const string &cram_path,
   found_unaligned_reads_ = false;
   int ret;
   while ((ret = sam_read1(file_ptr_, header_ptr_, align_ptr_)) >= 0) {
-    if (align_ptr_->core.tid == -1) { // Reached unaligned reads.
+    if (align_ptr_->core.tid == -1) {  // Reached unaligned reads.
       found_unaligned_reads_ = true;
       cerr << "[Found unaligend reads]" << endl;
       break;
@@ -508,3 +529,4 @@ bool CramFile::GetUnalignedRead(Align &align) {
   }
   return true;
 }
+}  // namespace ehunter

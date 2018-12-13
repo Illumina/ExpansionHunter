@@ -37,6 +37,7 @@ using std::endl;
 #include <vector>
 using std::vector;
 
+namespace ehunter {
 // Given the observed IRR number, haplotype depth, and read length
 // estimate repeat length (in nt) and the associated confidence
 // interval.
@@ -84,3 +85,4 @@ void EstimateRepeatLen(const int num_irrs, const int read_len,
   assert(ml_estimate - lower_quantile + read_len >= 0);
   upper_bound = (int)(ml_estimate - lower_quantile + read_len);
 }
+}  // namespace ehunter

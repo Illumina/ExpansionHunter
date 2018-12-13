@@ -29,7 +29,6 @@ add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
 		${CMAKE_BINARY_DIR}/googletest-build)
 ##################################################################
 
-
 ExternalProject_Add(zlib
 	PREFIX ${CMAKE_BINARY_DIR}/thirdparty/zlib
 	GIT_REPOSITORY "https://github.com/madler/zlib.git"
@@ -53,6 +52,8 @@ ExternalProject_Add(htslib
 	INSTALL_COMMAND make install prefix=${CMAKE_BINARY_DIR}/thirdparty/htslib
 	LOG_DOWNLOAD 1
 )
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic-errors -std=c++11")
 
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/zlib/include)
 set(zlib_static ${CMAKE_BINARY_DIR}/thirdparty/zlib/lib/libz.a)

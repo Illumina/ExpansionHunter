@@ -34,6 +34,8 @@ using std::vector;
 using std::cerr;
 using std::endl;
 
+namespace ehunter {
+
 size_t CountUnitsAtOffset(const vector<string> &units, const string &bases,
                           size_t offset) {
   const size_t unit_len = units[0].length();
@@ -76,23 +78,23 @@ static const string RevComp(const string &bases) {
 
   for (const char base : bases) {
     switch (base) {
-    case 'A':
-      complement_base = 'T';
-      break;
-    case 'C':
-      complement_base = 'G';
-      break;
-    case 'G':
-      complement_base = 'C';
-      break;
-    case 'T':
-      complement_base = 'A';
-      break;
-    case '/':
-      complement_base = '/';
-      break;
-    default:
-      complement_base = 'N';
+      case 'A':
+        complement_base = 'T';
+        break;
+      case 'C':
+        complement_base = 'G';
+        break;
+      case 'G':
+        complement_base = 'C';
+        break;
+      case 'T':
+        complement_base = 'A';
+        break;
+      case '/':
+        complement_base = '/';
+        break;
+      default:
+        complement_base = 'N';
     }
 
     *rev_iter++ = complement_base;
@@ -130,9 +132,9 @@ bool AlignLeftFlank(const vector<string> &units, const string &left_flank,
       const string left_flank_pref =
           left_flank.substr(left_flank.length() - offset, offset);
       const vector<string> left_flank_pref_units = {left_flank_pref};
-      *left_flank_score = MatchUnits(left_flank_pref_units, bases_pref.begin(),
-                                     bases_pref.end(), quals_pref.begin(),
-                                     quals_pref.end(), min_baseq);
+      *left_flank_score =
+          MatchUnits(left_flank_pref_units, bases_pref.begin(),
+                     bases_pref.end(), quals_pref.begin(), min_baseq);
       if (*left_flank_score / bases_pref.length() >= min_wp_score) {
         const string bases_pref_rc = RevComp(bases_pref);
         const string quals_pref_rc(quals_pref.rbegin(), quals_pref.rend());
@@ -264,13 +266,11 @@ bool IsSpanningOrFlankingReadRc(const Parameters &params,
   return reverse_match;
 }
 
-static double ScoreSpanningAlign(size_t min_baseq, double min_wp,
-                                 const vector<string> &units,
+static double ScoreSpanningAlign(size_t min_baseq, const vector<string> &units,
                                  const string &left_flank,
                                  const string &right_flank, const string &bases,
                                  const string &quals, size_t left_flank_len,
                                  size_t right_flank_len) {
-  const double kFlankMinWpScore = 0.7;
   const string bases_prefix = bases.substr(0, left_flank_len);
   const string quals_prefix = quals.substr(0, left_flank_len);
 
@@ -291,20 +291,20 @@ static double ScoreSpanningAlign(size_t min_baseq, double min_wp,
   const string left_flank_pref =
       left_flank.substr(left_flank.length() - left_flank_len, left_flank_len);
   const vector<string> left_flank_pref_units = {left_flank_pref};
-  double left_flank_score = MatchUnits(
-      left_flank_pref_units, bases_prefix.begin(), bases_prefix.end(),
-      quals_prefix.begin(), quals_prefix.end(), min_baseq);
+  double left_flank_score =
+      MatchUnits(left_flank_pref_units, bases_prefix.begin(),
+                 bases_prefix.end(), quals_prefix.begin(), min_baseq);
 
   const string right_flank_pref = right_flank.substr(0, right_flank_len);
   const vector<string> right_flank_pref_units = {right_flank_pref};
-  double right_flank_score = MatchUnits(
-      right_flank_pref_units, bases_suffix.begin(), bases_suffix.end(),
-      quals_suffix.begin(), quals_suffix.end(), min_baseq);
+  double right_flank_score =
+      MatchUnits(right_flank_pref_units, bases_suffix.begin(),
+                 bases_suffix.end(), quals_suffix.begin(), min_baseq);
 
   return (left_flank_score + repeat_score + right_flank_score) / bases.length();
 }
 
-static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
+static size_t FindTopRightFlankLen(size_t min_baseq,
                                    const vector<string> &units,
                                    const string &left_flank,
                                    const string &right_flank,
@@ -313,7 +313,6 @@ static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
   size_t unit_len = units[0].length();
   double top_wp = 0;
   size_t top_right_len = 0;
-  size_t top_size = 0;
 
   for (size_t test_size = 1; test_size != cur_size + 1; ++test_size) {
     const size_t test_repeat_len = test_size * unit_len;
@@ -321,10 +320,9 @@ static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
     assert(bases.length() >= cur_left_len + test_repeat_len);
     size_t test_right_len = bases.length() - cur_left_len - test_repeat_len;
     const double test_wp =
-        ScoreSpanningAlign(min_baseq, min_wp, units, left_flank, right_flank,
-                           bases, quals, cur_left_len, test_right_len);
+        ScoreSpanningAlign(min_baseq, units, left_flank, right_flank, bases,
+                           quals, cur_left_len, test_right_len);
     if (test_wp > top_wp) {
-      top_size = test_size;
       top_right_len = test_right_len;
       top_wp = test_wp;
     }
@@ -333,8 +331,7 @@ static size_t FindTopRightFlankLen(size_t min_baseq, double min_wp,
   return top_right_len;
 }
 
-static size_t FindTopLeftFlankLen(size_t min_baseq, double min_wp,
-                                  const vector<string> &units,
+static size_t FindTopLeftFlankLen(size_t min_baseq, const vector<string> &units,
                                   const string &left_flank,
                                   const string &right_flank,
                                   const string &bases, const string &quals,
@@ -349,8 +346,8 @@ static size_t FindTopLeftFlankLen(size_t min_baseq, double min_wp,
     assert(bases.length() >= cur_right_len + test_repeat_len);
     size_t test_left_len = bases.length() - cur_right_len - test_repeat_len;
     const double test_wp =
-        ScoreSpanningAlign(min_baseq, min_wp, units, left_flank, right_flank,
-                           bases, quals, test_left_len, cur_right_len);
+        ScoreSpanningAlign(min_baseq, units, left_flank, right_flank, bases,
+                           quals, test_left_len, cur_right_len);
     if (test_wp > top_wp) {
       top_size = test_size;
       top_left_len = test_left_len;
@@ -379,7 +376,7 @@ bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
   const size_t unit_len = units[0].length();
 
   const size_t top_left_len = FindTopLeftFlankLen(
-      params.min_baseq(), params.min_wp(), units, repeat_spec.left_flank,
+      params.min_baseq(), units, repeat_spec.left_flank,
       repeat_spec.right_flank, oriented_bases, oriented_quals, rep_align->size,
       rep_align->right_flank_len);
 
@@ -388,10 +385,10 @@ bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
       (oriented_bases.length() - top_left_len - rep_align->right_flank_len) /
       unit_len;
 
-  const size_t top_right_len = FindTopRightFlankLen(
-      params.min_baseq(), params.min_wp(), units, repeat_spec.left_flank,
-      repeat_spec.right_flank, oriented_bases, oriented_quals, cur_size,
-      top_left_len);
+  const size_t top_right_len =
+      FindTopRightFlankLen(params.min_baseq(), units, repeat_spec.left_flank,
+                           repeat_spec.right_flank, oriented_bases,
+                           oriented_quals, cur_size, top_left_len);
 
   cur_size =
       (oriented_bases.length() - top_left_len - top_right_len) / unit_len;
@@ -404,3 +401,4 @@ bool AlignRead(const Parameters &params, const RepeatSpec &repeat_spec,
   }
   return true;
 }
+}  // namespace ehunter

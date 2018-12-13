@@ -60,6 +60,7 @@ using std::string;
 using std::unordered_set;
 using std::vector;
 
+namespace ehunter {
 // Returns the length of the first read in a BAM file.
 size_t CalcReadLen(const string &bam_path) {
   // Open a BAM file for reading.
@@ -100,12 +101,10 @@ size_t CalcReadLen(const string &bam_path) {
 }
 
 // Search for reads spanning the entire repeat sequence.
-void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
+void FindShortRepeats(const Parameters &parameters,
                       const RepeatSpec &repeat_spec, AlignPairs &align_pairs,
                       vector<RepeatReadGroup> &read_groups,
                       vector<RepeatAlign> *flanking_repaligns) {
-  const int unit_len = repeat_spec.units_shifts[0][0].length();
-
   map<int, vector<RepeatAlign>> size_spanning_repaligns;
   flanking_repaligns->clear();
 
@@ -147,9 +146,7 @@ void FindShortRepeats(const Parameters &parameters, BamFile &bam_file,
   DistributeFlankingReads(parameters, repeat_spec, &read_groups,
                           flanking_repaligns);
 
-  const double haplotype_depth = parameters.depth() / 2;
   CoalesceFlankingReads(repeat_spec, read_groups, flanking_repaligns,
-                        parameters.read_len(), haplotype_depth,
                         repeat_spec.units[0].length(), repeat_spec.units_shifts,
                         parameters.min_baseq(), parameters.min_wp());
 }
@@ -200,7 +197,7 @@ bool IsFlannkingGroup(const RepeatReadGroup &read_group) {
   return read_group.read_type == ReadType::kFlanking;
 }
 
-bool FindLongRepeats(const Parameters &parameters,
+void FindLongRepeats(const Parameters &parameters,
                      const RepeatSpec &repeat_spec, BamFile &bam_file,
                      unordered_set<string> &ontarget_frag_names,
                      AlignPairs &align_pairs, RegionFindings &region_findings) {
@@ -211,10 +208,9 @@ bool FindLongRepeats(const Parameters &parameters,
 
   // Anchored IRRs and IRR pairs will be stored here.
   vector<RepeatAlign> irr_rep_aligns;
-  CountAnchoredIrrs(bam_file, parameters, target_nhood, repeat_spec,
-                    ontarget_frag_names, align_pairs,
-                    region_findings.num_anchored_irrs, repeat_spec.units_shifts,
-                    &irr_rep_aligns);
+  CountAnchoredIrrs(bam_file, parameters, target_nhood, ontarget_frag_names,
+                    align_pairs, region_findings.num_anchored_irrs,
+                    repeat_spec.units_shifts, &irr_rep_aligns);
 
   cerr << TimeStamp() << ",\t[Found " << region_findings.num_anchored_irrs
        << " anchored IRRs]" << endl
@@ -230,7 +226,7 @@ bool FindLongRepeats(const Parameters &parameters,
       cerr << TimeStamp() << ",\t[Counting aligned IRR pairs]" << endl;
       map<string, int> numIrrConfRegion;
       region_findings.num_irrs +=
-          CountAlignedIrr(bam_file, parameters, align_pairs, numIrrConfRegion,
+          CountAlignedIrr(parameters, align_pairs, numIrrConfRegion,
                           repeat_spec.units_shifts, &irr_rep_aligns);
 
       // Record paired IRR counts from each confusion region.
@@ -349,7 +345,7 @@ void EstimateRepeatSizes(const Parameters &parameters,
     }
 
     cerr << TimeStamp() << ",\t[Estimating short repeat sizes]" << endl;
-    FindShortRepeats(parameters, *bam_file, repeat_spec, align_pairs,
+    FindShortRepeats(parameters, repeat_spec, align_pairs,
                      region_findings.read_groups,
                      &region_findings.flanking_repaligns);
 
@@ -370,7 +366,6 @@ void EstimateRepeatSizes(const Parameters &parameters,
 
     const int num_units_in_read = (int)(std::ceil(
         parameters.read_len() / (double)repeat_spec.units[0].length()));
-    int num_supporting_irr_reads = -1;
 
     vector<RepeatAllele> haplotype_candidates;
     // Add count of in-repeat reads to flanking.
@@ -455,23 +450,28 @@ void EstimateRepeatSizes(const Parameters &parameters,
   WriteVcf(parameters, repeat_specs, sample_findings, outputs->vcf());
   cerr << TimeStamp() << ",[All done]" << endl;
 }
+}  // namespace ehunter
 
+#ifdef LIBRARY_TARGET
+int expansionHunter(int argc, char *argv[]) {
+#else
 int main(int argc, char *argv[]) {
+#endif
   try {
-    Parameters parameters;
-    cerr << kProgramVersion << endl;
+    ehunter::Parameters parameters;
+    cerr << ehunter::kProgramVersion << endl;
 
     if (!parameters.Load(argc, argv)) {
       return 0;
     }
 
-    cerr << TimeStamp() << ",[Starting Logging for " << parameters.sample_name()
-         << "]" << endl;
+    cerr << ehunter::TimeStamp() << ",[Starting Logging for "
+         << parameters.sample_name() << "]" << endl;
 
-    Outputs outputs(parameters.vcf_path(), parameters.json_path(),
-                    parameters.log_path());
+    ehunter::Outputs outputs(parameters.vcf_path(), parameters.json_path(),
+                             parameters.log_path());
 
-    map<string, RepeatSpec> repeat_specs;
+    map<string, ehunter::RepeatSpec> repeat_specs;
     if (!LoadRepeatSpecs(parameters.repeat_specs_path(),
                          parameters.genome_path(), parameters.min_wp(),
                          &repeat_specs)) {
@@ -481,29 +481,29 @@ int main(int argc, char *argv[]) {
     }
 
     if (!parameters.read_len_is_set()) {
-      const int read_len = CalcReadLen(parameters.bam_path());
+      const int read_len = ehunter::CalcReadLen(parameters.bam_path());
       if (read_len < parameters.minReadLength) {
-        throw std::runtime_error("Read length=" +
-                                 lexical_cast<string>(read_len) +
-                                 " determined from first alignment" +
-                                 " is too small.");
+        throw std::runtime_error(
+            "Read length=" + lexical_cast<string>(read_len) +
+            " determined from first alignment" + " is too small.");
       }
       parameters.set_read_len(read_len);
     }
 
-    BamFile bam_file;
+    ehunter::BamFile bam_file;
     bam_file.Init(parameters.bam_path(), parameters.genome_path());
 
     if (!parameters.depth_is_set()) {
-      cerr << TimeStamp() << ",[Calculating depth]" << endl;
+      cerr << ehunter::TimeStamp() << ",[Calculating depth]" << endl;
       const double depth =
           bam_file.CalcMedianDepth(parameters, parameters.read_len());
       parameters.set_depth(depth);
     }
 
-    cerr << TimeStamp() << ",[Read length: " << parameters.read_len() << "]"
+    cerr << ehunter::TimeStamp() << ",[Read length: " << parameters.read_len()
+         << "]" << endl;
+    cerr << ehunter::TimeStamp() << ",[Depth: " << parameters.depth() << "]"
          << endl;
-    cerr << TimeStamp() << ",[Depth: " << parameters.depth() << "]" << endl;
 
     if (parameters.depth() < parameters.kSmallestPossibleDepth) {
       throw std::runtime_error("Estimated depth of " +
@@ -512,7 +512,7 @@ int main(int argc, char *argv[]) {
                                "repeat sizes");
     }
 
-    EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
+    ehunter::EstimateRepeatSizes(parameters, repeat_specs, &bam_file, &outputs);
   } catch (const std::exception &e) {
     cerr << e.what() << endl;
     return 1;

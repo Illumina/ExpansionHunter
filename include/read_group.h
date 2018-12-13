@@ -31,10 +31,12 @@
 #include <utility>
 #include <vector>
 
+#include "common/common.h"
 #include "common/parameters.h"
 #include "common/repeat_spec.h"
-#include "common/common.h"
 #include "rep_align/rep_align.h"
+
+namespace ehunter {
 
 struct RepeatReadGroup {
   ReadType read_type;
@@ -43,15 +45,12 @@ struct RepeatReadGroup {
   int num_supporting_reads;
 };
 
-static bool CompareReadGroupsBySize(const RepeatReadGroup &a1,
-                                    const RepeatReadGroup &a2) {
-  return a1.size < a2.size;
-}
+bool CompareReadGroupsBySize(const RepeatReadGroup &a1,
+                             const RepeatReadGroup &a2);
 
 void CoalesceFlankingReads(
     const RepeatSpec &repeat_spec, std::vector<RepeatReadGroup> &read_groups,
-    std::vector<RepeatAlign> *flanking_repaligns, const int read_len,
-    const double hap_depth, int motif_len,
+    std::vector<RepeatAlign> *flanking_repaligns, int motif_len,
     const std::vector<std::vector<std::string>> &units_shifts, int min_baseq,
     double min_wp_score);
 
@@ -66,3 +65,5 @@ void DistributeFlankingReads(const Parameters &parameters,
                              const RepeatSpec &repeat_spec,
                              std::vector<RepeatReadGroup> *read_groups,
                              std::vector<RepeatAlign> *flanking_repaligns);
+
+}  // namespace ehunter

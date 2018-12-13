@@ -27,6 +27,8 @@
 
 #include "htslib/hts.h"
 
+namespace ehunter {
+
 class BamIndex {
  public:
   BamIndex(const std::string& bam_path);
@@ -41,3 +43,4 @@ class BamIndex {
   htsFile* hts_file_ptr_;
   std::string bam_path_;
 };
+}  // namespace ehunter

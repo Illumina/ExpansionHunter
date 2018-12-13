@@ -25,14 +25,16 @@
 #include <boost/lexical_cast.hpp>
 using boost::lexical_cast;
 
-#include <string>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 
 #include "common/genomic_region.h"
+
+namespace ehunter {
 
 enum ReadStatus { kNoCheck, kFlankingRead };
 
@@ -84,7 +86,7 @@ struct Align {
       return "chr-1";
     }
 
-    if (chromNum >= refVec.size()) {
+    if (chromNum >= (int)refVec.size()) {
       throw std::out_of_range(
           "[DecodeChrom ERROR] Input chromosme index: " +
           lexical_cast<std::string>(chromNum) + " but there are only " +
@@ -100,3 +102,4 @@ bool GetAlignFromHtsAlign(bam1_t* hts_align_ptr, Align& align,
 
 bool GetQualsFromHtsAlign(bam1_t* hts_align_ptr, std::string& quals);
 bool GetBasesFromHtsAlign(bam1_t* hts_align_ptr, std::string& bases);
+}  // namespace ehunter

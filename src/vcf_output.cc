@@ -38,6 +38,7 @@ using std::ostream;
 using std::string;
 using std::vector;
 
+namespace ehunter {
 void WriteVcf(const Parameters &parameters,
               const std::map<std::string, RepeatSpec> &repeat_specs,
               const std::vector<RegionFindings> &sample_findings,
@@ -80,7 +81,6 @@ void WriteVcf(const Parameters &parameters,
         sample_ad_fl, sample_ad_ir;
 
     for (const RepeatAllele allele : region_findings.genotype) {
-      const int allele_len = allele.size_ * unit_len;
       const string source = kReadTypeToString.at(allele.type_);
 
       if (allele.size_ != reference_size) {
@@ -164,3 +164,4 @@ void WriteVcf(const Parameters &parameters,
              << parameters.sample_name() << endl;
   out << vcf_header.str() << vcf_body.str();
 }
+}  // namespace ehunter

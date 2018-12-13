@@ -24,6 +24,8 @@
 
 #include <cstddef>
 
+namespace ehunter {
 void EstimateRepeatLen(const int num_irrs, const int read_len,
                        const double hap_depth, int& len_estimate,
                        int& lower_bound, int& upper_bound);
+}

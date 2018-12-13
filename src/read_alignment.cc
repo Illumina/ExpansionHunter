@@ -29,6 +29,7 @@ using std::string;
 
 #include "include/read_alignment.h"
 
+namespace ehunter {
 bool GetAlignFromHtsAlign(bam1_t* hts_align_ptr, Align& align,
                           bool assumeUnaligned) {
   align.name = bam_get_qname(hts_align_ptr);
@@ -82,3 +83,4 @@ bool GetBasesFromHtsAlign(bam1_t* hts_align_ptr, string& bases) {
 
   return true;
 }
+}  // namespace ehunter
