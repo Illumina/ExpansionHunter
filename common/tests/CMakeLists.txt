@@ -1,0 +1,11 @@
+add_executable(SequenceOperationsTest SequenceOperationsTest.cpp)
+target_link_libraries(SequenceOperationsTest common gtest_main)
+add_test(NAME SequenceOperationsTest COMMAND SequenceOperationsTest)
+
+add_executable(CountTableTest CountTableTest.cpp)
+target_link_libraries(CountTableTest common gtest_main)
+add_test(NAME CountTableTest COMMAND CountTableTest)
+
+add_executable(GenomicRegionTest GenomicRegionTest.cpp)
+target_link_libraries(GenomicRegionTest common gtest_main)
+add_test(NAME GenomicRegionTest COMMAND GenomicRegionTest)

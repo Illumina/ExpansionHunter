@@ -1,21 +1,19 @@
 # Installation
 
-Expansion Hunter is designed for Linux and macOS operating systems.
-A compiled binary for the latest release can be downloaded from 
-[here](https://github.com/Illumina/ExpansionHunter/releases). If 
-you wish to build the program from source follow the instructions 
-below.
+Expansion Hunter is designed for Linux and macOS operating systems. A compiled
+binary for the latest release can be downloaded from
+[here](https://github.com/Illumina/ExpansionHunter/releases). If you wish to
+build the program from source follow the instructions below.
 
-Building from source
---------------------
+## Building from source
 
 Prerequisites:
 
  - A recent version of [GCC](https://gcc.gnu.org/) or 
-   [clang](http://clang.llvm.org/) compiler supporting C++11.
- - [CMake](https://cmake.org/) version 3.2.0 or above.
+   [clang](http://clang.llvm.org/) compiler supporting C++11 standard
+ - [CMake](https://cmake.org/) version 3.2.0 or above
  - [Boost C++ Libraries](http://www.boost.org/) version 1.57.0 or
-   above.
+   above
 
 If you the above prerequisites are satisfied, you are ready to
 build the program. Note that during the build procedure, cmake will 
@@ -33,7 +31,8 @@ $ cmake ..
 $ make
 ```
 
-Note that if Boost is installed in a non-default location then its path should be specified with `BOOST_ROOT` in the cmake command above:
+Note that if Boost is installed in a non-default location then its path should
+be specified with `BOOST_ROOT` in the cmake command above:
 
 ```bash
 $ cmake -DBOOST_ROOT=/path/to/boost/ ..

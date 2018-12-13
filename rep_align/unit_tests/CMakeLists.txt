@@ -1,3 +1,0 @@
-add_executable(rep_align_test rep_align_test.cc)
-target_link_libraries(rep_align_test rep_align gtest_main)
-add_test(NAME rep_align_test COMMAND rep_align_test)

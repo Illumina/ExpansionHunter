@@ -1,3 +1,4 @@
-file(GLOB SOURCES "*.cc")
+file(GLOB SOURCES "*.cpp")
 add_library(genotyping ${SOURCES})
-add_subdirectory(unit_tests)
+target_link_libraries(genotyping common)
+add_subdirectory(tests)

@@ -4,6 +4,7 @@ project(ExpansionHunter CXX)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
 enable_testing()
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(ExternalProject)
 
@@ -26,8 +27,9 @@ endif()
 # Add googletest directly to our build. This defines
 # the gtest and gtest_main targets.
 add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-		${CMAKE_BINARY_DIR}/googletest-build)
+        ${CMAKE_BINARY_DIR}/googletest-build)
 ##################################################################
+
 
 ExternalProject_Add(zlib
 	PREFIX ${CMAKE_BINARY_DIR}/thirdparty/zlib
@@ -53,8 +55,6 @@ ExternalProject_Add(htslib
 	LOG_DOWNLOAD 1
 )
 
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror -Wall -Wextra -pedantic-errors -std=c++11")
-
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/zlib/include)
 set(zlib_static ${CMAKE_BINARY_DIR}/thirdparty/zlib/lib/libz.a)
 set(htslib_static ${CMAKE_BINARY_DIR}/thirdparty/htslib/lib/libhts.a)
@@ -62,23 +62,36 @@ set(htslib_static ${CMAKE_BINARY_DIR}/thirdparty/htslib/lib/libhts.a)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Boost 1.4 COMPONENTS program_options filesystem regex date_time system REQUIRED)
+set(Boost_USE_STATIC_LIBS ON)
+find_package(Boost 1.4 REQUIRED COMPONENTS program_options filesystem regex date_time system)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(${Boost_INCLUDE_DIR})
+include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
+include_directories(thirdparty/graph-tools-GT-506/include)
 
-add_subdirectory(genotyping)
-add_subdirectory(purity)
-add_subdirectory(rep_align)
+add_subdirectory(thirdparty/graph-tools-master)
+
+add_compile_options(-Werror -pedantic -Wall -Wextra)
+
 add_subdirectory(common)
+add_subdirectory(genotyping)
+add_subdirectory(reads)
+add_subdirectory(classification)
+add_subdirectory(region_spec)
+add_subdirectory(region_analysis)
+add_subdirectory(sample_analysis)
+add_subdirectory(input)
+add_subdirectory(output)
+add_subdirectory(alignment)
+add_subdirectory(stats)
+add_subdirectory(filtering)
 
-file(GLOB SOURCES "src/*.cc")
-
+file(GLOB SOURCES "src/*.cpp")
 add_executable(ExpansionHunter ${SOURCES})
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
+target_link_libraries(ExpansionHunter graphtools common genotyping region_analysis region_spec sample_analysis input output alignment filtering stats pthread ${Boost_LIBRARIES})
+install (TARGETS ExpansionHunter DESTINATION bin)
 
 add_dependencies(htslib zlib)
 add_dependencies(common htslib)
-
-target_link_libraries(ExpansionHunter common genotyping purity rep_align pthread ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})

@@ -1,0 +1,231 @@
+[
+    {
+        "VariantType": "Repeat",
+        "LocusId": "AFF2",
+        "LocusStructure": "(GCC)*",
+        "ReferenceRegion": "chrX:147582151-147582211"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "AR",
+        "LocusStructure": "(GCA)*",
+        "ReferenceRegion": "chrX:66765158-66765227"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "ATN1",
+        "LocusStructure": "(CAG)*",
+        "ReferenceRegion": "chr12:7045879-7045936"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "ATXN10",
+        "LocusStructure": "(ATTCT)*",
+        "ReferenceRegion": "chr22:46191234-46191304"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "ATXN1",
+        "LocusStructure": "(TGC)*",
+        "ReferenceRegion": "chr6:16327864-16327954"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "ATXN2",
+        "LocusStructure": "(GCT)*",
+        "ReferenceRegion": "chr12:112036753-112036822"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "ATXN3",
+        "LocusStructure": "(GCT)*",
+        "ReferenceRegion": "chr14:92537353-92537386"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "PHOX2B",
+        "LocusStructure": "(GCN)*",
+        "ReferenceRegion": "chr4:41747989-41748049"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "ATXN7",
+        "LocusStructure": "(GCA)*",
+        "ReferenceRegion": "chr3:63898360-63898390"
+    },
+    {
+        "LocusId": "ATXN8OS",
+        "LocusStructure": "(CTA)*(CTG)*",
+        "ReferenceRegion": [
+            "chr13:70713485-70713515",
+            "chr13:70713515-70713560"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat"
+        ]
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "C9ORF72",
+        "LocusStructure": "(GGCCCC)*",
+        "ReferenceRegion": "chr9:27573526-27573544",
+        "OfftargetRegions": [
+           "chr1:150552238-150552273",
+           "chr11:910821-910969",
+           "chr11:2905960-2906190",
+           "chr11:44748502-44748739",
+           "chr12:54476278-54476439",
+           "chr12:128751638-128751649",
+           "chr13:107569867-107570000",
+           "chr16:819162-819226",
+           "chr16:49526377-49526380",
+           "chr18:74203223-74203243",
+           "chr19:878803-878954",
+           "chr19:39897404-39897410",
+           "chr2:240659782-240660010",
+           "chr20:388475-388656",
+           "chr20:60640211-60640346",
+           "chr22:51066608-51066626",
+           "chr3:49591993-49592173",
+           "chr3:50161662-50161732",
+           "chr5:10761494-10761495",
+           "chr5:176797951-176798133",
+           "chr6:33601522-33601525",
+           "chr6:109804703-109804748",
+           "chr9:132331488-132331496",
+           "chr9:132428311-132428437",
+           "chrX:9754276-9754424",
+           "chrX:49644488-49644585",
+           "chrX:53652706-53652891",
+           "chrX:153569931-153569996",
+           "chrX:153618748-153618918"
+       ]
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "CACNA1A",
+        "LocusStructure": "(CTG)*",
+        "ReferenceRegion": "chr19:13318672-13318711"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "CBL",
+        "LocusStructure": "(CGG)*",
+        "ReferenceRegion": "chr11:119076999-119077032"
+    },
+    {
+        "LocusId": "CNBP",
+        "LocusStructure": "(CAGG)*(CAGA)*(CA)*",
+        "ReferenceRegion": [
+            "chr3:128891419-128891499",
+            "chr3:128891499-128891539",
+            "chr3:128891539-128891575"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat",
+            "Repeat"
+        ]
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "CSTB",
+        "LocusStructure": "(CGCGGGGCGGGG)*",
+        "ReferenceRegion": "chr21:45196324-45196360"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "DIP2B",
+        "LocusStructure": "(GGC)*",
+        "ReferenceRegion": "chr12:50898784-50898805"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "DMPK",
+        "LocusStructure": "(CAG)*",
+        "ReferenceRegion": "chr19:46273462-46273522"
+    },
+    {
+        "VariantType": "RareRepeat",
+        "LocusId": "FMR1",
+        "LocusStructure": "(CGG)*",
+        "ReferenceRegion": "chrX:146993568-146993628",
+        "OfftargetRegions": [
+            "chr10:101295192-101295194",
+            "chr12:7781290-7781350",
+            "chr12:125052154-125052156",
+            "chr16:25703613-25703635",
+            "chr16:28074516-28074518",
+            "chr17:30814024-30814026",
+            "chr17:64298467-64298469",
+            "chr19:2015524-2015526",
+            "chr2:87141540-87141618",
+            "chr2:92230909-92230911",
+            "chr2:211036020-211036032",
+            "chr2:225449878-225449880",
+            "chr20:30865500-30865516",
+            "chr5:443334-443364",
+            "chr7:20824939-20824941",
+            "chr7:100271437-100271439",
+            "chr7:104654597-104654599",
+            "chr7:143059853-143059855",
+            "chr9:100616695-100616697",
+            "chrX:20009036-20009046"
+        ]
+    },
+    {
+        "LocusId": "FXN",
+        "LocusStructure": "(A)*(GAA)*",
+        "ReferenceRegion": [
+            "chr9:71652177-71652202",
+            "chr9:71652202-71652220"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat"
+        ]
+    },
+    {
+        "LocusId": "HTT",
+        "LocusStructure": "(CAG)*CAACAG(CCG)*",
+        "ReferenceRegion": [
+            "chr4:3076603-3076660",
+            "chr4:3076666-3076693"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat"
+        ]
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "JPH3",
+        "LocusStructure": "(CTG)*",
+        "ReferenceRegion": "chr16:87637893-87637935"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "NOP56",
+        "LocusStructure": "(GGCCTG)*",
+        "ReferenceRegion": "chr20:2633379-2633403"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "PPP2R2B",
+        "LocusStructure": "(GCT)*",
+        "ReferenceRegion": "chr5:146258290-146258320"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "TBP",
+        "LocusStructure": "(GCA)*",
+        "ReferenceRegion": "chr6:170870994-170871105"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "TCF4",
+        "LocusStructure": "(CAG)*",
+        "ReferenceRegion": "chr18:53253386-53253458"
+    }
+]

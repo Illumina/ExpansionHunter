@@ -1,0 +1,19 @@
+add_executable(ShortRepeatGenotyperTest ShortRepeatGenotyperTest.cpp)
+target_link_libraries(ShortRepeatGenotyperTest genotyping gtest_main)
+add_test(NAME ShortRepeatGenotyperTest COMMAND ShortRepeatGenotyperTest)
+
+add_executable(RepeatGenotyperTest RepeatGenotyperTest.cpp)
+target_link_libraries(RepeatGenotyperTest genotyping gtest_main)
+add_test(NAME RepeatGenotyperTest COMMAND RepeatGenotyperTest)
+
+add_executable(RepeatGenotypeTest RepeatGenotypeTest.cpp)
+target_link_libraries(RepeatGenotypeTest genotyping gtest_main)
+add_test(NAME RepeatGenotypeTest COMMAND RepeatGenotypeTest)
+
+add_executable(SmallVariantGenotyperTest SmallVariantGenotyperTest.cpp)
+target_link_libraries(SmallVariantGenotyperTest genotyping gtest_main)
+add_test(NAME SmallVariantGenotyperTest COMMAND SmallVariantGenotyperTest)
+
+add_executable(AllelePresenceCheckerTest AllelePresenceCheckerTest.cpp)
+target_link_libraries(AllelePresenceCheckerTest genotyping gtest_main)
+add_test(NAME AllelePresenceCheckerTest COMMAND AllelePresenceCheckerTest)
