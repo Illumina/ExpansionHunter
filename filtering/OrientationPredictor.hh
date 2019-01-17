@@ -44,31 +44,13 @@ std::ostream& operator<<(std::ostream& out, OrientationPrediction orientationPre
 class OrientationPredictor
 {
 public:
-    OrientationPredictor(int readLength, const graphtools::Graph* graphRawPtr)
-        : kmerLength_(pickKmerLength(readLength))
-        , minKmerMatchesToPass_(pickKmerMatchesToPass(readLength))
+    OrientationPredictor(const graphtools::Graph* graphRawPtr)
+        : kmerLength_(10)
+        , minKmerMatchesToPass_(3)
         , kmerIndex_(*graphRawPtr, kmerLength_)
         , reverseComplementedGraph_(graphtools::reverseGraph(*graphRawPtr, true))
         , kmerIndexForReverseComplementedGraph_(reverseComplementedGraph_, kmerLength_)
     {
-    }
-
-    static int pickKmerLength(int readLength)
-    {
-        int kmerLength = readLength / 10.5;
-        kmerLength = std::max(kmerLength, 3);
-
-        return kmerLength;
-    }
-
-    static int pickKmerMatchesToPass(int readLength)
-    {
-        if (readLength >= 100)
-        {
-            return 3;
-        }
-
-        return 3;
     }
 
     OrientationPrediction predict(const std::string& query) const;

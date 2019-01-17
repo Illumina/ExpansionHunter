@@ -37,63 +37,37 @@
 namespace ehunter
 {
 
+#include <sstream>
+
 using boost::optional;
+using graphtools::AlignmentWriter;
 using graphtools::Operation;
 using graphtools::OperationType;
 using graphtools::splitStringByDelimiter;
-using reads::LinearAlignmentStats;
-using reads::Read;
 using std::list;
 using std::string;
 using std::vector;
 
 static const string encodeReadPair(const Read& read, const Read& mate)
 {
-    return read.read_id + ": " + read.sequence + "\n" + mate.read_id + ": " + read.sequence;
-}
-
-static string indentMultilineString(const string str, int32_t indentation_len)
-{
-    string indented_str;
-    const vector<string> lines = splitStringByDelimiter(str, '\n');
-    for (auto& line : lines)
-    {
-        if (!indented_str.empty())
-        {
-            indented_str += '\n';
-        }
-        indented_str += string(indentation_len, ' ') + line;
-    }
-
-    return indented_str;
-}
-
-static void outputAlignedRead(const Read& read, GraphAlignment alignment, std::ostream& out)
-{
-    const int32_t indentationSize = 2;
-    const string spacer(indentationSize, ' ');
-    out << spacer << "- name: " << read.read_id << std::endl;
-    out << spacer << "  path: " << alignment.path() << std::endl;
-    out << spacer << "  graph_cigar: " << alignment.generateCigar() << std::endl;
-    out << spacer << "  alignment: |" << std::endl;
-    const string alignmentEncoding = prettyPrint(alignment, read.sequence);
-    out << indentMultilineString(alignmentEncoding, 3 * indentationSize) << std::endl;
+    std::stringstream encoding;
+    encoding << read.readId() << ": " << read.sequence() << "\n" << mate.readId() << ": " << read.sequence();
+    return encoding.str();
 }
 
 RegionAnalyzer::RegionAnalyzer(
-    const LocusSpecification& regionSpec, SampleParameters sampleParams, HeuristicParameters heuristicParams,
-    std::ostream& alignmentStream)
+    const LocusSpecification& regionSpec, HeuristicParameters heuristicParams,
+    graphtools::AlignmentWriter& alignmentWriter)
     : regionSpec_(regionSpec)
-    , sampleParams_(sampleParams)
     , heuristicParams_(heuristicParams)
-    , alignmentStream_(alignmentStream)
-    , orientationPredictor_(sampleParams.readLength(), &regionSpec_.regionGraph())
+    , alignmentWriter_(alignmentWriter)
+    , orientationPredictor_(&regionSpec_.regionGraph())
     , graphAligner_(
           &regionSpec_.regionGraph(), heuristicParams.alignerType(), heuristicParams_.kmerLenForAlignment(),
           heuristicParams_.paddingLength(), heuristicParams_.seedAffixTrimLength())
-{
-    verboseLogger_ = spdlog::get("verbose");
+    , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
 
+{
     for (const auto& variantSpec : regionSpec_.variantSpecs())
     {
         if (variantSpec.classification().type == VariantType::kRepeat)
@@ -101,8 +75,6 @@ RegionAnalyzer::RegionAnalyzer(
             const auto& graph = regionSpec_.regionGraph();
             const int repeatNodeId = variantSpec.nodes().front();
             const string& repeatUnit = graph.nodeSeq(repeatNodeId);
-            const int repeatUnitLength = repeatUnit.length();
-            const int maxNumUnitsInRead = std::ceil(sampleParams_.readLength() / static_cast<double>(repeatUnitLength));
 
             weightedPurityCalculators.emplace(std::make_pair(repeatUnit, WeightedPurityCalculator(repeatUnit)));
 
@@ -118,15 +90,13 @@ RegionAnalyzer::RegionAnalyzer(
             }
 
             variantAnalyzerPtrs_.emplace_back(new RepeatAnalyzer(
-                variantSpec.id(), regionSpec.expectedAlleleCount(), regionSpec.regionGraph(), repeatNodeId,
-                sampleParams_.haplotypeDepth(), maxNumUnitsInRead));
+                variantSpec.id(), regionSpec.expectedAlleleCount(), regionSpec.regionGraph(), repeatNodeId));
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {
             variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
                 variantSpec.id(), variantSpec.classification().subtype, regionSpec.expectedAlleleCount(),
-                regionSpec.regionGraph(), variantSpec.nodes(), variantSpec.optionalRefNode(),
-                sampleParams_.haplotypeDepth()));
+                regionSpec.regionGraph(), variantSpec.nodes(), variantSpec.optionalRefNode()));
         }
         else
         {
@@ -137,43 +107,41 @@ RegionAnalyzer::RegionAnalyzer(
     }
 }
 
-void RegionAnalyzer::processMates(reads::Read read, reads::Read mate)
+void RegionAnalyzer::processMates(Read read, Read mate)
 {
     optional<GraphAlignment> readAlignment = alignRead(read);
     optional<GraphAlignment> mateAlignment = alignRead(mate);
 
-    int kMinNonRepeatAlignmentScore = sampleParams_.readLength() / 7.5;
-    kMinNonRepeatAlignmentScore = std::max(kMinNonRepeatAlignmentScore, 3);
+    int kMinNonRepeatAlignmentScore = read.sequence().length() / 7.5;
+    kMinNonRepeatAlignmentScore = std::max(kMinNonRepeatAlignmentScore, 10);
     if (!checkIfLocallyPlacedReadPair(readAlignment, mateAlignment, kMinNonRepeatAlignmentScore))
     {
-        if (verboseLogger_)
-        {
-            verboseLogger_->info("Not locally placed read pair");
-            verboseLogger_->info(encodeReadPair(read, mate));
-        }
+        console_->debug("Not locally placed read pair\n" + encodeReadPair(read, mate));
         return;
     }
 
     if (readAlignment && mateAlignment)
     {
-        outputAlignedRead(read, *readAlignment, alignmentStream_);
-        outputAlignedRead(mate, *mateAlignment, alignmentStream_);
+        alignmentWriter_.write(
+            regionSpec_.regionId(), read.fragmentId(), read.sequence(), read.isFirstMate(), *readAlignment);
+        alignmentWriter_.write(
+            regionSpec_.regionId(), mate.fragmentId(), mate.sequence(), mate.isFirstMate(), *mateAlignment);
 
         for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
         {
             variantAnalyzerPtr->processMates(read, *readAlignment, mate, *mateAlignment);
         }
     }
-    else if (verboseLogger_)
+    else
     {
         const string readStatus = readAlignment ? "Able" : "Unable";
         const string mateStatus = mateAlignment ? "Able" : "Unable";
-        verboseLogger_->info("{} to align {}: {}", readStatus, read.readId(), read.sequence);
-        verboseLogger_->info("{} to align {}: {}", mateStatus, mate.readId(), mate.sequence);
+        console_->debug("{} to align {}: {}", readStatus, read.readId(), read.sequence());
+        console_->debug("{} to align {}: {}", mateStatus, mate.readId(), mate.sequence());
     }
 }
 
-void RegionAnalyzer::processOfftargetMates(reads::Read read1, reads::Read read2)
+void RegionAnalyzer::processOfftargetMates(Read read1, Read read2)
 {
     if (!optionalUnitOfRareRepeat_)
     {
@@ -185,83 +153,45 @@ void RegionAnalyzer::processOfftargetMates(reads::Read read1, reads::Read read2)
     const string& repeatUnit = *optionalUnitOfRareRepeat_;
 
     const auto& weightedPurityCalculator = weightedPurityCalculators.at(repeatUnit);
-    const bool isFirstReadInrepeat = weightedPurityCalculator.score(read1.sequence) >= 0.90;
-    const bool isSecondReadInrepeat = weightedPurityCalculator.score(read2.sequence) >= 0.90;
+    const bool isFirstReadInrepeat = weightedPurityCalculator.score(read1.sequence()) >= 0.90;
+    const bool isSecondReadInrepeat = weightedPurityCalculator.score(read2.sequence()) >= 0.90;
 
     if (isFirstReadInrepeat && isSecondReadInrepeat)
     {
-        std::cerr << "Found IRR pair " << read1.fragmentId() << std::endl;
         processMates(std::move(read1), std::move(read2));
     }
 }
 
 boost::optional<GraphAlignment> RegionAnalyzer::alignRead(Read& read) const
 {
-    OrientationPrediction predictedOrientation = orientationPredictor_.predict(read.sequence);
+    OrientationPrediction predictedOrientation = orientationPredictor_.predict(read.sequence());
 
     if (predictedOrientation == OrientationPrediction::kAlignsInReverseComplementOrientation)
     {
-        read.sequence = graphtools::reverseComplement(read.sequence);
+        read.setSequence(graphtools::reverseComplement(read.sequence()));
     }
     else if (predictedOrientation == OrientationPrediction::kDoesNotAlign)
     {
         return boost::optional<GraphAlignment>();
     }
 
-    const list<GraphAlignment> alignments = graphAligner_.align(read.sequence);
+    const list<GraphAlignment> alignments = graphAligner_.align(read.sequence());
 
     if (alignments.empty())
     {
         return boost::optional<GraphAlignment>();
     }
 
-    GraphAlignment canonicalAlignment = computeCanonicalAlignment(alignments);
-
-    if (checkIfPassesAlignmentFilters(canonicalAlignment))
-    {
-        // const int kShrinkLength = 10;
-        // shrinkUncertainPrefix(kShrinkLength, read.sequence, canonicalAlignment);
-        // shrinkUncertainSuffix(kShrinkLength, read.sequence, canonicalAlignment);
-
-        return canonicalAlignment;
-    }
-    else
-    {
-        return boost::optional<GraphAlignment>();
-    }
+    return computeCanonicalAlignment(alignments);
 }
 
-bool RegionAnalyzer::checkIfPassesAlignmentFilters(const GraphAlignment& alignment) const
-{
-    const Operation& firstOperation = alignment.alignments().front().operations().front();
-    const int frontSoftclipLen = firstOperation.type() == OperationType::kSoftclip ? firstOperation.queryLength() : 0;
-
-    const Operation& lastOperation = alignment.alignments().back().operations().back();
-    const int backSoftclipLen = lastOperation.type() == OperationType::kSoftclip ? lastOperation.queryLength() : 0;
-
-    const int clippedQueryLength = alignment.queryLength() - frontSoftclipLen - backSoftclipLen;
-    const int referenceLength = alignment.referenceLength();
-
-    const int percentQueryMatches = (100 * alignment.numMatches()) / clippedQueryLength;
-    const int percentReferenceMatches = (100 * alignment.numMatches()) / referenceLength;
-
-    if (percentQueryMatches >= 80 && percentReferenceMatches >= 80)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-RegionFindings RegionAnalyzer::genotype()
+RegionFindings RegionAnalyzer::analyze(const SampleParameters& params)
 {
     RegionFindings regionResults;
 
     for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
     {
-        std::unique_ptr<VariantFindings> variantFindingsPtr = variantAnalyzerPtr->analyze();
+        std::unique_ptr<VariantFindings> variantFindingsPtr = variantAnalyzerPtr->analyze(params);
         regionResults.emplace(std::make_pair(variantAnalyzerPtr->variantId(), std::move(variantFindingsPtr)));
     }
 
@@ -269,8 +199,7 @@ RegionFindings RegionAnalyzer::genotype()
 }
 
 vector<std::unique_ptr<RegionAnalyzer>> initializeRegionAnalyzers(
-    const RegionCatalog& RegionCatalog, const SampleParameters& sampleParams,
-    const HeuristicParameters& heuristicParams, std::ostream& alignmentStream)
+    const RegionCatalog& RegionCatalog, const HeuristicParameters& heuristicParams, AlignmentWriter& bamletWriter)
 {
     vector<std::unique_ptr<RegionAnalyzer>> regionAnalyzers;
 
@@ -278,8 +207,7 @@ vector<std::unique_ptr<RegionAnalyzer>> initializeRegionAnalyzers(
     {
         const LocusSpecification& regionSpec = regionIdAndRegionSpec.second;
 
-        // alignmentStream << regionSpec.regionId() << ":" << std::endl;
-        regionAnalyzers.emplace_back(new RegionAnalyzer(regionSpec, sampleParams, heuristicParams, alignmentStream));
+        regionAnalyzers.emplace_back(new RegionAnalyzer(regionSpec, heuristicParams, bamletWriter));
     }
 
     return regionAnalyzers;

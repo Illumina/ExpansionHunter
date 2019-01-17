@@ -28,6 +28,7 @@
 #include "graphcore/Graph.hh"
 
 #include "common/Common.hh"
+#include "common/Parameters.hh"
 #include "reads/Read.hh"
 #include "region_analysis/VariantFindings.hh"
 
@@ -49,11 +50,11 @@ public:
     virtual ~VariantAnalyzer() = default;
 
     virtual void processMates(
-        const reads::Read& read, const graphtools::GraphAlignment& readAlignment, const reads::Read& mate,
+        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
         const graphtools::GraphAlignment& mateAlignment)
         = 0;
 
-    virtual std::unique_ptr<VariantFindings> analyze() const = 0;
+    virtual std::unique_ptr<VariantFindings> analyze(const SampleParameters& params) const = 0;
 
     const std::string& variantId() const { return variantId_; }
     AlleleCount expectedAlleleCount() const { return expectedAlleleCount_; }

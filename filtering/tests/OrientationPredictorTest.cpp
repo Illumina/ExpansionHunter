@@ -44,11 +44,16 @@ TEST(PredictingQueryOrientation, TypicalQueries_Classified)
 {
     graphtools::Graph graph = graphtools::makeStrGraph("TAAT", "CCG", "CCTTA");
 
-    OrientationPredictor orientationPredictor(10, &graph);
+    OrientationPredictor orientationPredictor(&graph);
 
-    EXPECT_EQ(OrientationPrediction::kAlignsInOriginalOrientation, orientationPredictor.predict("ATCCGCCTTA"));
+    const string read = "ATCCGCCGCCGCCGCCGCCGCCGCCGCCGCCGCCTTA";
+
+    EXPECT_EQ(OrientationPrediction::kAlignsInOriginalOrientation, orientationPredictor.predict(read));
+
     EXPECT_EQ(
         OrientationPrediction::kAlignsInReverseComplementOrientation,
-        orientationPredictor.predict(reverseComplement("ATCCGCCTTA")));
-    EXPECT_EQ(OrientationPrediction::kDoesNotAlign, orientationPredictor.predict("AAAAAAAAA"));
+        orientationPredictor.predict(reverseComplement(read)));
+
+    const string homopolymer(150, 'A');
+    EXPECT_EQ(OrientationPrediction::kDoesNotAlign, orientationPredictor.predict(homopolymer));
 }

@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "graphio/AlignmentWriter.hh"
+
 #include "common/Parameters.hh"
 #include "region_analysis/VariantFindings.hh"
 #include "region_spec/LocusSpecification.hh"
@@ -33,6 +35,6 @@ namespace ehunter
 
 SampleFindings htslibStreamingSampleAnalyzer(
     const InputPaths& inputPaths, const SampleParameters& sampleParams, const HeuristicParameters& heuristicParams,
-    const RegionCatalog& regionCatalog, std::ostream& alignmentStream);
+    const RegionCatalog& regionCatalog, graphtools::AlignmentWriter& alignmentWriter);
 
 }

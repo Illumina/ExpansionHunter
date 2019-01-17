@@ -33,7 +33,7 @@ namespace ehunter
 {
 
 void SmallVariantAnalyzer::processMates(
-    const reads::Read& /*read*/, const graphtools::GraphAlignment& readAlignment, const reads::Read& /*mate*/,
+    const Read& /*read*/, const graphtools::GraphAlignment& readAlignment, const Read& /*mate*/,
     const graphtools::GraphAlignment& mateAlignment)
 {
     alignmentClassifier_.classify(readAlignment);
@@ -58,7 +58,7 @@ int SmallVariantAnalyzer::countReadsSupportingNode(graphtools::NodeId nodeId) co
     return (numReadsSupportingUpstreamFlank + numReadsSupportingDownstreamFlank) / 2;
 }
 
-std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze() const
+std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const SampleParameters& params) const
 {
     NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : ClassifierOfAlignmentsToVariant::kInvalidNodeId;
     NodeId altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
@@ -88,10 +88,13 @@ std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze() const
     const int refNodeSupport = countReadsSupportingNode(refNode);
     const int altNodeSupport = countReadsSupportingNode(altNode);
 
-    auto genotype = smallVariantGenotyper_.genotype(refNodeSupport, altNodeSupport);
+    SmallVariantGenotyper smallVariantGenotyper(params.haplotypeDepth(), expectedAlleleCount_);
+    auto genotype = smallVariantGenotyper.genotype(refNodeSupport, altNodeSupport);
 
-    AllelePresenceStatus refAlleleStatus = allelePresenceChecker_.check(refNodeSupport, altNodeSupport);
-    AllelePresenceStatus altAlleleStatus = allelePresenceChecker_.check(altNodeSupport, refNodeSupport);
+    AllelePresenceStatus refAlleleStatus
+        = allelePresenceChecker_.check(params.haplotypeDepth(), refNodeSupport, altNodeSupport);
+    AllelePresenceStatus altAlleleStatus
+        = allelePresenceChecker_.check(params.haplotypeDepth(), altNodeSupport, refNodeSupport);
 
     return std::unique_ptr<VariantFindings>(
         new SmallVariantFindings(refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));

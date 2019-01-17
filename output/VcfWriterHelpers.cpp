@@ -97,7 +97,7 @@ void VcfSampleFields::addAltAlleleInfo(
     int repeatReadCount)
 {
     const int previousAlleleSize = genotype_.empty() ? -1 : genotype_.back();
-    if (alleleSize <= previousAlleleSize)
+    if (alleleSize < previousAlleleSize)
     {
         throw std::logic_error(
             "Allele of size " + to_string(alleleSize) + " cannot follow allele of size "

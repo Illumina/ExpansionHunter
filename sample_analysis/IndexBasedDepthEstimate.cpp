@@ -34,6 +34,8 @@ extern "C"
 #include "htslib/sam.h"
 }
 
+#include "common/HtsHelpers.hh"
+
 using std::string;
 using std::unordered_set;
 using namespace boost::accumulators;
@@ -78,18 +80,17 @@ double estimateDepthFromHtsIndex(const std::string& htsFilePath, int readLength)
         throw std::runtime_error("Failed to load index of " + htsFilePath);
     }
 
-    const int numContigs = htsHeaderPtr->n_targets;
+    const auto contigInfo = htshelpers::decodeContigInfo(htsHeaderPtr);
 
     accumulator_set<double, features<tag::median>> contigDepths;
 
-    for (int contigIndex = 0; contigIndex != numContigs; ++contigIndex)
+    for (int contigIndex = 0; contigIndex != contigInfo.numContigs(); ++contigIndex)
     {
-        const auto contigName = htsHeaderPtr->target_name[contigIndex];
-        const int64_t contigLength = htsHeaderPtr->target_len[contigIndex];
         uint64_t numMappedReads, numUnmappedReads;
         hts_idx_get_stat(htsIndexPtr, contigIndex, &numMappedReads, &numUnmappedReads);
-        if (isAutosome(contigName))
+        if (isAutosome(contigInfo.getContigName(contigIndex)))
         {
+            const int64_t contigLength = contigInfo.getContigSize(contigIndex);
             const double contigDepth = (readLength * numMappedReads) / static_cast<double>(contigLength);
             contigDepths(contigDepth);
         }

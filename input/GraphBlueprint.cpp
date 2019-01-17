@@ -21,6 +21,7 @@
 #include "input/GraphBlueprint.hh"
 
 #include <algorithm>
+#include <sstream>
 
 using graphtools::NodeId;
 using std::string;
@@ -217,23 +218,21 @@ GraphBlueprint decodeFeaturesFromRegex(const string& regex)
 
         if (index == 0)
         {
-            if (featureType != GraphBlueprintFeatureType::kInterruption)
+            if (featureType == GraphBlueprintFeatureType::kInterruption)
             {
-                throw std::logic_error("Malformed regular expression " + regex);
+                featureType = GraphBlueprintFeatureType::kLeftFlank;
             }
 
-            featureType = GraphBlueprintFeatureType::kLeftFlank;
             blueprint.push_back(GraphBlueprintFeature(featureType, sequences, { firstUnusedNodeId }));
             ++firstUnusedNodeId;
         }
         else if (index == static_cast<int>(tokens.size()) - 1)
         {
-            if (featureType != GraphBlueprintFeatureType::kInterruption)
+            if (featureType == GraphBlueprintFeatureType::kInterruption)
             {
-                throw std::logic_error("Malformed regular expression " + regex);
+                featureType = GraphBlueprintFeatureType::kRightFlank;
             }
 
-            featureType = GraphBlueprintFeatureType::kRightFlank;
             blueprint.push_back(GraphBlueprintFeature(featureType, sequences, { firstUnusedNodeId }));
             ++firstUnusedNodeId;
         }
@@ -251,6 +250,28 @@ GraphBlueprint decodeFeaturesFromRegex(const string& regex)
     }
 
     return blueprint;
+}
+
+bool doesFeatureDefineVariant(GraphBlueprintFeatureType featureType)
+{
+    switch (featureType)
+    {
+    case GraphBlueprintFeatureType::kInsertionOrDeletion:
+    case GraphBlueprintFeatureType::kSkippableRepeat:
+    case GraphBlueprintFeatureType::kUnskippableRepeat:
+    case GraphBlueprintFeatureType::kSwap:
+        return true;
+
+    case GraphBlueprintFeatureType::kLeftFlank:
+    case GraphBlueprintFeatureType::kRightFlank:
+    case GraphBlueprintFeatureType::kInterruption:
+        return false;
+
+    default:
+        std::stringstream encoding;
+        encoding << featureType;
+        throw std::logic_error("Unrecognized feature type: " + encoding.str());
+    }
 }
 
 }

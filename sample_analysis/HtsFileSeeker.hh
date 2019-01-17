@@ -30,6 +30,7 @@ extern "C"
 }
 
 #include "common/GenomicRegion.hh"
+#include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
 
 namespace ehunter
@@ -43,7 +44,7 @@ namespace htshelpers
     public:
         HtsFileSeeker(const std::string& htsFilePath);
         ~HtsFileSeeker();
-        void setRegion(const Region& region);
+        void setRegion(const GenomicRegion& region);
         bool trySeekingToNextPrimaryAlignment();
 
         int32_t currentReadChromIndex() const;
@@ -53,7 +54,7 @@ namespace htshelpers
         const std::string& currentMateChrom() const;
         int32_t currentMatePosition() const;
 
-        reads::Read decodeRead(reads::LinearAlignmentStats& alignmentStats) const;
+        Read decodeRead(LinearAlignmentStats& alignmentStats) const;
 
     private:
         enum class Status
@@ -68,7 +69,7 @@ namespace htshelpers
         void closeRegion();
 
         const std::string htsFilePath_;
-        std::vector<std::string> contigNames_;
+        ReferenceContigInfo contigInfo_;
         Status status_ = Status::kFinishedStreaming;
 
         htsFile* htsFilePtr_ = nullptr;

@@ -38,15 +38,10 @@ enum class AllelePresenceStatus
 class AllelePresenceChecker
 {
 public:
-    AllelePresenceChecker(double haplotypeDepth, double errorRate = 0.02, double llrThreshold = 10000)
-        : haplotypeDepth_(haplotypeDepth)
-        , errorRate_(errorRate)
+    AllelePresenceChecker(double errorRate = 0.02, double llrThreshold = 10000)
+        : errorRate_(errorRate)
         , llrThreshold_(llrThreshold)
     {
-        if (haplotypeDepth <= 0)
-        {
-            throw std::runtime_error("Haplotype depth must be positive");
-        }
         if (errorRate <= 0 || errorRate >= 1)
         {
             throw std::runtime_error("Error rate must be positive and less than 1");
@@ -57,11 +52,9 @@ public:
         }
     }
 
-    AllelePresenceStatus check(int targetAlleleCount, int otherAlleleCount) const;
+    AllelePresenceStatus check(double haplotypeDepth, int targetAlleleCount, int otherAlleleCount) const;
 
 private:
-    // expected depth for one allele
-    double haplotypeDepth_;
     // Rate of 'false' key-allele observations
     double errorRate_;
     // If the likelihood ratio threshold in favor of presence or absence
