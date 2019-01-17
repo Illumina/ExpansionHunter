@@ -42,50 +42,43 @@ namespace ehunter
 {
 
 using RegionId = std::string;
-using NodeToRegionAssociation = std::unordered_map<graphtools::NodeId, GenomicRegion>;
 
 class LocusSpecification
 {
 public:
     LocusSpecification(
-        RegionId regionId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
-        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions);
+        RegionId regionId, std::vector<Region> referenceLoci, AlleleCount expectedAlleleCount,
+        graphtools::Graph regionGraph);
 
     const RegionId& regionId() const { return regionId_; }
     /*
      * List of all regions in the reference this graph describes
      * i.e. where we expect relevant reads to align
      */
-    const std::vector<GenomicRegion>& targetReadExtractionRegions() const { return targetReadExtractionRegions_; }
+    const std::vector<Region>& referenceLoci() const { return referenceLoci_; }
     /*
      * List of regions that additional relevant reads might be found
      * Require filtering or special considerations
      */
-    const std::vector<GenomicRegion>& offtargetReadExtractionRegions() const { return offtargetReadExtractionRegions_; }
-    void setOfftargetReadExtractionRegions(const std::vector<GenomicRegion>& offtargetReadExtractionRegions)
-    {
-        offtargetReadExtractionRegions_ = offtargetReadExtractionRegions;
-    }
+    const std::vector<Region>& offtargetLoci() const { return offtargetLoci_; }
+    void setOfftargetLoci(const std::vector<Region>& offtargetLoci) { offtargetLoci_ = offtargetLoci; }
     const graphtools::Graph& regionGraph() const { return regionGraph_; }
     AlleleCount expectedAlleleCount() const { return expectedAlleleCount_; }
 
     const std::vector<VariantSpecification>& variantSpecs() const { return variantSpecs_; }
     void addVariantSpecification(
-        std::string id, VariantClassification classification, GenomicRegion referenceLocus,
+        std::string id, VariantClassification classification, Region referenceLocus,
         std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode);
 
     const VariantSpecification& getVariantSpecById(const std::string& variantSpecId) const;
 
-    const NodeToRegionAssociation& referenceProjectionOfNodes() const { return referenceRegions_; }
-
 private:
     std::string regionId_;
-    std::vector<GenomicRegion> targetReadExtractionRegions_;
-    std::vector<GenomicRegion> offtargetReadExtractionRegions_;
+    std::vector<Region> referenceLoci_;
     AlleleCount expectedAlleleCount_;
+    std::vector<Region> offtargetLoci_;
     graphtools::Graph regionGraph_;
     std::vector<VariantSpecification> variantSpecs_;
-    NodeToRegionAssociation referenceRegions_;
 };
 
 using RegionCatalog = std::map<RegionId, LocusSpecification>;

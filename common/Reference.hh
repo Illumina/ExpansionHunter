@@ -24,53 +24,43 @@
 
 #include <iostream>
 #include <string>
-#include <unordered_map>
-#include <vector>
 
 // Include the fai class from samtools
 #include "htslib/faidx.h"
 
 #include "common/GenomicRegion.hh"
-#include "common/ReferenceContigInfo.hh"
 
 namespace ehunter
 {
+
+using pos_t = size_t;
 
 class Reference
 {
 public:
     /**
-     * @param contigName Name of the reference contig
+     * @param chrom Name of the reference contig (chromosome)
      * @param start 0-based, inclusive
      * @param end 0-based, exclusive
      * @return Reference sequence in upper case
      */
-    virtual std::string getSequence(const std::string& contigName, int64_t start, int64_t end) const = 0;
-
-    virtual std::string getSequence(const GenomicRegion& region) const = 0;
-
-    virtual const ReferenceContigInfo& contigInfo() const = 0;
+    virtual std::string getSequence(const std::string& chrom, pos_t start, pos_t end) const = 0;
 };
 
 /**
- * Reference genome implementation backed by a FASTA file read through HTSlib
+ * Reference Genome implementation backed by a fasta file read through htslib
  */
 class FastaReference : public Reference
 {
 public:
-    explicit FastaReference(const std::string& referencePath, const ReferenceContigInfo& contigInfo);
+    explicit FastaReference(const std::string& genome_path);
     ~FastaReference();
 
-    std::string getSequence(const std::string& contigIndex, int64_t start, int64_t end) const override;
-    std::string getSequence(const GenomicRegion& region) const override;
-
-    const ReferenceContigInfo& contigInfo() const override { return contigInfo_; }
+    std::string getSequence(const std::string& chrom, pos_t start, pos_t end) const override;
 
 private:
-    std::string referencePath_;
-    faidx_t* htsFastaIndexPtr_;
-
-    ReferenceContigInfo contigInfo_;
+    std::string genome_path_;
+    faidx_t* fai_ptr_;
 };
 
 }

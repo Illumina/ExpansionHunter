@@ -28,48 +28,49 @@ using namespace ehunter;
 
 TEST(AllelePresenceChecker, ThrowsWithIllegalParameter)
 {
-    ASSERT_ANY_THROW(new AllelePresenceChecker(1));
-    ASSERT_ANY_THROW(new AllelePresenceChecker(0.01, -1));
+    ASSERT_ANY_THROW(new AllelePresenceChecker(0));
+    ASSERT_ANY_THROW(new AllelePresenceChecker(15, 1));
+    ASSERT_ANY_THROW(new AllelePresenceChecker(15, 0.01, -1));
+    ASSERT_ANY_THROW(new AllelePresenceChecker(0));
 
-    AllelePresenceChecker presenseChecker;
-    ASSERT_ANY_THROW(presenseChecker.check(0.0, 10, 20));
-    ASSERT_ANY_THROW(presenseChecker.check(15.0, -1, 20));
+    AllelePresenceChecker negCountGenotyper(15.0);
+    ASSERT_ANY_THROW(negCountGenotyper.check(-1, 20));
 }
 
 TEST(AllelePresenceChecker, NoReads)
 {
-    AllelePresenceChecker checker;
-    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(15.0, 0, 0));
+    AllelePresenceChecker checker(15.0);
+    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(0, 0));
 }
 
 TEST(AllelePresenceChecker, AllelePresent)
 {
-    AllelePresenceChecker checker;
-    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(15.0, 30, 30));
-    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(15.0, 10, 45));
-    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(15.0, 10, 0));
-    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(15.0, 50, 60));
+    AllelePresenceChecker checker(15.0);
+    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(30, 30));
+    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(10, 45));
+    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(10, 0));
+    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(50, 60));
 }
 
 TEST(AllelePresenceChecker, AlleleAbsent)
 {
-    AllelePresenceChecker checker;
-    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(15.0, 0, 30));
-    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(15.0, 1, 60));
-    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(15.0, 1, 5));
+    AllelePresenceChecker checker(15.0);
+    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(0, 30));
+    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(1, 60));
+    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(1, 5));
 }
 
 TEST(AllelePresenceChecker, NoCall)
 {
-    AllelePresenceChecker checker;
-    EXPECT_EQ(AllelePresenceStatus::kUncertain, checker.check(15.0, 5, 30));
-    EXPECT_EQ(AllelePresenceStatus::kUncertain, checker.check(15.0, 1, 0));
+    AllelePresenceChecker checker(15.0);
+    EXPECT_EQ(AllelePresenceStatus::kUncertain, checker.check(5, 30));
+    EXPECT_EQ(AllelePresenceStatus::kUncertain, checker.check(1, 0));
 }
 
 TEST(AllelePresenceChecker, HighReads)
 {
-    AllelePresenceChecker checker;
-    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(150.0, 100, 450));
-    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(150.0, 20, 600));
-    EXPECT_EQ(AllelePresenceStatus::kUncertain, checker.check(150.0, 40, 200));
+    AllelePresenceChecker checker(150.0);
+    EXPECT_EQ(AllelePresenceStatus::kPresent, checker.check(100, 450));
+    EXPECT_EQ(AllelePresenceStatus::kAbsent, checker.check(20, 600));
+    EXPECT_EQ(AllelePresenceStatus::kUncertain, checker.check(40, 200));
 }

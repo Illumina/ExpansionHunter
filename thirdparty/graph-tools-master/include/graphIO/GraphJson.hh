@@ -36,7 +36,7 @@
 
 using namespace graphtools;
 
-namespace graphtools
+namespace graphIO
 {
 
 using Json = nlohmann::json;

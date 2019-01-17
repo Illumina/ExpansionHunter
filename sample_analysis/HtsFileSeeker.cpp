@@ -23,7 +23,7 @@
 #include <cstdint>
 #include <stdexcept>
 
-#include "common/HtsHelpers.hh"
+#include "sample_analysis/HtsHelpers.hh"
 
 using std::string;
 
@@ -35,7 +35,6 @@ namespace htshelpers
 
     HtsFileSeeker::HtsFileSeeker(const string& htsFilePath)
         : htsFilePath_(htsFilePath)
-        , contigInfo_({})
     {
         openFile();
         loadHeader();
@@ -83,7 +82,13 @@ namespace htshelpers
             throw std::runtime_error("Failed to read header of " + htsFilePath_);
         }
 
-        contigInfo_ = htshelpers::decodeContigInfo(htsHeaderPtr_);
+        const int32_t numContigs = htsHeaderPtr_->n_targets;
+
+        for (int32_t contigInd = 0; contigInd != numContigs; ++contigInd)
+        {
+            const string contig = htsHeaderPtr_->target_name[contigInd];
+            contigNames_.push_back(contig);
+        }
     }
 
     void HtsFileSeeker::loadIndex()
@@ -105,15 +110,16 @@ namespace htshelpers
         }
     }
 
-    void HtsFileSeeker::setRegion(const GenomicRegion& region)
+    void HtsFileSeeker::setRegion(const Region& region)
     {
         closeRegion();
 
-        htsRegionPtr_ = sam_itr_queryi(htsIndexPtr_, region.contigIndex(), region.start(), region.end());
+        const string regionEncoding = region.ToString();
+        htsRegionPtr_ = sam_itr_querys(htsIndexPtr_, htsHeaderPtr_, regionEncoding.c_str());
 
         if (htsRegionPtr_ == nullptr)
         {
-            throw std::runtime_error("Failed to extract reads from " + encode(contigInfo_, region));
+            throw std::runtime_error("Failed to extract reads from " + regionEncoding);
         }
 
         status_ = Status::kStreamingReads;
@@ -148,10 +154,12 @@ namespace htshelpers
         return false;
     }
 
-    Read HtsFileSeeker::decodeRead(LinearAlignmentStats& alignmentStats) const
+    reads::Read HtsFileSeeker::decodeRead(reads::LinearAlignmentStats& alignmentStats) const
     {
-        alignmentStats = decodeAlignmentStats(htsAlignmentPtr_);
-        return htshelpers::decodeRead(htsAlignmentPtr_);
+        reads::Read read;
+        DecodeAlignedRead(htsAlignmentPtr_, read, alignmentStats);
+
+        return read;
     }
 
 }

@@ -45,27 +45,33 @@ class RepeatAnalyzer : public VariantAnalyzer
 public:
     RepeatAnalyzer(
         std::string variantId, AlleleCount expectedAlleleCount, const graphtools::Graph& graph,
-        graphtools::NodeId repeatNodeId)
+        graphtools::NodeId repeatNodeId, double haplotypeDepth, int32_t maxNumUnitsInRead)
         : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, { repeatNodeId })
+        , maxNumUnitsInRead_(maxNumUnitsInRead)
+        , haplotypeDepth_(haplotypeDepth)
         , repeatUnit_(graph.nodeSeq(repeatNodeId))
         , alignmentClassifier_(graph, repeatNodeId)
-        , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
+        verboseLogger_ = spdlog::get("verbose");
     }
 
     ~RepeatAnalyzer() = default;
 
     void processMates(
-        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
+        const reads::Read& read, const graphtools::GraphAlignment& readAlignment, const reads::Read& mate,
         const graphtools::GraphAlignment& mateAlignment) override;
 
-    std::unique_ptr<VariantFindings> analyze(const SampleParameters& params) const override;
+    std::unique_ptr<VariantFindings> analyze() const override;
 
 private:
     graphtools::NodeId repeatNodeId() const { return nodeIds_.front(); }
-    RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
-    void summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats);
+    boost::optional<RepeatGenotype> genotypeCommonRepeat(const std::vector<int32_t>& candidateAlleleSizes) const;
+    reads::RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
+    void summarizeAlignmentsToReadCounts(const reads::RepeatAlignmentStats& repeatAlignmentStats);
     std::vector<int32_t> generateCandidateAlleleSizes() const;
+
+    const int32_t maxNumUnitsInRead_;
+    const double haplotypeDepth_;
 
     const std::string repeatUnit_;
     RepeatAlignmentClassifier alignmentClassifier_;
@@ -74,7 +80,7 @@ private:
     CountTable countsOfFlankingReads_;
     CountTable countsOfInrepeatReads_;
 
-    std::shared_ptr<spdlog::logger> console_;
+    std::shared_ptr<spdlog::logger> verboseLogger_;
 };
 
 }

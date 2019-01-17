@@ -23,40 +23,40 @@
 #include <memory>
 #include <unordered_map>
 
-#include "common/HtsHelpers.hh"
 #include "region_analysis/RegionAnalyzer.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
+#include "sample_analysis/HtsHelpers.hh"
 #include "sample_analysis/LocationBasedDispatcher.hh"
 
-using graphtools::AlignmentWriter;
 using std::map;
 using std::string;
-using std::unordered_map;
 using std::vector;
+
+using std::unordered_map;
 
 namespace ehunter
 {
 
 SampleFindings htslibStreamingSampleAnalyzer(
     const InputPaths& inputPaths, const SampleParameters& sampleParams, const HeuristicParameters& heuristicParams,
-    const RegionCatalog& regionCatalog, AlignmentWriter& bamletWriter)
+    const RegionCatalog& regionCatalog, std::ostream& alignmentStream)
 {
     vector<std::unique_ptr<RegionAnalyzer>> locusAnalyzers
-        = initializeRegionAnalyzers(regionCatalog, heuristicParams, bamletWriter);
-    LocationBasedDispatcher locationBasedDispatcher(locusAnalyzers);
+        = initializeRegionAnalyzers(regionCatalog, sampleParams, heuristicParams, alignmentStream);
+    LocationBasedDispatcher locationBasedDispatcher(locusAnalyzers, heuristicParams.regionExtensionLength());
 
     htshelpers::HtsFileStreamer readStreamer(inputPaths.htsFile());
     while (readStreamer.trySeekingToNextPrimaryAlignment() && readStreamer.isStreamingAlignedReads())
     {
         locationBasedDispatcher.dispatch(
-            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readStreamer.currentMateContigId(),
+            readStreamer.currentReadChrom(), readStreamer.currentReadPosition(), readStreamer.currentMateChrom(),
             readStreamer.currentMatePosition(), readStreamer.decodeRead());
     }
 
     SampleFindings sampleFindings;
     for (auto& locusAnalyzer : locusAnalyzers)
     {
-        auto locusFindings = locusAnalyzer->analyze(sampleParams);
+        auto locusFindings = locusAnalyzer->genotype();
         sampleFindings.emplace(std::make_pair(locusAnalyzer->regionId(), std::move(locusFindings)));
     }
 

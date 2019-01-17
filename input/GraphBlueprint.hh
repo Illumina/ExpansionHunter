@@ -43,7 +43,6 @@ enum class GraphBlueprintFeatureType
     kInterruption
 };
 
-bool doesFeatureDefineVariant(GraphBlueprintFeatureType featureType);
 bool isSkippable(GraphBlueprintFeatureType featureType);
 
 using FeatureTypeAndSequences = std::pair<GraphBlueprintFeatureType, std::vector<std::string>>;

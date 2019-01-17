@@ -3,13 +3,13 @@
 Expansion Hunter requires an indexed BAM or a CRAM file containing aligned reads
 from a PCR-free WGS sample, a FASTA file with a reference genome assembly (which
 must be the same as the one used to align the reads), and a [variant catalog
-file](04_VariantCatalogFiles.md).
+file](04_VariantCatalogs.md).
 
-Expansion Hunter outputs a VCF file and a JSON file with variant genotypes and
-other useful information along with a BAMlet containing alignments of reads that
-overlap or located in close proximity to each variant. The VCF and JSON files
-are largely equivalent, but the JSON file may be easier to parse
-programmatically. Here is a template with the names of the required parameters.
+Expansion Hunter outputs a VCF file and a JSON file with repeat genotypes along
+with other useful information and a log file with alignments of spanning and
+flanking reads and sequences of in-repeat reads. The VCF and JSON files are
+largely equivalent, but the JSON file may be easier to parse programmatically.
+Here is a template with the names of the required parameters.
 
 ```bash
 ExpansionHunter --reads <BAM/CRAM file with aligned reads> \
@@ -26,9 +26,8 @@ optional arguments.
 * `--sex <arg>` Specifies sex of the sample; can be either `male` or `female`
   (default). This parameter only affects repeats on sex chromosomes.
 
-* `--genome-coverage <float>` Specifies read depth on diploid chromosomes.
-  Specifying read depth is required for BAM files containing a subset of
-  alignments or CRAMs.
+* `--genome-coverage <float>` Specifies read depth on diploid chromosomes. Specifying
+  read depth is required for BAM files containing a subset of alignments or CRAMs.
 
 * `--region-extension-length <int>` Specifies how far from on/off-target regions
    to search for informative reads. Set to 1000 by default.

@@ -26,14 +26,16 @@
 // OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "graphio/GraphJson.hh"
+#include "graphIO/GraphJson.hh"
 
 #include <boost/optional.hpp>
 #include <fstream>
 
+#include "graphIO/ReferenceGenome.hh"
+
 using std::string;
 
-namespace graphtools
+namespace graphIO
 {
 
 Graph loadGraph(string const& jsonPath)
@@ -47,12 +49,12 @@ Graph loadGraph(string const& jsonPath)
 
 Graph parseGraph(Json const& jsonGraph)
 {
-    // boost::optional<RefGenome> genome;
-    // const auto refFasta = jsonGraph.find("reference_genome");
-    // if (refFasta != jsonGraph.end())
-    //{
-    //    genome.emplace(refFasta->get<string>());
-    //}
+    boost::optional<RefGenome> genome;
+    const auto refFasta = jsonGraph.find("reference_genome");
+    if (refFasta != jsonGraph.end())
+    {
+        genome.emplace(refFasta->get<string>());
+    }
 
     Json::array_t nodes = jsonGraph.value("nodes", Json::array());
     auto const nNodes = nodes.size();
@@ -72,18 +74,17 @@ Graph parseGraph(Json const& jsonGraph)
         }
         else
         {
-            throw std::runtime_error("Node has an invalid sequence: " + graph.nodeName(nodeIndex));
-            // auto const refRegion = jsonNode.find("reference");
-            // if (refRegion == jsonNode.end())
-            //{
-            //    throw std::runtime_error("Node has no sequence: " + graph.nodeName(nodeIndex));
-            //}
-            // if (!genome)
-            //{
-            //    throw std::runtime_error("Need 'referenceGenome' FASTA file to use reference nodes");
-            //}
-            // auto const interval = ReferenceInterval::parseRegion(*refRegion);
-            // graph.setNodeSeq(nodeIndex, genome->extractSeq(interval));
+            auto const refRegion = jsonNode.find("reference");
+            if (refRegion == jsonNode.end())
+            {
+                throw std::runtime_error("Node has no sequence: " + graph.nodeName(nodeIndex));
+            }
+            if (!genome)
+            {
+                throw std::runtime_error("Need 'referenceGenome' FASTA file to use reference nodes");
+            }
+            auto const interval = ReferenceInterval::parseRegion(*refRegion);
+            graph.setNodeSeq(nodeIndex, genome->extractSeq(interval));
         }
         assert(nodeIds.count(name) == 0);
         nodeIds[name] = nodeIndex;
@@ -138,6 +139,8 @@ Json graphToJson(Graph const& graph)
 
 GraphReferenceMapping parseReferenceMapping(Json const& jRefmap, Graph const& graph)
 {
+    const string refFasta = jRefmap.at("reference_genome");
+    RefGenome genome(refFasta);
     Json::array_t nodes = jRefmap.value("nodes", Json::array());
 
     GraphReferenceMapping refmap(&graph);

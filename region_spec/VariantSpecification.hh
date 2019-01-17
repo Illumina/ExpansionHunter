@@ -53,6 +53,7 @@ enum class VariantSubtype
     kSMN
 };
 
+
 struct VariantClassification
 {
     VariantClassification(VariantType type, VariantSubtype subtype)
@@ -74,7 +75,7 @@ class VariantSpecification
 {
 public:
     VariantSpecification(
-        std::string id, VariantClassification classification, GenomicRegion referenceLocus,
+        std::string id, VariantClassification classification, Region referenceLocus,
         std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode)
         : id_(std::move(id))
         , classification_(classification)
@@ -87,7 +88,7 @@ public:
 
     const std::string& id() const { return id_; }
     VariantClassification classification() const { return classification_; }
-    const GenomicRegion& referenceLocus() const { return referenceLocus_; }
+    const Region& referenceLocus() const { return referenceLocus_; }
     const std::vector<graphtools::NodeId>& nodes() const { return nodes_; }
     const boost::optional<graphtools::NodeId>& optionalRefNode() const { return optionalRefNode_; }
 
@@ -101,7 +102,7 @@ public:
 private:
     std::string id_;
     VariantClassification classification_;
-    GenomicRegion referenceLocus_;
+    Region referenceLocus_;
     std::vector<graphtools::NodeId> nodes_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
 };

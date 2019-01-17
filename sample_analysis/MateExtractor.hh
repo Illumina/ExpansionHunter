@@ -23,15 +23,12 @@
 #include <string>
 #include <vector>
 
-#include <boost/optional.hpp>
-
 extern "C"
 {
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 }
 
-#include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
 
 namespace ehunter
@@ -45,7 +42,7 @@ namespace htshelpers
         MateExtractor(const std::string& htsFilePath);
         ~MateExtractor();
 
-        boost::optional<Read> extractMate(const Read& read, const LinearAlignmentStats& alignmentStats);
+        reads::Read extractMate(const reads::Read& read, const reads::LinearAlignmentStats& alignmentStats);
 
     private:
         void openFile();
@@ -53,7 +50,7 @@ namespace htshelpers
         void loadIndex();
 
         const std::string htsFilePath_;
-        ReferenceContigInfo contigInfo_;
+        std::vector<std::string> contigNames_;
 
         htsFile* htsFilePtr_ = nullptr;
         bam_hdr_t* htsHeaderPtr_ = nullptr;

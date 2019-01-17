@@ -20,7 +20,7 @@
 
 #include "sample_analysis/HtsFileStreamer.hh"
 
-#include "common/HtsHelpers.hh"
+#include "sample_analysis/HtsHelpers.hh"
 
 using std::string;
 
@@ -49,7 +49,13 @@ namespace htshelpers
             throw std::runtime_error("Failed to read header of " + htsFilePath_);
         }
 
-        contigInfo_ = htshelpers::decodeContigInfo(htsHeaderPtr_);
+        const int32_t numChroms = htsHeaderPtr_->n_targets;
+
+        for (int32_t chromInd = 0; chromInd != numChroms; ++chromInd)
+        {
+            const string chrom = htsHeaderPtr_->target_name[chromInd];
+            chromNames_.push_back(chrom);
+        }
     }
 
     void HtsFileStreamer::prepareForStreamingAlignments() { htsAlignmentPtr_ = bam_init1(); }
@@ -83,17 +89,27 @@ namespace htshelpers
         return false;
     }
 
-    int32_t HtsFileStreamer::currentReadContigId() const { return htsAlignmentPtr_->core.tid; }
+    int32_t HtsFileStreamer::currentReadChromIndex() const { return htsAlignmentPtr_->core.tid; }
+    const std::string& HtsFileStreamer::currentReadChrom() const { return chromNames_[currentReadChromIndex()]; }
     int32_t HtsFileStreamer::currentReadPosition() const { return htsAlignmentPtr_->core.pos; }
-    int32_t HtsFileStreamer::currentMateContigId() const { return htsAlignmentPtr_->core.mtid; }
+
+    int32_t HtsFileStreamer::currentMateChromIndex() const { return htsAlignmentPtr_->core.mtid; }
+    const std::string& HtsFileStreamer::currentMateChrom() const { return chromNames_[currentMateChromIndex()]; }
     int32_t HtsFileStreamer::currentMatePosition() const { return htsAlignmentPtr_->core.mpos; }
 
     bool HtsFileStreamer::isStreamingAlignedReads() const
     {
-        return status_ != Status::kFinishedStreaming && currentReadContigId() != -1;
+        return status_ != Status::kFinishedStreaming && currentReadChromIndex() != -1;
     }
 
-    Read HtsFileStreamer::decodeRead() const { return htshelpers::decodeRead(htsAlignmentPtr_); }
+    reads::Read HtsFileStreamer::decodeRead() const
+    {
+        reads::Read read;
+        reads::LinearAlignmentStats alignmentStats;
+        DecodeAlignedRead(htsAlignmentPtr_, read, alignmentStats);
+
+        return read;
+    }
 
     HtsFileStreamer::~HtsFileStreamer()
     {

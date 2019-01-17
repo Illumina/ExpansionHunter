@@ -29,22 +29,18 @@ static double poissonLogLikelihood(double lambda, double count)
     return count * log(lambda) - lambda - boost::math::lgamma(count + 1);
 }
 
-AllelePresenceStatus
-AllelePresenceChecker::check(double haplotypeDepth, int targetAlleleCount, int otherAlleleCount) const
+AllelePresenceStatus AllelePresenceChecker::check(int targetAlleleCount, int otherAlleleCount) const
 {
-    if (haplotypeDepth <= 0)
-    {
-        throw std::runtime_error("Haplotype depth must be positive");
-    }
-
     if (targetAlleleCount < 0 || otherAlleleCount < 0)
     {
         throw std::runtime_error("Negative read counts are not allowed");
     }
 
     const int totalReadCount = targetAlleleCount + otherAlleleCount;
-    double ll0 = (totalReadCount > 0) ? poissonLogLikelihood(errorRate_ * totalReadCount, targetAlleleCount) : 0;
-    double ll1 = poissonLogLikelihood(haplotypeDepth, targetAlleleCount);
+    double ll0 = (totalReadCount > 0) ?
+            poissonLogLikelihood(errorRate_ * totalReadCount, targetAlleleCount) :
+            0;
+    double ll1 = poissonLogLikelihood(haplotypeDepth_, targetAlleleCount);
     if (abs(ll0 - ll1) < log(llrThreshold_))
     {
         return AllelePresenceStatus::kUncertain;

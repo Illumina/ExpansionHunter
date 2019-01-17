@@ -24,57 +24,48 @@
 
 #include <iostream>
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-#include "common/ReferenceContigInfo.hh"
 
 namespace ehunter
 {
 
-// Represents a contiguous region of a genome using 0-based half-open coordinates
-class GenomicRegion
+class Region
 {
 public:
-    friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& region);
+    friend std::ostream& operator<<(std::ostream& out, const Region& region);
 
-    GenomicRegion(const int32_t contigIndex, int64_t start, int64_t end);
+    Region(const std::string chrom, int64_t start, int64_t end);
+    explicit Region(const std::string encoding);
 
-    bool operator<(const GenomicRegion& other) const;
+    bool operator<(const Region& other) const;
 
-    bool overlaps(const GenomicRegion& other) const;
-    int64_t distance(const GenomicRegion& other) const;
+    bool Overlaps(const Region& other) const;
+    int64_t Distance(const Region& other) const;
 
-    int32_t contigIndex() const { return contigIndex_; }
+    const std::string& chrom() const { return chrom_; }
     int64_t start() const { return start_; }
     int64_t end() const { return end_; }
-    int64_t length() const { return end_ - start_; }
+    int64_t length() const { return end_ - start_ + 1; }
 
-    void setContigId(int32_t contigIndex) { contigIndex_ = contigIndex; }
+    void setChrom(const std::string& chrom) { chrom_ = chrom; }
     void setStart(int64_t start) { start_ = start; }
     void setEnd(int64_t end) { end_ = end; }
-
-    bool operator==(const GenomicRegion& other) const
+    bool operator==(const Region& other) const
     {
-        return contigIndex_ == other.contigIndex_ && start_ == other.start_ && end_ == other.end_;
+        return chrom_ == other.chrom_ && start_ == other.start_ && end_ == other.end_;
     }
+    bool operator!=(const Region& other) const { return !(*this == other); }
 
-    bool operator!=(const GenomicRegion& other) const { return !(*this == other); }
-
-    GenomicRegion extend(int length) const;
+    Region extend(int length) const;
+    const std::string ToString() const;
 
 private:
-    int32_t contigIndex_;
+    std::string chrom_;
     int64_t start_;
     int64_t end_;
 };
 
-using GenomicRegionCatalog = std::unordered_map<std::string, GenomicRegion>;
-
-std::ostream& operator<<(std::ostream& out, const GenomicRegion& region);
-std::vector<GenomicRegion> merge(std::vector<GenomicRegion> regions, int maxMergeDist = 500);
-
-std::string encode(const ReferenceContigInfo& contigInfo, const GenomicRegion& region);
-GenomicRegion decode(const ReferenceContigInfo& contigInfo, const std::string& encoding);
+std::vector<Region> merge(std::vector<Region> regions, int maxMergeDist = 500);
+std::ostream& operator<<(std::ostream& out, const Region& region);
 
 }

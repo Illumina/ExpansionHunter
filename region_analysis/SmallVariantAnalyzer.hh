@@ -39,35 +39,42 @@ public:
     SmallVariantAnalyzer(
         std::string variantId, VariantSubtype variantSubtype, AlleleCount expectedAlleleCount,
         const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds,
-        boost::optional<graphtools::NodeId> optionalRefNode)
+        boost::optional<graphtools::NodeId> optionalRefNode, double haplotypeDepth)
         : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, std::move(nodeIds))
         , variantSubtype_(variantSubtype)
+        , haplotypeDepth_(haplotypeDepth)
         , optionalRefNode_(optionalRefNode)
         , alignmentClassifier_(nodeIds_)
-        , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
+        , smallVariantGenotyper_(haplotypeDepth_, expectedAlleleCount_)
+        , allelePresenceChecker_(haplotypeDepth_)
     {
+        verboseLogger_ = spdlog::get("verbose");
         // Only indels are allowed
         assert(nodeIds_.size() <= 2);
     }
 
     ~SmallVariantAnalyzer() = default;
 
-    std::unique_ptr<VariantFindings> analyze(const SampleParameters& params) const override;
+    std::unique_ptr<VariantFindings> analyze() const override;
 
     void processMates(
-        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
+        const reads::Read& read, const graphtools::GraphAlignment& readAlignment, const reads::Read& mate,
         const graphtools::GraphAlignment& mateAlignment) override;
+
+    double haplotypeDepth() const { return haplotypeDepth_; }
 
 protected:
     int countReadsSupportingNode(graphtools::NodeId nodeId) const;
 
     VariantSubtype variantSubtype_;
+    double haplotypeDepth_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
 
     ClassifierOfAlignmentsToVariant alignmentClassifier_;
+    SmallVariantGenotyper smallVariantGenotyper_;
     AllelePresenceChecker allelePresenceChecker_;
 
-    std::shared_ptr<spdlog::logger> console_;
+    std::shared_ptr<spdlog::logger> verboseLogger_;
 };
 
 }

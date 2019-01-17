@@ -23,10 +23,10 @@
 #include "gtest/gtest.h"
 
 using namespace ehunter;
+using namespace reads;
 
 TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead)
 {
-    ReadId readId("frag1", MateNumber::kSecondMate);
-    Read read(readId, "ATTC");
+    Read read("frag1/2", "ATTC");
     EXPECT_EQ("frag1", read.fragmentId());
 }

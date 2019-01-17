@@ -51,19 +51,20 @@ struct LocusTypeAndAnalyzer
     RegionAnalyzer* locusAnalyzerPtr;
 };
 
-using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, LocusTypeAndAnalyzer>;
-using AnalyzerIntervalTree = ehunter::IntervalTree<std::size_t, LocusTypeAndAnalyzer>;
-using AnalyzerIntervalTrees = std::unordered_map<int32_t, AnalyzerIntervalTree>;
+using IntervalWithLocusTypeAndAnalyzer = Interval<std::size_t, LocusTypeAndAnalyzer>;
+using AnalyzerIntervalTree = IntervalTree<std::size_t, LocusTypeAndAnalyzer>;
+using AnalyzerIntervalTrees = std::unordered_map<std::string, AnalyzerIntervalTree>;
 
 class LocationBasedAnalyzerFinder
 {
 public:
-    LocationBasedAnalyzerFinder(std::vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers);
+    LocationBasedAnalyzerFinder(std::vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers, int searchRadius);
     boost::optional<LocusTypeAndAnalyzer>
-    query(int32_t readContigId, int64_t readPosition, int32_t mateContigId, int64_t matePosition);
+    query(const std::string& readChrom, int32_t readPosition, const std::string& mateChrom, int32_t matePosition);
 
 private:
-    boost::optional<LocusTypeAndAnalyzer> tryGettingLocusAnalyzer(int32_t contigIndex, int64_t position) const;
+    boost::optional<LocusTypeAndAnalyzer>
+    tryGettingLocusAnalyzer(const std::string& readChrom, int32_t readPosition) const;
 
     AnalyzerIntervalTrees intervalTrees_;
 };

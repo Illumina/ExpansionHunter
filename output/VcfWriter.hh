@@ -25,7 +25,6 @@
 #include <set>
 #include <string>
 
-#include "common/Parameters.hh"
 #include "common/Reference.hh"
 #include "region_analysis/VariantFindings.hh"
 #include "region_spec/LocusSpecification.hh"
@@ -37,12 +36,12 @@ class VariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     VariantVcfWriter(
-        const SampleParameters& sampleParams, Reference& reference, const LocusSpecification& regionSpec,
-        const VariantSpecification& variantSpec, std::ostream& out)
-        : sampleParams_(sampleParams)
-        , reference_(reference)
-        , regionSpec_(regionSpec)
+        const LocusSpecification& regionSpec, const VariantSpecification& variantSpec, int readLength,
+        Reference& reference, std::ostream& out)
+        : regionSpec_(regionSpec)
         , variantSpec_(variantSpec)
+        , readLength_(readLength)
+        , reference_(reference)
         , out_(out)
     {
     }
@@ -52,10 +51,10 @@ public:
     void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
 
 private:
-    const SampleParameters& sampleParams_;
-    Reference& reference_;
     const LocusSpecification& regionSpec_;
     const VariantSpecification& variantSpec_;
+    const int readLength_;
+    Reference& reference_;
     std::ostream& out_;
 };
 
@@ -64,21 +63,20 @@ class VcfWriter
 {
 public:
     VcfWriter(
-        const SampleParameters& sampleParams, Reference& reference, const RegionCatalog& regionCatalog,
-        const SampleFindings& sampleFindings);
+        const std::string& sampleName, int readLength, const RegionCatalog& regionCatalog,
+        const SampleFindings& sampleFindings, Reference& reference);
 
     friend std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
 
 private:
     void writeHeader(std::ostream& out);
     void writeBody(std::ostream& out);
-    using RegionIdAndVariantId = std::pair<std::string, std::string>;
-    const std::vector<RegionIdAndVariantId> getSortedIdPairs();
 
-    const SampleParameters& sampleParams_;
-    Reference& reference_;
+    const std::string sampleName_;
+    const int readLength_;
     const RegionCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
+    Reference& reference_;
 };
 
 std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);

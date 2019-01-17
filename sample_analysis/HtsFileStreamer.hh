@@ -29,7 +29,6 @@ extern "C"
 #include "htslib/sam.h"
 }
 
-#include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
 
 namespace ehunter
@@ -43,7 +42,6 @@ namespace htshelpers
     public:
         HtsFileStreamer(const std::string& htsFilePath)
             : htsFilePath_(htsFilePath)
-            , contigInfo_({})
         {
             openHtsFile();
             loadHeader();
@@ -53,14 +51,16 @@ namespace htshelpers
 
         bool trySeekingToNextPrimaryAlignment();
 
-        int32_t currentReadContigId() const;
+        int32_t currentReadChromIndex() const;
+        const std::string& currentReadChrom() const;
         int32_t currentReadPosition() const;
-        int32_t currentMateContigId() const;
+        int32_t currentMateChromIndex() const;
+        const std::string& currentMateChrom() const;
         int32_t currentMatePosition() const;
 
         bool isStreamingAlignedReads() const;
 
-        Read decodeRead() const;
+        reads::Read decodeRead() const;
 
     private:
         enum class Status
@@ -74,7 +74,7 @@ namespace htshelpers
         void prepareForStreamingAlignments();
 
         const std::string htsFilePath_;
-        ReferenceContigInfo contigInfo_;
+        std::vector<std::string> chromNames_;
         Status status_ = Status::kStreamingReads;
 
         htsFile* htsFilePtr_ = nullptr;

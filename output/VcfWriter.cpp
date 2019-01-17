@@ -58,45 +58,24 @@ void writeBodyHeader(const string& sampleName, ostream& out)
 std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter)
 {
     outputVcfHeader(vcfWriter.regionCatalog_, vcfWriter.sampleFindings_, out);
-    writeBodyHeader(vcfWriter.sampleParams_.id(), out);
+    writeBodyHeader(vcfWriter.sampleName_, out);
     vcfWriter.writeBody(out);
     return out;
 }
 
 VcfWriter::VcfWriter(
-    const SampleParameters& sampleParams, Reference& reference, const RegionCatalog& regionCatalog,
-    const SampleFindings& sampleFindings)
-    : sampleParams_(sampleParams)
-    , reference_(reference)
+    const string& sampleName, int readLength, const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings,
+    Reference& reference)
+    : sampleName_(sampleName)
+    , readLength_(readLength)
     , regionCatalog_(regionCatalog)
     , sampleFindings_(sampleFindings)
+    , reference_(reference)
 {
 }
 
 void VcfWriter::writeBody(ostream& out)
 {
-    const std::vector<VcfWriter::RegionIdAndVariantId>& ids = VcfWriter::getSortedIdPairs();
-
-    for (const auto& pair : ids)
-    {
-        const string& regionId = pair.first;
-        const LocusSpecification& regionSpec = regionCatalog_.at(regionId);
-        const RegionFindings& regionFindings = sampleFindings_.at(regionId);
-        
-        const string& variantId = pair.second;
-        const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
-        const auto& variantFindings = regionFindings.at(variantId);
-
-        VariantVcfWriter variantWriter(sampleParams_, reference_, regionSpec, variantSpec, out);
-        variantFindings->accept(&variantWriter);
-    }
-}
-
-const std::vector<VcfWriter::RegionIdAndVariantId> VcfWriter::getSortedIdPairs()
-{
-    using VariantTuple = std::tuple<int32_t, int64_t, int64_t, RegionIdAndVariantId>;
-    std::vector<VariantTuple> tuples;
-
     for (const auto& regionIdAndFindings : sampleFindings_)
     {
         const string& regionId = regionIdAndFindings.first;
@@ -107,16 +86,11 @@ const std::vector<VcfWriter::RegionIdAndVariantId> VcfWriter::getSortedIdPairs()
         {
             const string& variantId = variantIdAndFindings.first;
             const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
-            tuples.emplace_back(variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(), variantSpec.referenceLocus().end(), RegionIdAndVariantId(regionId, variantId));
+
+            VariantVcfWriter variantWriter(regionSpec, variantSpec, readLength_, reference_, out);
+            variantIdAndFindings.second->accept(&variantWriter);
         }
     }
-
-    std::sort(tuples.begin(), tuples.end());
-    std::vector<VcfWriter::RegionIdAndVariantId> idPairs;
-    for (const auto& t : tuples)
-        idPairs.emplace_back(std::get<3>(t));
-
-    return idPairs;
 }
 
 static string createRepeatAlleleSymbol(int repeatSize) { return "<STR" + std::to_string(repeatSize) + ">"; }
@@ -235,17 +209,22 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 
     const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
     const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
-    const string sampleFields
-        = computeSampleFields(sampleParams_.readLength(), variantSpec_, repeatUnit, *repeatFindingsPtr);
+    const string sampleFields = computeSampleFields(readLength_, variantSpec_, repeatUnit, *repeatFindingsPtr);
 
     const int posPreceedingRepeat1based = referenceLocus.start();
-    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     const string leftFlankingBase
-        = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
+        = reference_.getSequence(referenceLocus.chrom(), referenceLocus.start() - 1, referenceLocus.start());
 
-    vector<string> vcfRecordElements
-        = { contigName, to_string(posPreceedingRepeat1based), ".",         leftFlankingBase, altSymbol, ".", "PASS",
-            infoFields, "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR",   sampleFields };
+    vector<string> vcfRecordElements = { referenceLocus.chrom(),
+                                         to_string(posPreceedingRepeat1based),
+                                         ".",
+                                         leftFlankingBase,
+                                         altSymbol,
+                                         ".",
+                                         "PASS",
+                                         infoFields,
+                                         "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR",
+                                         sampleFields };
 
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
@@ -253,7 +232,6 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
 {
     const auto& referenceLocus = variantSpec_.referenceLocus();
-    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     string refSequence;
     string altSequence;
     int64_t startPosition = -1;
@@ -277,7 +255,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
     else if (variantSpec_.classification().subtype == VariantSubtype::kDeletion)
     {
         const string refFlankingBase
-            = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
+            = reference_.getSequence(referenceLocus.chrom(), referenceLocus.start() - 1, referenceLocus.start());
 
         const int refNodeId = variantSpec_.nodes().front();
         refSequence = refFlankingBase + regionSpec_.regionGraph().nodeSeq(refNodeId);
@@ -288,7 +266,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
     else if (variantSpec_.classification().subtype == VariantSubtype::kInsertion)
     {
         const string refFlankingBase
-            = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
+            = reference_.getSequence(referenceLocus.chrom(), referenceLocus.start() - 1, referenceLocus.start());
 
         const int altNodeId = variantSpec_.nodes().front();
         refSequence = refFlankingBase;
@@ -336,11 +314,16 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
 
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
-
-    vector<string> line{
-        contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
-        sampleValue
-    };
+    vector<string> line{ referenceLocus.chrom(),
+                         streamToString(startPosition),
+                         ".",
+                         refSequence,
+                         altSequence,
+                         ".",
+                         "PASS",
+                         infoFields,
+                         sampleField,
+                         sampleValue };
     out_ << boost::algorithm::join(line, "\t") << std::endl;
 }
 

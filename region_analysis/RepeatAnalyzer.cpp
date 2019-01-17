@@ -37,6 +37,8 @@ using graphtools::GraphAlignment;
 using graphtools::NodeId;
 using graphtools::prettyPrint;
 using graphtools::splitStringByDelimiter;
+using reads::Read;
+using reads::RepeatAlignmentStats;
 using std::list;
 using std::string;
 using std::vector;
@@ -44,11 +46,6 @@ using std::vector;
 static bool checkIfAlignmentIsConfident(
     NodeId repeatNodeId, const GraphAlignment& alignment, const RepeatAlignmentStats& alignmentStats)
 {
-    if (!checkIfPassesAlignmentFilters(alignment))
-    {
-        return false;
-    }
-
     const bool doesReadAlignWellOverLeftFlank = checkIfUpstreamAlignmentIsGood(repeatNodeId, alignment);
     const bool doesReadAlignWellOverRightFlank = checkIfDownstreamAlignmentIsGood(repeatNodeId, alignment);
 
@@ -84,39 +81,40 @@ void RepeatAnalyzer::processMates(
 
     if (isReadAlignmentConfident)
     {
-        // std::cerr << read.readId() << " is " << readAlignmentStats.canonicalAlignmentType() << " for variant "
-        //          << variantId_ << std::endl;
+        std::cerr << read.readId() << " is " << readAlignmentStats.canonicalAlignmentType() << " for variant "
+                  << variantId_ << std::endl;
         summarizeAlignmentsToReadCounts(readAlignmentStats);
     }
-    else
+    else if (verboseLogger_)
     {
-        // std::cerr << read.readId() << " could not be confidently aligned " << std::endl;
-        // std::cerr << prettyPrint(readAlignment, read.sequence()) << std::endl;
-        console_->debug(
+        std::cerr << read.readId() << " could not be confidently aligned " << std::endl;
+        std::cerr << prettyPrint(readAlignment, read.sequence) << std::endl;
+        verboseLogger_->info(
             "Not a confident alignment for repeat node {}\n{}", repeatNodeId(),
-            prettyPrint(readAlignment, read.sequence()));
+            prettyPrint(readAlignment, read.sequence));
     }
 
     if (isMateAlignmentConfident)
     {
-        // std::cerr << mate.readId() << " is " << mateAlignmentStats.canonicalAlignmentType() << " for variant "
-        //          << std::endl;
+        std::cerr << mate.readId() << " is " << mateAlignmentStats.canonicalAlignmentType() << " for variant "
+                  << std::endl;
         summarizeAlignmentsToReadCounts(mateAlignmentStats);
     }
-    else
+    else if (verboseLogger_)
     {
-        // std::cerr << mate.readId() << " could not be confidently aligned " << std::endl;
-        // std::cerr << prettyPrint(mateAlignment, mate.sequence()) << std::endl;
-        console_->debug(
+        std::cerr << mate.readId() << " could not be confidently aligned " << std::endl;
+        std::cerr << prettyPrint(mateAlignment, mate.sequence) << std::endl;
+        verboseLogger_->info(
             "Not a confident alignment for repeat node {}\n{}", repeatNodeId(),
-            prettyPrint(mateAlignment, mate.sequence()));
+            prettyPrint(mateAlignment, mate.sequence));
     }
 }
 
 RepeatAlignmentStats RepeatAnalyzer::classifyReadAlignment(const graphtools::GraphAlignment& alignment)
 {
     AlignmentType alignmentType = alignmentClassifier_.Classify(alignment);
-    int numRepeatUnitsOverlapped = countFullOverlaps(repeatNodeId(), alignment);
+    int32_t numRepeatUnitsOverlapped = countFullOverlaps(repeatNodeId(), alignment);
+    numRepeatUnitsOverlapped = std::min(numRepeatUnitsOverlapped, maxNumUnitsInRead_);
 
     return RepeatAlignmentStats(alignment, alignmentType, numRepeatUnitsOverlapped);
 }
@@ -139,21 +137,10 @@ void RepeatAnalyzer::summarizeAlignmentsToReadCounts(const RepeatAlignmentStats&
     }
 }
 
-std::unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const SampleParameters& params) const
+std::unique_ptr<VariantFindings> RepeatAnalyzer::analyze() const
 {
-    //     numRepeatUnitsOverlapped = std::min(numRepeatUnitsOverlapped, maxNumUnitsInRead_);
-
     const vector<int32_t> candidateAlleleSizes = generateCandidateAlleleSizes();
-
-    const int32_t repeatUnitLength = repeatUnit_.length();
-    const double propCorrectMolecules = 0.97;
-    const int maxNumUnitsInRead = std::ceil(params.readLength() / static_cast<double>(repeatUnitLength));
-
-    RepeatGenotyper repeatGenotyper(
-        params.haplotypeDepth(), expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
-        countsOfSpanningReads_, countsOfFlankingReads_, countsOfInrepeatReads_);
-
-    optional<RepeatGenotype> repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
+    optional<RepeatGenotype> repeatGenotype = genotypeCommonRepeat(candidateAlleleSizes);
 
     std::unique_ptr<VariantFindings> variantFiningsPtr(
         new RepeatFindings(countsOfSpanningReads_, countsOfFlankingReads_, countsOfInrepeatReads_, repeatGenotype));
@@ -185,6 +172,18 @@ vector<int32_t> RepeatAnalyzer::generateCandidateAlleleSizes() const
     }
 
     return candidateAlleleSizes;
+}
+
+optional<RepeatGenotype> RepeatAnalyzer::genotypeCommonRepeat(const vector<int32_t>& candidateAlleleSizes) const
+{
+    const int32_t repeatUnitLen = repeatUnit_.length();
+    const double propCorrectMolecules = 0.97;
+
+    RepeatGenotyper repeatGenotyper(
+        haplotypeDepth_, expectedAlleleCount_, repeatUnitLen, maxNumUnitsInRead_, propCorrectMolecules,
+        countsOfSpanningReads_, countsOfFlankingReads_, countsOfInrepeatReads_);
+
+    return repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
 }
 
 }

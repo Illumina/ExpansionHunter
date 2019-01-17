@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
 
 #include "thirdparty/spdlog/spdlog.h"
@@ -40,24 +39,25 @@ namespace ehunter
 {
 
 using boost::optional;
-using graphtools::AlignmentWriter;
 using htshelpers::HtsFileSeeker;
+using reads::LinearAlignmentStats;
+using reads::Read;
+using reads::ReadPairs;
 using std::ostream;
 using std::string;
 using std::unordered_map;
 using std::vector;
 
-using AlignmentStatsCatalog = unordered_map<ReadId, LinearAlignmentStats, boost::hash<ReadId>>;
+using AlignmentStatsCatalog = unordered_map<string, LinearAlignmentStats>;
 
-static ReadPairs collectReads(
-    const vector<GenomicRegion>& regions, AlignmentStatsCatalog& alignmentStatsCatalog, HtsFileSeeker& fileHopper)
+static ReadPairs
+collectReads(const vector<Region>& regions, AlignmentStatsCatalog& alignmentStatsCatalog, HtsFileSeeker& fileHopper)
 {
     ReadPairs readPairs;
     auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
-
+    int preReads = 0;
     for (const auto& region : regions)
     {
-        int numReadsBeforeCollection = readPairs.NumReads();
         fileHopper.setRegion(region);
         while (fileHopper.trySeekingToNextPrimaryAlignment())
         {
@@ -66,7 +66,8 @@ static ReadPairs collectReads(
             alignmentStatsCatalog.emplace(std::make_pair(read.readId(), alignmentStats));
             readPairs.Add(std::move(read));
         }
-        console->debug("Collected {} reads from {}", readPairs.NumReads() - numReadsBeforeCollection, region);
+        console->info("Collected {} reads from {}", readPairs.NumReads() - preReads, region);
+        preReads += readPairs.NumReads();
     }
     return readPairs;
 }
@@ -74,8 +75,8 @@ static ReadPairs collectReads(
 bool checkIfMatesWereMappedNearby(const LinearAlignmentStats& alignmentStats)
 {
     const int maxMateDistance = 1000;
-    if ((alignmentStats.chromId == alignmentStats.mateChromId)
-        && (std::abs(alignmentStats.pos - alignmentStats.matePos) < maxMateDistance))
+    if ((alignmentStats.chrom_id == alignmentStats.mate_chrom_id)
+        && (std::abs(alignmentStats.pos - alignmentStats.mate_pos) < maxMateDistance))
     {
         return true;
     }
@@ -88,14 +89,15 @@ void recoverMates(const string& htsFilePath, const AlignmentStatsCatalog& alignm
 
     for (auto& fragmentIdAndReadPair : readPairs)
     {
-        ReadPair& readPair = fragmentIdAndReadPair.second;
+        reads::ReadPair& readPair = fragmentIdAndReadPair.second;
 
-        if (readPair.numMatesSet() == 2)
+        if (readPair.first_mate.isSet() && readPair.second_mate.isSet())
         {
             continue;
         }
 
-        const Read& read = readPair.firstMate != boost::none ? *readPair.firstMate : *readPair.secondMate;
+        assert(readPair.first_mate.isSet() || readPair.second_mate.isSet());
+        const Read& read = readPair.first_mate.isSet() ? readPair.first_mate : readPair.second_mate;
 
         const auto alignmentStatsIterator = alignmentStatsCatalog.find(read.readId());
         if (alignmentStatsIterator == alignmentStatsCatalog.end())
@@ -106,10 +108,10 @@ void recoverMates(const string& htsFilePath, const AlignmentStatsCatalog& alignm
 
         if (!checkIfMatesWereMappedNearby(alignmentStats))
         {
-            optional<Read> optionalMate = mateExtractor.extractMate(read, alignmentStats);
-            if (optionalMate != boost::none)
+            Read mate = mateExtractor.extractMate(read, alignmentStats);
+            if (mate.isSet())
             {
-                readPairs.AddMateToExistingRead(*optionalMate);
+                readPairs.AddMateToExistingRead(mate);
             }
             else
             {
@@ -122,34 +124,35 @@ void recoverMates(const string& htsFilePath, const AlignmentStatsCatalog& alignm
 
 static RegionFindings analyzeRegion(
     const ReadPairs& readPairs, const ReadPairs& offtargetReadPairs, const LocusSpecification& regionSpec,
-    const SampleParameters& sampleParams, const HeuristicParameters& heuristicParams, AlignmentWriter& alignmentWriter)
+    const SampleParameters& sampleParams, const HeuristicParameters& heuristicParams, ostream& alignmentStream)
 {
-    RegionAnalyzer regionAnalyzer(regionSpec, heuristicParams, alignmentWriter);
+    alignmentStream << regionSpec.regionId() << ":" << std::endl;
+    RegionAnalyzer regionAnalyzer(regionSpec, sampleParams, heuristicParams, alignmentStream);
 
     for (const auto fragmentIdAndReads : readPairs)
     {
         const auto& readPair = fragmentIdAndReads.second;
-        if (readPair.numMatesSet() == 2)
+        if (readPair.first_mate.isSet() && readPair.second_mate.isSet())
         {
-            regionAnalyzer.processMates(*readPair.firstMate, *readPair.secondMate);
+            regionAnalyzer.processMates(readPair.first_mate, readPair.second_mate);
         }
     }
 
     for (const auto fragmentIdAndReads : offtargetReadPairs)
     {
         const auto& readPair = fragmentIdAndReads.second;
-        if (readPair.numMatesSet() == 2)
+        if (readPair.first_mate.isSet() && readPair.second_mate.isSet())
         {
-            regionAnalyzer.processOfftargetMates(*readPair.firstMate, *readPair.secondMate);
+            regionAnalyzer.processOfftargetMates(readPair.first_mate, readPair.second_mate);
         }
     }
 
-    return regionAnalyzer.analyze(sampleParams);
+    return regionAnalyzer.genotype();
 }
 
 SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, SampleParameters& sampleParams, const HeuristicParameters& heuristicParams,
-    const RegionCatalog& regionCatalog, AlignmentWriter& alignmentWriter)
+    const RegionCatalog& regionCatalog, std::ostream& alignmentStream)
 {
     auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
 
@@ -174,21 +177,23 @@ SampleFindings htsSeekingSampleAnalysis(
     {
         const string& regionId = regionIdAndRegionSpec.first;
         const LocusSpecification& regionSpec = regionIdAndRegionSpec.second;
-
+        vector<Region> targetRegions;
+        const auto& referenceLoci = regionSpec.referenceLoci();
+        auto extendRegion = [=](Region region) { return region.extend(heuristicParams.regionExtensionLength()); };
+        std::transform(referenceLoci.begin(), referenceLoci.end(), std::back_inserter(targetRegions), extendRegion);
         AlignmentStatsCatalog readAlignmentStats;
-        ReadPairs targetReadPairs
-            = collectReads(regionSpec.targetReadExtractionRegions(), readAlignmentStats, htsFileSeeker);
+        ReadPairs targetReadPairs = collectReads(targetRegions, readAlignmentStats, htsFileSeeker);
         recoverMates(inputPaths.htsFile(), readAlignmentStats, targetReadPairs);
-        console->debug("Collected {} read pairs from target regions", targetReadPairs.NumCompletePairs());
+        console->info("Collected {} read pairs from target regions", targetReadPairs.NumCompletePairs());
 
         AlignmentStatsCatalog offtargetReadAlignmentStatsCatalog;
-        ReadPairs offtargetReadPairs = collectReads(
-            regionSpec.offtargetReadExtractionRegions(), offtargetReadAlignmentStatsCatalog, htsFileSeeker);
+        ReadPairs offtargetReadPairs
+            = collectReads(regionSpec.offtargetLoci(), offtargetReadAlignmentStatsCatalog, htsFileSeeker);
         recoverMates(inputPaths.htsFile(), offtargetReadAlignmentStatsCatalog, offtargetReadPairs);
-        console->debug("Collected {} read pairs from offtarget regions", offtargetReadPairs.NumCompletePairs());
+        console->info("Collected {} read pairs from offtarget regions", offtargetReadPairs.NumCompletePairs());
 
         auto regionFindings = analyzeRegion(
-            targetReadPairs, offtargetReadPairs, regionSpec, sampleParams, heuristicParams, alignmentWriter);
+            targetReadPairs, offtargetReadPairs, regionSpec, sampleParams, heuristicParams, alignmentStream);
         sampleFindings.emplace(std::make_pair(regionId, std::move(regionFindings)));
     }
 

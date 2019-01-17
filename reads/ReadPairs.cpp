@@ -28,80 +28,109 @@ using std::vector;
 namespace ehunter
 {
 
-void ReadPairs::Add(Read read)
+namespace reads
 {
-    ReadPair& readPair = readPairs_[read.fragmentId()];
-    const int originalMateCount = readPair.numMatesSet();
 
-    if (read.isFirstMate() && readPair.firstMate == boost::none)
+    void ReadPairs::Add(const Read& read)
     {
-        readPair.firstMate = std::move(read);
-    }
+        ReadPair& read_pair = read_pairs_[read.fragmentId()];
+        const int32_t num_mates_original
+            = static_cast<int32_t>(read_pair.first_mate.isSet()) + static_cast<int32_t>(read_pair.second_mate.isSet());
 
-    if (read.isSecondMate() && readPair.secondMate == boost::none)
-    {
-        readPair.secondMate = std::move(read);
-    }
-
-    const int mateCountAfterAdd = readPair.numMatesSet();
-
-    numReads_ += mateCountAfterAdd - originalMateCount;
-}
-
-void ReadPairs::AddMateToExistingRead(Read mate)
-{
-    ReadPair& readPair = readPairs_.at(mate.fragmentId());
-    if (mate.isFirstMate() && readPair.firstMate == boost::none)
-    {
-        readPair.firstMate = std::move(mate);
-        ++numReads_;
-    }
-    else if (mate.isSecondMate() && readPair.secondMate == boost::none)
-    {
-        readPair.secondMate = std::move(mate);
-        ++numReads_;
-    }
-    else
-    {
-        throw std::logic_error("Unable to find read placement");
-    }
-}
-
-const ReadPair& ReadPairs::operator[](const string& fragment_id) const
-{
-    if (readPairs_.find(fragment_id) == readPairs_.end())
-    {
-        throw std::logic_error("Fragment " + fragment_id + " does not exist");
-    }
-    return readPairs_.at(fragment_id);
-}
-
-int32_t ReadPairs::NumCompletePairs() const
-{
-    int32_t numCompletePairs = 0;
-    for (const auto& fragmentIdAndReads : readPairs_)
-    {
-        const ReadPair& reads = fragmentIdAndReads.second;
-        if (reads.firstMate != boost::none && reads.secondMate != boost::none)
+        if (read.is_first_mate && !read_pair.first_mate.isSet())
         {
-            ++numCompletePairs;
+            read_pair.first_mate = read;
+        }
+
+        if (read.isSecondMate() && !read_pair.second_mate.isSet())
+        {
+            read_pair.second_mate = read;
+        }
+
+        const int32_t num_mates_after_add
+            = static_cast<int32_t>(read_pair.first_mate.isSet()) + static_cast<int32_t>(read_pair.second_mate.isSet());
+
+        num_reads_ += num_mates_after_add - num_mates_original;
+    }
+
+    void ReadPairs::AddMateToExistingRead(const Read& mate)
+    {
+        ReadPair& read_pair = read_pairs_.at(mate.fragmentId());
+        if (mate.is_first_mate && !read_pair.first_mate.isSet())
+        {
+            read_pair.first_mate = mate;
+        }
+        else if (mate.isSecondMate() && !read_pair.second_mate.isSet())
+        {
+            read_pair.second_mate = mate;
+        }
+        else
+        {
+            throw std::logic_error("Unable to find read placement");
         }
     }
 
-    return numCompletePairs;
-}
+    const ReadPair& ReadPairs::operator[](const string& fragment_id) const
+    {
+        if (read_pairs_.find(fragment_id) == read_pairs_.end())
+        {
+            throw std::logic_error("Fragment " + fragment_id + " does not exist");
+        }
+        return read_pairs_.at(fragment_id);
+    }
 
-void ReadPairs::Clear()
-{
-    readPairs_.clear();
-    numReads_ = 0;
-}
+    ReadIdToReadReference ReadPairs::GetReads()
+    {
+        ReadIdToReadReference read_references;
 
-bool operator==(const ReadPair& readPairA, const ReadPair& readPairB)
-{
-    const bool areFirstMatesEqual = readPairA.firstMate == readPairB.firstMate;
-    const bool areSecondMatesEqual = readPairA.secondMate == readPairB.secondMate;
-    return (areFirstMatesEqual && areSecondMatesEqual);
-}
+        for (auto& kv : read_pairs_)
+        {
+            ReadPair& read_pair = kv.second;
+            if (read_pair.first_mate.isSet())
+            {
+                const string& read_id = read_pair.first_mate.read_id;
+                std::reference_wrapper<Read> read_ref = read_pair.first_mate;
+                read_references.emplace(std::make_pair(read_id, read_ref));
+            }
+            if (read_pair.second_mate.isSet())
+            {
+                const string& read_id = read_pair.second_mate.read_id;
+                std::reference_wrapper<Read> read_ref = read_pair.second_mate;
+                read_references.emplace(std::make_pair(read_id, read_ref));
+            }
+        }
+
+        return read_references;
+    }
+
+    int32_t ReadPairs::NumCompletePairs() const
+    {
+        int32_t numCompletePairs = 0;
+        for (const auto& fragmentIdAndReads : read_pairs_)
+        {
+            const ReadPair& reads = fragmentIdAndReads.second;
+            if (reads.first_mate.isSet() && reads.second_mate.isSet())
+            {
+                ++numCompletePairs;
+            }
+        }
+
+        return numCompletePairs;
+    }
+
+    void ReadPairs::Clear()
+    {
+        read_pairs_.clear();
+        num_reads_ = 0;
+    }
+
+    bool operator==(const ReadPair& read_pair_a, const ReadPair& read_pair_b)
+    {
+        const bool are_first_mates_equal = read_pair_a.first_mate == read_pair_b.first_mate;
+        const bool are_second_mates_equal = read_pair_a.second_mate == read_pair_b.second_mate;
+        return (are_first_mates_equal && are_second_mates_equal);
+    }
+
+} // namespace reads
 
 }

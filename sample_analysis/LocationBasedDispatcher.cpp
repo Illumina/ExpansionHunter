@@ -26,13 +26,15 @@ using std::vector;
 namespace ehunter
 {
 
-LocationBasedDispatcher::LocationBasedDispatcher(std::vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers)
-    : locationBasedAnalyzerFinder_(locusAnalyzers)
+LocationBasedDispatcher::LocationBasedDispatcher(
+    std::vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers, int searchRadius)
+    : locationBasedAnalyzerFinder_(locusAnalyzers, searchRadius)
 {
 }
 
 void LocationBasedDispatcher::dispatch(
-    int32_t readContigId, int64_t readPosition, int32_t mateContigId, int64_t matePosition, Read read)
+    const std::string& readChrom, int32_t readPosition, const std::string& mateChrom, int32_t matePosition,
+    reads::Read read)
 {
     // Check if the read is in the hash and act accordingly
     const auto mateIterator = unpairedReads_.find(read.fragmentId());
@@ -42,9 +44,9 @@ void LocationBasedDispatcher::dispatch(
         return;
     }
 
-    Read& mate = mateIterator->second;
+    reads::Read& mate = mateIterator->second;
     auto optionalRegionTypeAndAnalyzer
-        = locationBasedAnalyzerFinder_.query(readContigId, readPosition, mateContigId, matePosition);
+        = locationBasedAnalyzerFinder_.query(readChrom, readPosition, mateChrom, matePosition);
 
     if (optionalRegionTypeAndAnalyzer)
     {

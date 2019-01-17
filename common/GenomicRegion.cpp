@@ -22,34 +22,55 @@
 
 #include "common/GenomicRegion.hh"
 
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include <limits>
 #include <sstream>
 #include <stdexcept>
-
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
+#include <string>
+#include <vector>
 
 using std::istream;
 using std::ostream;
 using std::string;
-using std::unordered_map;
 using std::vector;
+
+using boost::lexical_cast;
+using boost::algorithm::is_any_of;
+using boost::algorithm::split;
 
 namespace ehunter
 {
 
-GenomicRegion::GenomicRegion(int32_t contigIndex, int64_t start, int64_t end)
-    : contigIndex_(contigIndex)
+Region::Region(const std::string chrom, int64_t start, int64_t end)
+    : chrom_(chrom)
     , start_(start)
     , end_(end)
 {
 }
 
-bool GenomicRegion::operator<(const GenomicRegion& other) const
+Region::Region(const std::string encoding)
 {
-    if (contigIndex_ != other.contigIndex_)
+    vector<string> components;
+    boost::algorithm::split(components, encoding, is_any_of(":-"));
+
+    if (components.size() != 3)
     {
-        return contigIndex_ < other.contigIndex_;
+        throw std::logic_error("Unexpected range format: " + encoding);
+    }
+
+    chrom_ = components[0];
+    start_ = lexical_cast<int64_t>(components[1]);
+    end_ = lexical_cast<int64_t>(components[2]);
+}
+
+bool Region::operator<(const Region& other) const
+{
+    if (chrom_ != other.chrom_)
+    {
+        return chrom_ < other.chrom_;
     }
 
     if (start_ != other.start_)
@@ -60,9 +81,9 @@ bool GenomicRegion::operator<(const GenomicRegion& other) const
     return end_ < other.end_;
 }
 
-bool GenomicRegion::overlaps(const GenomicRegion& other) const
+bool Region::Overlaps(const Region& other) const
 {
-    if (contigIndex_ != other.contigIndex_)
+    if (chrom_ != other.chrom_)
     {
         return false;
     }
@@ -73,9 +94,9 @@ bool GenomicRegion::overlaps(const GenomicRegion& other) const
     return leftBound <= rightBound;
 }
 
-int64_t GenomicRegion::distance(const GenomicRegion& other) const
+int64_t Region::Distance(const Region& other) const
 {
-    if (contigIndex_ != other.contigIndex_)
+    if (chrom_ != other.chrom_)
     {
         return std::numeric_limits<int64_t>::max();
     }
@@ -93,7 +114,7 @@ int64_t GenomicRegion::distance(const GenomicRegion& other) const
     return 0;
 }
 
-vector<GenomicRegion> merge(vector<GenomicRegion> regions, int maxMergeDist)
+vector<Region> merge(vector<Region> regions, int maxMergeDist)
 {
     if (regions.empty())
     {
@@ -102,12 +123,12 @@ vector<GenomicRegion> merge(vector<GenomicRegion> regions, int maxMergeDist)
 
     std::sort(regions.begin(), regions.end());
 
-    GenomicRegion mergedRegion = regions.front();
-    vector<GenomicRegion> mergedRegions;
+    Region mergedRegion = regions.front();
+    vector<Region> mergedRegions;
 
     for (const auto& currentRegion : regions)
     {
-        if (currentRegion.distance(mergedRegion) <= maxMergeDist)
+        if (currentRegion.Distance(mergedRegion) <= maxMergeDist)
         {
             const int64_t furthestEnd = std::max<int64_t>(mergedRegion.end(), currentRegion.end());
             mergedRegion.setEnd(furthestEnd);
@@ -127,45 +148,27 @@ vector<GenomicRegion> merge(vector<GenomicRegion> regions, int maxMergeDist)
     return mergedRegions;
 }
 
+const string Region::ToString() const
+{
+    std::ostringstream out;
+    out << *this;
+    return out.str();
+}
+
 // Returns the range extended by flankSize upstream and downstream.
 // NOTE: The right boundary of the extended region may stick past chromosome
 // end.
-GenomicRegion GenomicRegion::extend(int length) const
+Region Region::extend(int length) const
 {
-    const int64_t newStart = start_ >= length ? (start_ - length) : 0;
-    const int64_t newEnd = end_ + length;
-    return GenomicRegion(contigIndex_, newStart, newEnd);
+    const int64_t new_start = start_ >= length ? (start_ - length) : 0;
+    const int64_t new_end = end_ + length;
+    return Region(chrom_, new_start, new_end);
 }
 
-std::ostream& operator<<(std::ostream& out, const GenomicRegion& region)
+std::ostream& operator<<(std::ostream& out, const Region& region)
 {
-    out << "(" << region.contigIndex_ << "):" << region.start_ << "-" << region.end_;
+    out << region.chrom_ << ":" << region.start_ << "-" << region.end_;
     return out;
-}
-
-string encode(const ReferenceContigInfo& contigInfo, const GenomicRegion& region)
-{
-    const auto& contigName = contigInfo.getContigName(region.contigIndex());
-    return contigName + ":" + std::to_string(region.start()) + "-" + std::to_string(region.end());
-}
-
-GenomicRegion decode(const ReferenceContigInfo& contigInfo, const string& encoding)
-{
-    vector<string> components;
-    boost::algorithm::split(components, encoding, boost::algorithm::is_any_of(":-"));
-
-    if (components.size() != 3)
-    {
-        throw std::logic_error("Unexpected range format: " + encoding);
-    }
-
-    const auto& contigName = components[0];
-    int32_t contigIndex = contigInfo.getContigId(contigName);
-
-    int64_t start = std::stoi(components[1]);
-    int64_t end = std::stoi(components[2]);
-
-    return GenomicRegion(contigIndex, start, end);
 }
 
 }

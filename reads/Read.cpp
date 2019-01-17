@@ -29,38 +29,39 @@ using std::string;
 namespace ehunter
 {
 
-bool operator==(const Read& read, const Read& mate)
+
+namespace reads
 {
-    const bool idsAreEqual = read.readId() == mate.readId();
-    const bool sequencesAreEqual = read.sequence() == mate.sequence();
-    return (idsAreEqual && sequencesAreEqual);
+
+bool operator==(const Read& read_a, const Read& read_b)
+{
+    const bool is_id_equal = read_a.read_id == read_b.read_id;
+    const bool is_sequence_equal = read_a.sequence == read_b.sequence;
+    const bool is_mate_order_equal = read_a.is_first_mate == read_b.is_first_mate;
+    return (is_id_equal && is_sequence_equal && is_mate_order_equal);
 }
 
-bool operator==(const LinearAlignmentStats& statsA, const LinearAlignmentStats& statsB)
+bool operator==(const LinearAlignmentStats& alignment_stats_a, const LinearAlignmentStats& alignment_stats_b)
 {
-    const bool contigsEqual = statsA.chromId == statsB.chromId;
-    const bool positionsEqual = statsA.pos == statsB.pos;
-    const bool mapqsEqual = statsA.mapq == statsB.mapq;
-    const bool mateContigsEqual = statsA.mateChromId == statsB.mateChromId;
-    const bool matePositionsEqual = statsA.matePos == statsB.matePos;
-    const bool mappingStatusesEqual = statsA.isMapped == statsB.isMapped;
-    const bool mateMappingStatusesEqual = statsA.isMateMapped == statsB.isMateMapped;
+    const bool is_chrom_id_equal = alignment_stats_a.chrom_id == alignment_stats_b.chrom_id;
+    const bool is_pos_equal = alignment_stats_a.pos == alignment_stats_b.pos;
+    const bool is_mapq_equal = alignment_stats_a.mapq == alignment_stats_b.mapq;
+    const bool is_mate_chrom_id_equal = alignment_stats_a.mate_chrom_id == alignment_stats_b.mate_chrom_id;
+    const bool is_mate_pos_equal = alignment_stats_a.mate_pos == alignment_stats_b.mate_pos;
+    const bool is_mapping_status_equal = alignment_stats_a.is_mapped == alignment_stats_b.is_mapped;
+    const bool is_mate_mapping_status_equal = alignment_stats_a.is_mate_mapped == alignment_stats_b.is_mate_mapped;
 
     return (
-        contigsEqual && positionsEqual && mapqsEqual && mateContigsEqual && matePositionsEqual && mappingStatusesEqual
-        && mateMappingStatusesEqual);
+        is_chrom_id_equal && is_pos_equal && is_mapq_equal && is_mate_chrom_id_equal && is_mate_pos_equal
+        && is_mapping_status_equal && is_mate_mapping_status_equal);
 }
 
-std::ostream& operator<<(std::ostream& out, const ReadId& readId)
+std::ostream& operator<<(std::ostream& os, const Read& read)
 {
-    out << readId.fragmentId() << "/" << static_cast<int>(readId.mateNumber());
-    return out;
+    os << read.read_id << " " << read.sequence;
+    return os;
 }
 
-std::ostream& operator<<(std::ostream& out, const Read& read)
-{
-    out << read.readId() << " " << read.sequence();
-    return out;
-}
+} // namespace reads
 
 }

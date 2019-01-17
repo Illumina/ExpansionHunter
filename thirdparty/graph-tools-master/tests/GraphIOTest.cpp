@@ -27,15 +27,148 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <iostream>
+#include <mutex>
 
 #include "nlohmann/json.hpp"
 #include "gtest/gtest.h"
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
 
+#include "graphIO/BamWriter.hh"
+#include "graphIO/GraphJson.hh"
+#include "graphIO/ReferenceGenome.hh"
 #include "graphcore/Graph.hh"
 #include "graphcore/GraphBuilders.hh"
-#include "graphio/GraphJson.hh"
+
+#include <stdio.h>
+#include <string.h>
 
 using std::string;
+namespace fs = boost::filesystem;
+using namespace testing;
+using namespace graphtools;
+using namespace graphIO;
+
+class ReferenceGenome : public testing::Test
+{
+protected:
+    // Write Fasta file shared by all refGenome dependent tests.
+    static void SetUpTestCase()
+    {
+        auto tmpFasta = fs::unique_path(fs::temp_directory_path() / "%%%%%%%%.fa");
+        fs::ofstream fastaOut(tmpFasta);
+        fastaOut << ">chr12\n"
+                 << "AAAAAGGGGG" << std::endl;
+        fastaOut.close();
+        fastaPath = tmpFasta.string();
+    }
+
+    static void TearDownTestCase()
+    {
+        auto tmpFasta = fs::path(fastaPath);
+        fs::remove(tmpFasta);
+        fs::remove(tmpFasta.replace_extension(".fa.fai"));
+    }
+
+    static string fastaPath;
+};
+string ReferenceGenome::fastaPath = "";
+
+TEST_F(ReferenceGenome, GetSequence_success)
+{
+    RefGenome ref(fastaPath);
+    string const seq = ref.extractSeq(ReferenceInterval("chr12", 3, 6));
+    ASSERT_EQ("AAG", seq);
+}
+
+TEST_F(ReferenceGenome, ParseInvalidRegion_throws)
+{
+    RefGenome ref(fastaPath);
+    EXPECT_ANY_THROW(ReferenceInterval::parseRegion("chr12-4-6"));
+}
+
+TEST_F(ReferenceGenome, NonExistingSequence_throws)
+{
+    RefGenome ref(fastaPath);
+    EXPECT_ANY_THROW(ref.extractSeq(ReferenceInterval("chr12", 4, 11)));
+    EXPECT_ANY_THROW(ref.extractSeq(ReferenceInterval("chr13", 4, 6)));
+}
+
+TEST_F(ReferenceGenome, ParseRegion_success)
+{
+    RefGenome ref(fastaPath);
+    ReferenceInterval reg = ReferenceInterval::parseRegion("chr12:4-6");
+
+    ASSERT_EQ("chr12", reg.contig);
+    ASSERT_EQ(4, reg.start);
+    ASSERT_EQ(6, reg.end);
+}
+
+std::mutex HtsLibMutex;
+class BamWriterTest : public Test
+{
+public:
+    fs::path bamFile;
+    void SetUp() override
+    {
+        HtsLibMutex.lock();
+        bamFile = fs::unique_path(fs::temp_directory_path() / "%%%%%%%%.bam");
+    }
+
+    void TearDown() override
+    {
+        HtsLibMutex.unlock();
+        fs::remove(bamFile);
+    }
+};
+
+TEST_F(BamWriterTest, UnplacedAlignment_SingleRead)
+{
+    ReferenceContigs contigs = {};
+    BamWriter bw(bamFile.string(), contigs);
+    auto aln = bw.makeAlignment("Read2", "GATC", std::vector<int>(), BamWriter::PairingInfo::Unpaired, "1(1M2D)2(4M)");
+    EXPECT_NO_THROW(bw.writeAlignment(aln));
+    HtsLibMutex.unlock();
+    ASSERT_EQ("", aln.chromName);
+    ASSERT_EQ(-1, aln.pos);
+    ASSERT_EQ(false, aln.isMate1);
+    ASSERT_EQ(false, aln.isPaired);
+    // TODO GT-538: Add test to validate BAM
+}
+
+TEST_F(BamWriterTest, UnplacedAlignment_PairedReads)
+{
+    ReferenceContigs contigs = {};
+    BamWriter bw(bamFile.string(), contigs);
+    auto aln1 = bw.makeAlignment("Read1", "ATTAC", std::vector<int>(), BamWriter::PairingInfo::FirstMate, "1(3M)");
+    ASSERT_NO_THROW(bw.writeAlignment(aln1));
+    ASSERT_TRUE(aln1.isMate1);
+    ASSERT_TRUE(aln1.isPaired);
+    auto aln2
+        = bw.makeAlignment("Read1", "GATC", std::vector<int>(), BamWriter::PairingInfo::SecondMate, "1(1M2D)2(4M)");
+    ASSERT_NO_THROW(bw.writeAlignment(aln2));
+    ASSERT_FALSE(aln2.isMate1);
+    ASSERT_TRUE(aln2.isPaired);
+    // TODO GT-538: Add test to validate BAM
+}
+
+TEST_F(BamWriterTest, PlacedAlignment_SingleRead)
+{
+    ReferenceContigs contigs = { std::make_pair("chr1", 10), std::make_pair("chr2", 20) };
+    BamWriter bw(bamFile.string(), contigs);
+    Graph graph = makeSwapGraph("AAAA", "C", "T", "GGGG");
+    GraphReferenceMapping mapping(&graph);
+    mapping.addMapping(0, ReferenceInterval("chr2", 10, 14));
+    Path path(&graph, 2, { 0, 1, 3 }, 3);
+    std::vector<Alignment> alignments = { Alignment(2, "2M"), Alignment(0, "1M"), Alignment(0, "3M") };
+    GraphAlignment gAlign(path, alignments);
+
+    auto aln = bw.makeAlignment(mapping, "read1", "AACGGG", {}, BamWriter::PairingInfo::Unpaired, gAlign);
+    ASSERT_NO_THROW(bw.writeAlignment(aln));
+    ASSERT_EQ("chr2", aln.chromName);
+    ASSERT_EQ(12, aln.pos);
+    ASSERT_EQ("0[Ref start: 2, 2M]1[Ref start: 0, 1M]3[Ref start: 0, 3M]", aln.graphCigar);
+}
 
 TEST(GraphLoading, ValidGraph_Loaded)
 {
@@ -114,9 +247,7 @@ TEST(GraphLoading, BackwardsEdge_Throws)
     ASSERT_ANY_THROW(parseGraph(jGraph));
 }
 
-/*
-
-TEST(ReferenceGenome, LoadGraphSequence_Success)
+TEST_F(ReferenceGenome, LoadGraphSequence_Success)
 {
     Json jGraph;
     jGraph["reference_genome"] = fastaPath;
@@ -127,8 +258,6 @@ TEST(ReferenceGenome, LoadGraphSequence_Success)
 
     ASSERT_EQ("AAGG", graph.nodeSeq(0));
 }
-
-*/
 
 TEST(GraphLoading, MissingReference_Throws)
 {
@@ -176,8 +305,6 @@ TEST(GraphWriting, Graph_RoundTrip)
     ASSERT_EQ(graph.edgeLabels(1, 1), newGraph.edgeLabels(1, 1));
 }
 
-/*
-
 TEST_F(ReferenceGenome, LoadGraphMapping_Success)
 {
     Json jGraph;
@@ -198,5 +325,3 @@ TEST_F(ReferenceGenome, LoadGraphMapping_Success)
     ASSERT_ANY_THROW(refmap.map(0, 3)); // Position outside node
     ASSERT_ANY_THROW(refmap.map(2, 0)); // Nonexistent node
 }
-
-*/

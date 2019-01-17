@@ -28,6 +28,7 @@
 
 using namespace ehunter;
 
+using reads::Read;
 using std::map;
 using std::vector;
 

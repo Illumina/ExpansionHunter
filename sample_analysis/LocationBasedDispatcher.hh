@@ -33,13 +33,15 @@ namespace ehunter
 class LocationBasedDispatcher
 {
 public:
-    LocationBasedDispatcher(std::vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers);
-    void dispatch(int32_t readContigId, int64_t readPosition, int32_t mateContigId, int64_t matePosition, Read read);
+    LocationBasedDispatcher(std::vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers, int searchRadius);
+    void dispatch(
+        const std::string& readChrom, int32_t readPosition, const std::string& mateChrom, int32_t matePosition,
+        reads::Read read);
 
 private:
     LocationBasedAnalyzerFinder locationBasedAnalyzerFinder_;
 
-    using ReadCatalog = std::unordered_map<std::string, Read>;
+    using ReadCatalog = std::unordered_map<std::string, reads::Read>;
     ReadCatalog unpairedReads_;
 };
 

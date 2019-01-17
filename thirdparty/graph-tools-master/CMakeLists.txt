@@ -9,6 +9,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 set(BUILD_TESTS OFF CACHE BOOL "Should unit tests be built")
+set(BUILD_GRAPHIO OFF CACHE BOOL "Should graphIO library be built")
 
 set(USE_ASAN OFF CACHE BOOL "Use clang address sanitizer")
 set(USE_MSAN OFF CACHE BOOL "Use clang memory sanitizer")
@@ -47,12 +48,15 @@ endif ()
 #find_package(Threads REQUIRED)
 find_package(Boost 1.5 COMPONENTS program_options filesystem system REQUIRED)
 
-file(GLOB SOURCES "src/graphalign/*.cpp" "src/graphalign/*/*.cpp" "src/graphcore/*.cpp" "src/graphutils/*.cpp" "src/graphio/*.cpp")
+file(GLOB SOURCES "src/graphalign/*.cpp" "src/graphalign/*/*.cpp" "src/graphcore/*.cpp" "src/graphutils/*.cpp")
 add_library(graphtools ${SOURCES})
-target_include_directories(graphtools PUBLIC "include")
-target_include_directories(graphtools PUBLIC "external/include")
+target_include_directories(graphtools PUBLIC include)
 target_link_libraries(graphtools Boost::boost)
 target_compile_features(graphtools PRIVATE cxx_range_for)
+
+if (BUILD_GRAPHIO)
+    add_subdirectory("src/graphIO")
+endif (BUILD_GRAPHIO)
 
 if (BUILD_TESTS)
     enable_testing()

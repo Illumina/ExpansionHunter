@@ -23,8 +23,6 @@
 #include <iostream>
 #include <string>
 
-#include "graphio/AlignmentWriter.hh"
-
 #include "common/Parameters.hh"
 #include "region_analysis/VariantFindings.hh"
 #include "region_spec/LocusSpecification.hh"
@@ -34,6 +32,6 @@ namespace ehunter
 
 SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, SampleParameters& sampleParams, const HeuristicParameters& heuristicParams,
-    const RegionCatalog& regionCatalog, graphtools::AlignmentWriter& alignmentWriter);
+    const RegionCatalog& regionCatalog, std::ostream& alignmentStream);
 
 }

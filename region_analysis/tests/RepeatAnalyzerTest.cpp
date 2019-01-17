@@ -46,10 +46,11 @@ TEST(DISABLE_RegionAnalysis, ShortSingleUnitRepeat_Genotyped)
 
     AlleleCount expectedAlleleCount = AlleleCount::kTwo;
     graphtools::NodeId repeatNodeId = 1;
-    // const int32_t maxNumUnitsInRead = 10;
-    // const double haplotypeDepth = 5.0;
+    const int32_t maxNumUnitsInRead = 10;
+    const double haplotypeDepth = 5.0;
 
-    RepeatAnalyzer repeatAnalyzer("repeat0", expectedAlleleCount, graph, repeatNodeId);
+    RepeatAnalyzer repeatAnalyzer(
+        "repeat0", expectedAlleleCount, graph, repeatNodeId, haplotypeDepth, maxNumUnitsInRead);
     // repeatAnalyzer.processMates({ alignmentA1 }, { alignmentA2 });
     // repeatAnalyzer.processMates({ alignmentB1 }, { alignmentB2 });
     // repeatAnalyzer.processMates({ alignmentC1 }, { alignmentC2 });

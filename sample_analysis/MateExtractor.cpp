@@ -22,19 +22,19 @@
 
 #include <stdexcept>
 
-#include "common/HtsHelpers.hh"
+#include "sample_analysis/HtsHelpers.hh"
 
 namespace ehunter
 {
 
-using boost::optional;
+using reads::LinearAlignmentStats;
+using reads::Read;
 using std::string;
 
 namespace htshelpers
 {
     MateExtractor::MateExtractor(const string& htsFilePath)
         : htsFilePath_(htsFilePath)
-        , contigInfo_({})
     {
         openFile();
         loadHeader();
@@ -76,7 +76,13 @@ namespace htshelpers
             throw std::runtime_error("Failed to read header of " + htsFilePath_);
         }
 
-        contigInfo_ = htshelpers::decodeContigInfo(htsHeaderPtr_);
+        const int32_t numContigs = htsHeaderPtr_->n_targets;
+
+        for (int32_t contigInd = 0; contigInd != numContigs; ++contigInd)
+        {
+            const string contig = htsHeaderPtr_->target_name[contigInd];
+            contigNames_.push_back(contig);
+        }
     }
 
     void MateExtractor::loadIndex()
@@ -89,20 +95,20 @@ namespace htshelpers
         }
     }
 
-    optional<Read> MateExtractor::extractMate(const Read& read, const LinearAlignmentStats& alignmentStats)
+    Read MateExtractor::extractMate(const Read& read, const LinearAlignmentStats& alignmentStats)
     {
-        const int32_t searchRegionContigIndex
-            = alignmentStats.isMateMapped ? alignmentStats.mateChromId : alignmentStats.chromId;
+        const int32_t searchRegionContigId
+            = alignmentStats.is_mate_mapped ? alignmentStats.mate_chrom_id : alignmentStats.chrom_id;
 
-        const int32_t searchRegionStart = alignmentStats.isMateMapped ? alignmentStats.matePos : alignmentStats.pos;
+        const int32_t searchRegionStart = alignmentStats.is_mate_mapped ? alignmentStats.mate_pos : alignmentStats.pos;
         const int32_t searchRegionEnd = searchRegionStart + 1;
 
         hts_itr_t* htsRegionPtr_
-            = sam_itr_queryi(htsIndexPtr_, searchRegionContigIndex, searchRegionStart, searchRegionEnd);
+            = sam_itr_queryi(htsIndexPtr_, searchRegionContigId, searchRegionStart, searchRegionEnd);
 
         if (!htsRegionPtr_)
         {
-            const string& contigName = contigInfo_.getContigName(searchRegionContigIndex);
+            const string contigName = contigNames_[searchRegionContigId];
             const string regionEncoding
                 = contigName + ":" + std::to_string(searchRegionStart) + "-" + std::to_string(searchRegionEnd);
 
@@ -111,10 +117,12 @@ namespace htshelpers
 
         while (sam_itr_next(htsFilePtr_, htsRegionPtr_, htsAlignmentPtr_) >= 0)
         {
-            Read putativeMate = htshelpers::decodeRead(htsAlignmentPtr_);
+            LinearAlignmentStats putativeMateAlignmentStats;
+            Read putativeMate;
+            htshelpers::DecodeAlignedRead(htsAlignmentPtr_, putativeMate, putativeMateAlignmentStats);
 
             const bool belongToSameFragment = read.fragmentId() == putativeMate.fragmentId();
-            const bool formProperPair = read.mateNumber() != putativeMate.mateNumber();
+            const bool formProperPair = read.is_first_mate != putativeMate.is_first_mate;
             if (belongToSameFragment && formProperPair)
             {
                 hts_itr_destroy(htsRegionPtr_);
@@ -123,7 +131,7 @@ namespace htshelpers
         }
         hts_itr_destroy(htsRegionPtr_);
 
-        return optional<Read>();
+        return Read();
     }
 
 }

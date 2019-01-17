@@ -32,38 +32,40 @@ using std::vector;
 namespace ehunter
 {
 
-LocationBasedAnalyzerFinder::LocationBasedAnalyzerFinder(vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers)
+LocationBasedAnalyzerFinder::LocationBasedAnalyzerFinder(
+    vector<std::unique_ptr<RegionAnalyzer>>& locusAnalyzers, int searchRadius)
 {
-    unordered_map<int32_t, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
+    unordered_map<string, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
     for (auto& locusAnalyzer : locusAnalyzers)
     {
         const LocusSpecification& locusSpec = locusAnalyzer->regionSpec();
-        for (auto& refRegion : locusSpec.targetReadExtractionRegions())
+        for (auto& refRegion : locusSpec.referenceLoci())
         {
+            auto targetRegion = refRegion.extend(searchRadius);
             LocusTypeAndAnalyzer payload(LocusType::kTargetLocus, locusAnalyzer.get());
-            contigToIntervals[refRegion.contigIndex()].emplace_back(refRegion.start(), refRegion.end(), payload);
+            contigToIntervals[targetRegion.chrom()].emplace_back(targetRegion.start(), targetRegion.end(), payload);
         }
-        for (const auto& offtargetLocus : locusSpec.offtargetReadExtractionRegions())
+        for (const auto& offtargetLocus : locusSpec.offtargetLoci())
         {
             LocusTypeAndAnalyzer payload(LocusType::kOfftargetLocus, locusAnalyzer.get());
-            contigToIntervals[offtargetLocus.contigIndex()].emplace_back(
+            contigToIntervals[offtargetLocus.chrom()].emplace_back(
                 offtargetLocus.start(), offtargetLocus.end(), payload);
         }
     }
 
     for (auto& contigAndIntervals : contigToIntervals)
     {
-        int32_t contigIndex = contigAndIntervals.first;
+        const string& contig = contigAndIntervals.first;
         auto intervals = contigAndIntervals.second;
-        intervalTrees_.emplace(std::make_pair(contigIndex, AnalyzerIntervalTree(std::move(intervals))));
+        intervalTrees_.emplace(std::make_pair(contig, AnalyzerIntervalTree(std::move(intervals))));
     }
 }
 
 optional<LocusTypeAndAnalyzer> LocationBasedAnalyzerFinder::query(
-    int32_t readContigId, int64_t readPosition, int32_t mateContigId, int64_t matePosition)
+    const string& readChrom, int32_t readPosition, const string& mateChrom, int32_t matePosition)
 {
-    auto optionalReadLocusTypeAndAnalyzer = tryGettingLocusAnalyzer(readContigId, readPosition);
-    auto optionalMateLocusTypeAndAnalyzer = tryGettingLocusAnalyzer(mateContigId, matePosition);
+    auto optionalReadLocusTypeAndAnalyzer = tryGettingLocusAnalyzer(readChrom, readPosition);
+    auto optionalMateLocusTypeAndAnalyzer = tryGettingLocusAnalyzer(mateChrom, matePosition);
 
     if (optionalReadLocusTypeAndAnalyzer && optionalReadLocusTypeAndAnalyzer->locusType == LocusType::kTargetLocus)
     {
@@ -89,9 +91,9 @@ optional<LocusTypeAndAnalyzer> LocationBasedAnalyzerFinder::query(
 }
 
 optional<LocusTypeAndAnalyzer>
-LocationBasedAnalyzerFinder::tryGettingLocusAnalyzer(int32_t contigIndex, int64_t position) const
+LocationBasedAnalyzerFinder::tryGettingLocusAnalyzer(const string& readChrom, int32_t readPosition) const
 {
-    const auto contigTreeIterator = intervalTrees_.find(contigIndex);
+    const auto contigTreeIterator = intervalTrees_.find(readChrom);
 
     if (contigTreeIterator == intervalTrees_.end())
     {
@@ -99,7 +101,7 @@ LocationBasedAnalyzerFinder::tryGettingLocusAnalyzer(int32_t contigIndex, int64_
     }
 
     const vector<IntervalWithLocusTypeAndAnalyzer>& relevantRegionAnalyzers
-        = contigTreeIterator->second.findOverlapping(position, position + 1);
+        = contigTreeIterator->second.findOverlapping(readPosition, readPosition + 1);
 
     if (relevantRegionAnalyzers.size() > 1)
     {

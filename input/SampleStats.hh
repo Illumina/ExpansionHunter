@@ -23,17 +23,13 @@
 
 #include <string>
 
-#include "common/ReferenceContigInfo.hh"
-
 namespace ehunter
 {
 
-// Returns the length of the first read in a HTS file
-int extractReadLength(const std::string& htsFilePath);
+// Returns the length of the first read in a BAM file
+int extractReadLength(const std::string& bamPath);
 
 // Checks if a file is in the BAM format by checking the extension
 bool isBamFile(const std::string& htsFilePath);
-
-ReferenceContigInfo extractReferenceContigInfo(const std::string& htsFilePath);
 
 }

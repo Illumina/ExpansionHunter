@@ -30,17 +30,22 @@
 
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
-#include "common/ReferenceContigInfo.hh"
 
 namespace ehunter
 {
 
-enum class LogLevel
+class Outputs
 {
-    kDebug,
-    kInfo,
-    kWarn,
-    kError
+public:
+    Outputs(const std::string& vcfPath, const std::string& jsonPath, const std::string& logPath);
+    std::ostream& vcf() { return vcf_; }
+    std::ostream& json() { return json_; }
+    std::ostream& log() { return log_; }
+
+private:
+    std::ofstream vcf_;
+    std::ofstream json_;
+    std::ofstream log_;
 };
 
 class InputPaths
@@ -66,21 +71,21 @@ private:
 class OutputPaths
 {
 public:
-    OutputPaths(std::string vcf, std::string json, std::string bamlet)
+    OutputPaths(std::string vcf, std::string json, std::string log)
         : vcf_(vcf)
         , json_(json)
-        , bamlet_(bamlet)
+        , log_(log)
     {
     }
 
     const std::string& vcf() const { return vcf_; }
     const std::string& json() const { return json_; }
-    const std::string& bamlet() const { return bamlet_; }
+    const std::string& log() const { return log_; }
 
 private:
     std::string vcf_;
     std::string json_;
-    std::string bamlet_;
+    std::string log_;
 };
 
 class SampleParameters
@@ -88,7 +93,7 @@ class SampleParameters
 public:
     SampleParameters(
         std::string id, Sex sex, int readLength,
-        boost::optional<double> optionalHaplotypeDepth)
+        boost::optional<double> optionalHaplotypeDepth = boost::optional<double>())
         : id_(std::move(id))
         , sex_(sex)
         , readLength_(readLength)
@@ -123,9 +128,11 @@ class HeuristicParameters
 {
 public:
     HeuristicParameters(
-        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType,
-        int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 5)
-        : regionExtensionLength_(regionExtensionLength)
+        bool verboseLogging, int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned,
+        const std::string& alignerType, int kmerLenForAlignment = 14, int paddingLength = 10,
+        int seedAffixTrimLength = 5)
+        : verboseLogging_(verboseLogging)
+        , regionExtensionLength_(regionExtensionLength)
         , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
         , skipUnaligned_(skipUnaligned)
         , alignerType_(alignerType)
@@ -136,6 +143,7 @@ public:
     {
     }
 
+    bool verboseLogging() const { return verboseLogging_; }
     int regionExtensionLength() const { return regionExtensionLength_; }
     int qualityCutoffForGoodBaseCall() const { return qualityCutoffForGoodBaseCall_; }
     bool skipUnaligned() const { return skipUnaligned_; }
@@ -145,6 +153,7 @@ public:
     int seedAffixTrimLength() const { return seedAffixTrimLength_; }
 
 private:
+    bool verboseLogging_;
     int regionExtensionLength_;
     int qualityCutoffForGoodBaseCall_;
     bool skipUnaligned_;
@@ -158,13 +167,11 @@ class ProgramParameters
 {
 public:
     ProgramParameters(
-        InputPaths inputPaths, OutputPaths outputPaths, SampleParameters sample, HeuristicParameters heuristics,
-        LogLevel logLevel)
+        InputPaths inputPaths, OutputPaths outputPaths, SampleParameters sample, HeuristicParameters heuristics)
         : inputPaths_(std::move(inputPaths))
         , outputPaths_(std::move(outputPaths))
         , sample_(std::move(sample))
         , heuristics_(std::move(heuristics))
-        , logLevel_(logLevel)
     {
     }
 
@@ -172,14 +179,12 @@ public:
     const OutputPaths& outputPaths() const { return outputPaths_; }
     SampleParameters& sample() { return sample_; }
     const HeuristicParameters& heuristics() const { return heuristics_; }
-    LogLevel logLevel() const { return logLevel_; }
 
 private:
     InputPaths inputPaths_;
     OutputPaths outputPaths_;
     SampleParameters sample_;
     HeuristicParameters heuristics_;
-    LogLevel logLevel_;
 };
 
 }
