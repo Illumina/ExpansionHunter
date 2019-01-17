@@ -29,7 +29,6 @@
 using namespace ehunter;
 
 using graphtools::Graph;
-using reads::Read;
 using std::string;
 using std::vector;
 
@@ -41,21 +40,28 @@ class AlignerTests : public ::testing::TestWithParam<std::string>
 TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
 {
     Graph graph = makeRegionGraph(decodeFeaturesFromRegex("ATTCGA(C)*ATGTCG"));
-    vector<Region> referenceRegions = { Region("chr1:1-2") };
+    vector<GenomicRegion> referenceRegions = { GenomicRegion(1, 1, 2) };
 
-    LocusSpecification regionSpec("region", referenceRegions, AlleleCount::kTwo, graph);
+    NodeToRegionAssociation dummyAssociation;
+    LocusSpecification regionSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
-    regionSpec.addVariantSpecification("repeat", classification, Region("chr1:1-2"), { 1 }, 1);
+    regionSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
 
     SampleParameters sampleParams("dummy_sample", Sex::kFemale, 10, 5.0);
-    HeuristicParameters heuristicParams(false, 1000, 20, true, GetParam(), 4, 1, 5);
+    HeuristicParameters heuristicParams(1000, 20, true, GetParam(), 4, 1, 5);
 
-    RegionAnalyzer regionAnalyzer(regionSpec, sampleParams, heuristicParams, std::cerr);
+    graphtools::BlankAlignmentWriter blankAlignmentWriter;
+    RegionAnalyzer regionAnalyzer(regionSpec, heuristicParams, blankAlignmentWriter);
 
-    regionAnalyzer.processMates(Read("read1/1", "CGACCCATGT"), Read("read1/2", "GACCCATGTC"));
-    regionAnalyzer.processMates(Read("read2/1", "CGACATGT"), Read("read2/2", "GACATGTC"));
+    regionAnalyzer.processMates(
+        Read(ReadId("read1", MateNumber::kFirstMate), "CGACCCATGT"),
+        Read(ReadId("read1", MateNumber::kSecondMate), "GACCCATGTC"));
 
-    RegionFindings regionFindings = regionAnalyzer.genotype();
+    regionAnalyzer.processMates(
+        Read(ReadId("read2", MateNumber::kFirstMate), "CGACATGT"),
+        Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC"));
+
+    RegionFindings regionFindings = regionAnalyzer.analyze(sampleParams);
 
     std::unique_ptr<VariantFindings> repeatFindingsPtr(new RepeatFindings(
         CountTable({ { 1, 2 }, { 3, 2 } }), CountTable(), CountTable(), RepeatGenotype(1, { 1, 3 })));

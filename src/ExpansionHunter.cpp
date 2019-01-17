@@ -20,6 +20,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 //
 
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -35,6 +36,7 @@
 #include "input/CatalogLoading.hh"
 #include "input/ParameterLoading.hh"
 #include "input/SampleStats.hh"
+#include "output/BamletWriter.hh"
 #include "output/JsonWriter.hh"
 #include "output/VcfWriter.hh"
 #include "region_analysis/VariantFindings.hh"
@@ -45,6 +47,38 @@
 namespace spd = spdlog;
 
 using namespace ehunter;
+
+template <typename T> static void writeToFile(std::string fileName, T streamable)
+{
+    std::ofstream out;
+
+    out.open(fileName.c_str());
+    if (!out.is_open())
+    {
+        throw std::runtime_error("Failed to open " + fileName + " for writing (" + strerror(errno) + ")");
+    }
+
+    out << streamable;
+}
+
+void setLogLevel(LogLevel logLevel)
+{
+    switch (logLevel)
+    {
+    case LogLevel::kDebug:
+        spdlog::set_level(spdlog::level::debug);
+        break;
+    case LogLevel::kInfo:
+        spdlog::set_level(spdlog::level::info);
+        break;
+    case LogLevel::kWarn:
+        spdlog::set_level(spdlog::level::warn);
+        break;
+    case LogLevel::kError:
+        spdlog::set_level(spdlog::level::err);
+        break;
+    }
+}
 
 int main(int argc, char** argv)
 {
@@ -62,12 +96,7 @@ int main(int argc, char** argv)
         }
         ProgramParameters& params = *optionalProgramParameters;
 
-        if (params.heuristics().verboseLogging())
-        {
-            auto verboseConsole = spdlog::stdout_color_mt("verbose");
-            verboseConsole->set_pattern("%Y-%m-%dT%H:%M:%S\n%v");
-            console->info("Verbose logging enabled");
-        }
+        setLogLevel(params.logLevel());
 
         SampleParameters& sampleParams = params.sample();
 
@@ -77,35 +106,36 @@ int main(int argc, char** argv)
         const InputPaths& inputPaths = params.inputPaths();
 
         console->info("Initializing reference {}", inputPaths.reference());
-        FastaReference reference(inputPaths.reference());
+        FastaReference reference(inputPaths.reference(), extractReferenceContigInfo(inputPaths.htsFile()));
 
         console->info("Loading variant catalog from disk {}", inputPaths.catalog());
+        const HeuristicParameters& heuristicParams = params.heuristics();
         const RegionCatalog regionCatalog
-            = loadRegionCatalogFromDisk(inputPaths.catalog(), reference, sampleParams.sex());
+            = loadLocusCatalogFromDisk(inputPaths.catalog(), sampleParams.sex(), heuristicParams, reference);
 
         console->info("Running sample analysis");
-        const HeuristicParameters& heuristicParams = params.heuristics();
         const OutputPaths& outputPaths = params.outputPaths();
-        Outputs outputs(outputPaths.vcf(), outputPaths.json(), outputPaths.log());
+
+        BamletWriter bamletWriter(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
 
         SampleFindings sampleFindings;
         if (isBamFile(inputPaths.htsFile()))
         {
             sampleFindings
-                = htsSeekingSampleAnalysis(inputPaths, sampleParams, heuristicParams, regionCatalog, outputs.log());
+                = htsSeekingSampleAnalysis(inputPaths, sampleParams, heuristicParams, regionCatalog, bamletWriter);
         }
         else
         {
-            sampleFindings = htslibStreamingSampleAnalyzer(
-                inputPaths, sampleParams, heuristicParams, regionCatalog, outputs.log());
+            sampleFindings
+                = htslibStreamingSampleAnalyzer(inputPaths, sampleParams, heuristicParams, regionCatalog, bamletWriter);
         }
 
         console->info("Writing output to disk");
-        VcfWriter vcfWriter(sampleParams.id(), sampleParams.readLength(), regionCatalog, sampleFindings, reference);
-        outputs.vcf() << vcfWriter;
+        VcfWriter vcfWriter(sampleParams, reference, regionCatalog, sampleFindings);
+        writeToFile(outputPaths.vcf(), vcfWriter);
 
-        JsonWriter jsonWriter(sampleParams.id(), sampleParams.readLength(), regionCatalog, sampleFindings);
-        outputs.json() << jsonWriter;
+        JsonWriter jsonWriter(sampleParams, reference.contigInfo(), regionCatalog, sampleFindings);
+        writeToFile(outputPaths.json(), jsonWriter);
     }
     catch (const std::exception& e)
     {

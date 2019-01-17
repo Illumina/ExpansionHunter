@@ -26,6 +26,7 @@ extern "C"
 #include "htslib/sam.h"
 }
 
+#include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
 
 namespace ehunter
@@ -45,8 +46,9 @@ namespace htshelpers
         kIsNotPrimaryLine = 0x900
     };
 
-    void DecodeAlignedRead(bam1_t* hts_align_ptr, reads::Read& read, reads::LinearAlignmentStats& alignment_stats);
-    void DecodeUnalignedRead(bam1_t* hts_align_ptr, reads::Read& read);
+    LinearAlignmentStats decodeAlignmentStats(bam1_t* htsAlignPtr);
+    Read decodeRead(bam1_t* htsAlignPtr);
+    ReferenceContigInfo decodeContigInfo(bam_hdr_t* htsHeaderPtr);
 
 } // namespace htshelpers
 

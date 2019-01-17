@@ -1,0 +1,14 @@
+[
+    {
+        "LocusId": "SNV_AND_STR",
+        "LocusStructure": "(A|T)AATC(CAG)*",
+        "ReferenceRegion": [
+            "chr1:2000-2001",
+            "chr1:2005-2008"
+        ],
+        "VariantType": [
+            "SmallVariant",
+            "Repeat"
+        ]
+    }
+]

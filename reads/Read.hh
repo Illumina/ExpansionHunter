@@ -23,7 +23,10 @@
 #include <cstdint>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+
+#include <boost/functional/hash.hpp>
 
 #include "classification/AlignmentClassifier.hh"
 #include "graphalign/GraphAlignment.hh"
@@ -31,81 +34,120 @@
 namespace ehunter
 {
 
-namespace reads
+using FragmentId = std::string;
+
+enum class MateNumber
 {
+    kFirstMate = 1,
+    kSecondMate = 2
+};
 
-    struct Read
+class ReadId
+{
+public:
+    ReadId(FragmentId fragmentId, MateNumber mateNumber)
+        : fragmentId_(std::move(fragmentId))
+        , mateNumber_(mateNumber)
     {
-        Read()
-            : is_first_mate(false)
+        if (fragmentId_.empty())
         {
+            throw std::logic_error("Encountered an empty fragment id");
         }
+    }
 
-        Read(const std::string& new_read_id, const std::string& new_sequence)
-            : read_id(new_read_id)
-            , sequence(new_sequence)
-            , is_first_mate(false)
-        {
-        }
-        std::string read_id;
-        std::string sequence;
-        bool is_first_mate = false;
+    const FragmentId& fragmentId() const { return fragmentId_; }
+    MateNumber mateNumber() const { return mateNumber_; }
 
-        std::string fragmentId() const
-        {
-            std::string fragment_id = read_id;
-            fragment_id.pop_back();
-            fragment_id.pop_back();
-            return fragment_id;
-        }
-
-        const std::string& readId() const { return read_id; }
-        bool isSecondMate() const { return !is_first_mate; }
-        bool isSet() const { return !read_id.empty() && !sequence.empty(); }
-    };
-
-    struct LinearAlignmentStats
+    bool operator==(const ReadId& other) const
     {
-        int32_t chrom_id = -1;
-        int32_t pos = -1;
-        int32_t mapq = -1;
-        int32_t mate_chrom_id = -1;
-        int32_t mate_pos = -1;
-        bool is_mapped = false;
-        bool is_mate_mapped = false;
-    };
+        return fragmentId_ == other.fragmentId_ && mateNumber_ == other.mateNumber_;
+    }
 
-    using ReadIdToLinearAlignmentStats = std::unordered_map<std::string, LinearAlignmentStats>;
-
-    bool operator==(const Read& read_a, const Read& read_b);
-    bool operator==(const LinearAlignmentStats& stats_a, const LinearAlignmentStats& core_info_b);
-
-    class RepeatAlignmentStats
+    friend std::size_t hash_value(const ReadId& readId)
     {
-    public:
-        RepeatAlignmentStats(
-            const GraphAlignment& canonical_alignment, AlignmentType canonical_alignment_type,
-            int32_t num_repeat_units_spanned)
-            : canonical_alignment_(canonical_alignment)
-            , canonical_alignment_type_(canonical_alignment_type)
-            , num_repeat_units_spanned_(num_repeat_units_spanned)
+        std::size_t seed = 0;
+        boost::hash_combine(seed, readId.fragmentId_);
+        boost::hash_combine(seed, static_cast<int>(readId.mateNumber_));
+
+        return seed;
+    }
+
+private:
+    FragmentId fragmentId_;
+    MateNumber mateNumber_;
+};
+
+std::ostream& operator<<(std::ostream& out, const ReadId& readId);
+
+class Read
+{
+public:
+    Read(ReadId readId, std::string sequence)
+        : readId_(std::move(readId))
+        , sequence_(std::move(sequence))
+    {
+        if (sequence_.empty())
         {
+            std::ostringstream encoding;
+            encoding << readId_;
+            throw std::logic_error("Encountered empty query for " + encoding.str());
         }
+    }
 
-        const GraphAlignment& canonicalAlignment() const { return canonical_alignment_; }
-        AlignmentType canonicalAlignmentType() const { return canonical_alignment_type_; }
-        int32_t numRepeatUnitsSpanned() const { return num_repeat_units_spanned_; }
+    const ReadId& readId() const { return readId_; }
+    const FragmentId& fragmentId() const { return readId_.fragmentId(); }
+    MateNumber mateNumber() const { return readId_.mateNumber(); }
+    const std::string& sequence() const { return sequence_; }
+    void setSequence(std::string sequence) { sequence_ = sequence; }
 
-    private:
-        GraphAlignment canonical_alignment_;
-        AlignmentType canonical_alignment_type_;
-        int32_t num_repeat_units_spanned_;
-    };
+    bool isFirstMate() const { return mateNumber() == MateNumber::kFirstMate; }
+    bool isSecondMate() const { return mateNumber() == MateNumber::kSecondMate; }
 
-    using ReadIdToRepeatAlignmentStats = std::unordered_map<std::string, RepeatAlignmentStats>;
+private:
+    ReadId readId_;
+    std::string sequence_;
+};
 
-    std::ostream& operator<<(std::ostream& os, const Read& read);
+struct LinearAlignmentStats
+{
+    int32_t chromId = -1;
+    int32_t pos = -1;
+    int32_t mapq = -1;
+    int32_t mateChromId = -1;
+    int32_t matePos = -1;
+    bool isMapped = false;
+    bool isMateMapped = false;
+};
 
-} // namespace reads
+using ReadIdToLinearAlignmentStats = std::unordered_map<std::string, LinearAlignmentStats>;
+
+bool operator==(const Read& read, const Read& mate);
+bool operator==(const LinearAlignmentStats& statsA, const LinearAlignmentStats& statsB);
+
+class RepeatAlignmentStats
+{
+public:
+    RepeatAlignmentStats(
+        const GraphAlignment& canonical_alignment, AlignmentType canonical_alignment_type,
+        int32_t num_repeat_units_spanned)
+        : canonical_alignment_(canonical_alignment)
+        , canonical_alignment_type_(canonical_alignment_type)
+        , num_repeat_units_spanned_(num_repeat_units_spanned)
+    {
+    }
+
+    const GraphAlignment& canonicalAlignment() const { return canonical_alignment_; }
+    AlignmentType canonicalAlignmentType() const { return canonical_alignment_type_; }
+    int32_t numRepeatUnitsSpanned() const { return num_repeat_units_spanned_; }
+
+private:
+    GraphAlignment canonical_alignment_;
+    AlignmentType canonical_alignment_type_;
+    int32_t num_repeat_units_spanned_;
+};
+
+using ReadIdToRepeatAlignmentStats = std::unordered_map<std::string, RepeatAlignmentStats>;
+
+std::ostream& operator<<(std::ostream& out, const Read& read);
 
 }

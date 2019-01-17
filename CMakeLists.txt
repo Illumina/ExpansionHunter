@@ -68,7 +68,6 @@ find_package(Boost 1.4 REQUIRED COMPONENTS program_options filesystem regex date
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
-include_directories(thirdparty/graph-tools-GT-506/include)
 
 add_subdirectory(thirdparty/graph-tools-master)
 

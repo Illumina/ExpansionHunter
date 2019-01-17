@@ -23,40 +23,52 @@
 #include "common/Reference.hh"
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
-#include <string>
 
 using std::string;
+using std::to_string;
+using std::vector;
 
 namespace ehunter
 {
 
-FastaReference::FastaReference(const string& genome_path)
-    : genome_path_(genome_path)
+FastaReference::FastaReference(
+        const string& referencePath,
+        const ReferenceContigInfo& contigInfo)
+    : referencePath_(referencePath)
+    , contigInfo_(contigInfo)
 {
-    fai_ptr_ = fai_load(genome_path_.c_str());
+    htsFastaIndexPtr_ = fai_load(referencePath_.c_str());
 }
 
-FastaReference::~FastaReference() { fai_destroy(fai_ptr_); }
+FastaReference::~FastaReference() { fai_destroy(htsFastaIndexPtr_); }
 
-string FastaReference::getSequence(const string& chrom, pos_t start, pos_t end) const
+string FastaReference::getSequence(const string& contigName, int64_t start, int64_t end) const
 {
-    int len; // throwaway...
-    // this htslib function is 0-based closed but we need to be open
-    char* ref_tmp = faidx_fetch_seq(fai_ptr_, chrom.c_str(), start, end - 1, &len);
+    int extractedLength;
+    // This htslib function is 0-based closed but our coordinates are half open
+    char* sequencePtr = faidx_fetch_seq(htsFastaIndexPtr_, contigName.c_str(), start, end - 1, &extractedLength);
 
-    if (!ref_tmp || len < 0 || static_cast<uint>(len) < end - start)
+    if (!sequencePtr || extractedLength < 0 || extractedLength < end - start)
     {
-        string region(chrom + ":" + std::to_string(start) + "-" + std::to_string(end));
-        throw std::runtime_error(
-            "Cannot extract " + region + " from " + genome_path_ + "; chromosome names must match exactly "
-            + "(e.g. \"chr1\" and \"1\" are distinct names) "
-            + "and coordinates cannot be past the end of the chromosome");
+        const string encoding(contigName + ":" + to_string(start) + "-" + to_string(end));
+        const string message = "Cannot extract " + encoding + " from " + referencePath_
+            + "; chromosome names must match exactly (e.g. chr1 and 1 are distinct names) "
+            + "and coordinates cannot be past the end of the chromosome";
+        throw std::runtime_error(message);
     }
-    string sequence("N", len);
-    std::transform(ref_tmp, ref_tmp + len, sequence.begin(), ::toupper);
-    free(ref_tmp);
+
+    string sequence("N", extractedLength);
+    std::transform(sequencePtr, sequencePtr + extractedLength, sequence.begin(), ::toupper);
+    free(sequencePtr);
+
     return sequence;
+}
+
+string FastaReference::getSequence(const GenomicRegion& region) const
+{
+    return getSequence(contigInfo_.getContigName(region.contigIndex()), region.start(), region.end());
 }
 
 }

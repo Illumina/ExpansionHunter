@@ -39,42 +39,35 @@ public:
     SmallVariantAnalyzer(
         std::string variantId, VariantSubtype variantSubtype, AlleleCount expectedAlleleCount,
         const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds,
-        boost::optional<graphtools::NodeId> optionalRefNode, double haplotypeDepth)
+        boost::optional<graphtools::NodeId> optionalRefNode)
         : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, std::move(nodeIds))
         , variantSubtype_(variantSubtype)
-        , haplotypeDepth_(haplotypeDepth)
         , optionalRefNode_(optionalRefNode)
         , alignmentClassifier_(nodeIds_)
-        , smallVariantGenotyper_(haplotypeDepth_, expectedAlleleCount_)
-        , allelePresenceChecker_(haplotypeDepth_)
+        , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
-        verboseLogger_ = spdlog::get("verbose");
         // Only indels are allowed
         assert(nodeIds_.size() <= 2);
     }
 
     ~SmallVariantAnalyzer() = default;
 
-    std::unique_ptr<VariantFindings> analyze() const override;
+    std::unique_ptr<VariantFindings> analyze(const SampleParameters& params) const override;
 
     void processMates(
-        const reads::Read& read, const graphtools::GraphAlignment& readAlignment, const reads::Read& mate,
+        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
         const graphtools::GraphAlignment& mateAlignment) override;
-
-    double haplotypeDepth() const { return haplotypeDepth_; }
 
 protected:
     int countReadsSupportingNode(graphtools::NodeId nodeId) const;
 
     VariantSubtype variantSubtype_;
-    double haplotypeDepth_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
 
     ClassifierOfAlignmentsToVariant alignmentClassifier_;
-    SmallVariantGenotyper smallVariantGenotyper_;
     AllelePresenceChecker allelePresenceChecker_;
 
-    std::shared_ptr<spdlog::logger> verboseLogger_;
+    std::shared_ptr<spdlog::logger> console_;
 };
 
 }

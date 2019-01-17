@@ -52,17 +52,18 @@ namespace spd = spdlog;
 namespace ehunter
 {
 LocusSpecification::LocusSpecification(
-    RegionId regionId, std::vector<Region> referenceLoci, AlleleCount expectedAlleleCount,
-    graphtools::Graph regionGraph)
+    RegionId regionId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
+    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions)
     : regionId_(std::move(regionId))
-    , referenceLoci_(std::move(referenceLoci))
+    , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
     , expectedAlleleCount_(expectedAlleleCount)
     , regionGraph_(std::move(regionGraph))
+    , referenceRegions_(std::move(referenceRegions))
 {
 }
 
 void LocusSpecification::addVariantSpecification(
-    std::string id, VariantClassification classification, Region referenceLocus, vector<NodeId> nodes,
+    std::string id, VariantClassification classification, GenomicRegion referenceLocus, vector<NodeId> nodes,
     optional<NodeId> refNode)
 {
     variantSpecs_.emplace_back(std::move(id), classification, std::move(referenceLocus), std::move(nodes), refNode);
@@ -80,16 +81,5 @@ const VariantSpecification& LocusSpecification::getVariantSpecById(const std::st
 
     throw std::logic_error("There is no variant " + variantSpecId + " in locus " + regionId_);
 }
-
-/*
-ostream& operator<<(ostream& out, const LocusSpecification& LocusSpecification)
-{
-    for (const auto& component : LocusSpecification.regionBlueprint())
-    {
-        out << component;
-    }
-
-    return out;
-} */
 
 }
