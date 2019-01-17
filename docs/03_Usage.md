@@ -3,7 +3,7 @@
 Expansion Hunter requires an indexed BAM or a CRAM file containing aligned reads
 from a PCR-free WGS sample, a FASTA file with a reference genome assembly (which
 must be the same as the one used to align the reads), and a [variant catalog
-file](04_VariantCatalogs.md).
+file](04_VariantCatalogFiles.md).
 
 Expansion Hunter outputs a VCF file and a JSON file with repeat genotypes along
 with other useful information and a log file with alignments of spanning and
