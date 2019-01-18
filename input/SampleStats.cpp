@@ -21,28 +21,35 @@
 
 #include "input/SampleStats.hh"
 
+#include <cstdint>
+#include <string>
+#include <utility>
+
 #include <boost/filesystem.hpp>
 
 #include "htslib/hts.h"
 #include "htslib/sam.h"
 
+#include "common/HtsHelpers.hh"
+
+using std::pair;
 using std::string;
+using std::vector;
 
 namespace ehunter
 {
 
-int extractReadLength(const string& bamPath)
+int extractReadLength(const string& htsFilePath)
 {
-    // Open a BAM file for reading.
-    samFile* htsFilePtr = sam_open(bamPath.c_str(), "r");
+    samFile* htsFilePtr = sam_open(htsFilePath.c_str(), "r");
     if (!htsFilePtr)
     {
-        throw std::runtime_error("Failed to read BAM file '" + bamPath + "'");
+        throw std::runtime_error("Failed to read " + htsFilePath);
     }
     bam_hdr_t* htsHeaderPtr = sam_hdr_read(htsFilePtr);
     if (!htsHeaderPtr)
     {
-        throw std::runtime_error("BamFile::Init: Failed to read BAM header: '" + bamPath + "'");
+        throw std::runtime_error("Failed to read the header of " + htsFilePath);
     }
 
     enum
@@ -68,7 +75,7 @@ int extractReadLength(const string& bamPath)
 
     if (ret < 0)
     {
-        throw std::runtime_error("Failed to extract a read from BAM file");
+        throw std::runtime_error("Failed to extract a read from " + htsFilePath);
     }
 
     bam_destroy1(htsAlignmentPtr);
@@ -82,6 +89,23 @@ bool isBamFile(const string& htsFilePath)
 {
     string extension = boost::filesystem::extension(htsFilePath);
     return extension == ".bam";
+}
+
+ReferenceContigInfo extractReferenceContigInfo(const std::string& htsFilePath)
+{
+    samFile* htsFilePtr = sam_open(htsFilePath.c_str(), "r");
+    if (!htsFilePtr)
+    {
+        throw std::runtime_error("Failed to read " + htsFilePath);
+    }
+
+    bam_hdr_t* htsHeaderPtr = sam_hdr_read(htsFilePtr);
+    if (!htsHeaderPtr)
+    {
+        throw std::runtime_error("Failed to read the header of " + htsFilePath);
+    }
+
+       return htshelpers::decodeContigInfo(htsHeaderPtr);
 }
 
 }

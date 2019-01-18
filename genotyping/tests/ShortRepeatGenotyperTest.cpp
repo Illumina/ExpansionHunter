@@ -34,8 +34,6 @@
 #include "genotyping/RepeatGenotype.hh"
 
 using std::array;
-using std::cerr;
-using std::endl;
 using std::map;
 using std::string;
 using std::vector;

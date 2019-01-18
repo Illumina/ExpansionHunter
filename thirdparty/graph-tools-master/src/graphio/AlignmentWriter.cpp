@@ -26,35 +26,23 @@
 // OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#pragma once
+#include "graphio/AlignmentWriter.hh"
 
-#include <memory>
-#include <string>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 
-// cppcheck-suppress missingInclude
-#include "htslib/faidx.h"
+#include <boost/algorithm/string/join.hpp>
 
-#include "graphcore/GraphReferenceMapping.hh"
+using std::string;
 
-using namespace graphtools;
-
-namespace graphIO
+namespace graphtools
 {
 
-class RefGenome
+void BlankAlignmentWriter::write(
+    const std::string& /*locusId*/, const std::string& /*fragmentName*/, const std::string& /*query*/,
+    bool /*isFirstMate*/, const GraphAlignment& /*alignment*/)
 {
-public:
-    explicit RefGenome(std::string const& genome_path);
+}
 
-    /**
-     * Retrieve a piece of reference sequence
-     * @return The sequence in upper case
-     * @throws If not a valid region in the reference genome
-     */
-    std::string extractSeq(ReferenceInterval const&) const;
-
-private:
-    std::string const fastaPath_;
-    std::unique_ptr<faidx_t, decltype(&fai_destroy)> fai_;
-};
 }

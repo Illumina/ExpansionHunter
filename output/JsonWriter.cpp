@@ -45,9 +45,10 @@ std::ostream& operator<<(std::ostream& out, JsonWriter& jsonWriter)
 }
 
 JsonWriter::JsonWriter(
-    const string& sampleName, int readLength, const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings)
-    : sampleName_(sampleName)
-    , readLength_(readLength)
+    const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
+    const SampleFindings& sampleFindings)
+    : sampleParams_(sampleParams)
+    , contigInfo_(contigInfo)
     , regionCatalog_(regionCatalog)
     , sampleFindings_(sampleFindings)
 {
@@ -68,7 +69,7 @@ void JsonWriter::write(std::ostream& out)
             const string& variantId = variantIdAndFindings.first;
             const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
 
-            VariantJsonWriter variantWriter(regionSpec, variantSpec, readLength_);
+            VariantJsonWriter variantWriter(sampleParams_, contigInfo_, regionSpec, variantSpec);
             variantIdAndFindings.second->accept(&variantWriter);
             array.push_back(variantWriter.record());
         }
@@ -127,24 +128,26 @@ void VariantJsonWriter::visit(const RepeatFindings* repeatFindingsPtr)
     assert(variantSpec_.classification().type == VariantType::kRepeat);
 
     const RepeatFindings& repeatFindings = *repeatFindingsPtr;
-    if (repeatFindings.optionalGenotype())
+
+    record_.clear();
+    record_["VariantId"] = variantSpec_.id();
+    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec_.referenceLocus());
+    record_["VariantType"] = streamToString(variantSpec_.classification().type);
+    record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
+
+    const auto repeatNodeId = variantSpec_.nodes().front();
+    const auto& repeatUnit = regionSpec_.regionGraph().nodeSeq(repeatNodeId);
+    record_["RepeatUnit"] = repeatUnit;
+
+    record_["CountsOfSpanningReads"] = streamToString(repeatFindings.countsOfSpanningReads());
+    record_["CountsOfFlankingReads"] = streamToString(repeatFindings.countsOfFlankingReads());
+    record_["CountsOfInrepeatReads"] = streamToString(repeatFindings.countsOfInrepeatReads());
+
+    if (repeatFindings.optionalGenotype() != boost::none)
     {
-        record_.clear();
-        record_["VariantId"] = variantSpec_.id();
-        record_["ReferenceRegion"] = streamToString(variantSpec_.referenceLocus());
-        record_["VariantType"] = streamToString(variantSpec_.classification().type);
-        record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
-
-        const auto repeatNodeId = variantSpec_.nodes().front();
-        const auto& repeatUnit = regionSpec_.regionGraph().nodeSeq(repeatNodeId);
-        record_["RepeatUnit"] = repeatUnit;
-
         record_["Genotype"] = encodeGenotype(*repeatFindings.optionalGenotype());
         record_["GenotypeConfidenceInterval"] = streamToString(*repeatFindings.optionalGenotype());
-        record_["GenotypeSupport"] = encodeRepeatAlleleSupport(repeatUnit, repeatFindings, readLength_);
-        record_["CountsOfSpanningReads"] = streamToString(repeatFindings.countsOfSpanningReads());
-        record_["CountsOfFlankingReads"] = streamToString(repeatFindings.countsOfFlankingReads());
-        record_["CountsOfInrepeatReads"] = streamToString(repeatFindings.countsOfInrepeatReads());
+        record_["GenotypeSupport"] = encodeRepeatAlleleSupport(repeatUnit, repeatFindings, sampleParams_.readLength());
     }
 }
 

@@ -32,6 +32,8 @@
 
 using graphtools::GraphAlignment;
 using graphtools::NodeId;
+using graphtools::Operation;
+using graphtools::OperationType;
 using graphtools::Path;
 using std::list;
 using std::string;
@@ -108,6 +110,30 @@ bool checkIfDownstreamAlignmentIsGood(NodeId nodeId, GraphAlignment alignment)
     const int kScoreCutoff = parameters.matchScore * 8;
 
     return score >= kScoreCutoff;
+}
+
+bool checkIfPassesAlignmentFilters(const GraphAlignment& alignment)
+{
+    const Operation& firstOperation = alignment.alignments().front().operations().front();
+    const int frontSoftclipLen = firstOperation.type() == OperationType::kSoftclip ? firstOperation.queryLength() : 0;
+
+    const Operation& lastOperation = alignment.alignments().back().operations().back();
+    const int backSoftclipLen = lastOperation.type() == OperationType::kSoftclip ? lastOperation.queryLength() : 0;
+
+    const int clippedQueryLength = alignment.queryLength() - frontSoftclipLen - backSoftclipLen;
+    const int referenceLength = alignment.referenceLength();
+
+    const int percentQueryMatches = (100 * alignment.numMatches()) / clippedQueryLength;
+    const int percentReferenceMatches = (100 * alignment.numMatches()) / referenceLength;
+
+    if (percentQueryMatches >= 80 && percentReferenceMatches >= 80)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 }

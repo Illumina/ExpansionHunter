@@ -35,8 +35,6 @@ namespace ehunter
 {
 
 using boost::optional;
-using std::cerr;
-using std::endl;
 using std::map;
 using std::string;
 using std::vector;
@@ -75,8 +73,6 @@ optional<RepeatGenotype> RepeatGenotyper::genotypeRepeat(const vector<int32_t>& 
 
     const CountTable countsOfFlankingReadsForShortRepeatGenotyper
         = combineFlankingAndInrepeatReads(maxNumUnitsInRead_, countsOfFlankingReads_, countsOfInrepeatReads_);
-
-    std::cerr << countsOfFlankingReads_ << " -> " << countsOfFlankingReadsForShortRepeatGenotyper << std::endl;
 
     ShortRepeatGenotyper shortRepeatGenotyper(repeatUnitLen_, maxNumUnitsInRead_, propCorrectMolecules_);
 
@@ -305,6 +301,7 @@ static int depthBasedCountOfInrepeatReads(
             numFlankingReads += readCount;
         }
     }
+    if (numFlankingReads == 0) return 0;
 
     const double estimatedDepth = numFlankingReads / (kNumFlanks * kPropHighConfidenceFlank);
     const double expectedNumLowconfidenceFlankingReads = kNumFlanks * kPropLowConfidenceFlank * estimatedDepth;
@@ -340,9 +337,7 @@ int countFullLengthRepeatReads(
     int maxNumUnitsInRead, const CountTable& countsOfFlankingReads, const CountTable& countsOfInrepeatReads)
 {
     const int lengthBasedCount = lengthBasedCountOfInrepeatReads(maxNumUnitsInRead, countsOfInrepeatReads);
-    const int depthBasedCount
-        = depthBasedCountOfInrepeatReads(maxNumUnitsInRead, countsOfFlankingReads, countsOfInrepeatReads);
-
+    const int depthBasedCount = depthBasedCountOfInrepeatReads(maxNumUnitsInRead, countsOfFlankingReads, countsOfInrepeatReads);
     return std::max(lengthBasedCount, depthBasedCount);
 }
 

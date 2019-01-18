@@ -114,9 +114,6 @@ add_executable(DepthTestTest DepthTestTest.cpp)
 target_link_libraries(DepthTestTest graphtools gtest_main)
 add_test(NAME DepthTestTest COMMAND DepthTestTest)
 
-
-if (BUILD_GRAPHIO)
-    add_executable(GraphIOTest GraphIOTest.cpp)
-    target_link_libraries(GraphIOTest graphIO graphtools gtest_main)
-    add_test(NAME GraphIOTest COMMAND GraphIOTest)
-endif(BUILD_GRAPHIO)
+add_executable(GraphJsonTest GraphJsonTest.cpp)
+target_link_libraries(GraphJsonTest graphtools gtest_main)
+add_test(NAME GraphJsonTest COMMAND GraphJsonTest)

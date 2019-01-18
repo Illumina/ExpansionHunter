@@ -57,11 +57,12 @@ struct UserParameters
     string sampleSexEncoding;
 
     // Heuristic parameters
-    bool verboseLogging;
     string alignerType;
     int regionExtensionLength;
     int qualityCutoffForGoodBaseCall;
     bool skipUnaligned;
+
+    string logLevel;
 };
 
 boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
@@ -82,7 +83,7 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
       ("genome-coverage", po::value<double>(), "Read depth on diploid chromosomes")
       ("sex", po::value<string>(&params.sampleSexEncoding)->default_value("female"), "Sex of the sample; must be either male or female")
       ("aligner", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "dag-aligner or path-aligner")
-      ("verbose-logging", po::bool_switch(&params.verboseLogging)->default_value(false), "Enable verbose logging");
+      ("log-level", po::value<string>(&params.logLevel)->default_value("info"), "debug, info, warn, error");
     // clang-format on
 
     if (argc == 1)
@@ -222,6 +223,13 @@ void assertValidity(const UserParameters& userParameters)
             + to_string(kMinQualityCutoffForGoodBaseCall) + " and " + to_string(kMaxQualityCutoffForGoodBaseCall);
         throw std::invalid_argument(message);
     }
+
+    if (userParameters.logLevel != "debug" && userParameters.logLevel != "info" && userParameters.logLevel != "warn"
+        && userParameters.logLevel != "error")
+    {
+        const string message = "Log level must be set to one either debug, info, warn, or error";
+        throw std::invalid_argument(message);
+    }
 }
 
 SampleParameters decodeSampleParameters(const UserParameters& userParams)
@@ -234,14 +242,37 @@ SampleParameters decodeSampleParameters(const UserParameters& userParams)
     int readLength
         = userParams.optionalReadLength ? *userParams.optionalReadLength : extractReadLength(userParams.htsFilePath);
 
+    optional<double> optionalHaplotypeDepth;
+
     if (userParams.optionalGenomeCoverage)
     {
-        const double haplotypeDepth = *userParams.optionalGenomeCoverage / 2;
-        return SampleParameters(sampleId, sex, readLength, haplotypeDepth);
+        optionalHaplotypeDepth = *userParams.optionalGenomeCoverage / 2;
+    }
+
+    return SampleParameters(sampleId, sex, readLength, optionalHaplotypeDepth);
+}
+
+LogLevel decodeLogLevel(const string& encoding)
+{
+    if (encoding == "debug")
+    {
+        return LogLevel::kDebug;
+    }
+    else if (encoding == "info")
+    {
+        return LogLevel::kInfo;
+    }
+    else if (encoding == "warn")
+    {
+        return LogLevel::kWarn;
+    }
+    else if (encoding == "error")
+    {
+        return LogLevel::kError;
     }
     else
     {
-        return SampleParameters(sampleId, sex, readLength);
+        throw std::logic_error("Invalid encoding of logging level " + encoding);
     }
 }
 
@@ -259,14 +290,16 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     InputPaths inputPaths(userParams.htsFilePath, userParams.referencePath, userParams.catalogPath);
     const string vcfPath = userParams.outputPrefix + ".vcf";
     const string jsonPath = userParams.outputPrefix + ".json";
-    const string logPath = userParams.outputPrefix + ".log";
-    OutputPaths outputPaths(vcfPath, jsonPath, logPath);
+    const string bamletPath = userParams.outputPrefix + "_realigned.bam";
+    OutputPaths outputPaths(vcfPath, jsonPath, bamletPath);
     SampleParameters sampleParameters = decodeSampleParameters(userParams);
     HeuristicParameters heuristicParameters(
-        userParams.verboseLogging, userParams.regionExtensionLength, userParams.qualityCutoffForGoodBaseCall,
-        userParams.skipUnaligned, userParams.alignerType);
+        userParams.regionExtensionLength, userParams.qualityCutoffForGoodBaseCall, userParams.skipUnaligned,
+        userParams.alignerType);
 
-    return ProgramParameters(inputPaths, outputPaths, sampleParameters, heuristicParameters);
+    LogLevel logLevel = decodeLogLevel(userParams.logLevel);
+
+    return ProgramParameters(inputPaths, outputPaths, sampleParameters, heuristicParameters, logLevel);
 }
 
 }

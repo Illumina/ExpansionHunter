@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <vector>
+#include <string>
 
 #include "graphcore/Graph.hh"
 
@@ -29,6 +29,6 @@
 namespace ehunter
 {
 
-graphtools::Graph makeRegionGraph(const GraphBlueprint& blueprint);
+graphtools::Graph makeRegionGraph(const GraphBlueprint& blueprint, const std::string& locusId = "");
 
 }

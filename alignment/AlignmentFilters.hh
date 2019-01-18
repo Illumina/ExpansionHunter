@@ -50,4 +50,6 @@ bool checkIfUpstreamAlignmentIsGood(graphtools::NodeId nodeId, graphtools::Graph
 // Checks if alignment downstream of a given node is high quality
 bool checkIfDownstreamAlignmentIsGood(graphtools::NodeId nodeId, graphtools::GraphAlignment alignment);
 
+bool checkIfPassesAlignmentFilters(const graphtools::GraphAlignment& alignment);
+
 }

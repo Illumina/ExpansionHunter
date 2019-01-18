@@ -21,19 +21,20 @@
 
 #pragma once
 
-#include <fstream>
-#include <iostream>
-#include <map>
 #include <string>
-#include <vector>
 
 #include "common/Common.hh"
+#include "common/Parameters.hh"
 #include "common/Reference.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
 {
 
-RegionCatalog loadRegionCatalogFromDisk(const std::string& catalogPath, const Reference& reference, Sex sampleSex);
+RegionCatalog loadLocusCatalogFromDisk(
+    const std::string& catalogPath,
+    Sex sampleSex,
+    const HeuristicParameters& heuristicParams,
+    const Reference& reference);
 
 }

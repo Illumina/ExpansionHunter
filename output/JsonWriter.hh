@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "common/Parameters.hh"
 #include "region_analysis/VariantFindings.hh"
 #include "region_spec/LocusSpecification.hh"
 
@@ -31,10 +32,15 @@ namespace ehunter
 class VariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    VariantJsonWriter(const LocusSpecification& regionSpec, const VariantSpecification& variantSpec, int readLength)
-        : regionSpec_(regionSpec)
+    VariantJsonWriter(
+        const SampleParameters& sampleParams,
+        const ReferenceContigInfo& contigInfo,
+        const LocusSpecification& regionSpec,
+        const VariantSpecification& variantSpec)
+        : sampleParams_(sampleParams)
+        , contigInfo_(contigInfo)
+        , regionSpec_(regionSpec)
         , variantSpec_(variantSpec)
-        , readLength_(readLength)
     {
     }
 
@@ -44,9 +50,10 @@ public:
     nlohmann::json record() const { return record_; }
 
 private:
+    const SampleParameters& sampleParams_;
+    const ReferenceContigInfo& contigInfo_;
     const LocusSpecification& regionSpec_;
     const VariantSpecification& variantSpec_;
-    const int readLength_;
     nlohmann::json record_;
 };
 
@@ -54,14 +61,16 @@ class JsonWriter
 {
 public:
     JsonWriter(
-        const std::string& sampleName, int readLength, const RegionCatalog& regionCatalog,
+        const SampleParameters& sampleParams,
+        const ReferenceContigInfo& contigInfo,
+        const RegionCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     void write(std::ostream& out);
 
 private:
-    const std::string sampleName_;
-    const int readLength_;
+    const SampleParameters& sampleParams_;
+    const ReferenceContigInfo& contigInfo_;
     const RegionCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };

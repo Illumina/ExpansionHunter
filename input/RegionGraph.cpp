@@ -23,6 +23,7 @@
 #include <algorithm>
 #include <cassert>
 #include <utility>
+#include <vector>
 
 #include "input/GraphBlueprint.hh"
 
@@ -93,13 +94,13 @@ void setOutgoingFeatureEdges(const GraphBlueprint& blueprint, int index, Graph& 
     connectFeatures(currentFeature, *downstreamFeaturePtr, graph);
 }
 
-Graph makeRegionGraph(const GraphBlueprint& blueprint)
+Graph makeRegionGraph(const GraphBlueprint& blueprint, const std::string& locusId)
 {
     // Implicit assumptions about the graph structure
     assert(blueprint.front().type == GraphBlueprintFeatureType::kLeftFlank);
     assert(blueprint.back().type == GraphBlueprintFeatureType::kRightFlank);
 
-    Graph graph(getNumNodes(blueprint));
+    Graph graph(getNumNodes(blueprint), locusId);
 
     for (const auto& feature : blueprint)
     {

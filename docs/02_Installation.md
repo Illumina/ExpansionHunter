@@ -38,4 +38,5 @@ be specified with `BOOST_ROOT` in the cmake command above:
 $ cmake -DBOOST_ROOT=/path/to/boost/ ..
 ```
 
-If all of the above steps were successful, the `build` directory now contains ExpansionHunter executable.
+If all of the above steps were successful, the `build` directory now contains
+ExpansionHunter executable.
