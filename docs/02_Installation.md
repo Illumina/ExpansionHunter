@@ -11,7 +11,7 @@ Prerequisites:
 
  - A recent version of [GCC](https://gcc.gnu.org/) or 
    [clang](http://clang.llvm.org/) compiler supporting C++11 standard
- - [CMake](https://cmake.org/) version 3.2.0 or above
+ - [CMake](https://cmake.org/) version 3.5.0 or above
  - [Boost C++ Libraries](http://www.boost.org/) version 1.57.0 or
    above
 

@@ -1,33 +1,35 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #pragma once
 
 #include <iostream>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_analysis/VariantFindings.hh"
+#include "region_analysis/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
@@ -37,11 +39,10 @@ class VariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     VariantVcfWriter(
-        const SampleParameters& sampleParams, Reference& reference, const LocusSpecification& regionSpec,
-        const VariantSpecification& variantSpec, std::ostream& out)
-        : sampleParams_(sampleParams)
-        , reference_(reference)
-        , regionSpec_(regionSpec)
+        Reference& reference, const LocusSpecification& locusSpec, const VariantSpecification& variantSpec,
+        std::ostream& out)
+        : reference_(reference)
+        , locusSpec_(locusSpec)
         , variantSpec_(variantSpec)
         , out_(out)
     {
@@ -52,9 +53,8 @@ public:
     void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
 
 private:
-    const SampleParameters& sampleParams_;
     Reference& reference_;
-    const LocusSpecification& regionSpec_;
+    const LocusSpecification& locusSpec_;
     const VariantSpecification& variantSpec_;
     std::ostream& out_;
 };
@@ -64,7 +64,7 @@ class VcfWriter
 {
 public:
     VcfWriter(
-        const SampleParameters& sampleParams, Reference& reference, const RegionCatalog& regionCatalog,
+        std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     friend std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
@@ -72,10 +72,10 @@ public:
 private:
     void writeHeader(std::ostream& out);
     void writeBody(std::ostream& out);
-    using RegionIdAndVariantId = std::pair<std::string, std::string>;
-    const std::vector<RegionIdAndVariantId> getSortedIdPairs();
+    using LocusIdAndVariantId = std::pair<std::string, std::string>;
+    const std::vector<LocusIdAndVariantId> getSortedIdPairs();
 
-    const SampleParameters& sampleParams_;
+    std::string sampleId_;
     Reference& reference_;
     const RegionCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;

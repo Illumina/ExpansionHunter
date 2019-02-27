@@ -1,21 +1,22 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include "input/LocusSpecDecoding.hh"
@@ -55,14 +56,12 @@ static vector<GenomicRegion> addFlankingRegions(int kExtensionLength, const vect
 }
 
 static string extendLocusStructure(
-    const Reference& reference, const vector<GenomicRegion>& referenceRegions,
-    const string& flanklessLocusStructure)
+    const Reference& reference, const vector<GenomicRegion>& referenceRegions, const string& flanklessLocusStructure)
 {
 
     const auto& leftFlank = referenceRegions.front();
     const auto& rightFlank = referenceRegions.back();
-    return reference.getSequence(leftFlank) + flanklessLocusStructure
-        + reference.getSequence(rightFlank);
+    return reference.getSequence(leftFlank) + flanklessLocusStructure + reference.getSequence(rightFlank);
 }
 
 static vector<GenomicRegion>
@@ -89,18 +88,6 @@ addReferenceRegionsForInterruptions(const GraphBlueprint& blueprint, const vecto
 
     assert(blueprint.size() == completedReferenceRegions.size());
     return completedReferenceRegions;
-}
-
-static vector<string>
-combine(const std::string& prefix, const ReferenceContigInfo& contigInfo, const vector<GenomicRegion>& regions)
-{
-    vector<string> combinedStrings;
-    for (const auto& region : regions)
-    {
-        combinedStrings.push_back(prefix + "_" + encode(contigInfo, region));
-    }
-
-    return combinedStrings;
 }
 
 static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
@@ -222,9 +209,7 @@ static VariantSubtype determineVariantSubtype(
 }
 
 static optional<NodeId> determineReferenceNode(
-    const GraphBlueprintFeature& feature,
-    const Reference& reference,
-    const GenomicRegion& referenceRegion)
+    const GraphBlueprintFeature& feature, const Reference& reference, const GenomicRegion& referenceRegion)
 {
 
     if (feature.type == GraphBlueprintFeatureType::kSkippableRepeat
@@ -250,24 +235,19 @@ static optional<NodeId> determineReferenceNode(
 }
 
 LocusSpecification decodeLocusSpecification(
-    const LocusDescriptionFromUser& userDescription,
-    Sex sampleSex,
-    const Reference& reference,
+    const LocusDescriptionFromUser& userDescription, Sex sampleSex, const Reference& reference,
     const HeuristicParameters& heuristicParams)
 {
     assertValidity(userDescription);
 
     const int kExtensionLength = heuristicParams.regionExtensionLength();
     auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.referenceRegions);
-    auto completeLocusStructure = extendLocusStructure(
-        reference, referenceRegionsWithFlanks, userDescription.locusStructure);
+    auto completeLocusStructure
+        = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
 
     GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
     graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);
     auto completeReferenceRegions = addReferenceRegionsForInterruptions(blueprint, referenceRegionsWithFlanks);
-
-    vector<string> variantIds
-        = combine(userDescription.locusId, reference.contigInfo(), userDescription.referenceRegions);
 
     GenomicRegion referenceRegionForEntireLocus = mergeRegions(userDescription.referenceRegions);
 
@@ -281,17 +261,16 @@ LocusSpecification decodeLocusSpecification(
         targetReadExtractionRegions.push_back(referenceRegionForEntireLocus.extend(kExtensionLength));
     }
 
-    const auto& contigName
-        = reference.contigInfo().getContigName(referenceRegionForEntireLocus.contigIndex());
+    const auto& contigName = reference.contigInfo().getContigName(referenceRegionForEntireLocus.contigIndex());
     AlleleCount expectedAlleleCount = determineExpectedAlleleCount(sampleSex, contigName);
 
     NodeToRegionAssociation referenceRegionsOfGraphNodes
         = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
 
-    LocusSpecification regionSpec(
+    LocusSpecification locusSpec(
         userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,
         referenceRegionsOfGraphNodes);
-    regionSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
+    locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
     int variantIndex = 0;
     for (const auto& feature : blueprint)
@@ -301,22 +280,22 @@ LocusSpecification decodeLocusSpecification(
             const GenomicRegion& referenceRegion = userDescription.referenceRegions.at(variantIndex);
 
             VariantTypeFromUser variantDescription = userDescription.variantTypesFromUser.at(variantIndex);
+            const string& variantId = userDescription.variantIds[variantIndex];
             VariantType variantType = determineVariantType(feature.type);
             VariantSubtype variantSubtype = determineVariantSubtype(feature.type, variantDescription, referenceRegion);
 
-            optional<NodeId> optionalReferenceNode
-                = determineReferenceNode(feature, reference, referenceRegion);
+            optional<NodeId> optionalReferenceNode = determineReferenceNode(feature, reference, referenceRegion);
 
             VariantClassification classification(variantType, variantSubtype);
 
-            regionSpec.addVariantSpecification(
-                variantIds[variantIndex], classification, referenceRegion, feature.nodeIds, optionalReferenceNode);
+            locusSpec.addVariantSpecification(
+                variantId, classification, referenceRegion, feature.nodeIds, optionalReferenceNode);
 
             ++variantIndex;
         }
     }
 
-    return regionSpec;
+    return locusSpec;
 }
 
 void assertValidity(const LocusDescriptionFromUser& userDescription)

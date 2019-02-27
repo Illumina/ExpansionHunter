@@ -1,21 +1,22 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include "output/VcfWriter.hh"
@@ -58,15 +59,15 @@ void writeBodyHeader(const string& sampleName, ostream& out)
 std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter)
 {
     outputVcfHeader(vcfWriter.regionCatalog_, vcfWriter.sampleFindings_, out);
-    writeBodyHeader(vcfWriter.sampleParams_.id(), out);
+    writeBodyHeader(vcfWriter.sampleId_, out);
     vcfWriter.writeBody(out);
     return out;
 }
 
 VcfWriter::VcfWriter(
-    const SampleParameters& sampleParams, Reference& reference, const RegionCatalog& regionCatalog,
+    std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
     const SampleFindings& sampleFindings)
-    : sampleParams_(sampleParams)
+    : sampleId_(sampleId)
     , reference_(reference)
     , regionCatalog_(regionCatalog)
     , sampleFindings_(sampleFindings)
@@ -75,44 +76,46 @@ VcfWriter::VcfWriter(
 
 void VcfWriter::writeBody(ostream& out)
 {
-    const std::vector<VcfWriter::RegionIdAndVariantId>& ids = VcfWriter::getSortedIdPairs();
+    const std::vector<VcfWriter::LocusIdAndVariantId>& ids = VcfWriter::getSortedIdPairs();
 
     for (const auto& pair : ids)
     {
-        const string& regionId = pair.first;
-        const LocusSpecification& regionSpec = regionCatalog_.at(regionId);
-        const RegionFindings& regionFindings = sampleFindings_.at(regionId);
-        
-        const string& variantId = pair.second;
-        const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
-        const auto& variantFindings = regionFindings.at(variantId);
+        const string& locusId = pair.first;
+        const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
+        const LocusFindings& locusFindings = sampleFindings_.at(locusId);
 
-        VariantVcfWriter variantWriter(sampleParams_, reference_, regionSpec, variantSpec, out);
+        const string& variantId = pair.second;
+        const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+        const auto& variantFindings = locusFindings.findingsForEachVariant.at(variantId);
+
+        VariantVcfWriter variantWriter(reference_, locusSpec, variantSpec, out);
         variantFindings->accept(&variantWriter);
     }
 }
 
-const std::vector<VcfWriter::RegionIdAndVariantId> VcfWriter::getSortedIdPairs()
+const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
 {
-    using VariantTuple = std::tuple<int32_t, int64_t, int64_t, RegionIdAndVariantId>;
+    using VariantTuple = std::tuple<int32_t, int64_t, int64_t, LocusIdAndVariantId>;
     std::vector<VariantTuple> tuples;
 
-    for (const auto& regionIdAndFindings : sampleFindings_)
+    for (const auto& locusIdAndFindings : sampleFindings_)
     {
-        const string& regionId = regionIdAndFindings.first;
-        const LocusSpecification& regionSpec = regionCatalog_.at(regionId);
-        const RegionFindings& regionFindings = regionIdAndFindings.second;
+        const string& locusId = locusIdAndFindings.first;
+        const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
+        const LocusFindings& locusFindings = locusIdAndFindings.second;
 
-        for (const auto& variantIdAndFindings : regionFindings)
+        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
             const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
-            tuples.emplace_back(variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(), variantSpec.referenceLocus().end(), RegionIdAndVariantId(regionId, variantId));
+            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+            tuples.emplace_back(
+                variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
+                variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
         }
     }
 
     std::sort(tuples.begin(), tuples.end());
-    std::vector<VcfWriter::RegionIdAndVariantId> idPairs;
+    std::vector<VcfWriter::LocusIdAndVariantId> idPairs;
     for (const auto& t : tuples)
         idPairs.emplace_back(std::get<3>(t));
 
@@ -155,45 +158,44 @@ static string computeInfoFields(const VariantSpecification& variantSpec, const s
     fields.push_back("REF=" + std::to_string(referenceSizeInUnits));
     fields.push_back("RL=" + std::to_string(referenceSizeInUnits));
     fields.push_back("RU=" + repeatUnit);
+    fields.push_back("VARID=" + variantSpec.id());
     fields.push_back("REPID=" + variantSpec.id());
 
     return boost::algorithm::join(fields, ";");
 }
 
 static ReadType
-deterimineSupportType(int maxUnitsInRead, CountTable spanningCounts, CountTable flankingCounts, int repeatSize)
+deterimineSupportType(const CountTable& spanningCounts, const CountTable& flankingCounts, int repeatSize)
 {
     if (spanningCounts.countOf(repeatSize) != 0)
     {
         return ReadType::kSpanning;
     }
-    else if (flankingCounts.countOf(maxUnitsInRead) != 0)
+    else if (flankingCounts.countOf(repeatSize) != 0)
     {
-        return ReadType::kRepeat;
+        return ReadType::kFlanking;
     }
 
-    return ReadType::kFlanking;
+    return ReadType::kRepeat;
 }
 
 static string computeSampleFields(
-    int readLength, const VariantSpecification& variantSpec, const string& repeatUnit,
-    const RepeatFindings& repeatFindings)
+    const VariantSpecification& variantSpec, const string& repeatUnit, const RepeatFindings& repeatFindings)
 {
     const auto referenceLocus = variantSpec.referenceLocus();
     const int referenceSizeInBp = referenceLocus.length();
     const int referenceSizeInUnits = referenceSizeInBp / repeatUnit.length();
     const RepeatGenotype& genotype = *repeatFindings.optionalGenotype();
 
-    const int maxUnitsInRead = std::ceil(readLength / static_cast<double>(repeatUnit.length()));
     ReadSupportCalculator readSupportCalculator(
-        maxUnitsInRead, repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads());
+        repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(),
+        repeatFindings.countsOfInrepeatReads());
 
     VcfSampleFields sampleFields(referenceSizeInUnits);
 
     const int shortAlleleSize = genotype.shortAlleleSizeInUnits();
     ReadType shortAlleleSupportType = deterimineSupportType(
-        maxUnitsInRead, repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(),
-        shortAlleleSize);
+        repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), shortAlleleSize);
 
     sampleFields.addAlleleInfo(
         shortAlleleSize, shortAlleleSupportType, genotype.shortAlleleSizeInUnitsCi(),
@@ -205,8 +207,7 @@ static string computeSampleFields(
     {
         const int longAlleleSize = genotype.longAlleleSizeInUnits();
         ReadType longAlleleSupportType = deterimineSupportType(
-            maxUnitsInRead, repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(),
-            longAlleleSize);
+            repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), longAlleleSize);
 
         sampleFields.addAlleleInfo(
             genotype.longAlleleSizeInUnits(), longAlleleSupportType, genotype.longAlleleSizeInUnitsCi(),
@@ -229,14 +230,13 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto repeatNodeId = variantSpec_.nodes().front();
-    const string& repeatUnit = regionSpec_.regionGraph().nodeSeq(repeatNodeId);
+    const string& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
 
     const int referenceSizeInUnits = referenceLocus.length() / repeatUnit.length();
 
     const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
     const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
-    const string sampleFields
-        = computeSampleFields(sampleParams_.readLength(), variantSpec_, repeatUnit, *repeatFindingsPtr);
+    const string sampleFields = computeSampleFields(variantSpec_, repeatUnit, *repeatFindingsPtr);
 
     const int posPreceedingRepeat1based = referenceLocus.start();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
@@ -269,8 +269,8 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
         const auto refNodeId = variantSpec_.nodes()[refNodeIndex];
         const auto altNodeId = variantSpec_.nodes()[altNodeIndex];
 
-        refSequence = regionSpec_.regionGraph().nodeSeq(refNodeId);
-        altSequence = regionSpec_.regionGraph().nodeSeq(altNodeId);
+        refSequence = locusSpec_.regionGraph().nodeSeq(refNodeId);
+        altSequence = locusSpec_.regionGraph().nodeSeq(altNodeId);
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start() + 1;
     }
@@ -280,7 +280,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
             = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
         const int refNodeId = variantSpec_.nodes().front();
-        refSequence = refFlankingBase + regionSpec_.regionGraph().nodeSeq(refNodeId);
+        refSequence = refFlankingBase + locusSpec_.regionGraph().nodeSeq(refNodeId);
         altSequence = refFlankingBase;
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start();
@@ -292,7 +292,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
 
         const int altNodeId = variantSpec_.nodes().front();
         refSequence = refFlankingBase;
-        altSequence = refFlankingBase + regionSpec_.regionGraph().nodeSeq(altNodeId);
+        altSequence = refFlankingBase + locusSpec_.regionGraph().nodeSeq(altNodeId);
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start();
     }
@@ -307,32 +307,35 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
 
     std::vector<string> sampleFields;
     std::vector<string> sampleValues;
+
+    sampleFields.push_back("AD");
+    std::ostringstream adEncoding;
+    adEncoding << smallVariantFindingsPtr->numRefReads() << "," << smallVariantFindingsPtr->numAltReads();
+    sampleValues.push_back(adEncoding.str());
+
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
-        string genotype;
-        switch (smallVariantFindingsPtr->refAllelePresenceStatus())
+        string dst;
+        switch (smallVariantFindingsPtr->refAllelePresenceStatus().Status)
         {
-        case AllelePresenceStatus::kAbsent:
-            genotype = "1";
+        case AlleleStatus::kAbsent:
+            dst = "+";
             break;
-        case AllelePresenceStatus::kPresent:
-            genotype = "0";
+        case AlleleStatus::kPresent:
+            dst = "-";
             break;
-        case AllelePresenceStatus::kUncertain:
-            genotype = ".";
+        case AlleleStatus::kUncertain:
+            dst = "?";
             break;
         }
-        sampleFields.push_back("GT");
-        sampleValues.push_back(genotype);
-        sampleFields.push_back("SMN");
-        sampleValues.push_back(streamToString(smallVariantFindingsPtr->refAllelePresenceStatus()));
+        sampleFields.push_back("DST");
+        sampleValues.push_back(dst);
+        sampleFields.push_back("RPL");
+        sampleValues.push_back(streamToString(smallVariantFindingsPtr->refAllelePresenceStatus().LikelihoodRatio));
     }
-    else
-    {
-        auto genotype = smallVariantFindingsPtr->optionalGenotype();
-        sampleFields.push_back("GT");
-        sampleValues.push_back((genotype != boost::none) ? streamToString(*genotype) : ".");
-    }
+    auto genotype = smallVariantFindingsPtr->optionalGenotype();
+    sampleFields.push_back("GT");
+    sampleValues.push_back(genotype ? streamToString(*genotype) : ".");
 
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");

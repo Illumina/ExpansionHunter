@@ -1,38 +1,34 @@
 //
 // GraphTools library
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2017-2019 Illumina, Inc.
 // All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>,
 //         Roman Petrovski <RPetrovski@illumina.com>
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 #include "graphalign/GappedAligner.hh"
+
+#include <boost/algorithm/string.hpp>
+#include <boost/optional.hpp>
 
 #include "graphalign/GraphAlignmentOperations.hh"
 #include "graphalign/LinearAlignmentOperations.hh"
 #include "graphcore/PathOperations.hh"
 
+using boost::optional;
 using std::list;
 using std::make_pair;
 using std::string;
@@ -42,96 +38,129 @@ namespace graphtools
 {
 
 /**
- * Remove prefix of a path if it overlaps multiple nodes
+ * Trim prefix of a path if it is close to node edge
  *
- * @param prefixLength: length of the prefix of the path to evaluate
+ * @param requested_trim_len: length of the prefix to attempt to trim by
+ * @param min_path_len: minimal length of the trimmed path
  * @param[in|out] path: any path
- * @return: the length by which the path's beginning was trimmed
+ * @return: actual trim length
  */
-static int32_t removePrefixThatOverlapsMultipleNodes(int32_t prefixLength, Path& path)
+static int32_t trimPrefixNearNodeEdge(int32_t requested_trim_len, int32_t min_path_len, Path& path)
 {
-    if (path.numNodes() == 1)
+    if (path.numNodes() == 1 || static_cast<int32_t>(path.length()) <= min_path_len)
     {
         return 0;
     }
 
-    const int32_t overlapLengthWithFirstNode = path.getNodeOverlapLengthByIndex(0);
-
-    if (overlapLengthWithFirstNode <= prefixLength)
+    const int32_t overlap_len_with_first_node = path.getNodeOverlapLengthByIndex(0);
+    if (overlap_len_with_first_node > requested_trim_len)
     {
-        if ((int32_t)path.length() >= prefixLength)
-        {
-            path.shrinkStartBy(prefixLength);
-            return prefixLength;
-        }
+        return 0;
     }
 
-    return 0;
+    const bool can_be_fully_trimmed = static_cast<int32_t>(path.length()) >= requested_trim_len + min_path_len;
+    const int32_t actual_trim_len = can_be_fully_trimmed ? requested_trim_len : path.length() - min_path_len;
+
+    path.shrinkStartBy(actual_trim_len);
+    return actual_trim_len;
 }
 
 /**
- * Remove suffix of a path if it overlaps multiple nodes
+ * Trim suffix of a path if it is close to node edge
  *
- * @param suffixLength: length of the suffix of the path to evaluate
+ * @param requested_trim_len: length of the suffix to attempt to trim by
+ * @param min_path_len: minimal length of the shrank path
  * @param[in|out] path: any path
  * @return: the length by which the path's end was trimmed
  */
-static int32_t removeSuffixThatOverlapsMultipleNodes(int32_t suffixLength, Path& path)
+static int32_t trimSuffixNearNodeEdge(int32_t requested_trim_len, int32_t min_path_len, Path& path)
 {
-    if (path.numNodes() == 1)
+    if (path.numNodes() == 1 || static_cast<int32_t>(path.length()) <= min_path_len)
     {
         return 0;
     }
 
-    const int32_t overlapLengthWithLastNode = path.getNodeOverlapLengthByIndex(path.numNodes() - 1);
-
-    if (overlapLengthWithLastNode <= suffixLength)
+    const int32_t overlap_len_with_last_node = path.getNodeOverlapLengthByIndex(path.numNodes() - 1);
+    if (overlap_len_with_last_node > requested_trim_len)
     {
-        if ((int32_t)path.length() >= suffixLength)
-        {
-            path.shrinkEndBy(suffixLength);
-            return suffixLength;
-        }
+        return 0;
     }
 
-    return 0;
+    const bool can_be_fully_trimmed = static_cast<int32_t>(path.length()) >= requested_trim_len + min_path_len;
+    const int32_t actual_trim_len = can_be_fully_trimmed ? requested_trim_len : path.length() - min_path_len;
+
+    path.shrinkEndBy(actual_trim_len);
+    return actual_trim_len;
 }
 
 list<GraphAlignment> GappedGraphAligner::align(const string& query) const
 {
-    const list<string> kmers = extractKmersFromAllPositions(query, kmer_len_);
+    optional<AlignmentSeed> optional_seed = searchForAlignmentSeed(query);
 
-    size_t kmer_start_on_query = 0;
-    for (const string& kmer : kmers)
+    if (optional_seed)
     {
-        // Initiate alignment from a unique kmer.
+        Path& seed_path = optional_seed->path;
+        int seed_start_on_query = optional_seed->start_on_query;
+
+        const int kMinPathLength = 2;
+        trimSuffixNearNodeEdge(seed_affix_trim_len_, kMinPathLength, seed_path);
+        const int trimmed_prefix_len = trimPrefixNearNodeEdge(seed_affix_trim_len_, kMinPathLength, seed_path);
+        return extendSeedToFullAlignments(seed_path, query, seed_start_on_query + trimmed_prefix_len);
+    }
+    else
+    {
+        return {};
+    }
+}
+
+optional<GappedGraphAligner::AlignmentSeed> GappedGraphAligner::searchForAlignmentSeed(const string& query) const
+{
+    string upperQuery = query;
+    boost::to_upper(upperQuery);
+
+    optional<GappedGraphAligner::AlignmentSeed> optional_seed;
+
+    size_t kmer_start_position = 0;
+    while (kmer_start_position + kmer_len_ <= upperQuery.length())
+    {
+        const string kmer = upperQuery.substr(kmer_start_position, static_cast<size_t>(kmer_len_));
+
+        // Initiate seed construction from a unique kmer
         if (kmer_index_.numPaths(kmer) == 1)
         {
             Path kmer_path = kmer_index_.getPaths(kmer).front();
-            removeSuffixThatOverlapsMultipleNodes(seed_affix_trim_len_, kmer_path);
-            const int32_t num_prefix_bases_trimmed
-                = removePrefixThatOverlapsMultipleNodes(seed_affix_trim_len_, kmer_path);
-            return extendKmerMatchToFullAlignments(kmer_path, query, kmer_start_on_query + num_prefix_bases_trimmed);
+            // This call updates kmer_start_position to the start of the extended path
+            Path extended_path = extendPathMatching(kmer_path, upperQuery, kmer_start_position);
+
+            if (!optional_seed || extended_path.length() > optional_seed->path.length())
+            {
+                optional_seed = AlignmentSeed(extended_path, kmer_start_position);
+            }
+
+            kmer_start_position += extended_path.length();
         }
-        ++kmer_start_on_query;
+        else
+        {
+            ++kmer_start_position;
+        }
     }
 
-    return {};
+    return optional_seed;
 }
 
-list<GraphAlignment> GappedGraphAligner::extendKmerMatchToFullAlignments(
-    Path kmer_path, const string& query, size_t kmer_start_on_query) const
+list<GraphAlignment>
+GappedGraphAligner::extendSeedToFullAlignments(Path seed_path, const string& query, size_t seed_start_on_query) const
 {
-    assert(kmer_path.length() > 1);
+    assert(seed_path.length() > 1);
 
     // Generate prefix extensions
     list<PathAndAlignment> prefix_extensions;
-    size_t query_prefix_len = kmer_start_on_query;
+    size_t query_prefix_len = seed_start_on_query;
     if (query_prefix_len != 0)
     {
         const string query_prefix = query.substr(0, query_prefix_len);
-        Path prefix_seed_path = kmer_path;
-        prefix_seed_path.shrinkEndBy(kmer_path.length());
+        Path prefix_seed_path = seed_path;
+        prefix_seed_path.shrinkEndBy(seed_path.length());
         prefix_extensions = extendAlignmentPrefix(prefix_seed_path, query_prefix, query_prefix_len + padding_len_);
     }
     else
@@ -139,30 +168,30 @@ list<GraphAlignment> GappedGraphAligner::extendKmerMatchToFullAlignments(
         // Because (a) empty alignments are currently disallowed and (b) we don't want to deal with an empty list of
         // prefix_extensions we create a 1bp prefix artificially.
         query_prefix_len = 1;
-        Path prefix_path = kmer_path;
+        Path prefix_path = seed_path;
         prefix_path.shrinkEndBy(prefix_path.length() - 1);
         prefix_extensions = { make_pair(prefix_path, Alignment(0, "1M")) };
-        kmer_path.shrinkStartBy(1);
+        seed_path.shrinkStartBy(1);
     }
 
     // Generate suffix extensions
     list<PathAndAlignment> suffix_extensions;
-    size_t query_suffix_len = query.length() - kmer_path.length() - query_prefix_len;
+    size_t query_suffix_len = query.length() - seed_path.length() - query_prefix_len;
     if (query_suffix_len != 0)
     {
-        const string query_suffix = query.substr(query_prefix_len + kmer_path.length(), query_suffix_len);
-        Path suffix_seed_path = kmer_path;
-        suffix_seed_path.shrinkStartBy(kmer_path.length());
+        const string query_suffix = query.substr(query_prefix_len + seed_path.length(), query_suffix_len);
+        Path suffix_seed_path = seed_path;
+        suffix_seed_path.shrinkStartBy(seed_path.length());
         suffix_extensions = extendAlignmentSuffix(suffix_seed_path, query_suffix, query_suffix_len + padding_len_);
     }
     else
     {
         // Because (a) empty alignments are currently disallowed and (b) we don't want to deal with an empty list of
         // suffix_extensions we create a 1bp suffix artificially.
-        Path suffix_path = kmer_path;
+        Path suffix_path = seed_path;
         suffix_path.shrinkStartBy(suffix_path.length() - 1);
         suffix_extensions = { make_pair(suffix_path, Alignment(0, "1M")) };
-        kmer_path.shrinkEndBy(1);
+        seed_path.shrinkEndBy(1);
     }
 
     // Merge alignments together
@@ -170,19 +199,19 @@ list<GraphAlignment> GappedGraphAligner::extendKmerMatchToFullAlignments(
     for (PathAndAlignment& prefix_path_and_alignment : prefix_extensions)
     {
         Path& prefix_path = prefix_path_and_alignment.first;
-        Path prefix_plus_kmer_path = concatenatePaths(prefix_path, kmer_path);
+        Path prefix_plus_seed_path = concatenatePaths(prefix_path, seed_path);
 
         Alignment& prefix_alignment = prefix_path_and_alignment.second;
-        Alignment kmer_alignment(prefix_alignment.referenceLength(), to_string(kmer_path.length()) + "M");
+        Alignment kmer_alignment(prefix_alignment.referenceLength(), to_string(seed_path.length()) + "M");
         Alignment prefix_plus_kmer_alignment = mergeAlignments(prefix_alignment, kmer_alignment);
 
         for (PathAndAlignment& suffix_path_and_alignment : suffix_extensions)
         {
             Path& suffix_path = suffix_path_and_alignment.first;
             Alignment& suffix_alignment = suffix_path_and_alignment.second;
-            Path full_path = concatenatePaths(prefix_plus_kmer_path, suffix_path);
+            Path full_path = concatenatePaths(prefix_plus_seed_path, suffix_path);
 
-            suffix_alignment.setReferenceStart(prefix_plus_kmer_path.length());
+            suffix_alignment.setReferenceStart(prefix_plus_seed_path.length());
             Alignment full_alignment = mergeAlignments(prefix_plus_kmer_alignment, suffix_alignment);
             top_paths_and_alignments.push_back(make_pair(full_path, full_alignment));
         }

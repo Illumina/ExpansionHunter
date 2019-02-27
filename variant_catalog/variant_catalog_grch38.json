@@ -49,9 +49,19 @@
     },
     {
         "LocusId": "ATXN7",
-        "LocusStructure": "(GCA)*",
-        "ReferenceRegion": "3:63912684-63912714",
-        "VariantType": "Repeat"
+        "LocusStructure": "(GCA)*(GCC)+",
+        "ReferenceRegion": [
+            "3:63912684-63912714",
+            "3:63912714-63912726"
+        ],
+        "VariantId": [
+            "ATXN7",
+            "ATXN7_GCC"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat"
+        ]
     },
     {
         "LocusId": "ATXN8OS",
@@ -59,6 +69,10 @@
         "ReferenceRegion": [
             "13:70139353-70139383",
             "13:70139383-70139428"
+        ],
+        "VariantId": [
+            "ATXN8OS_CTA",
+            "ATXN8OS"
         ],
         "VariantType": [
             "Repeat",
@@ -167,6 +181,11 @@
             "3:129172576-129172656",
             "3:129172656-129172696",
             "3:129172696-129172732"
+        ],
+        "VariantId": [
+            "CNBP",
+            "CNBP_CAGA",
+            "CNBP_CA"
         ],
         "VariantType": [
             "Repeat",
@@ -421,6 +440,10 @@
             "9:69037261-69037286",
             "9:69037286-69037304"
         ],
+        "VariantId": [
+            "FXN_A",
+            "FXN"
+        ],
         "VariantType": [
             "Repeat",
             "Repeat"
@@ -432,6 +455,10 @@
         "ReferenceRegion": [
             "4:3074876-3074933",
             "4:3074939-3074966"
+        ],
+        "VariantId": [
+            "HTT",
+            "HTT_CCG"
         ],
         "VariantType": [
             "Repeat",
@@ -446,9 +473,19 @@
     },
     {
         "LocusId": "NOP56",
-        "LocusStructure": "(GGCCTG)*",
-        "ReferenceRegion": "20:2652733-2652757",
-        "VariantType": "Repeat"
+        "LocusStructure": "(GGCCTG)*(CGCCTG)*",
+        "ReferenceRegion": [
+            "20:2652733-2652757",
+            "20:2652757-2652775"
+        ],
+        "VariantId": [
+            "NOP56",
+            "NOP56_CGCCTG"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat"
+        ]
     },
     {
         "LocusId": "PPP2R2B",

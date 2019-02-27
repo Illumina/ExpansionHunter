@@ -1,22 +1,23 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 // Concept: Michael Eberle <meberle@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include "input/CatalogLoading.hh"
@@ -111,9 +112,23 @@ static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
     }
 }
 
-static LocusDescriptionFromUser loadUserDescription(
-        Json& locusJson,
-        const ReferenceContigInfo& contigInfo)
+static vector<string> generateIds(const std::string& locusId, const Json& variantRegionEncodings)
+{
+    if (variantRegionEncodings.size() == 1)
+    {
+        return { locusId };
+    }
+
+    vector<string> variantIds;
+    for (const string& regionEncoding : variantRegionEncodings)
+    {
+        variantIds.push_back(locusId + "_" + regionEncoding);
+    }
+
+    return variantIds;
+}
+
+static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
     LocusDescriptionFromUser userDescription;
 
@@ -148,6 +163,19 @@ static LocusDescriptionFromUser loadUserDescription(
         }
     }
 
+    if (checkIfFieldExists(locusJson, "VariantId"))
+    {
+        makeArray(locusJson["VariantId"]);
+        for (const string& variantId : locusJson["VariantId"])
+        {
+            userDescription.variantIds.push_back(variantId);
+        }
+    }
+    else
+    {
+        userDescription.variantIds = generateIds(userDescription.locusId, locusJson["ReferenceRegion"]);
+    }
+
     if (checkIfFieldExists(locusJson, "OfftargetRegions"))
     {
         assertRecordIsArray(locusJson["OfftargetRegions"]);
@@ -162,10 +190,7 @@ static LocusDescriptionFromUser loadUserDescription(
 }
 
 RegionCatalog loadLocusCatalogFromDisk(
-    const string& catalogPath,
-    Sex sampleSex,
-    const HeuristicParameters& heuristicParams,
-    const Reference& reference)
+    const string& catalogPath, Sex sampleSex, const HeuristicParameters& heuristicParams, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -182,9 +207,8 @@ RegionCatalog loadLocusCatalogFromDisk(
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
-        LocusSpecification locusSpec
-            = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
-        catalog.emplace(std::make_pair(locusSpec.regionId(), locusSpec));
+        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
+        catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
     }
 
     return catalog;

@@ -1,31 +1,23 @@
 //
 // GraphTools library
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2017-2019 Illumina, Inc.
 // All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>,
 //         Roman Petrovski <RPetrovski@illumina.com>
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 #pragma once
 
@@ -33,6 +25,8 @@
 #include <list>
 #include <string>
 #include <utility>
+
+#include <boost/optional.hpp>
 
 #include "graphalign/GaplessAligner.hh"
 #include "graphalign/GraphAligner.hh"
@@ -88,15 +82,15 @@ public:
     std::list<GraphAlignment> align(const std::string& query) const override;
 
     /**
-     * Extends a path matching a kmer in the query sequence to full-length alignments
+     * Extends a seed path corresponding to a perfect match to the query sequence to full-length alignments
      *
-     * @param kmer_path: Kmer match path
+     * @param seed_path: Seed path
      * @param query: Query sequence
-     * @param kmer_start_on_query: Position of the left-most base of the kmer on the query sequence
-     * @return List of top-scoring graph alignments going through the kmer match path
+     * @param seed_start_on_query: Position of the left-most base of the seed on the query sequence
+     * @return List of top-scoring graph alignments going through the seed path
      */
     std::list<GraphAlignment>
-    extendKmerMatchToFullAlignments(Path kmer_path, const std::string& query, size_t kmer_start_on_query) const;
+    extendSeedToFullAlignments(Path seed_path, const std::string& query, size_t seed_start_on_query) const;
 
     /**
      * Aligns query suffix to all suffix-extensions of a given path
@@ -125,6 +119,21 @@ private:
     const size_t padding_len_;
     const int32_t seed_affix_trim_len_;
     const KmerIndex kmer_index_;
+
+    // An alignment seed is a path whose sequence is a perfect match to the query starting from a given position
+    struct AlignmentSeed
+    {
+        AlignmentSeed(Path path, int start_on_query)
+            : path(std::move(path))
+            , start_on_query(start_on_query)
+        {
+        }
+        Path path;
+        int start_on_query = -1;
+    };
+
+    // Performs a search for an alignment seed
+    boost::optional<AlignmentSeed> searchForAlignmentSeed(const std::string& query) const;
 
     class AlignerSelector
     {
