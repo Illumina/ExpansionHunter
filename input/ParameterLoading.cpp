@@ -1,21 +1,22 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include "input/ParameterLoading.hh"
@@ -62,6 +63,7 @@ struct UserParameters
     int qualityCutoffForGoodBaseCall;
     bool skipUnaligned;
 
+    string analysisMode;
     string logLevel;
 };
 
@@ -70,34 +72,42 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     UserParameters params;
 
     // clang-format off
-    po::options_description usage("Allowed options");
-    usage.add_options()
-      ("help", "Print help message")
-      ("version", "Print version number")
-      ("reads", po::value<string>(&params.htsFilePath)->required(), "BAM/CRAM file with aligned reads")
-      ("reference", po::value<string>(&params.referencePath)->required(), "FASTA file with reference genome")
-      ("variant-catalog", po::value<string>(&params.catalogPath)->required(), "JSON file with variants to genotype")
-      ("output-prefix", po::value<string>(&params.outputPrefix)->required(), "Prefix for the output files")
-      ("region-extension-length", po::value<int>(&params.regionExtensionLength)->default_value(1000), "How far from on/off-target regions to search for informative reads")
-      ("read-length", po::value<int>(), "Read length")
-      ("genome-coverage", po::value<double>(), "Read depth on diploid chromosomes")
-      ("sex", po::value<string>(&params.sampleSexEncoding)->default_value("female"), "Sex of the sample; must be either male or female")
-      ("aligner", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "dag-aligner or path-aligner")
-      ("log-level", po::value<string>(&params.logLevel)->default_value("info"), "debug, info, warn, error");
+    po::options_description basicOptions("Basic options");
+    basicOptions.add_options()
+        ("help,h", "Print help message")
+        ("version,v", "Print version number")
+        ("reads", po::value<string>(&params.htsFilePath)->required(), "BAM/CRAM file with aligned reads")
+        ("reference", po::value<string>(&params.referencePath)->required(), "FASTA file with reference genome")
+        ("variant-catalog", po::value<string>(&params.catalogPath)->required(), "JSON file with variants to genotype")
+        ("output-prefix", po::value<string>(&params.outputPrefix)->required(), "Prefix for the output files")
+        ("region-extension-length", po::value<int>(&params.regionExtensionLength)->default_value(1000), "How far from on/off-target regions to search for informative reads")
+        ("sex", po::value<string>(&params.sampleSexEncoding)->default_value("female"), "Sex of the sample; must be either male or female")
+        ("log-level", po::value<string>(&params.logLevel)->default_value("info"), "trace, debug, info, warn, or error");
     // clang-format on
+
+    // clang-format off
+    po::options_description advancedOptions("Advanced options");
+    advancedOptions.add_options()
+        ("aligner,a", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Specify which aligner to use (dag-aligner or path-aligner)")
+        ("analysis-mode,m", po::value<string>(&params.analysisMode)->default_value("seeking"), "Specify which analysis workflow to use (seeking or streaming)");
+    // clang-format on
+
+    po::options_description cmdlineOptions;
+    cmdlineOptions.add(basicOptions).add(advancedOptions);
 
     if (argc == 1)
     {
-        std::cerr << usage << std::endl;
+        std::cerr << cmdlineOptions << std::endl;
         return boost::optional<UserParameters>();
     }
 
     po::variables_map argumentMap;
-    po::store(po::command_line_parser(argc, argv).options(usage).run(), argumentMap);
+    po::store(po::command_line_parser(argc, argv).options(cmdlineOptions).run(), argumentMap);
 
     if (argumentMap.count("help"))
     {
-        std::cerr << usage << std::endl;
+        std::cerr << basicOptions << std::endl;
+        std::cerr << advancedOptions << std::endl;
         return boost::optional<UserParameters>();
     }
 
@@ -128,10 +138,10 @@ static void assertWritablePath(const string& pathEncoding)
     const fs::path pathToDirectory = path.parent_path();
 
     const bool thereIsNoDirectory = pathToDirectory.empty();
-    const bool pathLeadsExistingDirectory = fs::is_directory(pathToDirectory);
+    const bool pathLeadsToExistingDirectory = fs::is_directory(pathToDirectory);
     const bool filenameIsValid = fs::portable_posix_name(path.filename().string());
 
-    if (!filenameIsValid || (!thereIsNoDirectory && !pathLeadsExistingDirectory))
+    if (!filenameIsValid || (!thereIsNoDirectory && !pathLeadsToExistingDirectory))
     {
         throw std::invalid_argument(pathEncoding + " is not a valid output path");
     }
@@ -140,8 +150,9 @@ static void assertWritablePath(const string& pathEncoding)
 static void assertPathToExistingFile(const string& pathEncoding)
 {
     const fs::path path(pathEncoding);
+    const bool isPathToExistingFile = fs::exists(path) && fs::is_regular_file(path);
 
-    if (fs::is_directory(path) && !fs::exists(path))
+    if (!isPathToExistingFile)
     {
         throw std::invalid_argument(pathEncoding + " is not a path to an existing file");
     }
@@ -223,37 +234,38 @@ void assertValidity(const UserParameters& userParameters)
             + to_string(kMinQualityCutoffForGoodBaseCall) + " and " + to_string(kMaxQualityCutoffForGoodBaseCall);
         throw std::invalid_argument(message);
     }
-
-    if (userParameters.logLevel != "debug" && userParameters.logLevel != "info" && userParameters.logLevel != "warn"
-        && userParameters.logLevel != "error")
-    {
-        const string message = "Log level must be set to one either debug, info, warn, or error";
-        throw std::invalid_argument(message);
-    }
 }
 
 SampleParameters decodeSampleParameters(const UserParameters& userParams)
 {
     fs::path boostHtsFilePath(userParams.htsFilePath);
     auto sampleId = boostHtsFilePath.stem().string();
-
     Sex sex = decodeSampleSex(userParams.sampleSexEncoding);
+    return SampleParameters(sampleId, sex);
+}
 
-    int readLength
-        = userParams.optionalReadLength ? *userParams.optionalReadLength : extractReadLength(userParams.htsFilePath);
-
-    optional<double> optionalHaplotypeDepth;
-
-    if (userParams.optionalGenomeCoverage)
+AnalysisMode decodeAnalysisMode(const string& encoding)
+{
+    if (encoding == "streaming")
     {
-        optionalHaplotypeDepth = *userParams.optionalGenomeCoverage / 2;
+        return AnalysisMode::kStreaming;
     }
-
-    return SampleParameters(sampleId, sex, readLength, optionalHaplotypeDepth);
+    else if (encoding == "seeking")
+    {
+        return AnalysisMode::kSeeking;
+    }
+    else
+    {
+        throw std::logic_error("Invalid encoding of data input mode '" + encoding + "'");
+    }
 }
 
 LogLevel decodeLogLevel(const string& encoding)
 {
+    if (encoding == "trace")
+    {
+        return LogLevel::kTrace;
+    }
     if (encoding == "debug")
     {
         return LogLevel::kDebug;
@@ -297,9 +309,29 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
         userParams.regionExtensionLength, userParams.qualityCutoffForGoodBaseCall, userParams.skipUnaligned,
         userParams.alignerType);
 
-    LogLevel logLevel = decodeLogLevel(userParams.logLevel);
+    LogLevel logLevel;
+    try
+    {
+        logLevel = decodeLogLevel(userParams.logLevel);
+    }
+    catch (std::logic_error)
+    {
+        const string message = "Log level must be set to either trace, debug, info, warn, or error";
+        throw std::invalid_argument(message);
+    }
 
-    return ProgramParameters(inputPaths, outputPaths, sampleParameters, heuristicParameters, logLevel);
+    AnalysisMode analysisMode;
+    try
+    {
+        analysisMode = decodeAnalysisMode(userParams.analysisMode);
+    }
+    catch (std::logic_error)
+    {
+        const string message = "Analysis mode must be set to either streaming or seeking";
+        throw std::invalid_argument(message);
+    }
+
+    return ProgramParameters(inputPaths, outputPaths, sampleParameters, heuristicParameters, analysisMode, logLevel);
 }
 
 }

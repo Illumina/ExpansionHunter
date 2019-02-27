@@ -1,21 +1,22 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include "output/JsonWriter.hh"
@@ -45,10 +46,8 @@ std::ostream& operator<<(std::ostream& out, JsonWriter& jsonWriter)
 }
 
 JsonWriter::JsonWriter(
-    const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
-    const SampleFindings& sampleFindings)
-    : sampleParams_(sampleParams)
-    , contigInfo_(contigInfo)
+    const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings)
+    : contigInfo_(contigInfo)
     , regionCatalog_(regionCatalog)
     , sampleFindings_(sampleFindings)
 {
@@ -58,18 +57,18 @@ void JsonWriter::write(std::ostream& out)
 {
     Json array = Json::array();
 
-    for (const auto& regionIdAndFindings : sampleFindings_)
+    for (const auto& locusIdAndFindings : sampleFindings_)
     {
-        const string& regionId = regionIdAndFindings.first;
-        const LocusSpecification& regionSpec = regionCatalog_.at(regionId);
-        const RegionFindings& regionFindings = regionIdAndFindings.second;
+        const string& locusId = locusIdAndFindings.first;
+        const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
+        const LocusFindings& locusFindings = locusIdAndFindings.second;
 
-        for (const auto& variantIdAndFindings : regionFindings)
+        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
             const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
+            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
-            VariantJsonWriter variantWriter(sampleParams_, contigInfo_, regionSpec, variantSpec);
+            VariantJsonWriter variantWriter(contigInfo_, locusSpec, variantSpec);
             variantIdAndFindings.second->accept(&variantWriter);
             array.push_back(variantWriter.record());
         }
@@ -83,32 +82,6 @@ template <typename T> static string streamToString(const T& streamableObject)
     std::stringstream out;
     out << streamableObject;
     return out.str();
-}
-
-static string encodeSupportCounts(const ReadSupportCalculator& readSupportCalculator, int repeatSize)
-{
-    const string countsOfSpanningReads = to_string(readSupportCalculator.getCountOfConsistentSpanningReads(repeatSize));
-    const string countsOfFlankingReads = to_string(readSupportCalculator.getCountOfConsistentFlankingReads(repeatSize));
-    return countsOfSpanningReads + "-" + countsOfFlankingReads;
-}
-
-static string encodeRepeatAlleleSupport(const string& repeatUnit, const RepeatFindings& repeatFindings, int readLength)
-{
-    const int maxUnitsInRead = std::ceil(readLength / static_cast<double>(repeatUnit.length()));
-    ReadSupportCalculator readSupportCalculator(
-        maxUnitsInRead, repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads());
-
-    assert(repeatFindings.optionalGenotype());
-    const RepeatGenotype& genotype = *repeatFindings.optionalGenotype();
-
-    string supportEncoding = encodeSupportCounts(readSupportCalculator, genotype.shortAlleleSizeInUnits());
-
-    if (genotype.numAlleles() == 2)
-    {
-        supportEncoding += "/" + encodeSupportCounts(readSupportCalculator, genotype.longAlleleSizeInUnits());
-    }
-
-    return supportEncoding;
 }
 
 static string encodeGenotype(const RepeatGenotype& genotype)
@@ -136,36 +109,37 @@ void VariantJsonWriter::visit(const RepeatFindings* repeatFindingsPtr)
     record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
 
     const auto repeatNodeId = variantSpec_.nodes().front();
-    const auto& repeatUnit = regionSpec_.regionGraph().nodeSeq(repeatNodeId);
+    const auto& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
     record_["RepeatUnit"] = repeatUnit;
 
     record_["CountsOfSpanningReads"] = streamToString(repeatFindings.countsOfSpanningReads());
     record_["CountsOfFlankingReads"] = streamToString(repeatFindings.countsOfFlankingReads());
     record_["CountsOfInrepeatReads"] = streamToString(repeatFindings.countsOfInrepeatReads());
 
-    if (repeatFindings.optionalGenotype() != boost::none)
+    if (repeatFindings.optionalGenotype())
     {
         record_["Genotype"] = encodeGenotype(*repeatFindings.optionalGenotype());
         record_["GenotypeConfidenceInterval"] = streamToString(*repeatFindings.optionalGenotype());
-        record_["GenotypeSupport"] = encodeRepeatAlleleSupport(repeatUnit, repeatFindings, sampleParams_.readLength());
     }
 }
 
 void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
 {
-    const SmallVariantFindings& indelFindings = *smallVariantFindingsPtr;
+    const SmallVariantFindings& findings = *smallVariantFindingsPtr;
     record_.clear();
     record_["VariantId"] = variantSpec_.id();
     record_["VariantType"] = streamToString(variantSpec_.classification().type);
     record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
-    record_["ReferenceRegion"] = streamToString(variantSpec_.referenceLocus());
-    record_["CountOfRefReads"] = indelFindings.numRefReads();
-    record_["CountOfAltReads"] = indelFindings.numAltReads();
-    record_["StatusOfRefAllele"] = streamToString(indelFindings.refAllelePresenceStatus());
-    record_["StatusOfAltAllele"] = streamToString(indelFindings.altAllelePresenceStatus());
-    if (indelFindings.optionalGenotype() != boost::none)
+    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec_.referenceLocus());
+    record_["CountOfRefReads"] = findings.numRefReads();
+    record_["CountOfAltReads"] = findings.numAltReads();
+    record_["StatusOfRefAllele"] = streamToString(findings.refAllelePresenceStatus().Status);
+    record_["LogLikelihoodRefAllelePresent"] = streamToString(findings.refAllelePresenceStatus().LikelihoodRatio);
+    record_["StatusOfAltAllele"] = streamToString(findings.altAllelePresenceStatus().Status);
+    record_["LogLikelihoodAltAllelePresent"] = streamToString(findings.altAllelePresenceStatus().LikelihoodRatio);
+    if (findings.optionalGenotype())
     {
-        record_["Genotype"] = streamToString(*indelFindings.optionalGenotype());
+        record_["Genotype"] = streamToString(*findings.optionalGenotype());
     }
 }
 

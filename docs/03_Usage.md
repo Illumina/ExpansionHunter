@@ -26,10 +26,6 @@ optional arguments.
 * `--sex <arg>` Specifies sex of the sample; can be either `male` or `female`
   (default). This parameter only affects repeats on sex chromosomes.
 
-* `--genome-coverage <float>` Specifies read depth on diploid chromosomes.
-  Specifying read depth is required for BAM files containing a subset of
-  alignments or CRAMs.
-
 * `--region-extension-length <int>` Specifies how far from on/off-target regions
    to search for informative reads. Set to 1000 by default.
 

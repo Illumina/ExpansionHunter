@@ -93,17 +93,19 @@ repeats with repeat units CAG and CCG separated by the sequence CAACAG.
 Fields `ReferenceRegion` and `VariantStatus` contain reference region and status
 of each constituent repeat. By default, the program assigns an identifier to
 each variant consisting of the locus id and reference region. So the two repeats
-receive ids HTT_4:3076603-3076660 and HTT_4:3076666-3076693 respectively.
+receive ids HTT_4:3076603-3076660 and HTT_4:3076666-3076693 respectively. An
+optional field `VariantId` allows to assign custom variant ids to each
+variant.
 
 The following section describes loci-specification records that the catalogs are
 comprised of.
 
 
-## The structure of loci-specification records
+## Structure of a locus-specification record
 
-When a region contains a single variant, there is no difference between the
-repeat and the region containing it. So field names refer only to the repeat as
-shown in the table below.
+When locus contains a single variant, there is no difference between the
+variant and the locus containing it. So field names refer to the variant
+itself.
 
 * `LocusId` Unique identifier of the entire locus
 
@@ -116,6 +118,11 @@ shown in the table below.
 
 * `VariantType` Can be either `RareRepeat`, `RareRepeat`, or `SmallVariant`
   with the latter corresponding to insertions deletions or sequence swaps.
+
+* `VariantId` Optional array of unique variant ids. If missing, variant ids
+  are synthesized according to this rule: If there is only one variant in
+  a locus then it gets the same id as the locus itself. If locus contains
+  multiple variants, each one of them gets id of the form `<LocusId>_<ReferenceRegionOfTheVariant>`.
 
 * `OfftargetRegions` Array of regions where informative reads may misalign;
    only used for variants of type `RareRepeat`.

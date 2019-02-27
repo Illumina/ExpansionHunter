@@ -1,23 +1,24 @@
 //
 // Expansion Hunter
-// Copyright (c) 2016 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>,
 //         Mitch Bekritsky <mbekritsky@illumina.com>, Richard Shaw
 // Concept: Michael Eberle <meberle@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include <fstream>
@@ -40,8 +41,8 @@
 #include "output/JsonWriter.hh"
 #include "output/VcfWriter.hh"
 #include "region_analysis/VariantFindings.hh"
-#include "sample_analysis/HtsSeekingSampleAnalyzer.hh"
-#include "sample_analysis/HtsStreamingSampleAnalyzer.hh"
+#include "sample_analysis/HtsSeekingSampleAnalysis.hh"
+#include "sample_analysis/HtsStreamingSampleAnalysis.hh"
 #include "src/Version.hh"
 
 namespace spd = spdlog;
@@ -65,6 +66,9 @@ void setLogLevel(LogLevel logLevel)
 {
     switch (logLevel)
     {
+    case LogLevel::kTrace:
+        spdlog::set_level(spdlog::level::trace);
+        break;
     case LogLevel::kDebug:
         spdlog::set_level(spdlog::level::debug);
         break;
@@ -101,7 +105,6 @@ int main(int argc, char** argv)
         SampleParameters& sampleParams = params.sample();
 
         console->info("Analyzing sample {}", sampleParams.id());
-        console->info("Read length is set to {}", sampleParams.readLength());
 
         const InputPaths& inputPaths = params.inputPaths();
 
@@ -113,28 +116,27 @@ int main(int argc, char** argv)
         const RegionCatalog regionCatalog
             = loadLocusCatalogFromDisk(inputPaths.catalog(), sampleParams.sex(), heuristicParams, reference);
 
-        console->info("Running sample analysis");
         const OutputPaths& outputPaths = params.outputPaths();
 
         BamletWriter bamletWriter(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
 
         SampleFindings sampleFindings;
-        if (isBamFile(inputPaths.htsFile()))
+        if (params.analysisMode() == AnalysisMode::kSeeking)
         {
-            sampleFindings
-                = htsSeekingSampleAnalysis(inputPaths, sampleParams, heuristicParams, regionCatalog, bamletWriter);
+            console->info("Running sample analysis in seeking mode");
+            sampleFindings = htsSeekingSampleAnalysis(inputPaths, heuristicParams, regionCatalog, bamletWriter);
         }
         else
         {
-            sampleFindings
-                = htslibStreamingSampleAnalyzer(inputPaths, sampleParams, heuristicParams, regionCatalog, bamletWriter);
+            console->info("Running sample analysis in streaming mode");
+            sampleFindings = htsStreamingSampleAnalysis(inputPaths, heuristicParams, regionCatalog, bamletWriter);
         }
 
         console->info("Writing output to disk");
-        VcfWriter vcfWriter(sampleParams, reference, regionCatalog, sampleFindings);
+        VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
         writeToFile(outputPaths.vcf(), vcfWriter);
 
-        JsonWriter jsonWriter(sampleParams, reference.contigInfo(), regionCatalog, sampleFindings);
+        JsonWriter jsonWriter(reference.contigInfo(), regionCatalog, sampleFindings);
         writeToFile(outputPaths.json(), jsonWriter);
     }
     catch (const std::exception& e)

@@ -1,21 +1,22 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #pragma once
@@ -35,8 +36,15 @@
 namespace ehunter
 {
 
+enum class AnalysisMode
+{
+    kSeeking,
+    kStreaming
+};
+
 enum class LogLevel
 {
+    kTrace,
     kDebug,
     kInfo,
     kWarn,
@@ -86,37 +94,18 @@ private:
 class SampleParameters
 {
 public:
-    SampleParameters(
-        std::string id, Sex sex, int readLength,
-        boost::optional<double> optionalHaplotypeDepth)
+    SampleParameters(std::string id, Sex sex)
         : id_(std::move(id))
         , sex_(sex)
-        , readLength_(readLength)
-        , optionalHaplotypeDepth_(optionalHaplotypeDepth)
     {
     }
 
     const std::string& id() const { return id_; }
     const Sex& sex() const { return sex_; }
-    int readLength() const { return readLength_; }
-
-    double haplotypeDepth() const
-    {
-        if (!optionalHaplotypeDepth_)
-        {
-            throw std::logic_error("Attempting to access unset depth parameter");
-        }
-        return *optionalHaplotypeDepth_;
-    }
-
-    bool isHaplotypeDepthSet() const { return optionalHaplotypeDepth_.is_initialized(); }
-    void setHaplotypeDepth(double haplotypeDepth) { optionalHaplotypeDepth_ = haplotypeDepth; }
 
 private:
     std::string id_;
     Sex sex_;
-    int readLength_;
-    boost::optional<double> optionalHaplotypeDepth_;
 };
 
 class HeuristicParameters
@@ -124,7 +113,7 @@ class HeuristicParameters
 public:
     HeuristicParameters(
         int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType,
-        int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 5)
+        int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 14)
         : regionExtensionLength_(regionExtensionLength)
         , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
         , skipUnaligned_(skipUnaligned)
@@ -159,11 +148,12 @@ class ProgramParameters
 public:
     ProgramParameters(
         InputPaths inputPaths, OutputPaths outputPaths, SampleParameters sample, HeuristicParameters heuristics,
-        LogLevel logLevel)
+        AnalysisMode analysisMode, LogLevel logLevel)
         : inputPaths_(std::move(inputPaths))
         , outputPaths_(std::move(outputPaths))
         , sample_(std::move(sample))
         , heuristics_(std::move(heuristics))
+        , analysisMode_(analysisMode)
         , logLevel_(logLevel)
     {
     }
@@ -172,6 +162,7 @@ public:
     const OutputPaths& outputPaths() const { return outputPaths_; }
     SampleParameters& sample() { return sample_; }
     const HeuristicParameters& heuristics() const { return heuristics_; }
+    AnalysisMode analysisMode() const { return analysisMode_; }
     LogLevel logLevel() const { return logLevel_; }
 
 private:
@@ -179,6 +170,7 @@ private:
     OutputPaths outputPaths_;
     SampleParameters sample_;
     HeuristicParameters heuristics_;
+    AnalysisMode analysisMode_;
     LogLevel logLevel_;
 };
 

@@ -1,24 +1,25 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
-#include "region_analysis/RegionAnalyzer.hh"
+#include "region_analysis/LocusAnalyzer.hh"
 
 #include "gtest/gtest.h"
 
@@ -43,32 +44,31 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
     vector<GenomicRegion> referenceRegions = { GenomicRegion(1, 1, 2) };
 
     NodeToRegionAssociation dummyAssociation;
-    LocusSpecification regionSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation);
+    LocusSpecification locusSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
-    regionSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
+    locusSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
 
-    SampleParameters sampleParams("dummy_sample", Sex::kFemale, 10, 5.0);
     HeuristicParameters heuristicParams(1000, 20, true, GetParam(), 4, 1, 5);
 
     graphtools::BlankAlignmentWriter blankAlignmentWriter;
-    RegionAnalyzer regionAnalyzer(regionSpec, heuristicParams, blankAlignmentWriter);
+    LocusAnalyzer locusAnalyzer(locusSpec, heuristicParams, blankAlignmentWriter);
 
-    regionAnalyzer.processMates(
+    locusAnalyzer.processMates(
         Read(ReadId("read1", MateNumber::kFirstMate), "CGACCCATGT"),
-        Read(ReadId("read1", MateNumber::kSecondMate), "GACCCATGTC"));
+        Read(ReadId("read1", MateNumber::kSecondMate), "GACCCATGTC"), RegionType::kTarget);
 
-    regionAnalyzer.processMates(
+    locusAnalyzer.processMates(
         Read(ReadId("read2", MateNumber::kFirstMate), "CGACATGT"),
-        Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC"));
+        Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC"), RegionType::kTarget);
 
-    RegionFindings regionFindings = regionAnalyzer.analyze(sampleParams);
+    LocusFindings locusFindings = locusAnalyzer.analyze();
 
     std::unique_ptr<VariantFindings> repeatFindingsPtr(new RepeatFindings(
         CountTable({ { 1, 2 }, { 3, 2 } }), CountTable(), CountTable(), RepeatGenotype(1, { 1, 3 })));
-    RegionFindings expectedFindings;
-    expectedFindings.emplace(std::make_pair("repeat", std::move(repeatFindingsPtr)));
+    LocusFindings expectedFindings;
+    expectedFindings.findingsForEachVariant.emplace("repeat", std::move(repeatFindingsPtr));
 
-    ASSERT_EQ(expectedFindings, regionFindings);
+    ASSERT_EQ(expectedFindings.findingsForEachVariant, locusFindings.findingsForEachVariant);
 }
 
 TEST_P(AlignerTests, RegionAnalysis_ShortMultiUnitRepeat_Genotyped)

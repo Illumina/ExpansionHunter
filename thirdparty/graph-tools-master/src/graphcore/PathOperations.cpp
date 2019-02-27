@@ -1,31 +1,23 @@
 //
 // GraphTools library
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2017-2019 Illumina, Inc.
 // All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>,
 //         Peter Krusche <pkrusche@illumina.com>
 //
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions are met:
-
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-
-// 2. Redistributions in binary form must reproduce the above copyright notice,
-//    this list of conditions and the following disclaimer in the documentation
-//    and/or other materials provided with the distribution.
-
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-// ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-// WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-// DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-// OR TORT INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 
 #include "graphcore/PathOperations.hh"
 
@@ -35,6 +27,8 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+
+#include "graphutils/BaseMatching.hh"
 
 using std::list;
 using std::set;
@@ -134,7 +128,7 @@ Path extendPathEndMatching(Path path, const std::string& query, size_t qpos)
         const std::string& node_sequence = graph.nodeSeq(node_in_graph);
 
         while (pos_in_query < query.size() && pos_in_node < node_sequence.size()
-               && query.at(pos_in_query) == node_sequence.at(pos_in_node))
+               && checkIfReferenceBaseMatchesQueryBase(node_sequence.at(pos_in_node), query.at(pos_in_query)))
         {
             moved = true;
             ++pos_in_node;
@@ -160,7 +154,8 @@ Path extendPathEndMatching(Path path, const std::string& query, size_t qpos)
                 size_t pos_in_successor = 0;
                 const std::string& successor_sequence = graph.nodeSeq(successor);
                 while (pos_in_successor < successor_min_size && pos_in_query + pos_in_successor < query.size()
-                       && successor_sequence.at(pos_in_successor) == query[pos_in_query + pos_in_successor])
+                       && checkIfReferenceBaseMatchesQueryBase(
+                              successor_sequence.at(pos_in_successor), query[pos_in_query + pos_in_successor]))
                 {
                     ++pos_in_successor;
                 }
@@ -207,7 +202,8 @@ Path extendPathStartMatching(Path path, const std::string& query, size_t& pos_in
 
         const std::string& node_sequence = graph.nodeSeq(node_in_graph);
 
-        while (pos_in_query > 0 && pos_in_node > 0 && query.at(pos_in_query - 1) == node_sequence.at(pos_in_node - 1))
+        while (pos_in_query > 0 && pos_in_node > 0
+               && checkIfReferenceBaseMatchesQueryBase(node_sequence.at(pos_in_node - 1), query.at(pos_in_query - 1)))
         {
             moved = true;
             --pos_in_node;
@@ -234,7 +230,8 @@ Path extendPathStartMatching(Path path, const std::string& query, size_t& pos_in
                 size_t match_length = 0;
                 while (pos_in_predecessor > (predecessor_sequence.size() - predecessor_min_size)
                        && pos_in_query - match_length > 0
-                       && predecessor_sequence.at(pos_in_predecessor - 1) == query[pos_in_query - match_length - 1])
+                       && checkIfReferenceBaseMatchesQueryBase(
+                              predecessor_sequence.at(pos_in_predecessor - 1), query[pos_in_query - match_length - 1]))
                 {
                     --pos_in_predecessor;
                     ++match_length;

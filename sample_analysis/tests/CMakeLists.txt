@@ -1,0 +1,3 @@
+add_executable(GenomeMaskTest GenomeMaskTest.cpp)
+target_link_libraries(GenomeMaskTest sample_analysis gtest gmock_main)
+add_test(NAME GenomeMaskTest COMMAND GenomeMaskTest)

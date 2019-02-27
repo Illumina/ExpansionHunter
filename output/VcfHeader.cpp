@@ -1,21 +1,22 @@
 //
 // Expansion Hunter
-// Copyright (c) 2018 Illumina, Inc.
+// Copyright 2016-2019 Illumina, Inc.
+// All rights reserved.
 //
 // Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// at your option) any later version.
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
 //
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
+//      http://www.apache.org/licenses/LICENSE-2.0
 //
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
 //
 
 #include "output/VcfHeader.hh"
@@ -28,6 +29,14 @@ using std::string;
 namespace ehunter
 {
 
+void FieldDescriptionWriter::addCommonFields()
+{
+    const string kVaridFieldDescription = "Variant identifier as specified in the variant catalog";
+    tryAddingFieldDescription(FieldType::kInfo, "VARID", "1", "String", kVaridFieldDescription);
+    tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
+    tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
+}
+
 void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
 {
     if (!repeatFindingsPtr->optionalGenotype())
@@ -35,15 +44,15 @@ void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
         return;
     }
 
+    addCommonFields();
     tryAddingFieldDescription(FieldType::kInfo, "SVTYPE", "1", "String", "Type of structural variant");
     tryAddingFieldDescription(FieldType::kInfo, "END", "1", "Integer", "End position of the variant");
     tryAddingFieldDescription(FieldType::kInfo, "REF", "1", "Integer", "Reference copy number");
     tryAddingFieldDescription(FieldType::kInfo, "RL", "1", "Integer", "Reference length in bp");
     tryAddingFieldDescription(FieldType::kInfo, "RU", "1", "String", "Repeat unit in the reference orientation");
 
-    const string kRepidFieldDescription = "Repeat identifier from the repeat specification file";
+    const string kRepidFieldDescription = "Repeat identifier as specified in the variant catalog";
     tryAddingFieldDescription(FieldType::kInfo, "REPID", "1", "String", kRepidFieldDescription);
-    tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
 
     const string kSoFieldDescription
         = "Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, "
@@ -63,10 +72,8 @@ void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
     const string kAdirFieldDescription = "Number of in-repeat reads consistent with the allele";
     tryAddingFieldDescription(FieldType::kFormat, "ADIR", "1", "String", kAdirFieldDescription);
 
-    tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
-
     const auto repeatNodeId = variantSpec_.nodes().front();
-    const string& repeatUnit = regionSpec_.regionGraph().nodeSeq(repeatNodeId);
+    const string& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
@@ -93,9 +100,19 @@ void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindi
     {
         return;
     }
-
-    tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
-    tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
+    addCommonFields();
+    tryAddingFieldDescription(
+            FieldType::kFormat, "AD", ".", "Integer",
+            "Allelic depths for the ref and alt alleles in the order listed");
+    if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
+    {
+        tryAddingFieldDescription(
+                FieldType::kFormat, "RPL", "1", "Float",
+                "Log-Likelihood ratio for the presence of the ref allele");
+        tryAddingFieldDescription(
+                FieldType::kFormat, "DST", "1", "Character",
+                "Status ('+' affected, '-' unaffected, '?' uncertain) for the test specified by the DID value");
+    }
 }
 
 void FieldDescriptionWriter::tryAddingFieldDescription(
@@ -125,24 +142,24 @@ FieldDescription::FieldDescription(
 {
 }
 
-void outputVcfHeader(const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings, ostream& out)
+void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sampleFindings, ostream& out)
 {
     out << "##fileformat=VCFv4.1\n";
 
     FieldDescriptionCatalog fieldDescriptionCatalog;
 
-    for (const auto& regionIdAndFindings : sampleFindings)
+    for (const auto& locusIdAndFindings : sampleFindings)
     {
-        const string& regionId = regionIdAndFindings.first;
-        const LocusSpecification& regionSpec = regionCatalog.at(regionId);
-        const RegionFindings& regionFindings = regionIdAndFindings.second;
+        const string& locusId = locusIdAndFindings.first;
+        const LocusSpecification& locusSpec = locusCatalog.at(locusId);
+        const LocusFindings& locusFindings = locusIdAndFindings.second;
 
-        for (const auto& variantIdAndFindings : regionFindings)
+        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
             const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = regionSpec.getVariantSpecById(variantId);
+            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
-            FieldDescriptionWriter descriptionWriter(regionSpec, variantSpec);
+            FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
             variantIdAndFindings.second->accept(&descriptionWriter);
             descriptionWriter.dumpTo(fieldDescriptionCatalog);
         }
