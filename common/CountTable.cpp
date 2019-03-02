@@ -22,6 +22,8 @@
 
 #include "common/CountTable.hh"
 
+#include <stdexcept>
+
 using std::string;
 using std::to_string;
 using std::vector;
@@ -31,33 +33,51 @@ namespace ehunter
 
 int32_t CountTable::countOf(int32_t element) const
 {
-    if (elements_to_counts_.find(element) == elements_to_counts_.end())
+    if (elementsToCounts_.find(element) == elementsToCounts_.end())
     {
         return 0;
     }
-    return elements_to_counts_.at(element);
+    return elementsToCounts_.at(element);
 }
 
 void CountTable::setCountOf(int32_t element, int32_t count)
 {
-    elements_to_counts_[element] = count;
+    elementsToCounts_[element] = count;
     if (count == 0)
     {
-        elements_to_counts_.erase(element);
+        elementsToCounts_.erase(element);
     }
 }
 
-void CountTable::incrementCountOf(int32_t element) { ++elements_to_counts_[element]; }
+void CountTable::incrementCountOf(int32_t element, int32_t increment)
+{
+    if (increment <= 0)
+    {
+        throw std::logic_error("CountTables require positive increments");
+    }
+
+    elementsToCounts_[element] += increment;
+}
 
 vector<int32_t> CountTable::getElementsWithNonzeroCounts() const
 {
     vector<int32_t> elements;
-    for (const auto& element_count : elements_to_counts_)
+    for (const auto& element_count : elementsToCounts_)
     {
         elements.push_back(element_count.first);
     }
 
     return elements;
+}
+
+CountTable& CountTable::operator=(const CountTable& other)
+{
+    if (this != &other)
+    {
+        elementsToCounts_ = other.elementsToCounts_;
+    }
+
+    return *this;
 }
 
 std::ostream& operator<<(std::ostream& out, const CountTable& count_table)
@@ -83,6 +103,32 @@ std::ostream& operator<<(std::ostream& out, const CountTable& count_table)
     out << encoding;
 
     return out;
+}
+
+CountTable collapseTopElements(const CountTable& countTable, int upperBound)
+{
+    if (upperBound < 0)
+    {
+        throw std::logic_error("CountTables cannot be truncated to negative values");
+    }
+
+    CountTable truncatedTable;
+
+    for (auto element : countTable.getElementsWithNonzeroCounts())
+    {
+        auto count = countTable.countOf(element);
+
+        if (element < upperBound)
+        {
+            truncatedTable.setCountOf(element, count);
+        }
+        else
+        {
+            truncatedTable.incrementCountOf(upperBound, count);
+        }
+    }
+
+    return truncatedTable;
 }
 
 }

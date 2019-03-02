@@ -40,6 +40,7 @@ using graphtools::prettyPrint;
 using graphtools::splitStringByDelimiter;
 using std::list;
 using std::string;
+using std::unique_ptr;
 using std::vector;
 
 static bool checkIfAlignmentIsConfident(
@@ -136,54 +137,56 @@ void RepeatAnalyzer::summarizeAlignmentsToReadCounts(const RepeatAlignmentStats&
     }
 }
 
-std::unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) const
+static vector<int32_t> generateCandidateAlleleSizes(
+    const CountTable& spanningTable, const CountTable& flankingTable, const CountTable& inrepeatTable)
 {
-    //     numRepeatUnitsOverlapped = std::min(numRepeatUnitsOverlapped, maxNumUnitsInRead_);
+    vector<int32_t> candidateSizes = spanningTable.getElementsWithNonzeroCounts();
+    const int32_t longestSpanning
+        = candidateSizes.empty() ? 0 : *std::max_element(candidateSizes.begin(), candidateSizes.end());
 
-    const vector<int32_t> candidateAlleleSizes = generateCandidateAlleleSizes();
+    const vector<int32_t> flankingSizes = flankingTable.getElementsWithNonzeroCounts();
+    const int32_t longestFlanking
+        = flankingSizes.empty() ? 0 : *std::max_element(flankingSizes.begin(), flankingSizes.end());
 
-    const int32_t repeatUnitLength = repeatUnit_.length();
-    const double propCorrectMolecules = 0.97;
-    const int maxNumUnitsInRead = std::ceil(stats.medianReadLength() / static_cast<double>(repeatUnitLength));
-
-    const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
-
-    RepeatGenotyper repeatGenotyper(
-        haplotypeDepth, expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
-        countsOfSpanningReads_, countsOfFlankingReads_, countsOfInrepeatReads_);
-
-    optional<RepeatGenotype> repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
-
-    std::unique_ptr<VariantFindings> variantFiningsPtr(
-        new RepeatFindings(countsOfSpanningReads_, countsOfFlankingReads_, countsOfInrepeatReads_, repeatGenotype));
-    return variantFiningsPtr;
-}
-
-vector<int32_t> RepeatAnalyzer::generateCandidateAlleleSizes() const
-{
-    vector<int32_t> candidateAlleleSizes = countsOfSpanningReads_.getElementsWithNonzeroCounts();
-    const int32_t longestSpanning = candidateAlleleSizes.empty()
-        ? 0
-        : *std::max_element(candidateAlleleSizes.begin(), candidateAlleleSizes.end());
-
-    const vector<int32_t> repeatSizesInFlankingReads = countsOfFlankingReads_.getElementsWithNonzeroCounts();
-    const int32_t longestFlanking = repeatSizesInFlankingReads.empty()
-        ? 0
-        : *std::max_element(repeatSizesInFlankingReads.begin(), repeatSizesInFlankingReads.end());
-
-    const vector<int32_t> repeatSizesInInrepeatReads = countsOfInrepeatReads_.getElementsWithNonzeroCounts();
-    const int32_t longestInrepeat = repeatSizesInInrepeatReads.empty()
-        ? 0
-        : *std::max_element(repeatSizesInInrepeatReads.begin(), repeatSizesInInrepeatReads.end());
+    const vector<int32_t> inrepeatSizes = inrepeatTable.getElementsWithNonzeroCounts();
+    const int32_t longestInrepeat
+        = inrepeatSizes.empty() ? 0 : *std::max_element(inrepeatSizes.begin(), inrepeatSizes.end());
 
     const int32_t longestNonSpanning = std::max(longestFlanking, longestInrepeat);
 
     if (longestSpanning < longestNonSpanning)
     {
-        candidateAlleleSizes.push_back(longestNonSpanning);
+        candidateSizes.push_back(longestNonSpanning);
     }
 
-    return candidateAlleleSizes;
+    return candidateSizes;
+}
+
+unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) const
+{
+
+    const int32_t repeatUnitLength = repeatUnit_.length();
+    const double propCorrectMolecules = 0.97;
+    const int maxNumUnitsInRead = std::ceil(stats.medianReadLength() / static_cast<double>(repeatUnitLength));
+
+    auto truncatedSpanningTable = collapseTopElements(countsOfSpanningReads_, maxNumUnitsInRead);
+    auto truncatedFlankingTable = collapseTopElements(countsOfFlankingReads_, maxNumUnitsInRead);
+    auto truncatedInrepeatTable = collapseTopElements(countsOfInrepeatReads_, maxNumUnitsInRead);
+
+    const vector<int32_t> candidateAlleleSizes
+        = generateCandidateAlleleSizes(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable);
+
+    const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
+
+    RepeatGenotyper repeatGenotyper(
+        haplotypeDepth, expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
+        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable);
+
+    optional<RepeatGenotype> repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
+
+    unique_ptr<VariantFindings> variantFindingsPtr(
+        new RepeatFindings(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, repeatGenotype));
+    return variantFindingsPtr;
 }
 
 }

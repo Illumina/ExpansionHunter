@@ -66,7 +66,6 @@ private:
     graphtools::NodeId repeatNodeId() const { return nodeIds_.front(); }
     RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
     void summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats);
-    std::vector<int32_t> generateCandidateAlleleSizes() const;
 
     const std::string repeatUnit_;
     RepeatAlignmentClassifier alignmentClassifier_;
