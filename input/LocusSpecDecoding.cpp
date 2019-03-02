@@ -21,7 +21,9 @@
 
 #include "input/LocusSpecDecoding.hh"
 
+#include <algorithm>
 #include <memory>
+#include <stdexcept>
 
 #include <boost/optional.hpp>
 
@@ -59,9 +61,24 @@ static string extendLocusStructure(
     const Reference& reference, const vector<GenomicRegion>& referenceRegions, const string& flanklessLocusStructure)
 {
 
-    const auto& leftFlank = referenceRegions.front();
-    const auto& rightFlank = referenceRegions.back();
-    return reference.getSequence(leftFlank) + flanklessLocusStructure + reference.getSequence(rightFlank);
+    const auto& leftFlankRegion = referenceRegions.front();
+    string leftFlank = reference.getSequence(leftFlankRegion);
+
+    const auto& rightFlankRegion = referenceRegions.back();
+    string rightFlank = reference.getSequence(rightFlankRegion);
+
+    const size_t maxNsAllowedInFlanks = 5;
+    const size_t numNsInLeftFlank = std::count(leftFlank.begin(), leftFlank.end(), 'N');
+    const size_t numNsInRightFlank = std::count(rightFlank.begin(), rightFlank.end(), 'N');
+
+    if (numNsInLeftFlank + numNsInRightFlank > maxNsAllowedInFlanks)
+    {
+        const string message = "Flanks can contain at most " + to_string(maxNsAllowedInFlanks)
+            + " characters N but found " + to_string(numNsInLeftFlank + numNsInRightFlank) + " Ns";
+        throw std::runtime_error(message);
+    }
+
+    return leftFlank + flanklessLocusStructure + rightFlank;
 }
 
 static vector<GenomicRegion>
@@ -238,64 +255,71 @@ LocusSpecification decodeLocusSpecification(
     const LocusDescriptionFromUser& userDescription, Sex sampleSex, const Reference& reference,
     const HeuristicParameters& heuristicParams)
 {
-    assertValidity(userDescription);
-
-    const int kExtensionLength = heuristicParams.regionExtensionLength();
-    auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.referenceRegions);
-    auto completeLocusStructure
-        = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
-
-    GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
-    graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);
-    auto completeReferenceRegions = addReferenceRegionsForInterruptions(blueprint, referenceRegionsWithFlanks);
-
-    GenomicRegion referenceRegionForEntireLocus = mergeRegions(userDescription.referenceRegions);
-
-    vector<GenomicRegion> targetReadExtractionRegions;
-    for (const GenomicRegion& region : userDescription.targetRegions)
+    try
     {
-        targetReadExtractionRegions.push_back(region.extend(kExtensionLength));
-    }
-    if (targetReadExtractionRegions.empty())
-    {
-        targetReadExtractionRegions.push_back(referenceRegionForEntireLocus.extend(kExtensionLength));
-    }
+        assertValidity(userDescription);
 
-    const auto& contigName = reference.contigInfo().getContigName(referenceRegionForEntireLocus.contigIndex());
-    AlleleCount expectedAlleleCount = determineExpectedAlleleCount(sampleSex, contigName);
+        const int kExtensionLength = heuristicParams.regionExtensionLength();
+        auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.referenceRegions);
+        auto completeLocusStructure
+            = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
 
-    NodeToRegionAssociation referenceRegionsOfGraphNodes
-        = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
+        GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
+        graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);
+        auto completeReferenceRegions = addReferenceRegionsForInterruptions(blueprint, referenceRegionsWithFlanks);
 
-    LocusSpecification locusSpec(
-        userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,
-        referenceRegionsOfGraphNodes);
-    locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
+        GenomicRegion referenceRegionForEntireLocus = mergeRegions(userDescription.referenceRegions);
 
-    int variantIndex = 0;
-    for (const auto& feature : blueprint)
-    {
-        if (doesFeatureDefineVariant(feature.type))
+        vector<GenomicRegion> targetReadExtractionRegions;
+        for (const GenomicRegion& region : userDescription.targetRegions)
         {
-            const GenomicRegion& referenceRegion = userDescription.referenceRegions.at(variantIndex);
-
-            VariantTypeFromUser variantDescription = userDescription.variantTypesFromUser.at(variantIndex);
-            const string& variantId = userDescription.variantIds[variantIndex];
-            VariantType variantType = determineVariantType(feature.type);
-            VariantSubtype variantSubtype = determineVariantSubtype(feature.type, variantDescription, referenceRegion);
-
-            optional<NodeId> optionalReferenceNode = determineReferenceNode(feature, reference, referenceRegion);
-
-            VariantClassification classification(variantType, variantSubtype);
-
-            locusSpec.addVariantSpecification(
-                variantId, classification, referenceRegion, feature.nodeIds, optionalReferenceNode);
-
-            ++variantIndex;
+            targetReadExtractionRegions.push_back(region.extend(kExtensionLength));
         }
-    }
+        if (targetReadExtractionRegions.empty())
+        {
+            targetReadExtractionRegions.push_back(referenceRegionForEntireLocus.extend(kExtensionLength));
+        }
 
-    return locusSpec;
+        const auto& contigName = reference.contigInfo().getContigName(referenceRegionForEntireLocus.contigIndex());
+        AlleleCount expectedAlleleCount = determineExpectedAlleleCount(sampleSex, contigName);
+
+        NodeToRegionAssociation referenceRegionsOfGraphNodes
+            = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
+
+        LocusSpecification locusSpec(
+            userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,
+            referenceRegionsOfGraphNodes);
+        locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
+
+        int variantIndex = 0;
+        for (const auto& feature : blueprint)
+        {
+            if (doesFeatureDefineVariant(feature.type))
+            {
+                const GenomicRegion& referenceRegion = userDescription.referenceRegions.at(variantIndex);
+
+                VariantTypeFromUser variantDescription = userDescription.variantTypesFromUser.at(variantIndex);
+                const string& variantId = userDescription.variantIds[variantIndex];
+                VariantType variantType = determineVariantType(feature.type);
+                VariantSubtype variantSubtype
+                    = determineVariantSubtype(feature.type, variantDescription, referenceRegion);
+
+                optional<NodeId> optionalReferenceNode = determineReferenceNode(feature, reference, referenceRegion);
+
+                VariantClassification classification(variantType, variantSubtype);
+
+                locusSpec.addVariantSpecification(
+                    variantId, classification, referenceRegion, feature.nodeIds, optionalReferenceNode);
+
+                ++variantIndex;
+            }
+        }
+        return locusSpec;
+    }
+    catch (const std::exception& e)
+    {
+        throw std::runtime_error("Error loading locus " + userDescription.locusId + ": " + e.what());
+    }
 }
 
 void assertValidity(const LocusDescriptionFromUser& userDescription)

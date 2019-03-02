@@ -25,35 +25,48 @@
 #include <cstdint>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <vector>
 
-namespace ehunter {
-
+namespace ehunter
+{
 
 class CountTable
 {
 public:
     using const_iterator = std::map<int32_t, int32_t>::const_iterator;
-    const_iterator begin() const { return elements_to_counts_.begin(); }
-    const_iterator end() const { return elements_to_counts_.end(); }
+    const_iterator begin() const { return elementsToCounts_.begin(); }
+    const_iterator end() const { return elementsToCounts_.end(); }
 
-    CountTable(){};
-    explicit CountTable(const std::map<int32_t, int32_t>& elements_to_counts)
-        : elements_to_counts_(elements_to_counts){};
+    CountTable() = default;
+    explicit CountTable(std::map<int32_t, int32_t> elementsToCounts)
+        : elementsToCounts_(std::move(elementsToCounts)) {};
+    CountTable(const CountTable& other) = default;
 
-    void clear() { elements_to_counts_.clear(); }
+    void clear() { elementsToCounts_.clear(); }
 
     int32_t countOf(int32_t element) const;
-    void incrementCountOf(int32_t element);
+    void incrementCountOf(int32_t element, int32_t increment = 1);
     void setCountOf(int32_t element, int32_t count);
     std::vector<int32_t> getElementsWithNonzeroCounts() const;
 
-    bool operator==(const CountTable& other) const { return elements_to_counts_ == other.elements_to_counts_; }
+    CountTable& operator=(const CountTable& other);
+    bool operator==(const CountTable& other) const { return elementsToCounts_ == other.elementsToCounts_; }
 
 private:
-    std::map<int32_t, int32_t> elements_to_counts_;
+    std::map<int32_t, int32_t> elementsToCounts_;
 };
 
 std::ostream& operator<<(std::ostream& out, const CountTable& count_table);
+
+/**
+ * Collapses the elements above a specified bound; the counts of collapsed elements are summed together.
+ *
+ * @param countTable: Any count table
+ * @param upperBound: Elements above this bound are collapsed
+ * @return Table where counts of all elements exceeding the bound are removed and their counts are added to bound's
+ * count
+ */
+CountTable collapseTopElements(const CountTable& countTable, int upperBound);
 
 }

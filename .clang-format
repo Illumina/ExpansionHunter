@@ -1,1 +1,7 @@
-BasedOnStyle: Google
+BasedOnStyle: WebKit
+ColumnLimit: 120
+AlignAfterOpenBracket: AlwaysBreak
+BreakBeforeBraces: Allman
+BreakStringLiterals: true
+ReflowComments: true
+CompactNamespaces: true
