@@ -95,6 +95,24 @@ TEST(CheckingConsistencyOfAlignments, UnderlyingPathCanBeShortened_CheckFailed)
     ASSERT_FALSE(checkConsistency(alignment, "GGGTT"));
 }
 
+TEST(CheckingIfAlignmentIsLocal, AlignmentsThatStartAndEndWithMatch_CheckPassed)
+{
+    Graph graph = makeDeletionGraph("AAAA", "TTGG", "TTTT");
+
+    ASSERT_TRUE(isLocalAlignment(decodeGraphAlignment(0, "0[4M]1[2M]", &graph)));
+    ASSERT_TRUE(isLocalAlignment(decodeGraphAlignment(0, "0[4M]1[2M3S]", &graph)));
+    ASSERT_TRUE(isLocalAlignment(decodeGraphAlignment(0, "0[3S4M]1[2M]", &graph)));
+}
+
+TEST(CheckingIfAlignmentIsLocal, AlignmentsWithoutTerminalMatch_CheckFailed)
+{
+    Graph graph = makeDeletionGraph("AAAA", "TTGG", "TTTT");
+
+    ASSERT_FALSE(isLocalAlignment(decodeGraphAlignment(0, "0[1D3M]1[2M3S]", &graph)));
+    ASSERT_FALSE(isLocalAlignment(decodeGraphAlignment(1, "0[3M]1[2M1X3S]", &graph)));
+    ASSERT_FALSE(isLocalAlignment(decodeGraphAlignment(0, "0[1X3M]1[2M1I3S]", &graph)));
+}
+
 TEST(GettingQuerySequencesForEachNode, TypicalAlignment_SequencePairs)
 {
     //  AAA:CGG:CGG:TG

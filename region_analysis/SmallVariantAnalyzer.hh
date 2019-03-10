@@ -40,11 +40,12 @@ public:
     SmallVariantAnalyzer(
         std::string variantId, VariantSubtype variantSubtype, AlleleCount expectedAlleleCount,
         const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds,
-        boost::optional<graphtools::NodeId> optionalRefNode)
+        boost::optional<graphtools::NodeId> optionalRefNode, const GenotyperParameters& params)
         : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, std::move(nodeIds))
         , variantSubtype_(variantSubtype)
         , optionalRefNode_(optionalRefNode)
         , alignmentClassifier_(nodeIds_)
+        , allelePresenceChecker_(params.errorRate, params.likelihoodRatioThreshold)
         , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
         // Only indels are allowed

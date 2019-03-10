@@ -39,10 +39,11 @@ class VariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     VariantVcfWriter(
-        Reference& reference, const LocusSpecification& locusSpec, const VariantSpecification& variantSpec,
-        std::ostream& out)
+        Reference& reference, const LocusSpecification& locusSpec, double locusDepth,
+        const VariantSpecification& variantSpec, std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
+        , locusDepth_(locusDepth)
         , variantSpec_(variantSpec)
         , out_(out)
     {
@@ -55,6 +56,7 @@ public:
 private:
     Reference& reference_;
     const LocusSpecification& locusSpec_;
+    double locusDepth_;
     const VariantSpecification& variantSpec_;
     std::ostream& out_;
 };

@@ -52,7 +52,7 @@ template <typename T> static string encodeSampleFields(const deque<T>& fieldReco
     return boost::algorithm::join(fieldRecordEncodings, "/");
 }
 
-string VcfSampleFields::encode() const
+string VcfAlleleFields::encode() const
 {
     vector<string> encoding;
     encoding.push_back(encodeSampleFields(genotype_));
@@ -66,7 +66,7 @@ string VcfSampleFields::encode() const
     return boost::algorithm::join(encoding, ":");
 }
 
-void VcfSampleFields::addAlleleInfo(
+void VcfAlleleFields::addAlleleInfo(
     int alleleSize, ReadType source, NumericInterval confidenceInterval, int spanningReadCount, int flankingReadCount,
     int repeatReadCount)
 {
@@ -80,7 +80,7 @@ void VcfSampleFields::addAlleleInfo(
     }
 }
 
-void VcfSampleFields::addRefAlleleInfo(
+void VcfAlleleFields::addRefAlleleInfo(
     int alleleSize, ReadType source, NumericInterval confidenceInterval, int spanningReadCount, int flankingReadCount,
     int repeatReadCount)
 {
@@ -93,7 +93,7 @@ void VcfSampleFields::addRefAlleleInfo(
     repeatReadCounts_.push_front(repeatReadCount);
 }
 
-void VcfSampleFields::addAltAlleleInfo(
+void VcfAlleleFields::addAltAlleleInfo(
     int alleleSize, ReadType source, NumericInterval confidenceInterval, int spanningReadCount, int flankingReadCount,
     int repeatReadCount)
 {

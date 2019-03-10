@@ -22,6 +22,8 @@
 
 #include <stdexcept>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 #include "graphalign/LinearAlignmentOperations.hh"
 
 using std::list;
@@ -64,6 +66,37 @@ bool checkConsistency(const GraphAlignment& graph_alignment, const string& query
     }
 
     return true;
+}
+
+static bool startsWithMatch(const Alignment& alignment)
+{
+    for (const auto& operation : alignment)
+    {
+        if (operation.type() != OperationType::kSoftclip)
+        {
+            return operation.type() == OperationType::kMatch;
+        }
+    }
+
+    return false;
+}
+
+static bool endsWithMatch(const Alignment& alignment)
+{
+    for (const auto& operation : boost::adaptors::reverse(alignment))
+    {
+        if (operation.type() != OperationType::kSoftclip)
+        {
+            return operation.type() == OperationType::kMatch;
+        }
+    }
+
+    return false;
+}
+
+bool isLocalAlignment(const GraphAlignment& graph_alignment)
+{
+    return startsWithMatch(graph_alignment.front()) && endsWithMatch(graph_alignment.back());
 }
 
 static vector<string> splitGraphCigar(const string& graph_cigar)

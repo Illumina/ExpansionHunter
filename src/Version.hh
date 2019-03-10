@@ -28,6 +28,6 @@
 namespace ehunter
 {
 
-const std::string kProgramVersion = "Expansion Hunter v3.0.0-rc4";
+const std::string kProgramVersion = "Expansion Hunter v3.0.0-rc5";
 
 }

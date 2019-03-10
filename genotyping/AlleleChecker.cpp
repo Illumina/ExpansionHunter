@@ -67,18 +67,18 @@ AlleleChecker::check(double haplotypeDepth, int targetAlleleCount, int otherAlle
     const double ll1 = poissonLogPmf(haplotypeDepth, targetAlleleCount);
 
     AlleleCheckSummary result;
-    result.LikelihoodRatio = (ll1 - ll0) / log(10);
-    if (result.LikelihoodRatio < -log10(llrThreshold_))
+    result.logLikelihoodRatio = (ll1 - ll0) / log(10);
+    if (result.logLikelihoodRatio < -log10(likelihoodRatioThreshold_))
     {
-        result.Status = AlleleStatus::kAbsent;
+        result.status = AlleleStatus::kAbsent;
     }
-    else if (result.LikelihoodRatio > log10(llrThreshold_))
+    else if (result.logLikelihoodRatio > log10(likelihoodRatioThreshold_))
     {
-        result.Status = AlleleStatus::kPresent;
+        result.status = AlleleStatus::kPresent;
     }
     else
     {
-        result.Status = AlleleStatus::kUncertain;
+        result.status = AlleleStatus::kUncertain;
     }
     return result;
 }

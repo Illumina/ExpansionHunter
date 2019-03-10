@@ -33,6 +33,9 @@ namespace graphtools
 // Checks if graph alignment is consistent with the given query sequence
 bool checkConsistency(const GraphAlignment& graph_alignment, const std::string& query);
 
+// Returns true if (disregarding soft clipping) the alignment starts and ends with a match
+bool isLocalAlignment(const GraphAlignment& graph_alignment);
+
 // A node CIGAR is a string of the form "<node_id>[linear alignment CIGAR]". This function extracts node_id and
 // linear alignment CIGAR from the node CIGAR.
 void splitNodeCigar(const std::string& node_cigar, std::string& cigar, NodeId& node_id);

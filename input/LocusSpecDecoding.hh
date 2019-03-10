@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include "boost/optional.hpp"
+
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
@@ -49,6 +51,8 @@ struct LocusDescriptionFromUser
     std::vector<GenomicRegion> targetRegions;
     std::vector<GenomicRegion> offtargetRegions;
     std::vector<VariantTypeFromUser> variantTypesFromUser;
+    boost::optional<double> errorRate;
+    boost::optional<double> likelihoodRatioThreshold;
 };
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);

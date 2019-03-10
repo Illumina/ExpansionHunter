@@ -143,6 +143,14 @@ private:
     int seedAffixTrimLength_;
 };
 
+// Per-locus parameters (settable from variant catalog) controlling genotyping
+struct GenotyperParameters
+{
+    double errorRate = 0.02;
+    double likelihoodRatioThreshold = 10000;
+};
+
+
 class ProgramParameters
 {
 public:

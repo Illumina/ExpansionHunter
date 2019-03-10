@@ -34,6 +34,7 @@ void FieldDescriptionWriter::addCommonFields()
     const string kVaridFieldDescription = "Variant identifier as specified in the variant catalog";
     tryAddingFieldDescription(FieldType::kInfo, "VARID", "1", "String", kVaridFieldDescription);
     tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
+    tryAddingFieldDescription(FieldType::kFormat, "LC", "1", "Integer", "Locus coverage");
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
 }
 
@@ -102,16 +103,14 @@ void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindi
     }
     addCommonFields();
     tryAddingFieldDescription(
-            FieldType::kFormat, "AD", ".", "Integer",
-            "Allelic depths for the ref and alt alleles in the order listed");
+        FieldType::kFormat, "AD", ".", "Integer", "Allelic depths for the ref and alt alleles in the order listed");
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         tryAddingFieldDescription(
-                FieldType::kFormat, "RPL", "1", "Float",
-                "Log-Likelihood ratio for the presence of the ref allele");
+            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the ref allele");
         tryAddingFieldDescription(
-                FieldType::kFormat, "DST", "1", "Character",
-                "Status ('+' affected, '-' unaffected, '?' uncertain) for the test specified by the DID value");
+            FieldType::kFormat, "DST", "1", "Character",
+            "Status ('+' affected, '-' unaffected, '?' uncertain) for the test specified by the DID value");
     }
 }
 
@@ -121,9 +120,8 @@ void FieldDescriptionWriter::tryAddingFieldDescription(
     const auto key = std::make_pair(fieldType, id);
     if (fieldDescriptions_.find(key) == fieldDescriptions_.end())
     {
-        FieldDescription fieldDescription(
-            fieldType, id, std::move(number), std::move(contentType), std::move(description));
-        fieldDescriptions_.emplace(std::make_pair(std::move(key), std::move(fieldDescription)));
+        FieldDescription fieldDescription(fieldType, id, number, contentType, description);
+        fieldDescriptions_.emplace(std::make_pair(key, std::move(fieldDescription)));
     }
 }
 

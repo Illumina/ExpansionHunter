@@ -31,7 +31,7 @@
 
 #include "alignment/AlignmentFilters.hh"
 #include "alignment/AlignmentTweakers.hh"
-#include "alignment/GraphAlignmentOperations.hh"
+#include "alignment/OperationsOnAlignments.hh"
 #include "region_analysis/RepeatAnalyzer.hh"
 #include "region_analysis/SmallVariantAnalyzer.hh"
 
@@ -101,7 +101,8 @@ LocusAnalyzer::LocusAnalyzer(
         {
             variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
                 variantSpec.id(), variantSpec.classification().subtype, locusSpec.expectedAlleleCount(),
-                locusSpec.regionGraph(), variantSpec.nodes(), variantSpec.optionalRefNode()));
+                locusSpec.regionGraph(), variantSpec.nodes(), variantSpec.optionalRefNode(),
+                locusSpec.genotyperParameters()));
         }
         else
         {
@@ -223,7 +224,8 @@ LocusFindings LocusAnalyzer::analyze()
     LocusFindings locusFindings;
 
     locusFindings.optionalStats = statsCalculator_.estimate();
-    if (locusFindings.optionalStats)
+    const double kMinDepthAllowed = 10.0;
+    if (locusFindings.optionalStats && locusFindings.optionalStats->depth() >= kMinDepthAllowed)
     {
         for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
         {
@@ -232,6 +234,10 @@ LocusFindings LocusAnalyzer::analyze()
             const string& variantId = variantAnalyzerPtr->variantId();
             locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
         }
+    }
+    else
+    {
+        console_->warn("Skipping locus {} due to low coverage", locusId());
     }
 
     return locusFindings;

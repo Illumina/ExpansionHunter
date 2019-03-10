@@ -44,6 +44,21 @@ Sex decodeSampleSex(const std::string& encoding)
     }
 }
 
+std::ostream& operator<<(std::ostream& out, Sex sex)
+{
+    switch (sex)
+    {
+    case Sex::kFemale:
+        out << "Female";
+        break;
+    case Sex::kMale:
+        out << "Male";
+        break;
+    }
+
+    return out;
+}
+
 std::ostream& operator<<(std::ostream& out, ReadType readType)
 {
     switch (readType)
@@ -67,14 +82,11 @@ std::ostream& operator<<(std::ostream& out, AlleleCount alleleCount)
 {
     switch (alleleCount)
     {
-    case AlleleCount::kZero:
-        out << "Zero alleles";
-        break;
     case AlleleCount::kOne:
-        out << "One allele";
+        out << "One";
         break;
     case AlleleCount::kTwo:
-        out << "Two alleles";
+        out << "Two";
     }
     return out;
 }

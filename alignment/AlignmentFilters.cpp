@@ -29,7 +29,7 @@
 #include "graphalign/LinearAlignmentOperations.hh"
 #include "graphcore/PathOperations.hh"
 
-#include "alignment/GraphAlignmentOperations.hh"
+#include "alignment/OperationsOnAlignments.hh"
 
 using graphtools::GraphAlignment;
 using graphtools::NodeId;
@@ -59,12 +59,7 @@ bool checkIfLocallyPlacedReadPair(
         nonRepeatAlignmentScore += scoreAlignmentToNonloopNodes(*mateAlignment);
     }
 
-    if (nonRepeatAlignmentScore < kMinNonRepeatAlignmentScore)
-    {
-        return false;
-    }
-
-    return true;
+    return nonRepeatAlignmentScore >= kMinNonRepeatAlignmentScore;
 }
 
 bool checkIfUpstreamAlignmentIsGood(NodeId nodeId, GraphAlignment alignment)

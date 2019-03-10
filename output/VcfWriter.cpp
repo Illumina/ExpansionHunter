@@ -22,6 +22,7 @@
 #include "output/VcfWriter.hh"
 
 #include <deque>
+#include <memory>
 #include <stdexcept>
 #include <utility>
 #include <vector>
@@ -44,13 +45,6 @@ using std::vector;
 namespace ehunter
 {
 
-template <typename T> static string streamToString(const T& streamableObject)
-{
-    std::stringstream out;
-    out << streamableObject;
-    return out.str();
-}
-
 void writeBodyHeader(const string& sampleName, ostream& out)
 {
     out << "#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\t" << sampleName << "\n";
@@ -67,7 +61,7 @@ std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter)
 VcfWriter::VcfWriter(
     std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
     const SampleFindings& sampleFindings)
-    : sampleId_(sampleId)
+    : sampleId_(std::move(sampleId))
     , reference_(reference)
     , regionCatalog_(regionCatalog)
     , sampleFindings_(sampleFindings)
@@ -88,7 +82,10 @@ void VcfWriter::writeBody(ostream& out)
         const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
         const auto& variantFindings = locusFindings.findingsForEachVariant.at(variantId);
 
-        VariantVcfWriter variantWriter(reference_, locusSpec, variantSpec, out);
+        assert(locusFindings.optionalStats);
+        const double locusDepth = locusFindings.optionalStats->depth();
+
+        VariantVcfWriter variantWriter(reference_, locusSpec, locusDepth, variantSpec, out);
         variantFindings->accept(&variantWriter);
     }
 }
@@ -117,7 +114,9 @@ const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
     std::sort(tuples.begin(), tuples.end());
     std::vector<VcfWriter::LocusIdAndVariantId> idPairs;
     for (const auto& t : tuples)
+    {
         idPairs.emplace_back(std::get<3>(t));
+    }
 
     return idPairs;
 }
@@ -179,7 +178,7 @@ deterimineSupportType(const CountTable& spanningCounts, const CountTable& flanki
     return ReadType::kRepeat;
 }
 
-static string computeSampleFields(
+static string computeAlleleFields(
     const VariantSpecification& variantSpec, const string& repeatUnit, const RepeatFindings& repeatFindings)
 {
     const auto referenceLocus = variantSpec.referenceLocus();
@@ -191,13 +190,13 @@ static string computeSampleFields(
         repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(),
         repeatFindings.countsOfInrepeatReads());
 
-    VcfSampleFields sampleFields(referenceSizeInUnits);
+    VcfAlleleFields alleleFields(referenceSizeInUnits);
 
     const int shortAlleleSize = genotype.shortAlleleSizeInUnits();
     ReadType shortAlleleSupportType = deterimineSupportType(
         repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), shortAlleleSize);
 
-    sampleFields.addAlleleInfo(
+    alleleFields.addAlleleInfo(
         shortAlleleSize, shortAlleleSupportType, genotype.shortAlleleSizeInUnitsCi(),
         readSupportCalculator.getCountOfConsistentSpanningReads(shortAlleleSize),
         readSupportCalculator.getCountOfConsistentFlankingReads(shortAlleleSize),
@@ -209,14 +208,14 @@ static string computeSampleFields(
         ReadType longAlleleSupportType = deterimineSupportType(
             repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), longAlleleSize);
 
-        sampleFields.addAlleleInfo(
+        alleleFields.addAlleleInfo(
             genotype.longAlleleSizeInUnits(), longAlleleSupportType, genotype.longAlleleSizeInUnitsCi(),
             readSupportCalculator.getCountOfConsistentSpanningReads(longAlleleSize),
             readSupportCalculator.getCountOfConsistentFlankingReads(longAlleleSize),
             readSupportCalculator.getCountOfConsistentRepeatReads(longAlleleSize));
     }
 
-    return sampleFields.encode();
+    return alleleFields.encode();
 }
 
 void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
@@ -236,7 +235,8 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 
     const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
     const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
-    const string sampleFields = computeSampleFields(variantSpec_, repeatUnit, *repeatFindingsPtr);
+    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, *repeatFindingsPtr);
+    const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
 
     const int posPreceedingRepeat1based = referenceLocus.start();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
@@ -244,8 +244,8 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
         = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
     vector<string> vcfRecordElements
-        = { contigName, to_string(posPreceedingRepeat1based), ".",         leftFlankingBase, altSymbol, ".", "PASS",
-            infoFields, "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR",   sampleFields };
+        = { contigName, to_string(posPreceedingRepeat1based),  ".",         leftFlankingBase, altSymbol, ".", "PASS",
+            infoFields, "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC", sampleFields };
 
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
@@ -316,7 +316,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         string dst;
-        switch (smallVariantFindingsPtr->refAllelePresenceStatus().Status)
+        switch (smallVariantFindingsPtr->refAllelePresenceStatus().status)
         {
         case AlleleStatus::kAbsent:
             dst = "+";
@@ -331,8 +331,12 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
         sampleFields.push_back("DST");
         sampleValues.push_back(dst);
         sampleFields.push_back("RPL");
-        sampleValues.push_back(streamToString(smallVariantFindingsPtr->refAllelePresenceStatus().LikelihoodRatio));
+        sampleValues.push_back(streamToString(smallVariantFindingsPtr->refAllelePresenceStatus().logLikelihoodRatio));
     }
+
+    sampleFields.push_back("LC");
+    sampleValues.push_back(std::to_string(locusDepth_));
+
     auto genotype = smallVariantFindingsPtr->optionalGenotype();
     sampleFields.push_back("GT");
     sampleValues.push_back(genotype ? streamToString(*genotype) : ".");
@@ -340,7 +344,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
 
-    vector<string> line{
+    vector<string> line {
         contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
         sampleValue
     };

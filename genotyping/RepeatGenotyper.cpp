@@ -29,7 +29,7 @@
 
 #include <boost/math/distributions/poisson.hpp>
 
-#include "genotyping/RepeatLength.hh"
+#include "genotyping/RegionLengthEstimation.hh"
 #include "genotyping/ShortRepeatGenotyper.hh"
 
 namespace ehunter
@@ -199,7 +199,7 @@ void RepeatGenotyper::estimateRepeatAlleleSize(
     int32_t numIrrs, int32_t& size, int32_t& sizeLowerBound, int32_t& sizeUpperBound) const
 {
     const int32_t readLength = repeatUnitLen_ * maxNumUnitsInRead_;
-    estimateRepeatLen(numIrrs, readLength, haplotypeDepth_, size, sizeLowerBound, sizeUpperBound);
+    estimateRegionLength(numIrrs, readLength, haplotypeDepth_, size, sizeLowerBound, sizeUpperBound);
 
     size /= repeatUnitLen_;
     sizeLowerBound /= repeatUnitLen_;
@@ -225,11 +225,11 @@ void RepeatGenotyper::estimateFlankingAlleleSize(
     }
 
     // Haplotype depth should be twice as high because flanking reads come from both flanks of the repeat.
-    estimateRepeatLen(
+    estimateRegionLength(
         numFlankingReadsLongerThanSpanning, readLength, 2 * haplotypeDepth_, flankingAlleleSize, flankingAlleleCiLower,
         flankingAlleleCiUpper);
 
-    // estimateRepeatLen adds read length to size estimates so we need to subtract it out.
+    // estimateRegionLength adds read length to size estimates so we need to subtract it out.
     flankingAlleleSize -= readLength;
     flankingAlleleCiLower -= readLength;
     flankingAlleleCiUpper -= readLength;

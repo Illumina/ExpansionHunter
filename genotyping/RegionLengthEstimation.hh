@@ -23,12 +23,20 @@
 
 #pragma once
 
-#include <cstdint>
-
 namespace ehunter
 {
 
-void estimateRepeatLen(
-    int32_t numIrrs, int32_t readLen, double hapDepth, int32_t& lenEstimate, int32_t& lowerBound, int32_t& upperBound);
+/**
+ * Computes depth-based estimate of region length
+ *
+ * @param readCount: Number of reads that originate in a region
+ * @param readLength: Read length (assumed to be the same for all reads)
+ * @param depth: Read depth at the region
+ * @param regionLength[out]: Point estimate for region length
+ * @param lowerBound[out]: lower bound of region length
+ * @param upperBound[out]: upper bound of region length
+ */
+void estimateRegionLength(
+    int readCount, int readLength, double depth, int& regionLength, int& lowerBound, int& upperBound);
 
 }

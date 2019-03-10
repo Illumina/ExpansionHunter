@@ -136,7 +136,7 @@ int main(int argc, char** argv)
         VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
         writeToFile(outputPaths.vcf(), vcfWriter);
 
-        JsonWriter jsonWriter(reference.contigInfo(), regionCatalog, sampleFindings);
+        JsonWriter jsonWriter(sampleParams, reference.contigInfo(), regionCatalog, sampleFindings);
         writeToFile(outputPaths.json(), jsonWriter);
     }
     catch (const std::exception& e)

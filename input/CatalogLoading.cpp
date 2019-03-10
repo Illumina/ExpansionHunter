@@ -186,6 +186,15 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
         }
     }
 
+    if (checkIfFieldExists(locusJson, "ErrorRate"))
+    {
+        userDescription.errorRate = locusJson["ErrorRate"].get<double>();
+    }
+    if (checkIfFieldExists(locusJson, "LikelihoodRatioThreshold"))
+    {
+        userDescription.likelihoodRatioThreshold = locusJson["LikelihoodRatioThreshold"].get<double>();
+    }
+
     return userDescription;
 }
 

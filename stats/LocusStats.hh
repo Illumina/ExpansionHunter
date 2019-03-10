@@ -40,19 +40,19 @@ namespace ehunter
 class LocusStats
 {
 public:
-    LocusStats(int medianReadLength, double depth)
-        : medianReadLength_(medianReadLength)
+    LocusStats(int meanReadLength, double depth)
+        : meanReadLength_(meanReadLength)
         , depth_(depth)
     {
     }
 
-    int medianReadLength() const { return medianReadLength_; }
+    int meanReadLength() const { return meanReadLength_; }
     double depth() const { return depth_; }
 
     bool operator==(const LocusStats& other) const;
 
 private:
-    int medianReadLength_;
+    int meanReadLength_;
     double depth_;
 };
 
@@ -62,15 +62,15 @@ std::ostream& operator<<(std::ostream& out, const LocusStats& stats);
 class LocusStatsCalculator
 {
 public:
-    LocusStatsCalculator(const graphtools::Graph& graph);
+    explicit LocusStatsCalculator(const graphtools::Graph& graph);
 
     void inspect(const graphtools::GraphAlignment& alignment);
 
     boost::optional<LocusStats> estimate() const;
 
 private:
-    using AccumulatorStats = boost::accumulators::features<
-        boost::accumulators::tag::count, boost::accumulators::tag::mean, boost::accumulators::tag::median>;
+    using AccumulatorStats
+        = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
     using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;
 
     Accumulator readLengthAccumulator_;
@@ -78,7 +78,6 @@ private:
     graphtools::NodeId rightFlankId_;
     int leftFlankLength_;
     int rightFlankLength_;
-    int readCount_;
 };
 
 }

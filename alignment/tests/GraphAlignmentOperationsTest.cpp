@@ -19,7 +19,7 @@
 //
 //
 
-#include "alignment/GraphAlignmentOperations.hh"
+#include "alignment/OperationsOnAlignments.hh"
 
 #include "gtest/gtest.h"
 

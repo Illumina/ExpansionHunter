@@ -27,7 +27,7 @@
 #include "graphutils/SequenceOperations.hh"
 
 #include "alignment/AlignmentFilters.hh"
-#include "alignment/GraphAlignmentOperations.hh"
+#include "alignment/OperationsOnAlignments.hh"
 #include "genotyping/RepeatGenotyper.hh"
 
 namespace ehunter
@@ -167,7 +167,7 @@ unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) con
 
     const int32_t repeatUnitLength = repeatUnit_.length();
     const double propCorrectMolecules = 0.97;
-    const int maxNumUnitsInRead = std::ceil(stats.medianReadLength() / static_cast<double>(repeatUnitLength));
+    const int maxNumUnitsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(repeatUnitLength));
 
     auto truncatedSpanningTable = collapseTopElements(countsOfSpanningReads_, maxNumUnitsInRead);
     auto truncatedFlankingTable = collapseTopElements(countsOfFlankingReads_, maxNumUnitsInRead);
