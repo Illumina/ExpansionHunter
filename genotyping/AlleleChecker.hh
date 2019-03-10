@@ -36,8 +36,8 @@ enum class AlleleStatus
 /// Results from the AlleleChecker on one allele
 struct AlleleCheckSummary
 {
-    AlleleStatus Status;
-    double LikelihoodRatio; // Log10(LR) for the allele being present
+    AlleleStatus status;
+    double logLikelihoodRatio; // Log10(LR) for the allele being present
 };
 
 /*
@@ -46,9 +46,9 @@ struct AlleleCheckSummary
 class AlleleChecker
 {
 public:
-    AlleleChecker(double errorRate = 0.02, double llrThreshold = 10000)
+    AlleleChecker(double errorRate, double llrThreshold)
         : errorRate_(errorRate)
-        , llrThreshold_(llrThreshold)
+        , likelihoodRatioThreshold_(llrThreshold)
     {
         if (errorRate <= 0 || errorRate >= 1)
         {
@@ -67,7 +67,7 @@ private:
     double errorRate_;
     // If the likelihood ratio threshold in favor of presence or absence
     // is not at least this strong, return no call.
-    double llrThreshold_;
+    double likelihoodRatioThreshold_;
 };
 
 std::ostream& operator<<(std::ostream& out, AlleleStatus status);

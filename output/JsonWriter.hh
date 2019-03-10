@@ -43,8 +43,8 @@ public:
     }
 
     ~VariantJsonWriter() = default;
-    void visit(const RepeatFindings* repeatFindingsPtr);
-    void visit(const SmallVariantFindings* smallVariantFindingsPtr);
+    void visit(const RepeatFindings* repeatFindingsPtr) override;
+    void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
     nlohmann::json record() const { return record_; }
 
 private:
@@ -58,12 +58,13 @@ class JsonWriter
 {
 public:
     JsonWriter(
-        const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
+        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     void write(std::ostream& out);
 
 private:
+    const SampleParameters& sampleParams_;
     const ReferenceContigInfo& contigInfo_;
     const RegionCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;

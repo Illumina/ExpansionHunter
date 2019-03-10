@@ -50,7 +50,7 @@ class LocusSpecification
 public:
     LocusSpecification(
         RegionId locusId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
-        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions);
+        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
 
     const RegionId& locusId() const { return locusId_; }
     /*
@@ -67,10 +67,12 @@ public:
     {
         offtargetReadExtractionRegions_ = offtargetReadExtractionRegions;
     }
+
     const graphtools::Graph& regionGraph() const { return regionGraph_; }
     AlleleCount expectedAlleleCount() const { return expectedAlleleCount_; }
-
+    const GenotyperParameters& genotyperParameters() const { return parameters_; }
     const std::vector<VariantSpecification>& variantSpecs() const { return variantSpecs_; }
+
     void addVariantSpecification(
         std::string id, VariantClassification classification, GenomicRegion referenceLocus,
         std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode);
@@ -87,6 +89,7 @@ private:
     graphtools::Graph regionGraph_;
     std::vector<VariantSpecification> variantSpecs_;
     NodeToRegionAssociation referenceRegions_;
+    GenotyperParameters parameters_;
 };
 
 using RegionCatalog = std::map<RegionId, LocusSpecification>;

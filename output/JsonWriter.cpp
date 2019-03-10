@@ -27,6 +27,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/optional.hpp>
 
+#include "common/Common.hh"
 #include "stats/ReadSupportCalculator.hh"
 
 namespace ehunter
@@ -46,8 +47,10 @@ std::ostream& operator<<(std::ostream& out, JsonWriter& jsonWriter)
 }
 
 JsonWriter::JsonWriter(
-    const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings)
-    : contigInfo_(contigInfo)
+    const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
+    const SampleFindings& sampleFindings)
+    : sampleParams_(sampleParams)
+    , contigInfo_(contigInfo)
     , regionCatalog_(regionCatalog)
     , sampleFindings_(sampleFindings)
 {
@@ -55,14 +58,28 @@ JsonWriter::JsonWriter(
 
 void JsonWriter::write(std::ostream& out)
 {
-    Json array = Json::array();
+    Json sampleParametersRecord;
+    sampleParametersRecord["SampleId"] = sampleParams_.id();
+    sampleParametersRecord["Sex"] = streamToString(sampleParams_.sex());
 
+    Json resultsRecord;
     for (const auto& locusIdAndFindings : sampleFindings_)
     {
         const string& locusId = locusIdAndFindings.first;
         const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
         const LocusFindings& locusFindings = locusIdAndFindings.second;
 
+        Json locusRecord;
+        locusRecord["LocusId"] = locusId;
+        locusRecord["AlleleCount"] = static_cast<int>(locusSpec.expectedAlleleCount());
+
+        if (locusFindings.optionalStats)
+        {
+            locusRecord["Coverage"] = locusFindings.optionalStats->depth();
+            locusRecord["ReadLength"] = locusFindings.optionalStats->meanReadLength();
+        }
+
+        Json variantRecords;
         for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
             const string& variantId = variantIdAndFindings.first;
@@ -70,18 +87,24 @@ void JsonWriter::write(std::ostream& out)
 
             VariantJsonWriter variantWriter(contigInfo_, locusSpec, variantSpec);
             variantIdAndFindings.second->accept(&variantWriter);
-            array.push_back(variantWriter.record());
+            variantRecords[variantId] = variantWriter.record();
         }
-    };
 
-    out << std::setw(4) << array << std::endl;
-}
+        if (!variantRecords.empty())
+        {
+            locusRecord["Variants"] = variantRecords;
+        }
+        resultsRecord[locusId] = locusRecord;
+    }
 
-template <typename T> static string streamToString(const T& streamableObject)
-{
-    std::stringstream out;
-    out << streamableObject;
-    return out.str();
+    Json sampleRecords;
+    if (!resultsRecord.empty())
+    {
+        sampleRecords["LocusResults"] = resultsRecord;
+    }
+    sampleRecords["SampleParameters"] = sampleParametersRecord;
+
+    out << std::setw(2) << sampleRecords << std::endl;
 }
 
 static string encodeGenotype(const RepeatGenotype& genotype)
@@ -133,10 +156,10 @@ void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPt
     record_["ReferenceRegion"] = encode(contigInfo_, variantSpec_.referenceLocus());
     record_["CountOfRefReads"] = findings.numRefReads();
     record_["CountOfAltReads"] = findings.numAltReads();
-    record_["StatusOfRefAllele"] = streamToString(findings.refAllelePresenceStatus().Status);
-    record_["LogLikelihoodRefAllelePresent"] = streamToString(findings.refAllelePresenceStatus().LikelihoodRatio);
-    record_["StatusOfAltAllele"] = streamToString(findings.altAllelePresenceStatus().Status);
-    record_["LogLikelihoodAltAllelePresent"] = streamToString(findings.altAllelePresenceStatus().LikelihoodRatio);
+    record_["StatusOfRefAllele"] = streamToString(findings.refAllelePresenceStatus().status);
+    record_["LogLikelihoodRefAllelePresent"] = streamToString(findings.refAllelePresenceStatus().logLikelihoodRatio);
+    record_["StatusOfAltAllele"] = streamToString(findings.altAllelePresenceStatus().status);
+    record_["LogLikelihoodAltAllelePresent"] = streamToString(findings.altAllelePresenceStatus().logLikelihoodRatio);
     if (findings.optionalGenotype())
     {
         record_["Genotype"] = streamToString(*findings.optionalGenotype());

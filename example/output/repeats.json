@@ -1,26 +1,41 @@
-[
-    {
-        "CountsOfFlankingReads": "(0, 1), (1, 4), (2, 2), (3, 1), (4, 2), (5, 1), (6, 1), (7, 2), (8, 3), (9, 3)",
-        "CountsOfInrepeatReads": "()",
-        "CountsOfSpanningReads": "(2, 44), (10, 34)",
-        "Genotype": "2/10",
-        "GenotypeConfidenceInterval": "2-2/10-10",
-        "GenotypeSupport": "44-7/34-20",
-        "ReferenceRegion": "chr1:2005-2008",
-        "RepeatUnit": "CAG",
-        "VariantId": "SNV_AND_STR_chr1:2005-2008",
-        "VariantSubtype": "Repeat",
-        "VariantType": "Repeat"
-    },
-    {
-        "CountOfAltReads": 39,
-        "CountOfRefReads": 47,
-        "Genotype": "0/1",
-        "ReferenceRegion": "(0):2000-2001",
-        "StatusOfAltAllele": "Present",
-        "StatusOfRefAllele": "Present",
-        "VariantId": "SNV_AND_STR_chr1:2000-2001",
-        "VariantSubtype": "Swap",
-        "VariantType": "SmallVariant"
+{
+  "LocusResults": {
+    "SNV_AND_STR": {
+      "AlleleCount": 2,
+      "Coverage": 99.6486486486486,
+      "LocusId": "SNV_AND_STR",
+      "ReadLength": 150,
+      "Variants": {
+        "SNV_AND_STR_chr1:2000-2001": {
+          "CountOfAltReads": 39,
+          "CountOfRefReads": 47,
+          "Genotype": "0/1",
+          "LogLikelihoodAltAllelePresent": "40.2624",
+          "LogLikelihoodRefAllelePresent": "54.2604",
+          "ReferenceRegion": "chr1:2000-2001",
+          "StatusOfAltAllele": "Present",
+          "StatusOfRefAllele": "Present",
+          "VariantId": "SNV_AND_STR_chr1:2000-2001",
+          "VariantSubtype": "Swap",
+          "VariantType": "SmallVariant"
+        },
+        "SNV_AND_STR_chr1:2005-2008": {
+          "CountsOfFlankingReads": "(0, 1), (1, 4), (2, 2), (3, 1), (4, 2), (5, 1), (6, 1), (7, 2), (8, 3), (9, 3)",
+          "CountsOfInrepeatReads": "()",
+          "CountsOfSpanningReads": "(2, 38), (10, 29)",
+          "Genotype": "2/10",
+          "GenotypeConfidenceInterval": "2-2/10-10",
+          "ReferenceRegion": "chr1:2005-2008",
+          "RepeatUnit": "CAG",
+          "VariantId": "SNV_AND_STR_chr1:2005-2008",
+          "VariantSubtype": "Repeat",
+          "VariantType": "Repeat"
+        }
+      }
     }
-]
+  },
+  "SampleParameters": {
+    "SampleId": "variants",
+    "Sex": "Female"
+  }
+}

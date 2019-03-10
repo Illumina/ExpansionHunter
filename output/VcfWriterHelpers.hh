@@ -33,10 +33,10 @@
 namespace ehunter
 {
 
-class VcfSampleFields
+class VcfAlleleFields
 {
 public:
-    VcfSampleFields(int referenceSize)
+    VcfAlleleFields(int referenceSize)
         : referenceSize_(referenceSize)
     {
     }

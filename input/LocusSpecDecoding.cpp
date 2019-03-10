@@ -128,14 +128,15 @@ static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
 
 AlleleCount determineExpectedAlleleCount(Sex sex, const string& chrom)
 {
-    const bool isFemaleChromY = sex == Sex::kFemale && (chrom == "chrY" || chrom == "Y");
-    if (isFemaleChromY)
+    // We assume that chrY always has copy number one; this seems more practical than skipping loci on this chromosome
+    // in females.
+    if (chrom == "chrY" || chrom == "Y")
     {
-        return AlleleCount::kZero;
+        return AlleleCount::kOne;
     }
 
-    const bool isSexChrom = chrom == "chrX" || chrom == "X" || chrom == "chrY" || chrom == "Y";
-    if (sex == Sex::kMale && isSexChrom)
+    const bool isChromX = chrom == "chrX" || chrom == "X";
+    if (isChromX && sex == Sex::kMale)
     {
         return AlleleCount::kOne;
     }
@@ -286,9 +287,19 @@ LocusSpecification decodeLocusSpecification(
         NodeToRegionAssociation referenceRegionsOfGraphNodes
             = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
 
+        GenotyperParameters parameters;
+        if (userDescription.errorRate)
+        {
+            parameters.errorRate = *userDescription.errorRate;
+        }
+        if (userDescription.likelihoodRatioThreshold)
+        {
+            parameters.likelihoodRatioThreshold = *userDescription.likelihoodRatioThreshold;
+        }
+
         LocusSpecification locusSpec(
             userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,
-            referenceRegionsOfGraphNodes);
+            referenceRegionsOfGraphNodes, parameters);
         locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
         int variantIndex = 0;

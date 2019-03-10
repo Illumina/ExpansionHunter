@@ -44,7 +44,8 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
     vector<GenomicRegion> referenceRegions = { GenomicRegion(1, 1, 2) };
 
     NodeToRegionAssociation dummyAssociation;
-    LocusSpecification locusSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation);
+    GenotyperParameters params;
+    LocusSpecification locusSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation, params);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
     locusSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
 

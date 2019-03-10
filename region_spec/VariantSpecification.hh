@@ -33,6 +33,7 @@
 #include "graphcore/Graph.hh"
 
 #include "common/Common.hh"
+#include "common/Parameters.hh"
 #include "common/GenomicRegion.hh"
 
 namespace ehunter

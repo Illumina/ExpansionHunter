@@ -29,16 +29,15 @@ namespace ehunter
 
 using boost::optional;
 
-bool LocusStats::operator==(const LocusStats& other) const { return medianReadLength_ == other.medianReadLength_; }
+bool LocusStats::operator==(const LocusStats& other) const { return meanReadLength_ == other.meanReadLength_; }
 
 std::ostream& operator<<(std::ostream& out, const LocusStats& stats)
 {
-    out << "LocusStats(medianReadLength=" << stats.medianReadLength() << ", depth=" << stats.depth() << ")";
+    out << "LocusStats(meanReadLength=" << stats.meanReadLength() << ", depth=" << stats.depth() << ")";
     return out;
 }
 
 LocusStatsCalculator::LocusStatsCalculator(const graphtools::Graph& graph)
-    : readCount_(0)
 {
     // As elsewhere in the program, assuming that the fist and last node are flanks
     leftFlankId_ = 0;
@@ -54,22 +53,23 @@ void LocusStatsCalculator::inspect(const graphtools::GraphAlignment& alignment)
     if (firstNode == leftFlankId_ || firstNode == rightFlankId_)
     {
         readLengthAccumulator_(alignment.queryLength());
-        ++readCount_;
     }
 }
 
 optional<LocusStats> LocusStatsCalculator::estimate() const
 {
-    if (boost::accumulators::count(readLengthAccumulator_) == 0 || readCount_ == 0)
+    const int readCount = boost::accumulators::count(readLengthAccumulator_);
+
+    if (readCount == 0)
     {
         return optional<LocusStats>();
     }
 
     const int meanReadLength = boost::accumulators::mean(readLengthAccumulator_);
     const int numberOfStartPositions = leftFlankLength_ + rightFlankLength_ - meanReadLength;
-    const double depth = meanReadLength * (static_cast<double>(readCount_) / numberOfStartPositions);
-    const int medianReadLength = boost::accumulators::median(readLengthAccumulator_);
-    return LocusStats(medianReadLength, depth);
+    const double depth = meanReadLength * (static_cast<double>(readCount) / numberOfStartPositions);
+
+    return LocusStats(meanReadLength, depth);
 }
 
 }

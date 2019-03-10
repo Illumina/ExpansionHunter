@@ -54,12 +54,13 @@ namespace ehunter
 {
 LocusSpecification::LocusSpecification(
     RegionId locusId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
-    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions)
+    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
     : locusId_(std::move(locusId))
     , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
     , expectedAlleleCount_(expectedAlleleCount)
     , regionGraph_(std::move(regionGraph))
     , referenceRegions_(std::move(referenceRegions))
+    , parameters_(std::move(genotyperParams))
 {
 }
 

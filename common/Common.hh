@@ -25,6 +25,7 @@
 
 #include <map>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -49,9 +50,8 @@ Sex decodeSampleSex(const std::string& encoding);
 
 enum class AlleleCount
 {
-    kZero,
-    kOne,
-    kTwo
+    kOne = 1,
+    kTwo = 2
 };
 
 class NumericInterval
@@ -103,6 +103,14 @@ template <typename T> struct LabeledSequence
     T label;
 };
 
+template <typename T> std::string streamToString(const T& streamable)
+{
+    std::stringstream out;
+    out << streamable;
+    return out.str();
+}
+
+std::ostream& operator<<(std::ostream& out, Sex sex);
 std::ostream& operator<<(std::ostream& out, ReadType readType);
 std::ostream& operator<<(std::ostream& out, AlleleCount alleleCount);
 std::ostream& operator<<(std::ostream& out, NumericInterval numericInterval);

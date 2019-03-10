@@ -23,14 +23,18 @@
 
 #include <algorithm>
 
-using graphtools::Graph;
-using graphtools::GraphAlignment;
-using graphtools::NodeId;
+#include "graphalign/GraphAlignmentOperations.hh"
 
 namespace ehunter
 {
 
-boost::optional<GraphAlignment> GreedyAlignmentIntersector::intersect()
+using boost::optional;
+using graphtools::Graph;
+using graphtools::GraphAlignment;
+using graphtools::isLocalAlignment;
+using graphtools::NodeId;
+
+optional<GraphAlignment> GreedyAlignmentIntersector::intersect()
 {
     initialize();
 
@@ -156,7 +160,7 @@ void GreedyAlignmentIntersector::computeIntersectionEnds()
     intersectionEnd_ = std::min(firstPathEndPosition, secondPathEndPosition);
 }
 
-boost::optional<graphtools::GraphAlignment> GreedyAlignmentIntersector::softclipFirstAlignmentToIntersection() const
+optional<GraphAlignment> GreedyAlignmentIntersector::softclipFirstAlignmentToIntersection() const
 {
     GraphAlignment shrankAlignment = firstAlignment_;
 
@@ -190,7 +194,9 @@ boost::optional<graphtools::GraphAlignment> GreedyAlignmentIntersector::softclip
         shrankAlignment.shrinkEnd(leftoverSuffixReferenceLength);
     }
 
-    return shrankAlignment;
+    // Note that shrankAlignment may not always be a local alignment (that is an alignment that starts and ends with a
+    // match possibly flanked by soft clips). Hence an explicit check below is required.
+    return isLocalAlignment(shrankAlignment) ? shrankAlignment : optional<GraphAlignment>();
 }
 
 bool GreedyAlignmentIntersector::checkIfIntersectionIsConsistent() const

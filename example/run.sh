@@ -4,6 +4,5 @@
   --reads input/variants.bam \
   --reference input/reference.fa \
   --variant-catalog input/variants.json \
-  --output-prefix output/repeats \
-  --genome-coverage 40
+  --output-prefix output/repeats
   
