@@ -146,8 +146,12 @@ private:
 // Per-locus parameters (settable from variant catalog) controlling genotyping
 struct GenotyperParameters
 {
+    // Base error rate assumed in SNV key-allele genotyping model
     double errorRate = 0.02;
+    // Threshold to call SNV key-allele confidently present / abstent
     double likelihoodRatioThreshold = 10000;
+    // Minimal estimated locus coverage (depth) to attempt genotyping
+    double minLocusCoverage = 10;
 };
 
 

@@ -18,9 +18,9 @@ Linux and macOS operating systems are currently supported.
 ## License
 
 Expansion Hunter is provided under the terms and conditions of the
-[GPLv3 license](LICENSE.txt). It relies on several third party packages provided
-under other open source licenses, please see [COPYRIGHT.txt](COPYRIGHT.txt) for
-additional details.
+[Apache License Version 2.0](LICENSE.txt). It relies on several third party
+packages provided under other open source licenses, please see
+[COPYRIGHT.txt](COPYRIGHT.txt) for additional details.
 
 
 ## Documentation
@@ -31,8 +31,12 @@ contained in the [docs folder](docs/01_Introduction.md).
 
 ## Method
 
-The detailed description of the method can be found here:
+The method is described in the following papers:
 
-Dolzhenko and others, [Detection of long repeat expansions from PCR-free
+- Dolzhenko and others, [Detection of long repeat expansions from PCR-free
 whole-genome sequence data](http://genome.cshlp.org/content/27/11/1895), Genome
 Research 2017
+
+- Dolzhenko and others,
+[ExpansionHunter: A sequence-graph based tool to analyze variation in short tandem repeat regions](https://www.biorxiv.org/content/10.1101/572545v1),
+bioRxiv 2019

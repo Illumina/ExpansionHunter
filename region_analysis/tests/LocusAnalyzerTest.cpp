@@ -55,12 +55,12 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
     LocusAnalyzer locusAnalyzer(locusSpec, heuristicParams, blankAlignmentWriter);
 
     locusAnalyzer.processMates(
-        Read(ReadId("read1", MateNumber::kFirstMate), "CGACCCATGT"),
-        Read(ReadId("read1", MateNumber::kSecondMate), "GACCCATGTC"), RegionType::kTarget);
+        Read(ReadId("read1", MateNumber::kFirstMate), "CGACCCATGT", true),
+        Read(ReadId("read1", MateNumber::kSecondMate), "GACCCATGTC", true), RegionType::kTarget);
 
     locusAnalyzer.processMates(
-        Read(ReadId("read2", MateNumber::kFirstMate), "CGACATGT"),
-        Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC"), RegionType::kTarget);
+        Read(ReadId("read2", MateNumber::kFirstMate), "CGACATGT", true),
+        Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC", true), RegionType::kTarget);
 
     LocusFindings locusFindings = locusAnalyzer.analyze();
 

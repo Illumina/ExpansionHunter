@@ -153,9 +153,9 @@ void LocusAnalyzer::processOntargetMates(Read read, optional<Read> mate)
     if (readAlignment && mateAlignment)
     {
         alignmentWriter_.write(
-            locusSpec_.locusId(), read.fragmentId(), read.sequence(), read.isFirstMate(), *readAlignment);
+            locusSpec_.locusId(), read.fragmentId(), read.sequence(), read.isFirstMate(), read.isReversed(), mate->isReversed(), *readAlignment);
         alignmentWriter_.write(
-            locusSpec_.locusId(), mate->fragmentId(), mate->sequence(), mate->isFirstMate(), *mateAlignment);
+            locusSpec_.locusId(), mate->fragmentId(), mate->sequence(), mate->isFirstMate(), mate->isReversed(), read.isReversed(), *mateAlignment);
 
         for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
         {
@@ -202,7 +202,7 @@ boost::optional<GraphAlignment> LocusAnalyzer::alignRead(Read& read) const
 
     if (predictedOrientation == OrientationPrediction::kAlignsInReverseComplementOrientation)
     {
-        read.setSequence(graphtools::reverseComplement(read.sequence()));
+        read.reverseComplement();
     }
     else if (predictedOrientation == OrientationPrediction::kDoesNotAlign)
     {
@@ -224,8 +224,8 @@ LocusFindings LocusAnalyzer::analyze()
     LocusFindings locusFindings;
 
     locusFindings.optionalStats = statsCalculator_.estimate();
-    const double kMinDepthAllowed = 10.0;
-    if (locusFindings.optionalStats && locusFindings.optionalStats->depth() >= kMinDepthAllowed)
+    if (locusFindings.optionalStats &&
+        locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
     {
         for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
         {

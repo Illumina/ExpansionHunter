@@ -43,7 +43,7 @@ namespace htshelpers
     class HtsFileSeeker
     {
     public:
-        HtsFileSeeker(const std::string& htsFilePath);
+        HtsFileSeeker(const std::string& htsFilePath, const std::string& htsReferencePath);
         ~HtsFileSeeker();
         void setRegion(const GenomicRegion& region);
         bool trySeekingToNextPrimaryAlignment();
@@ -70,6 +70,7 @@ namespace htshelpers
         void closeRegion();
 
         const std::string htsFilePath_;
+        const std::string htsReferencePath_;
         ReferenceContigInfo contigInfo_;
         Status status_ = Status::kFinishedStreaming;
 

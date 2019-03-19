@@ -34,7 +34,7 @@ void FieldDescriptionWriter::addCommonFields()
     const string kVaridFieldDescription = "Variant identifier as specified in the variant catalog";
     tryAddingFieldDescription(FieldType::kInfo, "VARID", "1", "String", kVaridFieldDescription);
     tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
-    tryAddingFieldDescription(FieldType::kFormat, "LC", "1", "Integer", "Locus coverage");
+    tryAddingFieldDescription(FieldType::kFormat, "LC", "1", "Float", "Locus coverage");
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
 }
 

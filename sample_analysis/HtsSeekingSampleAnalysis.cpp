@@ -56,7 +56,7 @@ namespace
     using AlignmentStatsCatalog = unordered_map<ReadId, LinearAlignmentStats, boost::hash<ReadId>>;
 
     vector<GenomicRegion>
-    combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion> offtargetRegions)
+    combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
     {
         vector<GenomicRegion> combinedRegions(targetRegions);
         combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
@@ -117,12 +117,12 @@ namespace
 
     ReadPairs collectCandidateReads(
         const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-        AlignmentStatsCatalog& alignmentStatsCatalog, const string& htsFilePath)
+        AlignmentStatsCatalog& alignmentStatsCatalog, const string& htsFilePath, const string& htsReferencePath)
     {
         auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
 
         vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
-        HtsFileSeeker htsFileSeeker(htsFilePath);
+        HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
         ReadPairs readPairs;
 
         for (const auto& regionWithReads : regionsWithReads)
@@ -259,7 +259,7 @@ SampleFindings htsSeekingSampleAnalysis(
         AlignmentStatsCatalog alignmentStats;
         ReadPairs readPairs = collectCandidateReads(
             locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), alignmentStats,
-            inputPaths.htsFile());
+            inputPaths.htsFile(), inputPaths.reference());
 
         processReads(readPairs, alignmentStats, analyzerFinder);
 

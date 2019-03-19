@@ -28,6 +28,18 @@ using namespace ehunter;
 TEST(ReadInitialization, TypicalCoreInfo_CoreInfoAddedToRead)
 {
     ReadId readId("frag1", MateNumber::kSecondMate);
-    Read read(readId, "ATTC");
+    Read read(readId, "ATTC", true);
     EXPECT_EQ("frag1", read.fragmentId());
+    EXPECT_EQ(true, read.isReversed());
+}
+
+TEST(ReadReverseComplement, SequenceReversed_ReversedFlagReversed)
+{
+    ReadId readId("frag1", MateNumber::kSecondMate);
+    Read read(readId, "ATTCCG", true);
+    EXPECT_EQ("ATTCCG", read.sequence());
+    ASSERT_TRUE(read.isReversed());
+    read.reverseComplement();
+    EXPECT_EQ("CGGAAT", read.sequence());
+    ASSERT_FALSE(read.isReversed());
 }

@@ -105,19 +105,19 @@ void BamletWriter::writeHeader()
 
 void BamletWriter::write(
     const string& locusId, const string& fragmentName, const string& query, bool isFirstMate,
-    const GraphAlignment& alignment)
+    bool isReversed, bool isMateReversed, const GraphAlignment& alignment)
 {
     const GraphReferenceMapping& referenceMapping = graphReferenceMappings_.at(locusId);
     auto optionalReferenceInterval = referenceMapping.map(alignment.path());
 
     if (optionalReferenceInterval)
     {
-        write(*optionalReferenceInterval, fragmentName, query, isFirstMate, alignment);
+        write(*optionalReferenceInterval, fragmentName, query, isFirstMate, isReversed, isMateReversed, alignment);
     }
     else
     {
         ReferenceInterval interval("", -1, -1);
-        write(interval, fragmentName, query, isFirstMate, alignment);
+        write(interval, fragmentName, query, isFirstMate, isReversed, isMateReversed, alignment);
     }
 }
 
@@ -151,7 +151,7 @@ static vector<int> extractQualityScores(const string& query)
 
 void BamletWriter::write(
     const ReferenceInterval& interval, const string& fragmentName, const string& query, bool isFirstMate,
-    const GraphAlignment& alignment)
+    bool isReversed, bool isMateReversed, const GraphAlignment& alignment)
 {
 
     bam1_t* htsAlignmentPtr = bam_init1();
@@ -175,6 +175,11 @@ void BamletWriter::write(
     htsAlignmentPtr->core.flag = BAM_FUNMAP;
 
     htsAlignmentPtr->core.flag += BAM_FPAIRED + BAM_FMUNMAP;
+    
+    if (isReversed)
+        htsAlignmentPtr->core.flag += BAM_FREVERSE;
+    if (isMateReversed)
+        htsAlignmentPtr->core.flag += BAM_FMREVERSE;
 
     htsAlignmentPtr->core.flag += isFirstMate ? BAM_FREAD1 : BAM_FREAD2;
 

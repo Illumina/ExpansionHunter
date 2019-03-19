@@ -31,6 +31,7 @@
 
 #include "classification/AlignmentClassifier.hh"
 #include "graphalign/GraphAlignment.hh"
+#include "graphutils/SequenceOperations.hh"
 
 namespace ehunter
 {
@@ -83,9 +84,10 @@ std::ostream& operator<<(std::ostream& out, const ReadId& readId);
 class Read
 {
 public:
-    Read(ReadId readId, std::string sequence)
+    Read(ReadId readId, std::string sequence, bool isReversed)
         : readId_(std::move(readId))
         , sequence_(std::move(sequence))
+        , isReversed_(isReversed)
     {
         if (sequence_.empty())
         {
@@ -99,14 +101,23 @@ public:
     const FragmentId& fragmentId() const { return readId_.fragmentId(); }
     MateNumber mateNumber() const { return readId_.mateNumber(); }
     const std::string& sequence() const { return sequence_; }
-    void setSequence(std::string sequence) { sequence_ = sequence; }
 
     bool isFirstMate() const { return mateNumber() == MateNumber::kFirstMate; }
     bool isSecondMate() const { return mateNumber() == MateNumber::kSecondMate; }
+    // Return whether the read is reverse complemented relative to it's
+    //  original direction during sequencing
+    bool isReversed() const { return isReversed_; }
+   
+    void reverseComplement()
+    {   
+        sequence_ = graphtools::reverseComplement(sequence_);
+        isReversed_ = !isReversed_;
+    }
 
 private:
     ReadId readId_;
     std::string sequence_;
+    bool isReversed_;
 };
 
 struct LinearAlignmentStats

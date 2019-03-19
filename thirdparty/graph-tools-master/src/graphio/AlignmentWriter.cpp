@@ -33,7 +33,7 @@ namespace graphtools
 
 void BlankAlignmentWriter::write(
     const std::string& /*locusId*/, const std::string& /*fragmentName*/, const std::string& /*query*/,
-    bool /*isFirstMate*/, const GraphAlignment& /*alignment*/)
+    bool /*isFirstMate*/, bool /*isReversed*/, bool /*isMateReversed*/, const GraphAlignment& /*alignment*/)
 {
 }
 
