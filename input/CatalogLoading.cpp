@@ -194,6 +194,10 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     {
         userDescription.likelihoodRatioThreshold = locusJson["LikelihoodRatioThreshold"].get<double>();
     }
+    if (checkIfFieldExists(locusJson, "MinimalLocusCoverage"))
+    {
+        userDescription.minLocusCoverage = locusJson["MinimalLocusCoverage"].get<double>();
+    }
 
     return userDescription;
 }

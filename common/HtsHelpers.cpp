@@ -112,6 +112,7 @@ namespace htshelpers
     {
         const uint32_t samFlag = htsAlignPtr->core.flag;
         const bool isFirstMate = samFlag & BAM_FREAD1;
+        const bool isReversed = samFlag & BAM_FREVERSE;
 
         const string fragmentId = bam_get_qname(htsAlignPtr);
         MateNumber mateNumber = isFirstMate ? MateNumber::kFirstMate : MateNumber::kSecondMate;
@@ -121,7 +122,7 @@ namespace htshelpers
         string quals = decodeQuals(htsAlignPtr);
         string sequence = lowercaseLowQualityBases(bases, quals);
 
-        return Read(readId, sequence);
+        return Read(readId, sequence, isReversed);
     }
 
     ReferenceContigInfo decodeContigInfo(bam_hdr_t* htsHeaderPtr)

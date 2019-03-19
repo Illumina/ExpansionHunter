@@ -48,7 +48,6 @@
         "ReferenceRegion": "chr4:41747989-41748049"
     },
     {
-        "VariantType": "Repeat",
         "LocusId": "ATXN7",
         "LocusStructure": "(GCA)*(GCC)+",
         "ReferenceRegion": [

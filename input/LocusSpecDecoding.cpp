@@ -296,6 +296,10 @@ LocusSpecification decodeLocusSpecification(
         {
             parameters.likelihoodRatioThreshold = *userDescription.likelihoodRatioThreshold;
         }
+        if (userDescription.minLocusCoverage)
+        {
+            parameters.minLocusCoverage = *userDescription.minLocusCoverage;
+        }
 
         LocusSpecification locusSpec(
             userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,

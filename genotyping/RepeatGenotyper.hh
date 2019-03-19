@@ -60,6 +60,10 @@ public:
     boost::optional<RepeatGenotype> genotypeRepeat(const std::vector<int32_t>& alleleSizeCandidates) const;
 
 private:
+    // When both alleles are longer than the read length we cannot, in general, know which allele a given in-repeat read
+    // originated from. To account for this we compute confidence intervals corresponding to two extreme cases of
+    // partitioning IRR proportions between the two alleles (0.5/0.5 and 0/1.0) and compute widest possible confidence
+    // intervals based on these estimates.
     void extendGenotypeWhenBothAllelesAreRepeat(RepeatGenotype& genotype, int numRepeatReads) const;
     void extendGenotypeWhenOneAlleleIsRepeat(RepeatGenotype& genotype, int numRepeatReads) const;
     void extendGenotypeWhenBothAllelesAreFlanking(RepeatGenotype& genotype) const;

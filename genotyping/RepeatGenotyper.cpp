@@ -182,15 +182,23 @@ void RepeatGenotyper::extendGenotypeWhenBothAllelesAreRepeat(RepeatGenotype& gen
 {
     assert(numRepeatReads);
 
-    // Calculate CI for the long allele.
-    int32_t longAlleleSize, longAlleleSizeLowerBound, longAlleleSizeUpperBound;
-    estimateRepeatAlleleSize(numRepeatReads, longAlleleSize, longAlleleSizeLowerBound, longAlleleSizeUpperBound);
+    int32_t allIrrSize, allIrrSizeLowerBound, allIrrlongSizeUpperBound;
+    estimateRepeatAlleleSize(numRepeatReads, allIrrSize, allIrrSizeLowerBound, allIrrlongSizeUpperBound);
+
+    int32_t halfIrrSize, halfIrrSizeLowerBound, halfIrrSizeUpperBound;
+    estimateRepeatAlleleSize(numRepeatReads / 2, halfIrrSize, halfIrrSizeLowerBound, halfIrrSizeUpperBound);
+
+    const int longAlleleSizeLowerBound = halfIrrSizeLowerBound;
+    const int longAlleleSizeUpperBound = allIrrlongSizeUpperBound;
+    const int longAlleleSize = (longAlleleSizeLowerBound + longAlleleSizeUpperBound) / 2;
+
     genotype.setLongAlleleSizeInUnits(longAlleleSize);
     genotype.setLongAlleleSizeInUnitsCi(longAlleleSizeLowerBound, longAlleleSizeUpperBound);
 
-    // Calculate CI for the short allele.
-    int32_t shortAlleleSize, shortAlleleSizeLowerBound, shortAlleleSizeUpperBound;
-    estimateRepeatAlleleSize(numRepeatReads / 2, shortAlleleSize, shortAlleleSizeLowerBound, shortAlleleSizeUpperBound);
+    const int shortAlleleSizeLowerBound = maxNumUnitsInRead_;
+    const int shortAlleleSizeUpperBound = halfIrrSizeUpperBound;
+    const int shortAlleleSize = (shortAlleleSizeLowerBound + shortAlleleSizeUpperBound) / 2;
+
     genotype.setShortAlleleSizeInUnits(shortAlleleSize);
     genotype.setShortAlleleSizeInUnitsCi(shortAlleleSizeLowerBound, shortAlleleSizeUpperBound);
 }
@@ -302,7 +310,8 @@ static int depthBasedCountOfInrepeatReads(
             numFlankingReads += readCount;
         }
     }
-    if (numFlankingReads == 0) return 0;
+    if (numFlankingReads == 0)
+        return 0;
 
     const double estimatedDepth = numFlankingReads / (kNumFlanks * kPropHighConfidenceFlank);
     const double expectedNumLowconfidenceFlankingReads = kNumFlanks * kPropLowConfidenceFlank * estimatedDepth;
@@ -338,7 +347,8 @@ int countFullLengthRepeatReads(
     int maxNumUnitsInRead, const CountTable& countsOfFlankingReads, const CountTable& countsOfInrepeatReads)
 {
     const int lengthBasedCount = lengthBasedCountOfInrepeatReads(maxNumUnitsInRead, countsOfInrepeatReads);
-    const int depthBasedCount = depthBasedCountOfInrepeatReads(maxNumUnitsInRead, countsOfFlankingReads, countsOfInrepeatReads);
+    const int depthBasedCount
+        = depthBasedCountOfInrepeatReads(maxNumUnitsInRead, countsOfFlankingReads, countsOfInrepeatReads);
     return std::max(lengthBasedCount, depthBasedCount);
 }
 

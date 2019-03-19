@@ -53,8 +53,6 @@ struct UserParameters
     string outputPrefix;
 
     // Sample parameters
-    optional<int> optionalReadLength;
-    optional<double> optionalGenomeCoverage;
     string sampleSexEncoding;
 
     // Heuristic parameters
@@ -119,16 +117,6 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
 
     po::notify(argumentMap);
 
-    if (argumentMap.count("read-length"))
-    {
-        params.optionalReadLength = argumentMap["read-length"].as<int>();
-    }
-
-    if (argumentMap.count("genome-coverage"))
-    {
-        params.optionalGenomeCoverage = argumentMap["genome-coverage"].as<double>();
-    }
-
     return params;
 }
 
@@ -185,23 +173,6 @@ void assertValidity(const UserParameters& userParameters)
     assertWritablePath(userParameters.outputPrefix);
 
     // Validate sample parameters
-    if (userParameters.optionalReadLength)
-    {
-        const int readLength = *userParameters.optionalReadLength;
-        const int minAllowedReadLength = 50;
-        const int maxAllowedReadLength = 500;
-        if (readLength < minAllowedReadLength || readLength > maxAllowedReadLength)
-        {
-            throw std::invalid_argument(to_string(readLength) + "bp reads are not supported");
-        }
-    }
-
-    const double kMinDepthAllowed = 10.0;
-    if (userParameters.optionalGenomeCoverage && *userParameters.optionalGenomeCoverage < kMinDepthAllowed)
-    {
-        throw std::invalid_argument("Read depth must be at least " + std::to_string(kMinDepthAllowed));
-    }
-
     if (userParameters.sampleSexEncoding != "female" && userParameters.sampleSexEncoding != "male")
     {
         throw std::invalid_argument(userParameters.sampleSexEncoding + " is not a valid sex encoding");

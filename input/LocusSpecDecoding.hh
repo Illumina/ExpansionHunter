@@ -53,6 +53,7 @@ struct LocusDescriptionFromUser
     std::vector<VariantTypeFromUser> variantTypesFromUser;
     boost::optional<double> errorRate;
     boost::optional<double> likelihoodRatioThreshold;
+    boost::optional<double> minLocusCoverage;
 };
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);

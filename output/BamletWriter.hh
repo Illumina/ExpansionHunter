@@ -51,13 +51,13 @@ public:
 
     void write(
         const std::string& locusId, const std::string& fragmentName, const std::string& query, bool isFirstMate,
-        const graphtools::GraphAlignment& alignment) override;
+        bool isReversed, bool isMateReversed, const graphtools::GraphAlignment& alignment) override;
 
 private:
     void writeHeader();
     void write(
         const graphtools::ReferenceInterval& interval, const std::string& fragmentName, const std::string& query,
-        bool isFirstMate, const graphtools::GraphAlignment& alignment);
+        bool isFirstMate, bool isReversed, bool isMateReversed, const graphtools::GraphAlignment& alignment);
 
     std::unique_ptr<htsFile, decltype(&hts_close)> filePtr_;
     std::unique_ptr<bam_hdr_t, decltype(&bam_hdr_destroy)> bamHeader_;

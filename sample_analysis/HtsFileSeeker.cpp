@@ -34,8 +34,9 @@ namespace ehunter
 namespace htshelpers
 {
 
-    HtsFileSeeker::HtsFileSeeker(const string& htsFilePath)
+    HtsFileSeeker::HtsFileSeeker(const string& htsFilePath, const std::string& htsReferencePath)
         : htsFilePath_(htsFilePath)
+        , htsReferencePath_(htsReferencePath)
         , contigInfo_({})
     {
         openFile();
@@ -72,6 +73,12 @@ namespace htshelpers
         if (!htsFilePtr_)
         {
             throw std::runtime_error("Failed to read BAM file " + htsFilePath_);
+        }
+
+        // Required step for parsing of some CRAMs
+        if (hts_set_fai_filename(htsFilePtr_, htsReferencePath_.c_str()) != 0)
+        {
+            throw std::runtime_error("Failed to set index of: " + htsReferencePath_);
         }
     }
 
