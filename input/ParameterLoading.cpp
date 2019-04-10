@@ -187,7 +187,7 @@ void assertValidity(const UserParameters& userParameters)
     const int kMinExtensionLength = 500;
     const int kMaxExtensionLength = 1500;
     if (userParameters.regionExtensionLength < kMinExtensionLength
-        && userParameters.regionExtensionLength > kMaxExtensionLength)
+        || userParameters.regionExtensionLength > kMaxExtensionLength)
     {
         const string message = "Extension length of size " + to_string(userParameters.regionExtensionLength)
             + " is not supported; the range of allowed extensions is between " + to_string(kMinExtensionLength)
@@ -198,7 +198,7 @@ void assertValidity(const UserParameters& userParameters)
     const int kMinQualityCutoffForGoodBaseCall = 5;
     const int kMaxQualityCutoffForGoodBaseCall = 40;
     if (userParameters.qualityCutoffForGoodBaseCall < kMinQualityCutoffForGoodBaseCall
-        && userParameters.qualityCutoffForGoodBaseCall > kMaxQualityCutoffForGoodBaseCall)
+        || userParameters.qualityCutoffForGoodBaseCall > kMaxQualityCutoffForGoodBaseCall)
     {
         const string message = "Base call quality cutoff of " + to_string(userParameters.qualityCutoffForGoodBaseCall)
             + " is not supported; the range of allowed cutoffs is between "
