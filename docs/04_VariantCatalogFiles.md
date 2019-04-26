@@ -149,9 +149,23 @@ For example, a CAG repeat flanked by a CAG/CAT swap	is defined by expression
 (CAG)+CTGT(CAG|CAT).
 
 
-## A note on creating custom variant catalogs
+## Notes on creating custom variant catalogs
 
-Creating custom variant catalogs is relatively straightforward for "common"
-variants. Defining "rare" variants is much harder because some data analysis is
-required to prove that the variant is indeed rare. Users who are looking to
-define custom catalogs are encouraged to contact the developers for assistance.
+During the analysis of each locus, ExpansionHunter effectively replaces the
+corresponding segment of the reference with a sequence graph. Thus it is
+permissible for the locus structure to be different from the corresponding
+reference sequence. One caveat is that the user must define reference
+coordinates for each variant that the graph/regular expression encodes. These
+coordinates are used to generate VCF records for these variants. If an STR is
+not present in the reference then its reference coordinates can be set to an
+adjacent reference location.
+
+Note that there is no need to specify off-target regions for the vast majority of
+variants. Off-target regions can be optionally specified for the variants of type
+`RareRepeat` and only when it is desirable to extend the repeat size estimate
+past the fragment length. Without off-target regions the program will genotype an
+STR up to the length of the sequenced fragment. Users who are interested in defining
+custom catalogs are encouraged to contact the developers for assistance.
+
+**Users who are interested in defining custom catalogs are encouraged to contact
+the developers for assistance.**
