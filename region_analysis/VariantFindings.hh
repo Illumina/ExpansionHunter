@@ -27,6 +27,7 @@
 #include <boost/optional.hpp>
 
 #include "common/CountTable.hh"
+#include "common/GenomicDistanceArray.hh"
 #include "genotyping/AlleleChecker.hh"
 #include "genotyping/RepeatGenotype.hh"
 #include "genotyping/SmallVariantGenotype.hh"
@@ -117,6 +118,51 @@ private:
     AlleleCheckSummary refAlleleStatus_;
     AlleleCheckSummary altAlleleStatus_;
     boost::optional<SmallVariantGenotype> optionalGenotype_;
+};
+
+
+class GangSTRFindings : public VariantFindings
+{
+public:
+    GangSTRFindings(
+            CountTable countsOfSpanningReads, CountTable countsOfFlankingReads, CountTable countsOfInrepeatReads,
+            GenomicDistanceArray distanceOfInrepeatMates, GenomicDistanceArray distanceOfTraversingPairs,
+            boost::optional<RepeatGenotype> optionalGenotype)
+            : countsOfSpanningReads_(std::move(countsOfSpanningReads))
+            , countsOfFlankingReads_(std::move(countsOfFlankingReads))
+            , countsOfInrepeatReads_(std::move(countsOfInrepeatReads))
+            , distanceOfInrepeatMates_(std::move(distanceOfInrepeatMates))
+            , distanceOfTraversingPairs_(std::move(distanceOfTraversingPairs))
+            , optionalGenotype_(std::move(optionalGenotype))
+    {
+    }
+
+    ~GangSTRFindings() override = default;
+    void accept(VariantFindingsVisitor* visitorPtr) override { visitorPtr->visit(this); }
+
+    const CountTable& countsOfSpanningReads() const { return countsOfSpanningReads_; }
+    const CountTable& countsOfFlankingReads() const { return countsOfFlankingReads_; }
+    const CountTable& countsOfInrepeatReads() const { return countsOfInrepeatReads_; }
+    const GenomicDistanceArray distanceOfInrepeatMates() const { return distanceOfInrepeatMates_; }
+    const GenomicDistanceArray distanceOfTraversingPairs() const { return distanceOfTraversingPairs_; }
+    const boost::optional<RepeatGenotype>& optionalGenotype() const { return optionalGenotype_; }
+
+//    bool operator==(const GangSTRFindings& other) const
+//    {
+//        return countsOfSpanningReads_ == other.countsOfSpanningReads_
+//               && countsOfFlankingReads_ == other.countsOfFlankingReads_
+//               && countsOfInrepeatReads_ == other.countsOfInrepeatReads_ && optionalGenotype_ == other.optionalGenotype_;
+//    }
+
+private:
+    CountTable countsOfSpanningReads_;
+    CountTable countsOfFlankingReads_;
+    CountTable countsOfInrepeatReads_;
+    GenomicDistanceArray distanceOfInrepeatMates_;
+    GenomicDistanceArray distanceOfTraversingPairs_;
+
+
+    boost::optional<RepeatGenotype> optionalGenotype_;
 };
 
 std::ostream& operator<<(std::ostream& out, const RepeatFindings& repeatFindings);
