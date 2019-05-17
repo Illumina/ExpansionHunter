@@ -67,6 +67,7 @@ public:
 
     void visit(const RepeatFindings* repeatFindingsPtr) override;
     void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
+    void visit(const GangSTRFindings* gangSTRFindingsPtr) override;
 
     void tryAddingFieldDescription(
         FieldType fieldType, const std::string& id, const std::string& number, const std::string& contentType,

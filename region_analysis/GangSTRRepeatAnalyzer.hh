@@ -33,7 +33,7 @@
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
 
-#include "classification/AlignmentClassifier.hh"
+#include "classification/GangSTRAlignmentClassifier.hh"
 #include "genotyping/RepeatGenotype.hh"
 #include "reads/Read.hh"
 #include "region_analysis/VariantAnalyzer.hh"
@@ -64,15 +64,18 @@ namespace ehunter
 
     private:
         graphtools::NodeId repeatNodeId() const { return nodeIds_.front(); }
-        RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
-        void summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats);
+        GangSTRAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment,
+                                                    const graphtools::GraphAlignment& mate);
+        void summarizeAlignmentsToReadCounts(const GangSTRAlignmentStats& gangSTRAlignmentStats);
 
         const std::string repeatUnit_;
-        RepeatAlignmentClassifier alignmentClassifier_;
+        GangSTRAlignmentClassifier alignmentClassifier_;
 
         CountTable countsOfSpanningReads_;
         CountTable countsOfFlankingReads_;
         CountTable countsOfInrepeatReads_;
+        GenomicDistanceArray distanceOfInrepeatMates_;
+        GenomicDistanceArray distanceOfTraversingPairs_;
 
         std::shared_ptr<spdlog::logger> console_;
     };

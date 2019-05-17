@@ -36,11 +36,13 @@ namespace ehunter
 {
 
 class VariantFindings;
+class GangSTRFindings;
 class RepeatFindings;
 class SmallVariantFindings;
 
 struct VariantFindingsVisitor
 {
+    virtual void visit(const GangSTRFindings* findingsPtr) = 0;
     virtual void visit(const RepeatFindings* findingsPtr) = 0;
     virtual void visit(const SmallVariantFindings* findingsPtr) = 0;
 };

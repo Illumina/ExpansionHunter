@@ -45,6 +45,7 @@ public:
     ~VariantJsonWriter() = default;
     void visit(const RepeatFindings* repeatFindingsPtr) override;
     void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
+    void visit(const GangSTRFindings* gangSTRFindingsPtr) override;
     nlohmann::json record() const { return record_; }
 
 private:

@@ -217,6 +217,47 @@ static string computeAlleleFields(
     return alleleFields.encode();
 }
 
+static string computeAlleleFields(
+        const VariantSpecification& variantSpec, const string& repeatUnit, const GangSTRFindings& gangSTRFindings)
+{
+    // TODO Nima: Update with GangSTR specific outputs
+    const auto referenceLocus = variantSpec.referenceLocus();
+    const int referenceSizeInBp = referenceLocus.length();
+    const int referenceSizeInUnits = referenceSizeInBp / repeatUnit.length();
+    const RepeatGenotype& genotype = *gangSTRFindings.optionalGenotype();
+
+    ReadSupportCalculator readSupportCalculator(
+            gangSTRFindings.countsOfSpanningReads(), gangSTRFindings.countsOfFlankingReads(),
+            gangSTRFindings.countsOfInrepeatReads());
+
+    VcfAlleleFields alleleFields(referenceSizeInUnits);
+
+    const int shortAlleleSize = genotype.shortAlleleSizeInUnits();
+    ReadType shortAlleleSupportType = determineSupportType(
+            gangSTRFindings.countsOfSpanningReads(), gangSTRFindings.countsOfFlankingReads(), shortAlleleSize);
+
+    alleleFields.addAlleleInfo(
+            shortAlleleSize, shortAlleleSupportType, genotype.shortAlleleSizeInUnitsCi(),
+            readSupportCalculator.getCountOfConsistentSpanningReads(shortAlleleSize),
+            readSupportCalculator.getCountOfConsistentFlankingReads(shortAlleleSize),
+            readSupportCalculator.getCountOfConsistentRepeatReads(shortAlleleSize));
+
+    if (genotype.numAlleles() == 2)
+    {
+        const int longAlleleSize = genotype.longAlleleSizeInUnits();
+        ReadType longAlleleSupportType = determineSupportType(
+                gangSTRFindings.countsOfSpanningReads(), gangSTRFindings.countsOfFlankingReads(), longAlleleSize);
+
+        alleleFields.addAlleleInfo(
+                genotype.longAlleleSizeInUnits(), longAlleleSupportType, genotype.longAlleleSizeInUnitsCi(),
+                readSupportCalculator.getCountOfConsistentSpanningReads(longAlleleSize),
+                readSupportCalculator.getCountOfConsistentFlankingReads(longAlleleSize),
+                readSupportCalculator.getCountOfConsistentRepeatReads(longAlleleSize));
+    }
+
+    return alleleFields.encode();
+}
+
 void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 {
     if (!repeatFindingsPtr->optionalGenotype())
@@ -350,4 +391,36 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
     out_ << boost::algorithm::join(line, "\t") << std::endl;
 }
 
+void VariantVcfWriter::visit(const GangSTRFindings* gangSTRFindingsPtr)
+{
+    // TODO Nima: Update with GangSTR specific outputs
+    if (!gangSTRFindingsPtr->optionalGenotype())
+    {
+        return;
+    }
+
+    const auto& genotype = *(gangSTRFindingsPtr->optionalGenotype());
+
+    const auto& referenceLocus = variantSpec_.referenceLocus();
+    const auto repeatNodeId = variantSpec_.nodes().front();
+    const string& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
+
+    const int referenceSizeInUnits = referenceLocus.length() / repeatUnit.length();
+
+    const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
+    const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
+    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, *gangSTRFindingsPtr);
+    const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
+
+    const int posPreceedingRepeat1based = referenceLocus.start();
+    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+    const string leftFlankingBase
+            = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
+
+    vector<string> vcfRecordElements
+            = { contigName, to_string(posPreceedingRepeat1based),  ".",         leftFlankingBase, altSymbol, ".", "PASS",
+                infoFields, "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC", sampleFields };
+
+    out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
+}
 }

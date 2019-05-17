@@ -44,7 +44,7 @@ namespace ehunter
     using std::vector;
 
     static bool checkIfAlignmentIsConfident(
-            NodeId repeatNodeId, const GraphAlignment& alignment, const RepeatAlignmentStats& alignmentStats)
+            NodeId repeatNodeId, const GraphAlignment& alignment, const GangSTRAlignmentStats& alignmentStats)
     {
         if (!checkIfPassesAlignmentFilters(alignment))
         {
@@ -54,7 +54,8 @@ namespace ehunter
         const bool doesReadAlignWellOverLeftFlank = checkIfUpstreamAlignmentIsGood(repeatNodeId, alignment);
         const bool doesReadAlignWellOverRightFlank = checkIfDownstreamAlignmentIsGood(repeatNodeId, alignment);
 
-        if (alignmentStats.canonicalAlignmentType() == AlignmentType::kFlanksRepeat)
+        if (alignmentStats.canonicalAlignmentType() == GangSTRAlignmentType::kFlanksLeft ||
+                alignmentStats.canonicalAlignmentType() == GangSTRAlignmentType::kFlanksRight)
         {
             if (!doesReadAlignWellOverLeftFlank && !doesReadAlignWellOverRightFlank)
             {
@@ -62,7 +63,7 @@ namespace ehunter
             }
         }
 
-        if (alignmentStats.canonicalAlignmentType() == AlignmentType::kSpansRepeat)
+        if (alignmentStats.canonicalAlignmentType() == GangSTRAlignmentType::kSpansRepeat)
         {
             if (!doesReadAlignWellOverLeftFlank || !doesReadAlignWellOverRightFlank)
             {
@@ -76,8 +77,9 @@ namespace ehunter
     void GangSTRRepeatAnalyzer::processMates(
             const Read& read, const GraphAlignment& readAlignment, const Read& mate, const GraphAlignment& mateAlignment)
     {
-        RepeatAlignmentStats readAlignmentStats = classifyReadAlignment(readAlignment);
-        RepeatAlignmentStats mateAlignmentStats = classifyReadAlignment(mateAlignment);
+        // TODO Nima: combine these two function calls?
+        GangSTRAlignmentStats readAlignmentStats = classifyReadAlignment(readAlignment, mateAlignment);
+        GangSTRAlignmentStats mateAlignmentStats = classifyReadAlignment(mateAlignment, readAlignment);
 
         const bool isReadAlignmentConfident
                 = checkIfAlignmentIsConfident(repeatNodeId(), readAlignment, readAlignmentStats);
@@ -111,26 +113,50 @@ namespace ehunter
         }
     }
 
-    RepeatAlignmentStats GangSTRRepeatAnalyzer::classifyReadAlignment(const graphtools::GraphAlignment& alignment)
+    GangSTRAlignmentStats GangSTRRepeatAnalyzer::classifyReadAlignment(const graphtools::GraphAlignment& alignment,
+                                                                       const graphtools::GraphAlignment& mate)
     {
-        AlignmentType alignmentType = alignmentClassifier_.Classify(alignment);
+        GangSTRAlignmentType alignmentType = alignmentClassifier_.Classify(alignment);
+        GangSTRAlignmentType mateType = alignmentClassifier_.Classify(mate);
         int numRepeatUnitsOverlapped = countFullOverlaps(repeatNodeId(), alignment);
-
-        return RepeatAlignmentStats(alignment, alignmentType, numRepeatUnitsOverlapped);
+        // TODO Nima: Calculate fragmentLength and mateDistanceToRepeat
+        int32_t fragmentLength = -1;
+        int32_t mateDistanceToRepeat = -1;
+        return GangSTRAlignmentStats(alignment, alignmentType, mateType, numRepeatUnitsOverlapped, fragmentLength, mateDistanceToRepeat);
     }
 
-    void GangSTRRepeatAnalyzer::summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats)
+    void GangSTRRepeatAnalyzer::summarizeAlignmentsToReadCounts(const GangSTRAlignmentStats& gangSTRAlignmentStats)
     {
-        switch (repeatAlignmentStats.canonicalAlignmentType())
+        switch (gangSTRAlignmentStats.canonicalAlignmentType())
         {
-            case AlignmentType::kSpansRepeat:
-                countsOfSpanningReads_.incrementCountOf(repeatAlignmentStats.numRepeatUnitsSpanned());
+            case GangSTRAlignmentType::kSpansRepeat:
+                countsOfSpanningReads_.incrementCountOf(gangSTRAlignmentStats.numRepeatUnitsSpanned());
                 break;
-            case AlignmentType::kFlanksRepeat:
-                countsOfFlankingReads_.incrementCountOf(repeatAlignmentStats.numRepeatUnitsSpanned());
+            case GangSTRAlignmentType::kFlanksLeft:
+                countsOfFlankingReads_.incrementCountOf(gangSTRAlignmentStats.numRepeatUnitsSpanned());
+                if (gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kFlanksRight ||
+                    gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kRightOfRepeat) {
+                    if (gangSTRAlignmentStats.fragmentLength() != -1) {
+                        distanceOfTraversingPairs_.addElement(gangSTRAlignmentStats.fragmentLength());
+                    }
+                }
                 break;
-            case AlignmentType::kInsideRepeat:
-                countsOfInrepeatReads_.incrementCountOf(repeatAlignmentStats.numRepeatUnitsSpanned());
+            case GangSTRAlignmentType::kFlanksRight:
+                countsOfFlankingReads_.incrementCountOf(gangSTRAlignmentStats.numRepeatUnitsSpanned());
+                if (gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kFlanksLeft ||
+                    gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kLeftOfRepeat) {
+                    if (gangSTRAlignmentStats.fragmentLength() != -1) {
+                        distanceOfTraversingPairs_.addElement(gangSTRAlignmentStats.fragmentLength());
+                    }
+                }
+                break;
+            case GangSTRAlignmentType::kInsideRepeat:
+                countsOfInrepeatReads_.incrementCountOf(gangSTRAlignmentStats.numRepeatUnitsSpanned());
+                if (gangSTRAlignmentStats.mateAlignmentType() != GangSTRAlignmentType::kInsideRepeat) {
+                    if (gangSTRAlignmentStats.mateDistanceToRepeat() != -1) {
+                        distanceOfInrepeatMates_.addElement(gangSTRAlignmentStats.mateDistanceToRepeat());
+                    }
+                }
                 break;
             default:
                 break;

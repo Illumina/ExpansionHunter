@@ -166,4 +166,31 @@ void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPt
     }
 }
 
+void VariantJsonWriter::visit(const GangSTRFindings* gangSTRFindingsPtr)
+{
+    // TODO Nima: update with additional GangSTR parameters
+    assert(variantSpec_.classification().type == VariantType::kRepeat);
+
+    const GangSTRFindings& gangSTRFindings = *gangSTRFindingsPtr;
+
+    record_.clear();
+    record_["VariantId"] = variantSpec_.id();
+    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec_.referenceLocus());
+    record_["VariantType"] = streamToString(variantSpec_.classification().type);
+    record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
+
+    const auto repeatNodeId = variantSpec_.nodes().front();
+    const auto& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
+    record_["RepeatUnit"] = repeatUnit;
+
+    record_["CountsOfSpanningReads"] = streamToString(gangSTRFindings.countsOfSpanningReads());
+    record_["CountsOfFlankingReads"] = streamToString(gangSTRFindings.countsOfFlankingReads());
+    record_["CountsOfInrepeatReads"] = streamToString(gangSTRFindings.countsOfInrepeatReads());
+
+    if (gangSTRFindings.optionalGenotype())
+    {
+        record_["Genotype"] = encodeGenotype(*gangSTRFindings.optionalGenotype());
+        record_["GenotypeConfidenceInterval"] = streamToString(*gangSTRFindings.optionalGenotype());
+    }
+}
 }

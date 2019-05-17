@@ -1,4 +1,4 @@
 file(GLOB SOURCES "*.cpp")
-add_library(classification ${SOURCES})
+add_library(classification ${SOURCES} GangSTRAlignmentClassifier.hh GangSTRAlignmentClassifier.cpp)
 target_link_libraries(classification region_spec input graphtools reads)
 add_subdirectory(tests)

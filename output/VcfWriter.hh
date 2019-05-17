@@ -52,6 +52,7 @@ public:
     ~VariantVcfWriter() = default;
     void visit(const RepeatFindings* repeatFindingsPtr) override;
     void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
+    void visit(const GangSTRFindings* gangSTRFindingsPtr) override;
 
 private:
     Reference& reference_;

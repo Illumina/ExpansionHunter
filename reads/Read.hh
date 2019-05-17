@@ -30,6 +30,7 @@
 #include <boost/functional/hash.hpp>
 
 #include "classification/AlignmentClassifier.hh"
+#include "classification/GangSTRAlignmentClassifier.hh"
 #include "graphalign/GraphAlignment.hh"
 #include "graphutils/SequenceOperations.hh"
 
@@ -157,6 +158,39 @@ private:
     GraphAlignment canonical_alignment_;
     AlignmentType canonical_alignment_type_;
     int32_t num_repeat_units_spanned_;
+};
+
+// TODO Nima: Refactor this class with RepeatAlignmentStats
+class GangSTRAlignmentStats
+{
+public:
+    GangSTRAlignmentStats(
+            const GraphAlignment& canonical_alignment, GangSTRAlignmentType canonical_alignment_type,
+            GangSTRAlignmentType mate_alignment_type, int32_t num_repeat_units_spanned,
+            int32_t fragment_length, int32_t mate_distance_to_repeat)
+            : canonical_alignment_(canonical_alignment)
+            , canonical_alignment_type_(canonical_alignment_type)
+            , mate_alignment_type_(mate_alignment_type)
+            , num_repeat_units_spanned_(num_repeat_units_spanned)
+            , fragment_length_(fragment_length)
+            , mate_distance_to_repeat_(mate_distance_to_repeat)
+    {
+    }
+
+    const GraphAlignment& canonicalAlignment() const { return canonical_alignment_; }
+    GangSTRAlignmentType canonicalAlignmentType() const { return canonical_alignment_type_; }
+    GangSTRAlignmentType mateAlignmentType() const { return mate_alignment_type_; }
+    int32_t numRepeatUnitsSpanned() const { return num_repeat_units_spanned_; }
+    int32_t fragmentLength() const { return fragment_length_; }
+    int32_t mateDistanceToRepeat() const { return mate_distance_to_repeat_; }
+
+private:
+    GraphAlignment canonical_alignment_;
+    GangSTRAlignmentType canonical_alignment_type_;
+    GangSTRAlignmentType mate_alignment_type_;
+    int32_t num_repeat_units_spanned_;
+    int32_t fragment_length_;
+    int32_t mate_distance_to_repeat_;
 };
 
 using ReadIdToRepeatAlignmentStats = std::unordered_map<std::string, RepeatAlignmentStats>;
