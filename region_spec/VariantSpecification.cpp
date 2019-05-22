@@ -45,7 +45,8 @@ void VariantSpecification::assertConsistency() const
     if (variantIsRepeat)
     {
         variantIsValid = classification_.subtype == VariantSubtype::kCommonRepeat
-            || classification_.subtype == VariantSubtype::kRareRepeat;
+            || classification_.subtype == VariantSubtype::kRareRepeat
+            || classification_.subtype == VariantSubtype::kGangSTRRepeat;
     }
     else if (variantIsDeletionOrSwap)
     {
@@ -87,6 +88,9 @@ std::ostream& operator<<(std::ostream& out, VariantSubtype subtype)
         break;
     case VariantSubtype::kCommonRepeat:
         out << "Repeat";
+        break;
+    case VariantSubtype::kGangSTRRepeat:
+        out << "GangSTRRepeat";
         break;
     case VariantSubtype::kDeletion:
         out << "Deletion";

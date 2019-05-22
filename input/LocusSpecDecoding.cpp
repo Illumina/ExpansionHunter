@@ -218,6 +218,10 @@ static VariantSubtype determineVariantSubtype(
     {
         return VariantSubtype::kRareRepeat;
     }
+    else if (userDescription == VariantTypeFromUser::kGangSTRRepeat)
+    {
+        return VariantSubtype::kGangSTRRepeat;
+    }
     else
     {
         std::ostringstream message;

@@ -38,6 +38,7 @@ enum class VariantTypeFromUser
 {
     kRareRepeat,
     kCommonRepeat,
+    kGangSTRRepeat,
     kSmallVariant,
     kSMN
 };

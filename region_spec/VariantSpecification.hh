@@ -49,6 +49,7 @@ enum class VariantSubtype
 {
     kCommonRepeat,
     kRareRepeat,
+    kGangSTRRepeat,
     kInsertion,
     kDeletion,
     kSwap,

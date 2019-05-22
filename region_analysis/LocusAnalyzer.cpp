@@ -33,6 +33,7 @@
 #include "alignment/AlignmentTweakers.hh"
 #include "alignment/OperationsOnAlignments.hh"
 #include "region_analysis/RepeatAnalyzer.hh"
+#include "region_analysis/GangSTRRepeatAnalyzer.hh"
 #include "region_analysis/SmallVariantAnalyzer.hh"
 
 namespace ehunter
@@ -94,8 +95,15 @@ LocusAnalyzer::LocusAnalyzer(
                 optionalUnitOfRareRepeat_ = repeatUnit;
             }
 
-            variantAnalyzerPtrs_.emplace_back(new RepeatAnalyzer(
-                variantSpec.id(), locusSpec.expectedAlleleCount(), locusSpec.regionGraph(), repeatNodeId));
+            // Nima: Added GangSTR variantAnalyzerPtr instead of default repeat analyzer
+            if (variantSpec.classification().subtype == VariantSubtype::kGangSTRRepeat)
+            {
+                variantAnalyzerPtrs_.emplace_back(new GangSTRRepeatAnalyzer(
+                        variantSpec.id(), locusSpec.expectedAlleleCount(), locusSpec.regionGraph(), repeatNodeId));
+            } else {
+                variantAnalyzerPtrs_.emplace_back(new RepeatAnalyzer(
+                        variantSpec.id(), locusSpec.expectedAlleleCount(), locusSpec.regionGraph(), repeatNodeId));
+            }
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {

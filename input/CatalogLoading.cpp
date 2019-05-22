@@ -98,6 +98,10 @@ static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
     {
         return VariantTypeFromUser::kCommonRepeat;
     }
+    if (encoding == "GangSTRRepeat")
+    {
+        return VariantTypeFromUser::kGangSTRRepeat;
+    }
     if (encoding == "SmallVariant")
     {
         return VariantTypeFromUser::kSmallVariant;
