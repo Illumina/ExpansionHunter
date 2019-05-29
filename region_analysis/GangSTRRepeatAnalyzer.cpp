@@ -127,6 +127,7 @@ namespace ehunter
 
     void GangSTRRepeatAnalyzer::summarizeAlignmentsToReadCounts(const GangSTRAlignmentStats& gangSTRAlignmentStats)
     {
+        // TODO Fix double counting traversing reads
         switch (gangSTRAlignmentStats.canonicalAlignmentType())
         {
             case GangSTRAlignmentType::kSpansRepeat:
@@ -141,7 +142,24 @@ namespace ehunter
                     }
                 }
                 break;
+            case GangSTRAlignmentType::kLeftOfRepeat:
+                if (gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kFlanksRight ||
+                    gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kRightOfRepeat) {
+                    if (gangSTRAlignmentStats.fragmentLength() != -1) {
+                        distanceOfTraversingPairs_.addElement(gangSTRAlignmentStats.fragmentLength());
+                    }
+                }
+                break;
             case GangSTRAlignmentType::kFlanksRight:
+                countsOfFlankingReads_.incrementCountOf(gangSTRAlignmentStats.numRepeatUnitsSpanned());
+                if (gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kFlanksLeft ||
+                    gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kLeftOfRepeat) {
+                    if (gangSTRAlignmentStats.fragmentLength() != -1) {
+                        distanceOfTraversingPairs_.addElement(gangSTRAlignmentStats.fragmentLength());
+                    }
+                }
+                break;
+            case GangSTRAlignmentType::kRightOfRepeat:
                 countsOfFlankingReads_.incrementCountOf(gangSTRAlignmentStats.numRepeatUnitsSpanned());
                 if (gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kFlanksLeft ||
                     gangSTRAlignmentStats.mateAlignmentType() == GangSTRAlignmentType::kLeftOfRepeat) {

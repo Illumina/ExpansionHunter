@@ -132,20 +132,31 @@ namespace ehunter
         }
 
         const bool overlaps_repeat = alignment.overlapsNode(repeat_node_id_);
-        if (overlaps_left_flank && overlaps_repeat)
+        if (overlaps_left_flank)
         {
-            return GangSTRAlignmentType::kFlanksLeft;
+            if (overlaps_repeat) {
+                return GangSTRAlignmentType::kFlanksLeft;
+            }
+            else {
+                return GangSTRAlignmentType::kLeftOfRepeat;
+            }
         }
-        if (overlaps_right_flank && overlaps_repeat)
+        if (overlaps_right_flank)
         {
-            return GangSTRAlignmentType::kFlanksRight;
+            if (overlaps_repeat){
+                return GangSTRAlignmentType::kFlanksRight;
+            }
+            else {
+                return GangSTRAlignmentType::kRightOfRepeat;
+            }
         }
         if (overlaps_repeat)
         {
             return GangSTRAlignmentType::kInsideRepeat;
         }
-        // TODO Nima separate left and right of repeat
-        return GangSTRAlignmentType::kLeftOfRepeat;
+
+        // TODO Nima Is this class appropriate? This is a default case that shouldn't happen.
+        return GangSTRAlignmentType::kUnableToAlign;
     }
 
     bool GangSTRAlignmentClassifier::operator==(const GangSTRAlignmentClassifier& other) const
