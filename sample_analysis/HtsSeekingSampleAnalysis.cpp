@@ -74,9 +74,11 @@ namespace
         return false;
     }
 
-    void recoverMates(const string& htsFilePath, AlignmentStatsCatalog& alignmentStatsCatalog, ReadPairs& readPairs)
+    void recoverMates(
+        const string& htsFilePath, const string& htsReferencePath, AlignmentStatsCatalog& alignmentStatsCatalog,
+        ReadPairs& readPairs)
     {
-        htshelpers::MateExtractor mateExtractor(htsFilePath);
+        htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
 
         for (auto& fragmentIdAndReadPair : readPairs)
         {
@@ -148,7 +150,7 @@ namespace
         }
 
         const int numReadsBeforeRecovery = readPairs.NumReads();
-        recoverMates(htsFilePath, alignmentStatsCatalog, readPairs);
+        recoverMates(htsFilePath, htsReferencePath, alignmentStatsCatalog, readPairs);
         const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
         console->debug("Recovered {} reads", numReadsAfterRecovery);
 
