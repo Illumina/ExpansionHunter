@@ -180,7 +180,7 @@ unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) con
 
     RepeatGenotyper repeatGenotyper(
         haplotypeDepth, expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
-        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable);
+        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, countOfInrepeatReadPairs_);
 
     optional<RepeatGenotype> repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
 

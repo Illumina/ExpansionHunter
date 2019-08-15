@@ -133,7 +133,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     LocusDescriptionFromUser userDescription;
 
     assertFieldExists(locusJson, "LocusId");
-    userDescription.locusId = locusJson["LocusId"].get<string>();
+    userDescription.locusId = locusJson["LocusId"];
 
     assertFieldExists(locusJson, "ReferenceRegion");
     makeArray(locusJson["ReferenceRegion"]);
@@ -144,7 +144,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     }
 
     assertFieldExists(locusJson, "LocusStructure");
-    userDescription.locusStructure = locusJson["LocusStructure"].get<string>();
+    userDescription.locusStructure = locusJson["LocusStructure"];
 
     assertFieldExists(locusJson, "VariantType");
     makeArray(locusJson["VariantType"]);

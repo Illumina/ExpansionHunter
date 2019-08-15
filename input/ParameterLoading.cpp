@@ -285,7 +285,7 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     {
         logLevel = decodeLogLevel(userParams.logLevel);
     }
-    catch (std::logic_error)
+    catch (std::logic_error&)
     {
         const string message = "Log level must be set to either trace, debug, info, warn, or error";
         throw std::invalid_argument(message);

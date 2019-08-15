@@ -252,6 +252,7 @@ SampleFindings htsSeekingSampleAnalysis(
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
         const string& locusId = locusIdAndRegionSpec.first;
+        console->info("Analyzing {}", locusId);
         const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
 
         vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;

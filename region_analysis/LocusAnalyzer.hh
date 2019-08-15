@@ -83,7 +83,9 @@ public:
 
 private:
     void processOntargetMates(Read read, boost::optional<Read> mate);
-    void processOfftargetMates(Read read1, Read read2);
+    void processOfftargetMates(Read read, Read mate);
+    void runVariantAnalysis(
+        const Read& read, const GraphAlignment& readAlignment, const Read& mate, const GraphAlignment& mateAlignment);
     boost::optional<GraphAlignment> alignRead(Read& read) const;
 
     LocusSpecification locusSpec_;

@@ -50,11 +50,15 @@ public:
         : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, { repeatNodeId })
         , repeatUnit_(graph.nodeSeq(repeatNodeId))
         , alignmentClassifier_(graph, repeatNodeId)
+        , countOfInrepeatReadPairs_(0)
         , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
     }
 
     ~RepeatAnalyzer() = default;
+
+    const std::string& repeatUnit() const { return repeatUnit_; }
+    void addInrepeatReadPair() { countOfInrepeatReadPairs_++; }
 
     void processMates(
         const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
@@ -73,6 +77,7 @@ private:
     CountTable countsOfSpanningReads_;
     CountTable countsOfFlankingReads_;
     CountTable countsOfInrepeatReads_;
+    int countOfInrepeatReadPairs_;
 
     std::shared_ptr<spdlog::logger> console_;
 };

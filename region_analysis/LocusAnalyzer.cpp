@@ -137,7 +137,11 @@ void LocusAnalyzer::processOntargetMates(Read read, optional<Read> mate)
 
     if (!checkIfLocallyPlacedReadPair(readAlignment, mateAlignment, kMinNonRepeatAlignmentScore))
     {
-        console_->debug("Not locally placed read pair\n" + read.fragmentId());
+        if (mate && optionalUnitOfRareRepeat_)
+        {
+            processOfftargetMates(std::move(read), std::move(*mate));
+        }
+
         return;
     }
 
@@ -152,15 +156,7 @@ void LocusAnalyzer::processOntargetMates(Read read, optional<Read> mate)
 
     if (readAlignment && mateAlignment)
     {
-        alignmentWriter_.write(
-            locusSpec_.locusId(), read.fragmentId(), read.sequence(), read.isFirstMate(), read.isReversed(), mate->isReversed(), *readAlignment);
-        alignmentWriter_.write(
-            locusSpec_.locusId(), mate->fragmentId(), mate->sequence(), mate->isFirstMate(), mate->isReversed(), read.isReversed(), *mateAlignment);
-
-        for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
-        {
-            variantAnalyzerPtr->processMates(read, *readAlignment, *mate, *mateAlignment);
-        }
+        runVariantAnalysis(read, *readAlignment, *mate, *mateAlignment);
     }
     else
     {
@@ -187,12 +183,44 @@ void LocusAnalyzer::processOfftargetMates(Read read, Read mate)
     const string& repeatUnit = *optionalUnitOfRareRepeat_;
 
     const auto& weightedPurityCalculator = weightedPurityCalculators.at(repeatUnit);
-    const bool isFirstReadInrepeat = weightedPurityCalculator.score(read.sequence()) >= 0.90;
-    const bool isSecondReadInrepeat = weightedPurityCalculator.score(mate.sequence()) >= 0.90;
+    const double kPurityCutoff = 0.90;
+    const bool isFirstReadInrepeat = weightedPurityCalculator.score(read.sequence()) >= kPurityCutoff;
+    const bool isSecondReadInrepeat = weightedPurityCalculator.score(mate.sequence()) >= kPurityCutoff;
 
     if (isFirstReadInrepeat && isSecondReadInrepeat)
     {
-        processOntargetMates(std::move(read), std::move(mate));
+        int numAnalyzersFound = 0;
+        for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
+        {
+            auto repeatAnalyzerPtr = dynamic_cast<RepeatAnalyzer*>(variantAnalyzerPtr.get());
+            if (repeatAnalyzerPtr != nullptr && repeatAnalyzerPtr->repeatUnit() == repeatUnit)
+            {
+                numAnalyzersFound++;
+                repeatAnalyzerPtr->addInrepeatReadPair();
+            }
+        }
+
+        if (numAnalyzersFound != 1)
+        {
+            const string errorMessage = "Encountered inconsistently-specified locus " + locusSpec_.locusId();
+            throw std::logic_error(errorMessage);
+        }
+    }
+}
+
+void LocusAnalyzer::runVariantAnalysis(
+    const Read& read, const GraphAlignment& readAlignment, const Read& mate, const GraphAlignment& mateAlignment)
+{
+    alignmentWriter_.write(
+        locusSpec_.locusId(), read.fragmentId(), read.sequence(), read.isFirstMate(), read.isReversed(),
+        mate.isReversed(), readAlignment);
+    alignmentWriter_.write(
+        locusSpec_.locusId(), mate.fragmentId(), mate.sequence(), mate.isFirstMate(), mate.isReversed(),
+        read.isReversed(), mateAlignment);
+
+    for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
+    {
+        variantAnalyzerPtr->processMates(read, readAlignment, mate, mateAlignment);
     }
 }
 
@@ -224,8 +252,8 @@ LocusFindings LocusAnalyzer::analyze()
     LocusFindings locusFindings;
 
     locusFindings.optionalStats = statsCalculator_.estimate();
-    if (locusFindings.optionalStats &&
-        locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
+    if (locusFindings.optionalStats
+        && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
     {
         for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
         {
