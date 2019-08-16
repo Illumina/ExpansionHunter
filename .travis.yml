@@ -1,17 +1,22 @@
-language: cpp
-
+dist: trusty
+sudo: required
+language:
+  - cpp
+compiler:
+  - gcc
 addons:
   apt:
     sources:
-      - boost-latest
       - ubuntu-toolchain-r-test
     packages:
-      - g++-4.9
+      - gcc-6
+      - g++-6
+      - cmake
       - libboost-all-dev
-
 script:
-  - export CC="gcc-4.9"
-  - export CXX="g++-4.9"
+  - export CC="/usr/bin/gcc-6"
+  - export CXX="/usr/bin/g++-6"
+  - gcc -v && g++ -v && cmake --version
   - mkdir build
   - cd build
   - cmake ..
