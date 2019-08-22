@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,7 +34,8 @@
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
 
-#include "classification/AlignmentClassifier.hh"
+#include "classification/AlignmentSummary.hh"
+#include "classification/StrAlignmentClassifier.hh"
 #include "genotyping/RepeatGenotype.hh"
 #include "reads/Read.hh"
 #include "region_analysis/VariantAnalyzer.hh"
@@ -44,35 +46,40 @@ namespace ehunter
 class RepeatAnalyzer : public VariantAnalyzer
 {
 public:
-    RepeatAnalyzer(
-        std::string variantId, AlleleCount expectedAlleleCount, const graphtools::Graph& graph,
-        graphtools::NodeId repeatNodeId)
-        : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, { repeatNodeId })
+    RepeatAnalyzer(std::string variantId, const graphtools::Graph& graph, graphtools::NodeId repeatNodeId)
+        : VariantAnalyzer(std::move(variantId), graph, { repeatNodeId })
         , repeatUnit_(graph.nodeSeq(repeatNodeId))
         , alignmentClassifier_(graph, repeatNodeId)
+        , countOfInrepeatReadPairs_(0)
         , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
     }
 
     ~RepeatAnalyzer() = default;
 
+    const std::string& repeatUnit() const { return repeatUnit_; }
+    void addInrepeatReadPair() { countOfInrepeatReadPairs_++; }
+
     void processMates(
-        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
-        const graphtools::GraphAlignment& mateAlignment) override;
+        const Read& read, const std::list<GraphAlignment>& readAlignments, const Read& mate,
+        const std::list<GraphAlignment>& mateAlignments) override;
 
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
 private:
     graphtools::NodeId repeatNodeId() const { return nodeIds_.front(); }
-    RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
-    void summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats);
 
-    const std::string repeatUnit_;
-    RepeatAlignmentClassifier alignmentClassifier_;
+    // std::set<StrAlignment> summarize(const Read& read, const std::list<GraphAlignment>& alignments) const;
+
+    void summarizeAlignmentsToReadCounts(const StrAlignment& strAlignment);
+
+    std::string repeatUnit_;
+    StrAlignmentClassifier alignmentClassifier_;
 
     CountTable countsOfSpanningReads_;
     CountTable countsOfFlankingReads_;
     CountTable countsOfInrepeatReads_;
+    int countOfInrepeatReadPairs_;
 
     std::shared_ptr<spdlog::logger> console_;
 };

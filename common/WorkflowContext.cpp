@@ -19,22 +19,25 @@
 //
 //
 
-#pragma once
-
-#include <iostream>
-#include <string>
-
-#include "graphio/AlignmentWriter.hh"
-
-#include "common/Parameters.hh"
-#include "region_analysis/LocusFindings.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "common/WorkflowContext.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+using std::string;
+
+std::unique_ptr<ContextParameters> WorkflowContext::paramsPtr_;
+
+void initializeWorkflowContext(HeuristicParameters heuristics)
+{
+    std::unique_ptr<ContextParameters> parametersPtr(new ContextParameters(heuristics));
+    WorkflowContext(std::move(parametersPtr));
+}
+
+std::ostream& operator<<(std::ostream& out, const WorkflowContext& context)
+{
+    out << context.heuristics();
+    return out;
+}
 
 }

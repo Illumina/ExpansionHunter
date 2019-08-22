@@ -33,6 +33,8 @@
 #include "graphcore/Graph.hh"
 
 #include "common/Common.hh"
+#include "common/GenomicRegion.hh"
+#include "common/Reference.hh"
 
 namespace ehunter
 {
@@ -40,18 +42,21 @@ namespace ehunter
 class LocusStats
 {
 public:
-    LocusStats(int meanReadLength, double depth)
-        : meanReadLength_(meanReadLength)
+    LocusStats(AlleleCount alleleCount, int meanReadLength, double depth)
+        : alleleCount_(alleleCount)
+        , meanReadLength_(meanReadLength)
         , depth_(depth)
     {
     }
 
+    AlleleCount alleleCount() const { return alleleCount_; }
     int meanReadLength() const { return meanReadLength_; }
     double depth() const { return depth_; }
 
     bool operator==(const LocusStats& other) const;
 
 private:
+    AlleleCount alleleCount_;
     int meanReadLength_;
     double depth_;
 };
@@ -62,17 +67,18 @@ std::ostream& operator<<(std::ostream& out, const LocusStats& stats);
 class LocusStatsCalculator
 {
 public:
-    explicit LocusStatsCalculator(const graphtools::Graph& graph);
+    LocusStatsCalculator(ChromType chromType, const graphtools::Graph& graph);
 
     void inspect(const graphtools::GraphAlignment& alignment);
 
-    boost::optional<LocusStats> estimate() const;
+    boost::optional<LocusStats> estimate(Sex sampleSex) const;
 
 private:
     using AccumulatorStats
         = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
     using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;
 
+    ChromType chromType_;
     Accumulator readLengthAccumulator_;
     graphtools::NodeId leftFlankId_;
     graphtools::NodeId rightFlankId_;

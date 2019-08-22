@@ -2,17 +2,26 @@ add_executable(ShortRepeatGenotyperTest ShortRepeatGenotyperTest.cpp)
 target_link_libraries(ShortRepeatGenotyperTest genotyping gtest_main)
 add_test(NAME ShortRepeatGenotyperTest COMMAND ShortRepeatGenotyperTest)
 
-add_executable(RepeatGenotyperTest RepeatGenotyperTest.cpp)
-target_link_libraries(RepeatGenotyperTest genotyping gtest_main)
-add_test(NAME RepeatGenotyperTest COMMAND RepeatGenotyperTest)
-
 add_executable(RepeatGenotypeTest RepeatGenotypeTest.cpp)
 target_link_libraries(RepeatGenotypeTest genotyping gtest_main)
 add_test(NAME RepeatGenotypeTest COMMAND RepeatGenotypeTest)
 
+add_executable(RepeatGenotyperTest RepeatGenotyperTest.cpp)
+target_link_libraries(RepeatGenotyperTest genotyping gtest_main)
+add_test(NAME RepeatGenotyperTest COMMAND RepeatGenotyperTest)
+
+add_executable(ProbabilisticRepeatGenotyperTest ProbabilisticRepeatGenotyperTest.cpp)
+target_link_libraries(ProbabilisticRepeatGenotyperTest genotyping gtest_main)
+add_test(NAME ProbabilisticRepeatGenotyperTest COMMAND ProbabilisticRepeatGenotyperTest)
+
+
 add_executable(SmallVariantGenotyperTest SmallVariantGenotyperTest.cpp)
 target_link_libraries(SmallVariantGenotyperTest genotyping gtest_main)
 add_test(NAME SmallVariantGenotyperTest COMMAND SmallVariantGenotyperTest)
+
+add_executable(CopyNumberGenotyperTest CopyNumberGenotyperTest.cpp)
+target_link_libraries(CopyNumberGenotyperTest genotyping gtest_main)
+add_test(NAME CopyNumberGenotyperTest COMMAND CopyNumberGenotyperTest)
 
 add_executable(AlleleCheckerTest AlleleCheckerTest.cpp)
 target_link_libraries(AlleleCheckerTest genotyping gtest_main)

@@ -22,6 +22,7 @@
 #pragma once
 
 #include <cassert>
+#include <list>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -37,6 +38,7 @@
 
 #include "alignment/SoftclippingAligner.hh"
 #include "common/Parameters.hh"
+#include "common/WorkflowContext.hh"
 #include "filtering/OrientationPredictor.hh"
 #include "reads/Read.hh"
 #include "region_analysis/LocusFindings.hh"
@@ -61,33 +63,33 @@ enum class RegionType
 class LocusAnalyzer
 {
 public:
-    LocusAnalyzer(
-        const LocusSpecification& locusSpec, HeuristicParameters heuristicParams,
-        graphtools::AlignmentWriter& alignmentWriter);
+    LocusAnalyzer(const LocusSpecification& locusSpec, graphtools::AlignmentWriter& alignmentWriter);
 
     LocusAnalyzer(const LocusAnalyzer&) = delete;
     LocusAnalyzer& operator=(const LocusAnalyzer&) = delete;
     LocusAnalyzer(LocusAnalyzer&&) = default;
-    LocusAnalyzer& operator=(LocusAnalyzer&&) = default;
 
     const std::string& locusId() const { return locusSpec_.locusId(); }
     const LocusSpecification& locusSpec() const { return locusSpec_; }
 
     void processMates(Read read, boost::optional<Read> mate, RegionType regionType);
 
-    bool checkIfPassesSequenceFilters(const std::string& sequence) const;
-
-    LocusFindings analyze();
+    LocusFindings analyze(Sex sampleSex);
 
     bool operator==(const LocusAnalyzer& other) const;
 
 private:
+    using GraphAlignments = std::list<graphtools::GraphAlignment>;
+
     void processOntargetMates(Read read, boost::optional<Read> mate);
     void processOfftargetMates(Read read1, Read read2);
-    boost::optional<GraphAlignment> alignRead(Read& read) const;
+    void runVariantAnalysis(
+        const Read& read, const GraphAlignments& readAlignments, const Read& mate,
+        const GraphAlignments& mateAlignments);
+    GraphAlignments alignRead(Read& read) const;
 
+    WorkflowContext workflowContext_;
     LocusSpecification locusSpec_;
-    HeuristicParameters heuristicParams_;
 
     graphtools::AlignmentWriter& alignmentWriter_;
     OrientationPredictor orientationPredictor_;
@@ -102,8 +104,7 @@ private:
     std::shared_ptr<spdlog::logger> console_;
 };
 
-std::vector<std::unique_ptr<LocusAnalyzer>> initializeLocusAnalyzers(
-    const RegionCatalog& RegionCatalog, const HeuristicParameters& heuristicParams,
-    graphtools::AlignmentWriter& alignmentWriter);
+std::vector<std::unique_ptr<LocusAnalyzer>>
+initializeLocusAnalyzers(const RegionCatalog& RegionCatalog, graphtools::AlignmentWriter& alignmentWriter);
 
 }

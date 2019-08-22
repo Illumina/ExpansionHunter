@@ -52,6 +52,4 @@ int scoreAlignmentToNonloopNodes(
 
 int countFullOverlaps(graphtools::NodeId nodeId, graphtools::GraphAlignment alignment);
 
-graphtools::GraphAlignment computeCanonicalAlignment(const std::list<graphtools::GraphAlignment>& alignments);
-
 }

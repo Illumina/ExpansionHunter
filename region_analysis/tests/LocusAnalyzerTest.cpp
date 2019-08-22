@@ -40,19 +40,19 @@ class AlignerTests : public ::testing::TestWithParam<std::string>
 // TODO: Throw an error if there are no valid extensions?
 TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
 {
+    initializeWorkflowContext(HeuristicParameters(1000, 20, true, GetParam(), 4, 1, 5));
+
     Graph graph = makeRegionGraph(decodeFeaturesFromRegex("ATTCGA(C)*ATGTCG"));
     vector<GenomicRegion> referenceRegions = { GenomicRegion(1, 1, 2) };
 
     NodeToRegionAssociation dummyAssociation;
     GenotyperParameters params;
-    LocusSpecification locusSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation, params);
+    LocusSpecification locusSpec("region", ChromType::kAutosome, referenceRegions, graph, dummyAssociation, params);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
     locusSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
 
-    HeuristicParameters heuristicParams(1000, 20, true, GetParam(), 4, 1, 5);
-
     graphtools::BlankAlignmentWriter blankAlignmentWriter;
-    LocusAnalyzer locusAnalyzer(locusSpec, heuristicParams, blankAlignmentWriter);
+    LocusAnalyzer locusAnalyzer(locusSpec, blankAlignmentWriter);
 
     locusAnalyzer.processMates(
         Read(ReadId("read1", MateNumber::kFirstMate), "CGACCCATGT", true),
@@ -62,7 +62,7 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
         Read(ReadId("read2", MateNumber::kFirstMate), "CGACATGT", true),
         Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC", true), RegionType::kTarget);
 
-    LocusFindings locusFindings = locusAnalyzer.analyze();
+    LocusFindings locusFindings = locusAnalyzer.analyze(Sex::kFemale);
 
     std::unique_ptr<VariantFindings> repeatFindingsPtr(new RepeatFindings(
         CountTable({ { 1, 2 }, { 3, 2 } }), CountTable(), CountTable(), RepeatGenotype(1, { 1, 3 })));

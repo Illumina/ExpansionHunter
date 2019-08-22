@@ -40,11 +40,8 @@ namespace ehunter
 class VariantAnalyzer
 {
 public:
-    VariantAnalyzer(
-        std::string variantId, AlleleCount expectedAlleleCount, const graphtools::Graph& graph,
-        std::vector<graphtools::NodeId> nodeIds)
+    VariantAnalyzer(std::string variantId, const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds)
         : variantId_(std::move(variantId))
-        , expectedAlleleCount_(expectedAlleleCount)
         , graph_(graph)
         , nodeIds_(std::move(nodeIds))
     {
@@ -52,20 +49,18 @@ public:
     virtual ~VariantAnalyzer() = default;
 
     virtual void processMates(
-        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
-        const graphtools::GraphAlignment& mateAlignment)
+        const Read& read, const std::list<graphtools::GraphAlignment>& readAlignments, const Read& mate,
+        const std::list<graphtools::GraphAlignment>& mateAlignments)
         = 0;
 
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
 
     const std::string& variantId() const { return variantId_; }
-    AlleleCount expectedAlleleCount() const { return expectedAlleleCount_; }
     const graphtools::Graph& graph() const { return graph_; }
     const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
 
 protected:
     std::string variantId_;
-    AlleleCount expectedAlleleCount_;
     const graphtools::Graph& graph_;
     std::vector<graphtools::NodeId> nodeIds_;
 };

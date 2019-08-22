@@ -39,11 +39,9 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, const HeuristicParameters& heuristicParams, const RegionCatalog& regionCatalog,
-    AlignmentWriter& bamletWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& bamletWriter)
 {
-    vector<std::unique_ptr<LocusAnalyzer>> locusAnalyzers
-        = initializeLocusAnalyzers(regionCatalog, heuristicParams, bamletWriter);
+    vector<std::unique_ptr<LocusAnalyzer>> locusAnalyzers = initializeLocusAnalyzers(regionCatalog, bamletWriter);
     GenomeQueryCollection genomeQuery(locusAnalyzers);
 
     using ReadCatalog = std::unordered_map<std::string, Read>;
@@ -106,7 +104,7 @@ SampleFindings htsStreamingSampleAnalysis(
     SampleFindings sampleFindings;
     for (auto& locusAnalyzer : locusAnalyzers)
     {
-        auto locusFindings = locusAnalyzer->analyze();
+        auto locusFindings = locusAnalyzer->analyze(sampleSex);
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }
 

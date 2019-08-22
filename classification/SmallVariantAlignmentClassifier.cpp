@@ -19,16 +19,21 @@
 //
 //
 
-#include "classification/ClassifierOfAlignmentsToVariant.hh"
+#include "classification/SmallVariantAlignmentClassifier.hh"
 
 #include <limits>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 
 #include <boost/algorithm/string/join.hpp>
 
+using boost::optional;
+using graphtools::GraphAlignment;
 using graphtools::NodeId;
+using std::list;
+using std::set;
 using std::string;
 using std::vector;
 
@@ -46,9 +51,9 @@ static string encode(const vector<NodeId>& nodeIds)
     return boost::algorithm::join(encoding, ", ");
 }
 
-const NodeId ClassifierOfAlignmentsToVariant::kInvalidNodeId = std::numeric_limits<NodeId>::max();
+const NodeId SmallVariantAlignmentClassifier::kInvalidNodeId = std::numeric_limits<NodeId>::max();
 
-ClassifierOfAlignmentsToVariant::ClassifierOfAlignmentsToVariant(vector<NodeId> targetNodes)
+SmallVariantAlignmentClassifier::SmallVariantAlignmentClassifier(vector<NodeId> targetNodes)
     : targetNodes_(std::move(targetNodes))
 {
     if (targetNodes_.empty())
@@ -68,14 +73,30 @@ ClassifierOfAlignmentsToVariant::ClassifierOfAlignmentsToVariant(vector<NodeId> 
     lastBundleNode_ = targetNodes_.back();
 }
 
-void ClassifierOfAlignmentsToVariant::classify(const graphtools::GraphAlignment& graphAlignment)
+ReadSummaryForSmallVariant SmallVariantAlignmentClassifier::classifyRead(
+    const std::string& read, const std::list<graphtools::GraphAlignment>& alignments)
+{
+    ReadSummaryForSmallVariant smallVariantRead(read.length());
+    for (const auto& alignment : alignments)
+    {
+        optional<SmallVariantAlignment> optionalSummary = classify(alignment);
+        if (optionalSummary)
+        {
+            smallVariantRead.addAlignment(*optionalSummary);
+        }
+    }
+
+    return smallVariantRead;
+}
+
+optional<SmallVariantAlignment> SmallVariantAlignmentClassifier::classify(const GraphAlignment& alignment)
 {
     bool pathStartsUpstream = false;
     bool pathEndsDownstream = false;
     bool pathOverlapsTargetNode = false;
     NodeId targetNodeOverlapped = kInvalidNodeId;
 
-    for (auto pathNode : graphAlignment.path().nodeIds())
+    for (auto pathNode : alignment.path().nodeIds())
     {
         if (pathNode < firstBundleNode_)
         {
@@ -96,25 +117,23 @@ void ClassifierOfAlignmentsToVariant::classify(const graphtools::GraphAlignment&
     const bool upstreamFlankingRead = pathStartsUpstream && pathOverlapsTargetNode;
     const bool downstreamFlankingRead = pathOverlapsTargetNode && pathEndsDownstream;
 
+    const int score = scoreAlignment(alignment);
+
     if (spanningRead)
     {
-        if (targetNodeOverlapped == kInvalidNodeId)
-        {
-            numBypassingReads_ += 1;
-        }
-        else
-        {
-            countsOfSpanningReads_.incrementCountOf(targetNodeOverlapped);
-        }
+        return SmallVariantAlignment(targetNodeOverlapped, SmallVariantAlignment::Type::kSpanning, score);
     }
     else if (upstreamFlankingRead)
     {
-        countsOfReadsFlankingUpstream_.incrementCountOf(targetNodeOverlapped);
+        return SmallVariantAlignment(targetNodeOverlapped, SmallVariantAlignment::Type::kUpstreamFlanking, score);
     }
     else if (downstreamFlankingRead)
     {
-        countsOfReadsFlankingDownstream_.incrementCountOf(targetNodeOverlapped);
+        return SmallVariantAlignment(targetNodeOverlapped, SmallVariantAlignment::Type::kDownstreamFlanking, score);
+    }
+    else
+    {
+        return boost::none;
     }
 }
-
 }

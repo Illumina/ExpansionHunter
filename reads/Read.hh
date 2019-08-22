@@ -29,7 +29,6 @@
 
 #include <boost/functional/hash.hpp>
 
-#include "classification/AlignmentClassifier.hh"
 #include "graphalign/GraphAlignment.hh"
 #include "graphutils/SequenceOperations.hh"
 
@@ -107,9 +106,9 @@ public:
     // Return whether the read is reverse complemented relative to it's
     //  original direction during sequencing
     bool isReversed() const { return isReversed_; }
-   
+
     void reverseComplement()
-    {   
+    {
         sequence_ = graphtools::reverseComplement(sequence_);
         isReversed_ = !isReversed_;
     }
@@ -136,30 +135,6 @@ using ReadIdToLinearAlignmentStats = std::unordered_map<std::string, LinearAlign
 
 bool operator==(const Read& read, const Read& mate);
 bool operator==(const LinearAlignmentStats& statsA, const LinearAlignmentStats& statsB);
-
-class RepeatAlignmentStats
-{
-public:
-    RepeatAlignmentStats(
-        const GraphAlignment& canonical_alignment, AlignmentType canonical_alignment_type,
-        int32_t num_repeat_units_spanned)
-        : canonical_alignment_(canonical_alignment)
-        , canonical_alignment_type_(canonical_alignment_type)
-        , num_repeat_units_spanned_(num_repeat_units_spanned)
-    {
-    }
-
-    const GraphAlignment& canonicalAlignment() const { return canonical_alignment_; }
-    AlignmentType canonicalAlignmentType() const { return canonical_alignment_type_; }
-    int32_t numRepeatUnitsSpanned() const { return num_repeat_units_spanned_; }
-
-private:
-    GraphAlignment canonical_alignment_;
-    AlignmentType canonical_alignment_type_;
-    int32_t num_repeat_units_spanned_;
-};
-
-using ReadIdToRepeatAlignmentStats = std::unordered_map<std::string, RepeatAlignmentStats>;
 
 std::ostream& operator<<(std::ostream& out, const Read& read);
 

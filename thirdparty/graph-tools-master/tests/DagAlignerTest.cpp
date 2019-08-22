@@ -660,7 +660,7 @@ TEST(RepeatExpansion, SimpleRepeat)
     Score secondBestScore = 0;
     Cigar cigar = aligner.backtrackBestPath<false>(edges, bestScore, secondBestScore);
     EXPECT_EQ(6, bestScore);
-    EXPECT_EQ("1[3=]2[3=]4[2=]", toString(cigar));
+    EXPECT_EQ("0[1D]1[3=]2[3=]4[2=]", toString(cigar));
 
     query = "GTCTCCCCAA";
     aligner.align(query.begin(), query.end(), reference.begin(), reference.end(), edges);

@@ -237,13 +237,13 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
     const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, *repeatFindingsPtr);
     const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
 
-    const int posPreceedingRepeat1based = referenceLocus.start();
+    const int posPreceedingRepeat1Based = referenceLocus.start();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     const string leftFlankingBase
         = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
     vector<string> vcfRecordElements
-        = { contigName, to_string(posPreceedingRepeat1based),  ".",         leftFlankingBase, altSymbol, ".", "PASS",
+        = { contigName, to_string(posPreceedingRepeat1Based),  ".",         leftFlankingBase, altSymbol, ".", "PASS",
             infoFields, "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC", sampleFields };
 
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;

@@ -21,6 +21,7 @@
 
 #include "output/JsonWriter.hh"
 
+#include <iomanip>
 #include <sstream>
 #include <vector>
 
@@ -71,10 +72,10 @@ void JsonWriter::write(std::ostream& out)
 
         Json locusRecord;
         locusRecord["LocusId"] = locusId;
-        locusRecord["AlleleCount"] = static_cast<int>(locusSpec.expectedAlleleCount());
 
         if (locusFindings.optionalStats)
         {
+            locusRecord["AlleleCount"] = static_cast<int>(locusFindings.optionalStats->alleleCount());
             locusRecord["Coverage"] = locusFindings.optionalStats->depth();
             locusRecord["ReadLength"] = locusFindings.optionalStats->meanReadLength();
         }

@@ -202,8 +202,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     return userDescription;
 }
 
-RegionCatalog loadLocusCatalogFromDisk(
-    const string& catalogPath, Sex sampleSex, const HeuristicParameters& heuristicParams, const Reference& reference)
+RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -220,7 +219,7 @@ RegionCatalog loadLocusCatalogFromDisk(
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
-        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
+        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, reference);
         catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
     }
 
