@@ -1,3 +1,7 @@
 add_executable(GenomeMaskTest GenomeMaskTest.cpp)
 target_link_libraries(GenomeMaskTest sample_analysis gtest gmock_main)
 add_test(NAME GenomeMaskTest COMMAND GenomeMaskTest)
+
+add_executable(DepthNormalizationTest DepthNormalizationTest.cpp)
+target_link_libraries(DepthNormalizationTest sample_analysis gtest gmock_main)
+add_test(NAME DepthNormalizationTest COMMAND DepthNormalizationTest)
