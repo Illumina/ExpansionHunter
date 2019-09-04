@@ -22,6 +22,8 @@
 #pragma once
 
 #include <list>
+#include <memory>
+#include <vector>
 
 #include "locus/Locus.hh"
 
@@ -34,14 +36,28 @@
 namespace ehunter
 {
 
+class GraphLocus;
+
 class GraphLocusFeature
 {
 public:
     using Ptr = std::unique_ptr<GraphLocusFeature>;
 
+    explicit GraphLocusFeature(const GraphLocus* locusPtr, std::vector<graphtools::NodeId> nodeIds)
+        : locusPtr_(locusPtr)
+        , nodeIds_(std::move(nodeIds))
+    {
+    }
+    virtual ~GraphLocusFeature() = default;
+
     using Alignments = std::list<graphtools::GraphAlignment>;
-    void
-    process(const Read& read, const Alignments& readAlignments, const Read& mate, const Alignments& mateAlignments);
+    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+        = 0;
+    const GraphLocus& locus() const { return *locusPtr_; }
+
+protected:
+    const GraphLocus* locusPtr_;
+    std::vector<graphtools::NodeId> nodeIds_;
 };
 
 class GraphLocus : public Locus
@@ -51,6 +67,7 @@ public:
     ~GraphLocus() override = default;
 
     void analyze(Read read, boost::optional<Read> mate) override;
+    const graphtools::Graph& graph() const { return graph_; }
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
