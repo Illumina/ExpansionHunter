@@ -38,17 +38,17 @@ namespace ehunter
 
 class GraphLocus;
 
-class GraphLocusFeature
+class GraphFeature
 {
 public:
-    using Ptr = std::unique_ptr<GraphLocusFeature>;
+    using Ptr = std::unique_ptr<GraphFeature>;
 
-    explicit GraphLocusFeature(const GraphLocus* locusPtr, std::vector<graphtools::NodeId> nodeIds)
+    explicit GraphFeature(const GraphLocus* locusPtr, std::vector<graphtools::NodeId> nodeIds)
         : locusPtr_(locusPtr)
         , nodeIds_(std::move(nodeIds))
     {
     }
-    virtual ~GraphLocusFeature() = default;
+    virtual ~GraphFeature() = default;
 
     using Alignments = std::list<graphtools::GraphAlignment>;
     virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
@@ -76,7 +76,7 @@ private:
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
 
-    std::vector<GraphLocusFeature::Ptr> features_;
+    std::vector<GraphFeature::Ptr> features_;
 };
 
 }

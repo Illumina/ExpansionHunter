@@ -21,33 +21,33 @@
 
 #pragma once
 
+#include <cassert>
 #include <vector>
 
+#include "classification/SmallVariantAlignmentClassifier.hh"
 #include "locus/GraphLocus.hh"
-
-#include "classification/AlignmentSummary.hh"
-#include "classification/StrAlignmentClassifier.hh"
 
 namespace ehunter
 {
 
-class StrFeature : public GraphFeature
+class SmallVariantFeature : GraphFeature
 {
-public:
-    explicit StrFeature(const GraphLocus* locusPtr, graphtools::NodeId nodeId)
-        : GraphFeature(locusPtr, { nodeId })
-        , alignmentClassifier_(locusPtr_->graph(), nodeId)
+    explicit SmallVariantFeature(const GraphLocus* locusPtr, std::vector<graphtools::NodeId> nodeIds)
+        : GraphFeature(locusPtr, std::move(nodeIds))
+        , alignmentClassifier_(nodeIds_)
     {
     }
 
     void
     process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
 
-    const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
+    const std::vector<ReadSummaryForSmallVariant>& readSummaries() const { return readSummaries_; }
 
 private:
-    StrAlignmentClassifier alignmentClassifier_;
-    std::vector<ReadSummaryForStr> readSummaries_;
+    void processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments);
+
+    SmallVariantAlignmentClassifier alignmentClassifier_;
+    std::vector<ReadSummaryForSmallVariant> readSummaries_;
 };
 
 }

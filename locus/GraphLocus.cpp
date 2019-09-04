@@ -32,9 +32,9 @@ using graphtools::GraphAlignment;
 using std::list;
 using std::string;
 
-void GraphLocusFeature::process(
-    const Read& /*read*/, const GraphLocusFeature::Alignments& /*readAlignments*/, const Read& /*mate*/,
-    const GraphLocusFeature::Alignments& /*mateAlignments*/)
+void GraphFeature::process(
+    const Read& /*read*/, const GraphFeature::Alignments& /*readAlignments*/, const Read& /*mate*/,
+    const GraphFeature::Alignments& /*mateAlignments*/)
 {
 }
 
