@@ -55,7 +55,7 @@ public:
     {
     }
 
-    ~RepeatAnalyzer() = default;
+    ~RepeatAnalyzer() override = default;
 
     const std::string& repeatUnit() const { return repeatUnit_; }
     void addInrepeatReadPair() { countOfInrepeatReadPairs_++; }
