@@ -21,40 +21,31 @@
 
 #pragma once
 
-#include <memory>
-#include <unordered_map>
-
 #include <boost/optional.hpp>
 
 #include "common/CountTable.hh"
-#include "genotyping/AlleleChecker.hh"
 #include "genotyping/RepeatGenotype.hh"
-#include "genotyping/SmallVariantGenotype.hh"
 
 namespace ehunter
 {
 
-class VariantFindings;
-class RepeatFindings;
-class SmallVariantFindings;
+class StrFindings;
 
 struct VariantFindingsVisitor
 {
-    virtual void visit(const RepeatFindings* findingsPtr) = 0;
-    virtual void visit(const SmallVariantFindings* findingsPtr) = 0;
+    virtual void visit(StrFindings& strFindings) = 0;
 };
 
-class VariantFindings
+struct VariantFindings
 {
-public:
-    virtual ~VariantFindings() = default;
-    virtual void accept(VariantFindingsVisitor* visitorPtr) = 0;
+    virtual ~VariantFindings() = 0;
+    virtual void accept(VariantFindingsVisitor& visitor) = 0;
 };
 
-class RepeatFindings : public VariantFindings
+class StrFindings : public VariantFindings
 {
 public:
-    RepeatFindings(
+    StrFindings(
         CountTable countsOfSpanningReads, CountTable countsOfFlankingReads, CountTable countsOfInrepeatReads,
         boost::optional<RepeatGenotype> optionalGenotype)
         : countsOfSpanningReads_(std::move(countsOfSpanningReads))
@@ -64,15 +55,15 @@ public:
     {
     }
 
-    ~RepeatFindings() override = default;
-    void accept(VariantFindingsVisitor* visitorPtr) override { visitorPtr->visit(this); }
+    ~StrFindings() override = default;
+    void accept(VariantFindingsVisitor& visitor) override { visitor.visit(*this); }
 
     const CountTable& countsOfSpanningReads() const { return countsOfSpanningReads_; }
     const CountTable& countsOfFlankingReads() const { return countsOfFlankingReads_; }
     const CountTable& countsOfInrepeatReads() const { return countsOfInrepeatReads_; }
     const boost::optional<RepeatGenotype>& optionalGenotype() const { return optionalGenotype_; }
 
-    bool operator==(const RepeatFindings& other) const
+    bool operator==(const StrFindings& other) const
     {
         return countsOfSpanningReads_ == other.countsOfSpanningReads_
             && countsOfFlankingReads_ == other.countsOfFlankingReads_
@@ -85,39 +76,5 @@ private:
     CountTable countsOfInrepeatReads_;
     boost::optional<RepeatGenotype> optionalGenotype_;
 };
-
-class SmallVariantFindings : public VariantFindings
-{
-public:
-    SmallVariantFindings(
-        int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus, AlleleCheckSummary altAlleleStatus,
-        boost::optional<SmallVariantGenotype> optionalGenotype)
-        : numRefReads_(numRefReads)
-        , numAltReads_(numAltReads)
-        , refAlleleStatus_(refAlleleStatus)
-        , altAlleleStatus_(altAlleleStatus)
-        , optionalGenotype_(std::move(optionalGenotype))
-    {
-    }
-
-    ~SmallVariantFindings() override = default;
-    void accept(VariantFindingsVisitor* visitorPtr) override { visitorPtr->visit(this); }
-
-    int numRefReads() const { return numRefReads_; }
-    int numAltReads() const { return numAltReads_; }
-    const boost::optional<SmallVariantGenotype>& optionalGenotype() const { return optionalGenotype_; }
-
-    AlleleCheckSummary refAllelePresenceStatus() const { return refAlleleStatus_; }
-    AlleleCheckSummary altAllelePresenceStatus() const { return altAlleleStatus_; }
-
-private:
-    int numRefReads_;
-    int numAltReads_;
-    AlleleCheckSummary refAlleleStatus_;
-    AlleleCheckSummary altAlleleStatus_;
-    boost::optional<SmallVariantGenotype> optionalGenotype_;
-};
-
-std::ostream& operator<<(std::ostream& out, const RepeatFindings& repeatFindings);
 
 }

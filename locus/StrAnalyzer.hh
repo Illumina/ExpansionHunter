@@ -21,35 +21,23 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
-#include <vector>
 
-#include "locus/GraphLocus.hh"
-
-#include "classification/AlignmentSummary.hh"
-#include "classification/StrAlignmentClassifier.hh"
+#include "locus/StrFeature.hh"
+#include "locus/VariantAnalyzer.hh"
 
 namespace ehunter
 {
 
-class StrFeature : public GraphFeature
+class StrAnalyzer : public VariantAnalyzer
 {
 public:
-    explicit StrFeature(const GraphLocus* locusPtr, graphtools::NodeId nodeId)
-        : GraphFeature(locusPtr, { nodeId })
-        , alignmentClassifier_(locusPtr_->graph(), nodeId)
-    {
-    }
-
-    void
-    process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
-
-    const std::string& motif() const;
-    const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
+    explicit StrAnalyzer(std::string variantId);
+    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
 private:
-    StrAlignmentClassifier alignmentClassifier_;
-    std::vector<ReadSummaryForStr> readSummaries_;
+    std::shared_ptr<StrFeature> graphFeaturePtr_;
 };
 
 }
