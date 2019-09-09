@@ -25,7 +25,7 @@
 #include <memory>
 #include <vector>
 
-#include "locus/Locus.hh"
+#include "region/Region.hh"
 
 #include "graphalign/GappedAligner.hh"
 #include "graphcore/Graph.hh"
@@ -36,15 +36,15 @@
 namespace ehunter
 {
 
-class GraphLocus;
+class GraphRegion;
 
 class GraphFeature
 {
 public:
     using Ptr = std::unique_ptr<GraphFeature>;
 
-    explicit GraphFeature(const GraphLocus* locusPtr, std::vector<graphtools::NodeId> nodeIds)
-        : locusPtr_(locusPtr)
+    explicit GraphFeature(const GraphRegion* regionPtr, std::vector<graphtools::NodeId> nodeIds)
+        : regionPtr_(regionPtr)
         , nodeIds_(std::move(nodeIds))
     {
     }
@@ -53,18 +53,18 @@ public:
     using Alignments = std::list<graphtools::GraphAlignment>;
     virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
         = 0;
-    const GraphLocus& locus() const { return *locusPtr_; }
+    const GraphRegion& region() const { return *regionPtr_; }
 
 protected:
-    const GraphLocus* locusPtr_;
+    const GraphRegion* regionPtr_;
     std::vector<graphtools::NodeId> nodeIds_;
 };
 
-class GraphLocus : public Locus
+class GraphRegion : public Region
 {
 public:
-    explicit GraphLocus(std::string locusId, graphtools::Graph graph, const HeuristicParameters& heuristics);
-    ~GraphLocus() override = default;
+    explicit GraphRegion(std::string locusId, graphtools::Graph graph, const HeuristicParameters& heuristics);
+    ~GraphRegion() override = default;
 
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }

@@ -19,7 +19,7 @@
 //
 //
 
-#include "locus/GraphLocus.hh"
+#include "region/GraphRegion.hh"
 
 #include "alignment/AlignmentFilters.hh"
 
@@ -38,8 +38,8 @@ void GraphFeature::process(
 {
 }
 
-GraphLocus::GraphLocus(string locusId, Graph graph, const HeuristicParameters& heuristics)
-    : Locus(std::move(locusId))
+GraphRegion::GraphRegion(string regionId, Graph graph, const HeuristicParameters& heuristics)
+    : Region(std::move(regionId))
     , graph_(std::move(graph))
     , aligner_(
           &graph_, heuristics.kmerLenForAlignment(), heuristics.paddingLength(), heuristics.seedAffixTrimLength(),
@@ -48,7 +48,7 @@ GraphLocus::GraphLocus(string locusId, Graph graph, const HeuristicParameters& h
 {
 }
 
-void GraphLocus::analyze(Read read, boost::optional<Read> mate)
+void GraphRegion::analyze(Read read, boost::optional<Read> mate)
 {
     list<GraphAlignment> readAlignments = align(read);
     list<GraphAlignment> mateAlignments;
@@ -76,7 +76,7 @@ void GraphLocus::analyze(Read read, boost::optional<Read> mate)
     }
 }
 
-list<GraphAlignment> GraphLocus::align(Read& read) const
+list<GraphAlignment> GraphRegion::align(Read& read) const
 {
     OrientationPrediction predictedOrientation = orientationPredictor_.predict(read.sequence());
 

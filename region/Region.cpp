@@ -19,26 +19,16 @@
 //
 //
 
-#include "locus/SmallVariantFeature.hh"
+#include "region/Region.hh"
 
 namespace ehunter
 {
 
-void SmallVariantFeature::process(
-    const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
-{
-    processRead(read, readAligns);
-    processRead(mate, mateAligns);
-}
+using std::string;
 
-void SmallVariantFeature::processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
+Region::Region(string regionId)
+    : regionId_(std::move(regionId))
 {
-    ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read.sequence(), alignments);
-
-    if (smallVariantRead.numAlignments() > 0)
-    {
-        readSummaries_.push_back(std::move(smallVariantRead));
-    }
 }
 
 }

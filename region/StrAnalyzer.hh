@@ -23,26 +23,21 @@
 
 #include <memory>
 #include <string>
-#include <vector>
 
-#include <boost/optional.hpp>
-
-#include "reads/Read.hh"
+#include "region/StrFeature.hh"
+#include "region/VariantAnalyzer.hh"
 
 namespace ehunter
 {
 
-class Locus
+class StrAnalyzer : public VariantAnalyzer
 {
 public:
-    explicit Locus(std::string locusId);
+    explicit StrAnalyzer(std::string variantId);
+    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
-    virtual ~Locus() = default;
-    virtual void analyze(Read read, boost::optional<Read> mate) = 0;
-
-protected:
-    std::string locusId_;
-    // ChromType typeOfChromLocusLocatedOn_;
+private:
+    std::shared_ptr<StrFeature> graphFeaturePtr_;
 };
 
 }

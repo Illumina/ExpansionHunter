@@ -19,9 +19,26 @@
 //
 //
 
-#include "locus/VariantFindings.hh"
+#include "region/SmallVariantFeature.hh"
 
 namespace ehunter
 {
+
+void SmallVariantFeature::process(
+    const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+{
+    processRead(read, readAligns);
+    processRead(mate, mateAligns);
+}
+
+void SmallVariantFeature::processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
+{
+    ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read.sequence(), alignments);
+
+    if (smallVariantRead.numAlignments() > 0)
+    {
+        readSummaries_.push_back(std::move(smallVariantRead));
+    }
+}
 
 }

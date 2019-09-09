@@ -19,7 +19,7 @@
 //
 //
 
-#include "locus/StrAnalyzer.hh"
+#include "region/StrAnalyzer.hh"
 #include "common/CountTable.hh"
 #include "genotyping/RepeatGenotyper.hh"
 

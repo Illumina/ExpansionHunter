@@ -19,24 +19,9 @@
 //
 //
 
-#include "locus/StrFeature.hh"
+#include "region/VariantFindings.hh"
 
 namespace ehunter
 {
-
-void StrFeature::process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
-{
-    ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read.sequence(), readAligns);
-    if (strRead.hasAlignments())
-    {
-        readSummaries_.push_back(std::move(strRead));
-    }
-
-    ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate.sequence(), mateAligns);
-    if (strMate.hasAlignments())
-    {
-        readSummaries_.push_back(std::move(strMate));
-    }
-}
 
 }

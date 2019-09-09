@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "locus/GraphLocus.hh"
+#include "region/GraphRegion.hh"
 
 #include "classification/AlignmentSummary.hh"
 #include "classification/StrAlignmentClassifier.hh"
@@ -35,9 +35,9 @@ namespace ehunter
 class StrFeature : public GraphFeature
 {
 public:
-    explicit StrFeature(const GraphLocus* locusPtr, graphtools::NodeId nodeId)
-        : GraphFeature(locusPtr, { nodeId })
-        , alignmentClassifier_(locusPtr_->graph(), nodeId)
+    explicit StrFeature(const GraphRegion* regionPtr, graphtools::NodeId nodeId)
+        : GraphFeature(regionPtr, { nodeId })
+        , alignmentClassifier_(regionPtr_->graph(), nodeId)
     {
     }
 

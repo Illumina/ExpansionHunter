@@ -19,16 +19,27 @@
 //
 //
 
-#include "locus/Locus.hh"
+#pragma once
+
+#include <memory>
+#include <string>
+
+#include "region/VariantFindings.hh"
+#include "stats/LocusStats.hh"
 
 namespace ehunter
 {
 
-using std::string;
-
-Locus::Locus(string locusId)
-    : locusId_(std::move(locusId))
+class VariantAnalyzer
 {
-}
+public:
+    explicit VariantAnalyzer(std::string variantId);
+    virtual ~VariantAnalyzer() = default;
+
+    virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
+
+private:
+    std::string variantId_;
+};
 
 }

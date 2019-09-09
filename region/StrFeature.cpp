@@ -19,27 +19,24 @@
 //
 //
 
-#pragma once
-
-#include <memory>
-#include <string>
-
-#include "locus/VariantFindings.hh"
-#include "stats/LocusStats.hh"
+#include "region/StrFeature.hh"
 
 namespace ehunter
 {
 
-class VariantAnalyzer
+void StrFeature::process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
 {
-public:
-    explicit VariantAnalyzer(std::string variantId);
-    virtual ~VariantAnalyzer() = default;
+    ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read.sequence(), readAligns);
+    if (strRead.hasAlignments())
+    {
+        readSummaries_.push_back(std::move(strRead));
+    }
 
-    virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
-
-private:
-    std::string variantId_;
-};
+    ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate.sequence(), mateAligns);
+    if (strMate.hasAlignments())
+    {
+        readSummaries_.push_back(std::move(strMate));
+    }
+}
 
 }
