@@ -66,12 +66,8 @@ namespace
     bool checkIfMatesWereMappedNearby(const LinearAlignmentStats& alignmentStats)
     {
         const int kMaxMateDistance = 1000;
-        if ((alignmentStats.chromId == alignmentStats.mateChromId)
-            && (std::abs(alignmentStats.pos - alignmentStats.matePos) < kMaxMateDistance))
-        {
-            return true;
-        }
-        return false;
+        return (alignmentStats.chromId == alignmentStats.mateChromId)
+            && (std::abs(alignmentStats.pos - alignmentStats.matePos) < kMaxMateDistance);
     }
 
     void recoverMates(
