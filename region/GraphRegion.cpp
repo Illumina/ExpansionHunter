@@ -39,7 +39,7 @@ void GraphFeature::process(
 }
 
 GraphRegion::GraphRegion(string regionId, Graph graph, const HeuristicParameters& heuristics)
-    : Region(std::move(regionId))
+    : Region(std::move(regionId), Region::Type::kTarget)
     , graph_(std::move(graph))
     , aligner_(
           &graph_, heuristics.kmerLenForAlignment(), heuristics.paddingLength(), heuristics.seedAffixTrimLength(),

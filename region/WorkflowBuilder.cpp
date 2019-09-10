@@ -19,21 +19,21 @@
 //
 //
 
-#pragma once
+#include "region/WorkflowBuilder.hh"
 
-#include "sample_analysis/AnalyzerFinder.hh"
-#include "sample_analysis/GenomeMask.hh"
+#include <memory>
+
+#include "region/GraphRegion.hh"
+
+using std::vector;
 
 namespace ehunter
 {
 
-// Aggregates various methods for querying genome
-struct GenomeQueryCollection
+vector<Region::SPtr> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
-    GenomeQueryCollection(std::vector<Region::SPtr>& regions);
-
-    AnalyzerFinder analyzerFinder; // Analyzers searchable by targeted region
-    GenomeMask targetRegionMask; // Marks targeted regions to enable fast read screening
-};
+    auto regionPtr = std::make_shared<GraphRegion>(locusSpec.locusId(), locusSpec.regionGraph(), heuristics);
+    return { regionPtr };
+}
 
 }

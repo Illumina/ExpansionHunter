@@ -21,19 +21,17 @@
 
 #pragma once
 
-#include "sample_analysis/AnalyzerFinder.hh"
-#include "sample_analysis/GenomeMask.hh"
+#include <vector>
+
+#include "common/Parameters.hh"
+#include "region/Region.hh"
+#include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
 {
 
-// Aggregates various methods for querying genome
-struct GenomeQueryCollection
-{
-    GenomeQueryCollection(std::vector<Region::SPtr>& regions);
-
-    AnalyzerFinder analyzerFinder; // Analyzers searchable by targeted region
-    GenomeMask targetRegionMask; // Marks targeted regions to enable fast read screening
-};
+// TODO: Should eventually return locus analyzers
+std::vector<Region::SPtr>
+buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
 
 }

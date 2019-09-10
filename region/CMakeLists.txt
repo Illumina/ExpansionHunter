@@ -5,6 +5,6 @@ add_library(region STATIC
         SmallVariantFeature.cpp SmallVariantFeature.hh
         StrAnalyzer.cpp StrAnalyzer.hh
         VariantAnalyzer.cpp VariantAnalyzer.hh
-        VariantFindings.cpp VariantFindings.hh)
+        VariantFindings.cpp VariantFindings.hh WorkflowBuilder.cpp WorkflowBuilder.hh)
 
-target_link_libraries(region reads alignment filtering common)
+target_link_libraries(region reads alignment filtering region_spec common)

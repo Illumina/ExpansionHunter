@@ -20,8 +20,8 @@
 //
 
 #include "sample_analysis/GenomeQueryCollection.hh"
+#include "region_spec/LocusSpecification.hh"
 
-using std::unique_ptr;
 using std::vector;
 
 namespace ehunter
@@ -29,18 +29,11 @@ namespace ehunter
 
 namespace
 {
-    void initializeGenomeMask(GenomeMask& genomeMask, vector<unique_ptr<LocusAnalyzer>>& locusAnalyzers)
+    void initializeGenomeMask(GenomeMask& genomeMask, vector<Region::SPtr>& regionModelPtrs)
     {
-        for (auto& locusAnalyzer : locusAnalyzers)
+        for (auto& regionModelPtr : regionModelPtrs)
         {
-            const LocusSpecification& locusSpec = locusAnalyzer->locusSpec();
-
-            for (const auto& region : locusSpec.targetReadExtractionRegions())
-            {
-                genomeMask.addRegion(region.contigIndex(), region.start(), region.end());
-            }
-
-            for (const auto& region : locusSpec.offtargetReadExtractionRegions())
+            for (const auto& region : regionModelPtr->readExtractionRegions())
             {
                 genomeMask.addRegion(region.contigIndex(), region.start(), region.end());
             }
@@ -48,10 +41,10 @@ namespace
     }
 }
 
-GenomeQueryCollection::GenomeQueryCollection(vector<unique_ptr<LocusAnalyzer>>& locusAnalyzers)
-    : analyzerFinder(locusAnalyzers)
+GenomeQueryCollection::GenomeQueryCollection(vector<Region::SPtr>& regions)
+    : analyzerFinder(regions)
 {
-    initializeGenomeMask(targetRegionMask, locusAnalyzers);
+    initializeGenomeMask(targetRegionMask, regions);
 }
 
 }

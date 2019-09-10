@@ -61,7 +61,7 @@ public:
      */
     const std::vector<GenomicRegion>& targetReadExtractionRegions() const { return targetReadExtractionRegions_; }
     /*
-     * List of regions that additional relevant reads might be found
+     * List of regions where additional relevant reads might be found
      * Require filtering or special considerations
      */
     const std::vector<GenomicRegion>& offtargetReadExtractionRegions() const { return offtargetReadExtractionRegions_; }

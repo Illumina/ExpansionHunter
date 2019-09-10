@@ -25,6 +25,7 @@
 #include <unordered_map>
 
 #include "common/HtsHelpers.hh"
+#include "region/WorkflowBuilder.hh"
 #include "region_analysis/LocusAnalyzer.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
@@ -39,10 +40,22 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& bamletWriter)
+    const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
+    AlignmentWriter& /*bamletWriter*/)
 {
-    vector<std::unique_ptr<LocusAnalyzer>> locusAnalyzers = initializeLocusAnalyzers(regionCatalog, bamletWriter);
-    GenomeQueryCollection genomeQuery(locusAnalyzers);
+    vector<Region::SPtr> regionModelPtrs;
+
+    WorkflowContext context;
+
+    for (const auto& locusIdAndLocusSpec : regionCatalog)
+    {
+        const auto& locusSpec = locusIdAndLocusSpec.second;
+        std::vector<Region::SPtr> locusModels = buildLocusWorkflow(locusSpec, context.heuristics());
+    }
+
+    //= initializeLocusAnalyzers(regionCatalog, bamletWriter);
+
+    GenomeQueryCollection genomeQuery(regionModelPtrs);
 
     using ReadCatalog = std::unordered_map<std::string, Read>;
     ReadCatalog unpairedReads;
@@ -84,29 +97,29 @@ SampleFindings htsStreamingSampleAnalysis(
 
         for (auto& analyzerBundle : analyzerBundles)
         {
-            const auto analyzerPtr = analyzerBundle.locusAnalyzerPtr;
+            const auto analyzerPtr = analyzerBundle.regionPtr;
 
             switch (analyzerBundle.inputType)
             {
             case AnalyzerInputType::kBothReads:
-                analyzerPtr->processMates(std::move(read), std::move(mate), analyzerBundle.regionType);
+                analyzerPtr->analyze(std::move(read), std::move(mate));
                 break;
             case AnalyzerInputType::kReadOnly:
-                analyzerPtr->processMates(std::move(read), boost::none, analyzerBundle.regionType);
+                analyzerPtr->analyze(std::move(read), boost::none);
                 break;
             case AnalyzerInputType::kMateOnly:
-                analyzerPtr->processMates(std::move(mate), boost::none, analyzerBundle.regionType);
+                analyzerPtr->analyze(std::move(mate), boost::none);
                 break;
             }
         }
     }
 
     SampleFindings sampleFindings;
-    for (auto& locusAnalyzer : locusAnalyzers)
-    {
-        auto locusFindings = locusAnalyzer->analyze(sampleSex);
-        sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
-    }
+    // for (auto& locusAnalyzer : regionModelPtrs)
+    //{
+    //    auto locusFindings = locusAnalyzer->analyze(sampleSex);
+    //    sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
+    //}
 
     return sampleFindings;
 }

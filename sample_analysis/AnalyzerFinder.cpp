@@ -21,6 +21,7 @@
 //
 
 #include "sample_analysis/AnalyzerFinder.hh"
+#include "region_spec/LocusSpecification.hh"
 
 using boost::optional;
 using std::unique_ptr;
@@ -38,16 +39,6 @@ namespace
         return ((readContigId == mateContigId) && (std::abs(readPosition - matePosition) < kMaxMateDistance));
     }
 
-    inline RegionType coalesceRegionTypes(RegionType readRegionType, RegionType mateRegionType)
-    {
-        if (readRegionType == RegionType::kTarget || mateRegionType == RegionType::kTarget)
-        {
-            return RegionType::kTarget;
-        }
-
-        return RegionType::kOfftarget;
-    }
-
     vector<AnalyzerBundle>
     coalesceCommonBundles(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
     {
@@ -57,10 +48,16 @@ namespace
         {
             for (const auto& mateBundle : mateBundles)
             {
-                if (readBundle.locusAnalyzerPtr == mateBundle.locusAnalyzerPtr)
+                if (readBundle.regionPtr == mateBundle.regionPtr)
                 {
-                    commonBundles.push_back(readBundle);
-                    commonBundles.back().regionType = coalesceRegionTypes(readBundle.regionType, mateBundle.regionType);
+                    if (readBundle.regionPtr->type() == Region::Type::kTarget)
+                    {
+                        commonBundles.push_back(readBundle);
+                    }
+                    else
+                    {
+                        commonBundles.push_back(mateBundle);
+                    }
                 }
             }
         }
@@ -76,7 +73,7 @@ namespace
 
         for (const auto& bundle : readBundles)
         {
-            if (bundle.regionType == RegionType::kTarget)
+            if (bundle.regionPtr->type() == Region::Type::kTarget)
             {
                 bundles.push_back(bundle);
                 bundles.back().inputType = AnalyzerInputType::kReadOnly;
@@ -85,7 +82,7 @@ namespace
 
         for (const auto& bundle : mateBundles)
         {
-            if (bundle.regionType == RegionType::kTarget)
+            if (bundle.regionPtr->type() == Region::Type::kTarget)
             {
                 bundles.push_back(bundle);
                 bundles.back().inputType = AnalyzerInputType::kMateOnly;
@@ -116,24 +113,18 @@ namespace
     }
 }
 
-AnalyzerFinder::AnalyzerFinder(vector<unique_ptr<LocusAnalyzer>>& locusAnalyzers)
+AnalyzerFinder::AnalyzerFinder(vector<Region::SPtr>& regionModelPtrs)
 {
     using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, AnalyzerBundle>;
 
     unordered_map<int32_t, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
-    for (auto& locusAnalyzer : locusAnalyzers)
+    for (auto& regionModelPtr : regionModelPtrs)
     {
-        const LocusSpecification& locusSpec = locusAnalyzer->locusSpec();
-        for (const auto& region : locusSpec.targetReadExtractionRegions())
+        for (const auto& genomicRegion : regionModelPtr->readExtractionRegions())
         {
-            AnalyzerBundle bundle(RegionType::kTarget, locusAnalyzer.get());
-            contigToIntervals[region.contigIndex()].emplace_back(region.start(), region.end(), bundle);
-        }
-
-        for (const auto& region : locusSpec.offtargetReadExtractionRegions())
-        {
-            AnalyzerBundle bundle(RegionType::kOfftarget, locusAnalyzer.get());
-            contigToIntervals[region.contigIndex()].emplace_back(region.start(), region.end(), bundle);
+            AnalyzerBundle bundle(regionModelPtr.get());
+            contigToIntervals[genomicRegion.contigIndex()].emplace_back(
+                genomicRegion.start(), genomicRegion.end(), bundle);
         }
     }
 

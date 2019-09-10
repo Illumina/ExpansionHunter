@@ -27,6 +27,7 @@
 
 #include <boost/optional.hpp>
 
+#include "common/GenomicRegion.hh"
 #include "reads/Read.hh"
 
 namespace ehunter
@@ -35,13 +36,26 @@ namespace ehunter
 class Region
 {
 public:
-    explicit Region(std::string regionId);
+    using SPtr = std::shared_ptr<Region>;
+    enum class Type
+    {
+        kTarget,
+        kOfftarget
+    };
 
+    // Add read extraction regions
+    explicit Region(std::string regionId, Type type);
     virtual ~Region() = default;
+
+    Type type() const { return type_; }
+    const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
+
     virtual void analyze(Read read, boost::optional<Read> mate) = 0;
 
 protected:
     std::string regionId_;
+    Type type_;
+    std::vector<GenomicRegion> readExtractionRegions_;
     // ChromType typeOfChromLocusLocatedOn_;
 };
 

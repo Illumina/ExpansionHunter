@@ -33,6 +33,7 @@
 #include "thirdparty/spdlog/spdlog.h"
 
 #include "reads/ReadPairs.hh"
+#include "region/WorkflowBuilder.hh"
 #include "region_analysis/LocusAnalyzer.hh"
 #include "sample_analysis/AnalyzerFinder.hh"
 #include "sample_analysis/HtsFileSeeker.hh"
@@ -206,15 +207,15 @@ namespace
 
         if (bundle.inputType == AnalyzerInputType::kBothReads)
         {
-            bundle.locusAnalyzerPtr->processMates(read, mate, bundle.regionType);
+            bundle.regionPtr->analyze(read, mate);
         }
         else if (bundle.inputType == AnalyzerInputType::kReadOnly)
         {
-            bundle.locusAnalyzerPtr->processMates(read, boost::none, bundle.regionType);
+            bundle.regionPtr->analyze(read, boost::none);
         }
         else if (bundle.inputType == AnalyzerInputType::kMateOnly)
         {
-            bundle.locusAnalyzerPtr->processMates(mate, boost::none, bundle.regionType);
+            bundle.regionPtr->analyze(mate, boost::none);
         }
     }
 
@@ -239,7 +240,7 @@ namespace
 
         assert(analyzers.size() == 1);
         const AnalyzerBundle& bundle = analyzers.front();
-        bundle.locusAnalyzerPtr->processMates(read, boost::none, bundle.regionType);
+        bundle.regionPtr->analyze(read, boost::none);
     }
 
     void processReads(
@@ -263,19 +264,26 @@ namespace
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& alignmentWriter)
+    const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
+    AlignmentWriter& /*alignmentWriter*/)
 {
     auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
 
     SampleFindings sampleFindings;
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
-        const string& locusId = locusIdAndRegionSpec.first;
+        // const string& locusId = locusIdAndRegionSpec.first;
         const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
 
-        vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
-        locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
-        AnalyzerFinder analyzerFinder(locusAnalyzers);
+        // TODO: Initialize regions
+        WorkflowContext context;
+        vector<Region::SPtr> regions = buildLocusWorkflow(locusSpec, context.heuristics());
+
+        // TODO: For each region: collect reads and pass them into regions
+
+        // vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
+        // locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
+        AnalyzerFinder analyzerFinder(regions);
 
         AlignmentStatsCatalog alignmentStats;
         ReadPairs readPairs = collectCandidateReads(
@@ -284,8 +292,8 @@ SampleFindings htsSeekingSampleAnalysis(
 
         processReads(readPairs, alignmentStats, analyzerFinder);
 
-        auto variantFindings = locusAnalyzers.front()->analyze(sampleSex);
-        sampleFindings.emplace(locusId, std::move(variantFindings));
+        // auto variantFindings = locusAnalyzers.front()->analyze(sampleSex);
+        // sampleFindings.emplace(locusId, std::move(variantFindings));
     }
 
     return sampleFindings;
