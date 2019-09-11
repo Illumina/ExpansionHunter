@@ -21,23 +21,29 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics.hpp>
+#include <boost/optional.hpp>
 
-#include "region/StrFeature.hh"
-#include "region/VariantAnalyzer.hh"
+#include "region/RegionModel.hh"
 
 namespace ehunter
 {
 
-class StrAnalyzer : public VariantAnalyzer
+class CountingModel : public RegionModel
 {
 public:
-    explicit StrAnalyzer(std::string variantId, std::shared_ptr<StrFeature> strFeature);
-    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
+    void analyze(Read read, boost::optional<Read> mate) override;
+    int readCount() const;
+    int meanReadLength() const;
+    double depth() const;
 
 private:
-    std::shared_ptr<StrFeature> strFeaturePtr_;
+    using AccumulatorStats
+        = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
+    using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;
+
+    Accumulator readLengthAccumulator_;
 };
 
 }

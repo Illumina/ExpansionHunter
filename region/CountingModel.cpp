@@ -19,28 +19,40 @@
 //
 //
 
-#include "region/StrFeature.hh"
+#include "region/CountingModel.hh"
 
 namespace ehunter
 {
 
-void StrFeature::process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+void CountingModel::analyze(Read read, boost::optional<Read> mate)
 {
-    ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read.sequence(), readAligns);
-    if (strRead.hasAlignments())
+    readLengthAccumulator_(read.sequence().length());
+    if (mate)
     {
-        readSummaries_.push_back(std::move(strRead));
-    }
-
-    ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate.sequence(), mateAligns);
-    if (strMate.hasAlignments())
-    {
-        readSummaries_.push_back(std::move(strMate));
+        readLengthAccumulator_(mate->sequence().length());
     }
 }
 
-graphtools::NodeId StrFeature::motifNodeId() const { return nodeIds_.front(); }
+int CountingModel::readCount() const { return boost::accumulators::count(readLengthAccumulator_); }
 
-const std::string& StrFeature::motif() const { return graphModelPtr_->graph().nodeSeq(motifNodeId()); }
+int CountingModel::meanReadLength() const
+{
+    if (readCount() == 0)
+    {
+        return 0;
+    }
+
+    return boost::accumulators::mean(readLengthAccumulator_);
+}
+
+double CountingModel::depth() const
+{
+    /*
+    const int numberOfStartPositions = leftFlankLength_ + rightFlankLength_ - meanReadLength;
+    const double depth = meanReadLength * (static_cast<double>(readCount) / numberOfStartPositions);
+ */
+
+    return 0;
+}
 
 }

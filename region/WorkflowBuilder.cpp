@@ -22,22 +22,76 @@
 #include "region/WorkflowBuilder.hh"
 
 #include <memory>
+#include <stdexcept>
+#include <string>
 
 #include "region/GraphLocus.hh"
+#include "region/StrAnalyzer.hh"
+
+using std::string;
 
 namespace ehunter
 {
 
-LocusAnalyzer::SPtr
-buildLocusWorkflow(const LocusSpecification& /*locusSpec*/, const HeuristicParameters& /*heuristics*/)
+LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
+    // Construct graph model
+    if (locusSpec.targetReadExtractionRegions().size() != 1)
+    {
+        const string message
+            = "Locus " + locusSpec.locusId() + " must be associated with exactly one read extraction region";
+        throw std::runtime_error(message);
+    }
+
+    const auto& regionForGraphModel = locusSpec.targetReadExtractionRegions().front();
+    auto graphModelPtr = std::make_shared<GraphModel>(regionForGraphModel, locusSpec.regionGraph(), heuristics);
+
+    // Construct graph features and variant analyzers
+
+    for (const auto& variantSpec : locusSpec.variantSpecs())
+    {
+        if (variantSpec.classification().type == VariantType::kRepeat)
+        {
+            const int motifNode = variantSpec.nodes().front();
+
+            auto strFeaturePtr = std::make_shared<StrFeature>(graphModelPtr, motifNode);
+            graphModelPtr->addFeature(strFeaturePtr.get());
+
+            auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(variantSpec.id(), strFeaturePtr);
+
+            /*
+            weightedPurityCalculators.emplace(std::make_pair(repeatUnit, WeightedPurityCalculator(repeatUnit)));
+
+            if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
+            {
+                if (optionalUnitOfRareRepeat_)
+                {
+                    const string errorMessage
+                        = "Region " + locusSpec_.locusId() + " is not permitted to have more than one rare variant";
+                    throw std::logic_error(errorMessage);
+                }
+                optionalUnitOfRareRepeat_ = repeatUnit;
+            } */
+        }
+        // else if (variantSpec.classification().type == VariantType::kSmallVariant)
+        //{
+        //    variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
+        //        variantSpec.id(), variantSpec.classification().subtype, locusSpec.regionGraph(), variantSpec.nodes(),
+        //        variantSpec.optionalRefNode(), locusSpec.genotyperParameters()));
+        //}
+        else
+        {
+            std::stringstream encoding;
+            encoding << variantSpec.classification().type << "/" << variantSpec.classification().subtype;
+            throw std::logic_error("Missing logic to create an analyzer for " + encoding.str());
+        }
+    }
+
     // TODO: Build GraphLocus
+    // TODO: It should be initialized with LocusStats and analyzer ptrs
+
     auto graphLocus = std::make_shared<GraphLocus>();
-    // TODO: Build Variants
 
-    // TODO: Build GraphFeatures
-
-    // TODO: Build GraphRegions
     // for (const auto& genomicRegion : locusSpec.targetReadExtractionRegions()) {}
 
     // auto locusPtr = std::make_shared<GraphLocus>(locusSpec.locusId(), locusSpec.regionGraph(), heuristics);

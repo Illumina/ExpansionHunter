@@ -43,8 +43,8 @@ public:
         kOfftarget
     };
 
-    // Add read extraction regions
-    explicit RegionModel(std::string regionId, Type type);
+    // TODO: Add read extraction regions
+    explicit RegionModel(Type type);
     virtual ~RegionModel() = default;
 
     Type type() const { return type_; }
@@ -53,7 +53,6 @@ public:
     virtual void analyze(Read read, boost::optional<Read> mate) = 0;
 
 protected:
-    std::string regionId_;
     Type type_;
     std::vector<GenomicRegion> readExtractionRegions_;
     // ChromType typeOfChromLocusLocatedOn_;

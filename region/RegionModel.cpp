@@ -26,9 +26,8 @@ namespace ehunter
 
 using std::string;
 
-RegionModel::RegionModel(string regionId, Type type)
-    : regionId_(std::move(regionId))
-    , type_(type)
+RegionModel::RegionModel(Type type)
+    : type_(type)
 {
 }
 

@@ -38,8 +38,9 @@ void GraphFeature::process(
 {
 }
 
-GraphModel::GraphModel(string regionId, Graph graph, const HeuristicParameters& heuristics)
-    : RegionModel(std::move(regionId), RegionModel::Type::kTarget)
+GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const HeuristicParameters& heuristics)
+    : RegionModel(RegionModel::Type::kTarget)
+    , referenceRegion_(std::move(referenceRegion))
     , graph_(std::move(graph))
     , aligner_(
           &graph_, heuristics.kmerLenForAlignment(), heuristics.paddingLength(), heuristics.seedAffixTrimLength(),
@@ -91,5 +92,6 @@ list<GraphAlignment> GraphModel::align(Read& read) const
 
     return aligner_.align(read.sequence());
 }
+void GraphModel::addFeature(GraphFeature* featurePtr) { features_.push_back(featurePtr); }
 
 }

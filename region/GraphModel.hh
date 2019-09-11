@@ -30,6 +30,7 @@
 #include "graphalign/GappedAligner.hh"
 #include "graphcore/Graph.hh"
 
+#include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "filtering/OrientationPredictor.hh"
 
@@ -42,15 +43,18 @@ class GraphModel : public RegionModel
 {
 public:
     using SPtr = std::shared_ptr<GraphModel>;
-    explicit GraphModel(std::string locusId, graphtools::Graph graph, const HeuristicParameters& heuristics);
+    explicit GraphModel(GenomicRegion referenceRegion, graphtools::Graph graph, const HeuristicParameters& heuristics);
     ~GraphModel() override = default;
 
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
+    const GenomicRegion& referenceRegion() const { return referenceRegion_; }
+    void addFeature(GraphFeature* featurePtr);
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
 
+    GenomicRegion referenceRegion_;
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
@@ -64,7 +68,7 @@ public:
     using SPtr = std::shared_ptr<GraphFeature>;
 
     explicit GraphFeature(GraphModel::SPtr regionModelPtr, std::vector<graphtools::NodeId> nodeIds)
-        : regionModelPtr_(std::move(regionModelPtr))
+        : graphModelPtr_(std::move(regionModelPtr))
         , nodeIds_(std::move(nodeIds))
     {
     }
@@ -73,10 +77,10 @@ public:
     using Alignments = std::list<graphtools::GraphAlignment>;
     virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
         = 0;
-    GraphModel::SPtr regionModelPtr() const { return regionModelPtr_; }
+    GraphModel::SPtr regionModelPtr() const { return graphModelPtr_; }
 
 protected:
-    GraphModel::SPtr regionModelPtr_;
+    GraphModel::SPtr graphModelPtr_;
     std::vector<graphtools::NodeId> nodeIds_;
 };
 

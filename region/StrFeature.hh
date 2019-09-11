@@ -36,7 +36,7 @@ class StrFeature : public GraphFeature
 {
 public:
     explicit StrFeature(GraphModel::SPtr graphModelPtr, graphtools::NodeId nodeId)
-        : GraphFeature(graphModelPtr, { nodeId })
+        : GraphFeature(std::move(graphModelPtr), { nodeId })
         , alignmentClassifier_(graphModelPtr->graph(), nodeId)
     {
     }
@@ -48,6 +48,7 @@ public:
     const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
 
 private:
+    graphtools::NodeId motifNodeId() const;
     StrAlignmentClassifier alignmentClassifier_;
     std::vector<ReadSummaryForStr> readSummaries_;
 };

@@ -81,8 +81,9 @@ static vector<int> generateCandidateAlleleSizes(
     return candidateSizes;
 }
 
-StrAnalyzer::StrAnalyzer(string variantId)
+StrAnalyzer::StrAnalyzer(string variantId, std::shared_ptr<StrFeature> strFeaturePtr)
     : VariantAnalyzer(std::move(variantId))
+    , strFeaturePtr_(strFeaturePtr)
 {
 }
 
@@ -91,10 +92,10 @@ std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) c
     CountTable spanningReads;
     CountTable flankingReads;
     CountTable inrepeatReads;
-    populateCountTables(graphFeaturePtr_->readSummaries(), spanningReads, flankingReads, inrepeatReads);
+    populateCountTables(strFeaturePtr_->readSummaries(), spanningReads, flankingReads, inrepeatReads);
 
-    assert(graphFeaturePtr_);
-    const string& motif = graphFeaturePtr_->motif();
+    assert(strFeaturePtr_);
+    const string& motif = strFeaturePtr_->motif();
     const int maxNumUnitsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(motif.length()));
     auto truncatedSpanningTable = collapseTopElements(spanningReads, maxNumUnitsInRead);
     auto truncatedFlankingTable = collapseTopElements(flankingReads, maxNumUnitsInRead);

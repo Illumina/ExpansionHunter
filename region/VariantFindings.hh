@@ -38,7 +38,7 @@ struct VariantFindingsVisitor
 
 struct VariantFindings
 {
-    virtual ~VariantFindings() = 0;
+    virtual ~VariantFindings() = default;
     virtual void accept(VariantFindingsVisitor& visitor) = 0;
 };
 
