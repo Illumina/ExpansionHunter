@@ -86,7 +86,7 @@ void VcfWriter::writeBody(ostream& out)
         const double locusDepth = locusFindings.optionalStats->depth();
 
         VariantVcfWriter variantWriter(reference_, locusSpec, locusDepth, variantSpec, out);
-        variantFindings->accept(&variantWriter);
+        variantFindings->accept(variantWriter);
     }
 }
 
@@ -177,23 +177,22 @@ static ReadType determineSupportType(const CountTable& spanningCounts, const Cou
     return ReadType::kRepeat;
 }
 
-static string computeAlleleFields(
-    const VariantSpecification& variantSpec, const string& repeatUnit, const RepeatFindings& repeatFindings)
+static string
+computeAlleleFields(const VariantSpecification& variantSpec, const string& motif, const StrFindings& strFindings)
 {
     const auto referenceLocus = variantSpec.referenceLocus();
     const int referenceSizeInBp = referenceLocus.length();
-    const int referenceSizeInUnits = referenceSizeInBp / repeatUnit.length();
-    const RepeatGenotype& genotype = *repeatFindings.optionalGenotype();
+    const int referenceSizeInUnits = referenceSizeInBp / motif.length();
+    const RepeatGenotype& genotype = *strFindings.optionalGenotype();
 
     ReadSupportCalculator readSupportCalculator(
-        repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(),
-        repeatFindings.countsOfInrepeatReads());
+        strFindings.countsOfSpanningReads(), strFindings.countsOfFlankingReads(), strFindings.countsOfInrepeatReads());
 
     VcfAlleleFields alleleFields(referenceSizeInUnits);
 
     const int shortAlleleSize = genotype.shortAlleleSizeInUnits();
     ReadType shortAlleleSupportType = determineSupportType(
-        repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), shortAlleleSize);
+        strFindings.countsOfSpanningReads(), strFindings.countsOfFlankingReads(), shortAlleleSize);
 
     alleleFields.addAlleleInfo(
         shortAlleleSize, shortAlleleSupportType, genotype.shortAlleleSizeInUnitsCi(),
@@ -205,7 +204,7 @@ static string computeAlleleFields(
     {
         const int longAlleleSize = genotype.longAlleleSizeInUnits();
         ReadType longAlleleSupportType = determineSupportType(
-            repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), longAlleleSize);
+            strFindings.countsOfSpanningReads(), strFindings.countsOfFlankingReads(), longAlleleSize);
 
         alleleFields.addAlleleInfo(
             genotype.longAlleleSizeInUnits(), longAlleleSupportType, genotype.longAlleleSizeInUnitsCi(),
@@ -217,14 +216,14 @@ static string computeAlleleFields(
     return alleleFields.encode();
 }
 
-void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
+void VariantVcfWriter::visit(StrFindings& strFindings)
 {
-    if (!repeatFindingsPtr->optionalGenotype())
+    if (!strFindings.optionalGenotype())
     {
         return;
     }
 
-    const auto& genotype = *(repeatFindingsPtr->optionalGenotype());
+    const auto& genotype = *(strFindings.optionalGenotype());
 
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto repeatNodeId = variantSpec_.nodes().front();
@@ -234,7 +233,7 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 
     const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
     const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
-    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, *repeatFindingsPtr);
+    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, strFindings);
     const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
 
     const int posPreceedingRepeat1Based = referenceLocus.start();
@@ -249,6 +248,7 @@ void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
+/*
 void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
 {
     const auto& referenceLocus = variantSpec_.referenceLocus();
@@ -348,6 +348,6 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
         sampleValue
     };
     out_ << boost::algorithm::join(line, "\t") << std::endl;
-}
+} */
 
 }

@@ -35,9 +35,9 @@ namespace ehunter
 class StrFeature : public GraphFeature
 {
 public:
-    explicit StrFeature(const GraphRegion* regionPtr, graphtools::NodeId nodeId)
-        : GraphFeature(regionPtr, { nodeId })
-        , alignmentClassifier_(regionPtr_->graph(), nodeId)
+    explicit StrFeature(GraphRegion::SPtr graphModelPtr, graphtools::NodeId nodeId)
+        : GraphFeature(graphModelPtr, { nodeId })
+        , alignmentClassifier_(graphModelPtr->graph(), nodeId)
     {
     }
 

@@ -23,7 +23,9 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
+#include "region/GraphRegion.hh"
 #include "region/VariantFindings.hh"
 #include "stats/LocusStats.hh"
 
@@ -33,13 +35,20 @@ namespace ehunter
 class VariantAnalyzer
 {
 public:
+    using SPtr = std::shared_ptr<VariantAnalyzer>;
+
     explicit VariantAnalyzer(std::string variantId);
     virtual ~VariantAnalyzer() = default;
 
+    const std::string& variantId() const { return variantId_; }
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
+
+    const std::vector<GraphFeature::SPtr>& regionFeaturePtrs() const { return regionFeaturePtrs_; }
 
 private:
     std::string variantId_;
+    // TODO: Introduce general "features"
+    std::vector<GraphFeature::SPtr> regionFeaturePtrs_;
 };
 
 }

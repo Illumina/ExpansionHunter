@@ -32,7 +32,7 @@ namespace ehunter
 
 class SmallVariantFeature : GraphFeature
 {
-    explicit SmallVariantFeature(const GraphRegion* regionPtr, std::vector<graphtools::NodeId> nodeIds)
+    explicit SmallVariantFeature(GraphRegion::SPtr regionPtr, std::vector<graphtools::NodeId> nodeIds)
         : GraphFeature(regionPtr, std::move(nodeIds))
         , alignmentClassifier_(nodeIds_)
     {

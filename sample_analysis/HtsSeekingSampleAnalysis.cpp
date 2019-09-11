@@ -25,6 +25,7 @@
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include <boost/functional/hash.hpp>
@@ -32,9 +33,10 @@
 
 #include "thirdparty/spdlog/spdlog.h"
 
+#include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
+#include "region/LocusAnalyzer.hh"
 #include "region/WorkflowBuilder.hh"
-#include "region_analysis/LocusAnalyzer.hh"
 #include "sample_analysis/AnalyzerFinder.hh"
 #include "sample_analysis/HtsFileSeeker.hh"
 #include "sample_analysis/IndexBasedDepthEstimate.hh"
@@ -50,6 +52,7 @@ using std::ostream;
 using std::string;
 using std::unique_ptr;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 namespace
@@ -107,8 +110,10 @@ namespace
                 }
                 else
                 {
-                    auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
-                    console->warn("Could not recover the mate of {}", read.readId());
+                    // TODO: Uncomment
+                    // auto console = spdlog::get("console") ? spdlog::get("console") :
+                    // spdlog::stderr_color_mt("console"); console->warn("Could not recover the mate of {}",
+                    // read.readId());
                 }
             }
         }
@@ -144,7 +149,7 @@ namespace
 
         for (const auto& regionWithReads : regionsWithReads)
         {
-            const int numReadsBeforeCollection = readPairs.NumReads();
+            // const int numReadsBeforeCollection = readPairs.NumReads();
             htsFileSeeker.setRegion(regionWithReads);
             while (htsFileSeeker.trySeekingToNextPrimaryAlignment())
             {
@@ -157,11 +162,12 @@ namespace
                 }
                 else
                 {
-                    console->warn("Skipping {} because it is unpaired", read.readId());
+                    // TODO: Uncomment
+                    // console->warn("Skipping {} because it is unpaired", read.readId());
                 }
             }
-            const int numReadsCollected = readPairs.NumReads() - numReadsBeforeCollection;
-            console->debug("Collected {} reads from {}", numReadsCollected, regionWithReads);
+            // const int numReadsCollected = readPairs.NumReads() - numReadsBeforeCollection;
+            // console->debug("Collected {} reads from {}", numReadsCollected, regionWithReads);
         }
 
         // add a cap for reads
@@ -277,13 +283,14 @@ SampleFindings htsSeekingSampleAnalysis(
 
         // TODO: Initialize regions
         WorkflowContext context;
-        vector<Region::SPtr> regions = buildLocusWorkflow(locusSpec, context.heuristics());
+        LocusAnalyzer::SPtr locusAnalyzerPtr = buildLocusWorkflow(locusSpec, context.heuristics());
 
         // TODO: For each region: collect reads and pass them into regions
 
         // vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
         // locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
-        AnalyzerFinder analyzerFinder(regions);
+        vector<Region::SPtr> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
+        AnalyzerFinder analyzerFinder(regionModelPtrs);
 
         AlignmentStatsCatalog alignmentStats;
         ReadPairs readPairs = collectCandidateReads(

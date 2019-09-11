@@ -23,17 +23,25 @@
 
 #include <memory>
 
-#include "region/GraphRegion.hh"
-
-using std::vector;
+#include "region/GraphLocus.hh"
 
 namespace ehunter
 {
 
-vector<Region::SPtr> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
+LocusAnalyzer::SPtr
+buildLocusWorkflow(const LocusSpecification& /*locusSpec*/, const HeuristicParameters& /*heuristics*/)
 {
-    auto regionPtr = std::make_shared<GraphRegion>(locusSpec.locusId(), locusSpec.regionGraph(), heuristics);
-    return { regionPtr };
+    // TODO: Build GraphLocus
+    auto graphLocus = std::make_shared<GraphLocus>();
+    // TODO: Build Variants
+
+    // TODO: Build GraphFeatures
+
+    // TODO: Build GraphRegions
+    // for (const auto& genomicRegion : locusSpec.targetReadExtractionRegions()) {}
+
+    // auto locusPtr = std::make_shared<GraphLocus>(locusSpec.locusId(), locusSpec.regionGraph(), heuristics);
+    return graphLocus;
 }
 
 }

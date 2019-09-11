@@ -36,33 +36,12 @@
 namespace ehunter
 {
 
-class GraphRegion;
-
-class GraphFeature
-{
-public:
-    using Ptr = std::unique_ptr<GraphFeature>;
-
-    explicit GraphFeature(const GraphRegion* regionPtr, std::vector<graphtools::NodeId> nodeIds)
-        : regionPtr_(regionPtr)
-        , nodeIds_(std::move(nodeIds))
-    {
-    }
-    virtual ~GraphFeature() = default;
-
-    using Alignments = std::list<graphtools::GraphAlignment>;
-    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
-        = 0;
-    const GraphRegion& region() const { return *regionPtr_; }
-
-protected:
-    const GraphRegion* regionPtr_;
-    std::vector<graphtools::NodeId> nodeIds_;
-};
+class GraphFeature;
 
 class GraphRegion : public Region
 {
 public:
+    using SPtr = std::shared_ptr<GraphRegion>;
     explicit GraphRegion(std::string locusId, graphtools::Graph graph, const HeuristicParameters& heuristics);
     ~GraphRegion() override = default;
 
@@ -76,7 +55,29 @@ private:
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
 
-    std::vector<GraphFeature::Ptr> features_;
+    std::vector<GraphFeature*> features_;
+};
+
+class GraphFeature
+{
+public:
+    using SPtr = std::shared_ptr<GraphFeature>;
+
+    explicit GraphFeature(GraphRegion::SPtr regionModelPtr, std::vector<graphtools::NodeId> nodeIds)
+        : regionModelPtr_(std::move(regionModelPtr))
+        , nodeIds_(std::move(nodeIds))
+    {
+    }
+    virtual ~GraphFeature() = default;
+
+    using Alignments = std::list<graphtools::GraphAlignment>;
+    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+        = 0;
+    GraphRegion::SPtr regionModelPtr() const { return regionModelPtr_; }
+
+protected:
+    GraphRegion::SPtr regionModelPtr_;
+    std::vector<graphtools::NodeId> nodeIds_;
 };
 
 }

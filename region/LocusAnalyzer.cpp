@@ -19,23 +19,32 @@
 //
 //
 
-#pragma once
+#include "region/LocusAnalyzer.hh"
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <unordered_set>
 
-#include "graphio/AlignmentWriter.hh"
-
-#include "common/Parameters.hh"
-#include "region/LocusFindings.hh"
-#include "region_spec/LocusSpecification.hh"
+using std::unordered_set;
+using std::vector;
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+vector<Region::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs)
+{
+    unordered_set<Region::SPtr> regionPtrs;
+
+    for (const auto& locusAnalyzerPtr : locusAnalyzerPtrs)
+    {
+        for (const auto& variantAnalyzerPtr : locusAnalyzerPtr->variantAnalyzerPtrs())
+        {
+            for (const auto& regionFeaturePtr : variantAnalyzerPtr->regionFeaturePtrs())
+            {
+                regionPtrs.insert(regionFeaturePtr->regionModelPtr());
+            }
+        }
+    }
+
+    return vector<Region::SPtr>(regionPtrs.begin(), regionPtrs.end());
+}
 
 }

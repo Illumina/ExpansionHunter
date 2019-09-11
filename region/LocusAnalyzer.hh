@@ -22,20 +22,28 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "graphio/AlignmentWriter.hh"
-
-#include "common/Parameters.hh"
 #include "region/LocusFindings.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "region/Region.hh"
+#include "region/VariantAnalyzer.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+class LocusAnalyzer
+{
+public:
+    using SPtr = std::shared_ptr<LocusAnalyzer>;
+    virtual LocusFindings analyze(Sex sampleSex) const = 0;
+    virtual ~LocusAnalyzer() = default;
+
+    const std::vector<VariantAnalyzer::SPtr>& variantAnalyzerPtrs() const { return variantAnalyzerPtrs_; }
+
+protected:
+    std::vector<VariantAnalyzer::SPtr> variantAnalyzerPtrs_;
+};
+
+std::vector<Region::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs);
 
 }

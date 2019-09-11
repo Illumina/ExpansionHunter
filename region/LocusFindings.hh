@@ -21,21 +21,24 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
+#include <unordered_map>
 
-#include "graphio/AlignmentWriter.hh"
+#include <boost/optional.hpp>
 
-#include "common/Parameters.hh"
-#include "region/LocusFindings.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "region/VariantFindings.hh"
+#include "stats/LocusStats.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+// Container with per-locus analysis results
+struct LocusFindings
+{
+    boost::optional<LocusStats> optionalStats;
+    // VariantFindings is an abstract class from which findings for all variant types are derived
+    std::unordered_map<std::string, std::unique_ptr<VariantFindings>> findingsForEachVariant;
+};
+
+using SampleFindings = std::unordered_map<std::string, LocusFindings>;
 
 }

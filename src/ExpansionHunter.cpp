@@ -41,7 +41,7 @@
 #include "output/BamletWriter.hh"
 #include "output/JsonWriter.hh"
 #include "output/VcfWriter.hh"
-#include "region_analysis/VariantFindings.hh"
+//#include "region_analysis/VariantFindings.hh"
 #include "sample_analysis/HtsSeekingSampleAnalysis.hh"
 #include "sample_analysis/HtsStreamingSampleAnalysis.hh"
 #include "src/Version.hh"

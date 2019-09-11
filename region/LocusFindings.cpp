@@ -19,23 +19,8 @@
 //
 //
 
-#pragma once
-
-#include <memory>
-#include <string>
-#include <vector>
-
-#include "graphio/AlignmentWriter.hh"
-
-#include "common/Parameters.hh"
 #include "region/LocusFindings.hh"
-#include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
 {
-
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
-
 }

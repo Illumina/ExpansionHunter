@@ -21,17 +21,13 @@
 
 #pragma once
 
-#include <vector>
-
 #include "common/Parameters.hh"
-#include "region/Region.hh"
+#include "region/LocusAnalyzer.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
 {
 
-// TODO: Should eventually return locus analyzers
-std::vector<Region::SPtr>
-buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
+LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
 
 }

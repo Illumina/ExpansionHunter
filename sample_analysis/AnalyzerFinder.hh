@@ -24,6 +24,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 #include "thirdparty/intervaltree/IntervalTree.h"
@@ -60,7 +61,7 @@ struct AnalyzerBundle
 class AnalyzerFinder
 {
 public:
-    explicit AnalyzerFinder(std::vector<Region::SPtr>& regionModelPtrs);
+    explicit AnalyzerFinder(std::vector<Region::SPtr>& locusAnalyzerPtrs);
 
     // Retrieves analyzers appropriate for the given read pair
     std::vector<AnalyzerBundle> query(

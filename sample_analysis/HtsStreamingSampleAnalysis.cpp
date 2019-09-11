@@ -25,8 +25,9 @@
 #include <unordered_map>
 
 #include "common/HtsHelpers.hh"
+#include "common/WorkflowContext.hh"
+#include "region/LocusAnalyzer.hh"
 #include "region/WorkflowBuilder.hh"
-#include "region_analysis/LocusAnalyzer.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
 
@@ -50,7 +51,7 @@ SampleFindings htsStreamingSampleAnalysis(
     for (const auto& locusIdAndLocusSpec : regionCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
-        std::vector<Region::SPtr> locusModels = buildLocusWorkflow(locusSpec, context.heuristics());
+        LocusAnalyzer::SPtr locusModelPtr = buildLocusWorkflow(locusSpec, context.heuristics());
     }
 
     //= initializeLocusAnalyzers(regionCatalog, bamletWriter);

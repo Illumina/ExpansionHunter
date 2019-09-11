@@ -26,6 +26,7 @@
 using boost::optional;
 using std::unique_ptr;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 namespace ehunter
@@ -117,7 +118,7 @@ AnalyzerFinder::AnalyzerFinder(vector<Region::SPtr>& regionModelPtrs)
 {
     using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, AnalyzerBundle>;
 
-    unordered_map<int32_t, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
+    unordered_map<int, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
     for (auto& regionModelPtr : regionModelPtrs)
     {
         for (const auto& genomicRegion : regionModelPtr->readExtractionRegions())

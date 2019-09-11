@@ -27,7 +27,7 @@
 #include "graphio/AlignmentWriter.hh"
 
 #include "common/Parameters.hh"
-#include "region_analysis/LocusFindings.hh"
+#include "region/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter

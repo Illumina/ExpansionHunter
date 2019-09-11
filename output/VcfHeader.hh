@@ -25,7 +25,7 @@
 #include <map>
 #include <string>
 
-#include "region_analysis/LocusFindings.hh"
+#include "region/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
@@ -65,8 +65,8 @@ public:
 
     ~FieldDescriptionWriter() = default;
 
-    void visit(const RepeatFindings* repeatFindingsPtr) override;
-    void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
+    void visit(StrFindings& strFindings) override;
+    // void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
 
     void tryAddingFieldDescription(
         FieldType fieldType, const std::string& id, const std::string& number, const std::string& contentType,
