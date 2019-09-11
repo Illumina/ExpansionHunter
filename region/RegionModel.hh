@@ -33,10 +33,10 @@
 namespace ehunter
 {
 
-class Region
+class RegionModel
 {
 public:
-    using SPtr = std::shared_ptr<Region>;
+    using SPtr = std::shared_ptr<RegionModel>;
     enum class Type
     {
         kTarget,
@@ -44,8 +44,8 @@ public:
     };
 
     // Add read extraction regions
-    explicit Region(std::string regionId, Type type);
-    virtual ~Region() = default;
+    explicit RegionModel(std::string regionId, Type type);
+    virtual ~RegionModel() = default;
 
     Type type() const { return type_; }
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }

@@ -1,6 +1,6 @@
 add_library(region STATIC
-        Region.hh Region.cpp
-        GraphRegion.hh GraphRegion.cpp
+        RegionModel.hh RegionModel.cpp
+        GraphModel.hh GraphModel.cpp
         StrFeature.cpp StrFeature.hh
         SmallVariantFeature.cpp SmallVariantFeature.hh
         StrAnalyzer.cpp StrAnalyzer.hh

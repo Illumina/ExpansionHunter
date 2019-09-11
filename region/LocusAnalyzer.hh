@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "region/LocusFindings.hh"
-#include "region/Region.hh"
+#include "region/RegionModel.hh"
 #include "region/VariantAnalyzer.hh"
 
 namespace ehunter
@@ -44,6 +44,6 @@ protected:
     std::vector<VariantAnalyzer::SPtr> variantAnalyzerPtrs_;
 };
 
-std::vector<Region::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs);
+std::vector<RegionModel::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs);
 
 }

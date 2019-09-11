@@ -25,7 +25,7 @@
 #include <memory>
 #include <vector>
 
-#include "region/Region.hh"
+#include "region/RegionModel.hh"
 
 #include "graphalign/GappedAligner.hh"
 #include "graphcore/Graph.hh"
@@ -38,12 +38,12 @@ namespace ehunter
 
 class GraphFeature;
 
-class GraphRegion : public Region
+class GraphModel : public RegionModel
 {
 public:
-    using SPtr = std::shared_ptr<GraphRegion>;
-    explicit GraphRegion(std::string locusId, graphtools::Graph graph, const HeuristicParameters& heuristics);
-    ~GraphRegion() override = default;
+    using SPtr = std::shared_ptr<GraphModel>;
+    explicit GraphModel(std::string locusId, graphtools::Graph graph, const HeuristicParameters& heuristics);
+    ~GraphModel() override = default;
 
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
@@ -63,7 +63,7 @@ class GraphFeature
 public:
     using SPtr = std::shared_ptr<GraphFeature>;
 
-    explicit GraphFeature(GraphRegion::SPtr regionModelPtr, std::vector<graphtools::NodeId> nodeIds)
+    explicit GraphFeature(GraphModel::SPtr regionModelPtr, std::vector<graphtools::NodeId> nodeIds)
         : regionModelPtr_(std::move(regionModelPtr))
         , nodeIds_(std::move(nodeIds))
     {
@@ -73,10 +73,10 @@ public:
     using Alignments = std::list<graphtools::GraphAlignment>;
     virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
         = 0;
-    GraphRegion::SPtr regionModelPtr() const { return regionModelPtr_; }
+    GraphModel::SPtr regionModelPtr() const { return regionModelPtr_; }
 
 protected:
-    GraphRegion::SPtr regionModelPtr_;
+    GraphModel::SPtr regionModelPtr_;
     std::vector<graphtools::NodeId> nodeIds_;
 };
 

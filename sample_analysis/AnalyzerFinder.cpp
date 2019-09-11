@@ -51,7 +51,7 @@ namespace
             {
                 if (readBundle.regionPtr == mateBundle.regionPtr)
                 {
-                    if (readBundle.regionPtr->type() == Region::Type::kTarget)
+                    if (readBundle.regionPtr->type() == RegionModel::Type::kTarget)
                     {
                         commonBundles.push_back(readBundle);
                     }
@@ -74,7 +74,7 @@ namespace
 
         for (const auto& bundle : readBundles)
         {
-            if (bundle.regionPtr->type() == Region::Type::kTarget)
+            if (bundle.regionPtr->type() == RegionModel::Type::kTarget)
             {
                 bundles.push_back(bundle);
                 bundles.back().inputType = AnalyzerInputType::kReadOnly;
@@ -83,7 +83,7 @@ namespace
 
         for (const auto& bundle : mateBundles)
         {
-            if (bundle.regionPtr->type() == Region::Type::kTarget)
+            if (bundle.regionPtr->type() == RegionModel::Type::kTarget)
             {
                 bundles.push_back(bundle);
                 bundles.back().inputType = AnalyzerInputType::kMateOnly;
@@ -114,7 +114,7 @@ namespace
     }
 }
 
-AnalyzerFinder::AnalyzerFinder(vector<Region::SPtr>& regionModelPtrs)
+AnalyzerFinder::AnalyzerFinder(vector<RegionModel::SPtr>& regionModelPtrs)
 {
     using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, AnalyzerBundle>;
 

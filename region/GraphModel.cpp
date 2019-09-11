@@ -19,7 +19,7 @@
 //
 //
 
-#include "region/GraphRegion.hh"
+#include "region/GraphModel.hh"
 
 #include "alignment/AlignmentFilters.hh"
 
@@ -38,8 +38,8 @@ void GraphFeature::process(
 {
 }
 
-GraphRegion::GraphRegion(string regionId, Graph graph, const HeuristicParameters& heuristics)
-    : Region(std::move(regionId), Region::Type::kTarget)
+GraphModel::GraphModel(string regionId, Graph graph, const HeuristicParameters& heuristics)
+    : RegionModel(std::move(regionId), RegionModel::Type::kTarget)
     , graph_(std::move(graph))
     , aligner_(
           &graph_, heuristics.kmerLenForAlignment(), heuristics.paddingLength(), heuristics.seedAffixTrimLength(),
@@ -48,7 +48,7 @@ GraphRegion::GraphRegion(string regionId, Graph graph, const HeuristicParameters
 {
 }
 
-void GraphRegion::analyze(Read read, boost::optional<Read> mate)
+void GraphModel::analyze(Read read, boost::optional<Read> mate)
 {
     list<GraphAlignment> readAlignments = align(read);
     list<GraphAlignment> mateAlignments;
@@ -76,7 +76,7 @@ void GraphRegion::analyze(Read read, boost::optional<Read> mate)
     }
 }
 
-list<GraphAlignment> GraphRegion::align(Read& read) const
+list<GraphAlignment> GraphModel::align(Read& read) const
 {
     OrientationPrediction predictedOrientation = orientationPredictor_.predict(read.sequence());
 

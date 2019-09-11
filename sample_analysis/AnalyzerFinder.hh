@@ -30,7 +30,7 @@
 #include "thirdparty/intervaltree/IntervalTree.h"
 
 #include "reads/Read.hh"
-#include "region/Region.hh"
+#include "region/RegionModel.hh"
 #include "sample_analysis/GenomeMask.hh"
 
 namespace ehunter
@@ -47,21 +47,21 @@ enum class AnalyzerInputType
 // Stores information needed to properly pass reads to the analyzer
 struct AnalyzerBundle
 {
-    explicit AnalyzerBundle(Region* regionPtr)
+    explicit AnalyzerBundle(RegionModel* regionPtr)
         : inputType(AnalyzerInputType::kBothReads)
         , regionPtr(regionPtr)
     {
     }
 
     AnalyzerInputType inputType;
-    Region* regionPtr;
+    RegionModel* regionPtr;
 };
 
 // Enables retrieval of appropriate locus analyzers by genomic coordinates of read alignments
 class AnalyzerFinder
 {
 public:
-    explicit AnalyzerFinder(std::vector<Region::SPtr>& locusAnalyzerPtrs);
+    explicit AnalyzerFinder(std::vector<RegionModel::SPtr>& locusAnalyzerPtrs);
 
     // Retrieves analyzers appropriate for the given read pair
     std::vector<AnalyzerBundle> query(

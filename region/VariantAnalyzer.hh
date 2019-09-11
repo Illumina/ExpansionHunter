@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-#include "region/GraphRegion.hh"
+#include "region/GraphModel.hh"
 #include "region/VariantFindings.hh"
 #include "stats/LocusStats.hh"
 

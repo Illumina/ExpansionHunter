@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "region/GraphRegion.hh"
+#include "region/GraphModel.hh"
 
 #include "classification/AlignmentSummary.hh"
 #include "classification/StrAlignmentClassifier.hh"
@@ -35,7 +35,7 @@ namespace ehunter
 class StrFeature : public GraphFeature
 {
 public:
-    explicit StrFeature(GraphRegion::SPtr graphModelPtr, graphtools::NodeId nodeId)
+    explicit StrFeature(GraphModel::SPtr graphModelPtr, graphtools::NodeId nodeId)
         : GraphFeature(graphModelPtr, { nodeId })
         , alignmentClassifier_(graphModelPtr->graph(), nodeId)
     {

@@ -289,7 +289,7 @@ SampleFindings htsSeekingSampleAnalysis(
 
         // vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
         // locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
-        vector<Region::SPtr> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
+        vector<RegionModel::SPtr> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
         AnalyzerFinder analyzerFinder(regionModelPtrs);
 
         AlignmentStatsCatalog alignmentStats;

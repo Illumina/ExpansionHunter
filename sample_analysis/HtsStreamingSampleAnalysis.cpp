@@ -44,7 +44,7 @@ SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*bamletWriter*/)
 {
-    vector<Region::SPtr> regionModelPtrs;
+    vector<RegionModel::SPtr> regionModelPtrs;
 
     WorkflowContext context;
 

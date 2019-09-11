@@ -29,9 +29,9 @@ using std::vector;
 namespace ehunter
 {
 
-vector<Region::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs)
+vector<RegionModel::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs)
 {
-    unordered_set<Region::SPtr> regionPtrs;
+    unordered_set<RegionModel::SPtr> regionPtrs;
 
     for (const auto& locusAnalyzerPtr : locusAnalyzerPtrs)
     {
@@ -44,7 +44,7 @@ vector<Region::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locu
         }
     }
 
-    return vector<Region::SPtr>(regionPtrs.begin(), regionPtrs.end());
+    return vector<RegionModel::SPtr>(regionPtrs.begin(), regionPtrs.end());
 }
 
 }

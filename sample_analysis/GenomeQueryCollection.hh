@@ -30,7 +30,7 @@ namespace ehunter
 // Aggregates various methods for querying genome
 struct GenomeQueryCollection
 {
-    GenomeQueryCollection(std::vector<Region::SPtr>& regions);
+    GenomeQueryCollection(std::vector<RegionModel::SPtr>& regions);
 
     AnalyzerFinder analyzerFinder; // Analyzers searchable by targeted region
     GenomeMask targetRegionMask; // Marks targeted regions to enable fast read screening
