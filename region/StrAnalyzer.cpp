@@ -81,9 +81,8 @@ static vector<int> generateCandidateAlleleSizes(
     return candidateSizes;
 }
 
-StrAnalyzer::StrAnalyzer(string variantId, std::shared_ptr<StrFeature> strFeaturePtr)
+StrAnalyzer::StrAnalyzer(string variantId)
     : VariantAnalyzer(std::move(variantId))
-    , strFeaturePtr_(strFeaturePtr)
 {
 }
 

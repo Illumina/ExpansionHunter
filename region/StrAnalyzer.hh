@@ -33,7 +33,7 @@ namespace ehunter
 class StrAnalyzer : public VariantAnalyzer
 {
 public:
-    explicit StrAnalyzer(std::string variantId, std::shared_ptr<StrFeature> strFeature);
+    explicit StrAnalyzer(std::string variantId);
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
 private:

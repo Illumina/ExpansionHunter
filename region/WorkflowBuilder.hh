@@ -23,11 +23,14 @@
 
 #include "common/Parameters.hh"
 #include "region/LocusAnalyzer.hh"
+#include "region/RegionModel.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
 {
 
 LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
+
+std::vector<RegionModel::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusPtrs);
 
 }

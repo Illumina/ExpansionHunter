@@ -49,8 +49,7 @@ public:
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
     const GenomicRegion& referenceRegion() const { return referenceRegion_; }
-    // void addFeature(GraphFeature* featurePtr);
-
+    
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
 

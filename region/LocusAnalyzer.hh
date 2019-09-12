@@ -25,11 +25,11 @@
 #include <vector>
 
 #include "region/LocusFindings.hh"
-#include "region/RegionModel.hh"
-#include "region/VariantAnalyzer.hh"
 
 namespace ehunter
 {
+
+class VariantAnalyzer;
 
 class LocusAnalyzer
 {
@@ -38,12 +38,12 @@ public:
     virtual LocusFindings analyze(Sex sampleSex) const = 0;
     virtual ~LocusAnalyzer() = default;
 
-    const std::vector<VariantAnalyzer::SPtr>& variantAnalyzerPtrs() const { return variantAnalyzerPtrs_; }
+    const std::vector<std::shared_ptr<VariantAnalyzer>>& variantAnalyzerPtrs() const { return variantPtrs_; }
+
+    void connect(std::shared_ptr<VariantAnalyzer> variantPtr);
 
 protected:
-    std::vector<VariantAnalyzer::SPtr> variantAnalyzerPtrs_;
+    std::vector<std::shared_ptr<VariantAnalyzer>> variantPtrs_;
 };
-
-std::vector<RegionModel::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusPtrs);
 
 }

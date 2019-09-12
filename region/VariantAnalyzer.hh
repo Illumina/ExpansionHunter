@@ -21,15 +21,17 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "region/ModelFeature.hh"
 #include "region/VariantFindings.hh"
 #include "stats/LocusStats.hh"
 
 namespace ehunter
 {
+
+class ModelFeature;
 
 class VariantAnalyzer
 {
@@ -42,11 +44,12 @@ public:
     const std::string& variantId() const { return variantId_; }
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
 
-    const std::vector<ModelFeature::SPtr>& featurePtrs() const { return featurePtrs_; }
+    void connect(std::shared_ptr<ModelFeature> featurePtr);
+    const std::vector<std::shared_ptr<ModelFeature>>& featurePtrs() const { return featurePtrs_; }
 
 private:
     std::string variantId_;
-    std::vector<ModelFeature::SPtr> featurePtrs_;
+    std::vector<std::shared_ptr<ModelFeature>> featurePtrs_;
 };
 
 }

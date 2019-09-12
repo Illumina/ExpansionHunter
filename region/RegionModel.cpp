@@ -31,4 +31,6 @@ RegionModel::RegionModel(Type type)
 {
 }
 
+void RegionModel::connect(ModelFeature* featurePtr) { featurePtrs_.push_back(featurePtr); }
+
 }

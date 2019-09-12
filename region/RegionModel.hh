@@ -52,6 +52,7 @@ public:
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
 
     virtual void analyze(Read read, boost::optional<Read> mate) = 0;
+    void connect(ModelFeature* featurePtr);
 
 protected:
     std::vector<ModelFeature*> featurePtrs_;

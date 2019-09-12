@@ -33,4 +33,6 @@ VariantAnalyzer::VariantAnalyzer(string variantId)
 {
 }
 
+void VariantAnalyzer::connect(std::shared_ptr<ModelFeature> featurePtr) { featurePtrs_.push_back(featurePtr); }
+
 }

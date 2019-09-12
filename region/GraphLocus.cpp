@@ -23,6 +23,8 @@
 
 #include <string>
 
+#include "region/VariantAnalyzer.hh"
+
 using std::string;
 
 namespace ehunter
@@ -37,11 +39,11 @@ LocusFindings GraphLocus::analyze(Sex /*sampleSex*/) const
     // if (locusFindings.optionalStats
     //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
     //{
-    for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
+    for (auto& variantPtr : variantPtrs_)
     {
         const LocusStats& locusStats = *locusFindings.optionalStats;
-        std::unique_ptr<VariantFindings> variantFindingsPtr = variantAnalyzerPtr->analyze(locusStats);
-        const string& variantId = variantAnalyzerPtr->variantId();
+        std::unique_ptr<VariantFindings> variantFindingsPtr = variantPtr->analyze(locusStats);
+        const string& variantId = variantPtr->variantId();
         locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
     }
     //}

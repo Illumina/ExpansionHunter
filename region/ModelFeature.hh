@@ -33,8 +33,8 @@ class ModelFeature
 public:
     using SPtr = std::shared_ptr<ModelFeature>;
 
-    ModelFeature(std::shared_ptr<RegionModel> modelPtr)
-        : modelPtr_(modelPtr)
+    explicit ModelFeature(std::shared_ptr<RegionModel> modelPtr)
+        : modelPtr_(std::move(modelPtr))
     {
     }
 

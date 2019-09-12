@@ -29,12 +29,18 @@
 #include "region/StrAnalyzer.hh"
 
 using std::string;
+using std::unordered_set;
+using std::vector;
 
 namespace ehunter
 {
 
 LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
+    // TODO: Build GraphLocus
+    // TODO: It should be initialized with LocusStats and analyzer ptrs
+    auto graphLocus = std::make_shared<GraphLocus>();
+
     // Construct graph model
     if (locusSpec.targetReadExtractionRegions().size() != 1)
     {
@@ -54,10 +60,12 @@ LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, cons
         {
             const int motifNode = variantSpec.nodes().front();
             auto strFeaturePtr = std::make_shared<StrFeature>(graphModelPtr, motifNode);
+            graphModelPtr->connect(strFeaturePtr.get());
 
-            // graphModelPtr->addFeature(std::move(strFeaturePtr));
+            auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(variantSpec.id());
+            strAnalyzerPtr->connect(strFeaturePtr);
 
-            // auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(variantSpec.id(), strFeaturePtr.get());
+            graphLocus->connect(strAnalyzerPtr);
 
             /*
             weightedPurityCalculators.emplace(std::make_pair(repeatUnit, WeightedPurityCalculator(repeatUnit)));
@@ -87,15 +95,25 @@ LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, cons
         }
     }
 
-    // TODO: Build GraphLocus
-    // TODO: It should be initialized with LocusStats and analyzer ptrs
-
-    auto graphLocus = std::make_shared<GraphLocus>();
-
-    // for (const auto& genomicRegion : locusSpec.targetReadExtractionRegions()) {}
-
-    // auto locusPtr = std::make_shared<GraphLocus>(locusSpec.locusId(), locusSpec.regionGraph(), heuristics);
     return graphLocus;
+}
+
+vector<RegionModel::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusPtrs)
+{
+    unordered_set<RegionModel::SPtr> modelPtrs;
+
+    for (const auto& locusPtr : locusPtrs)
+    {
+        for (const auto& variantPtr : locusPtr->variantAnalyzerPtrs())
+        {
+            for (const auto& featurePtr : variantPtr->featurePtrs())
+            {
+                modelPtrs.insert(featurePtr->modelPtr());
+            }
+        }
+    }
+
+    return vector<RegionModel::SPtr>(modelPtrs.begin(), modelPtrs.end());
 }
 
 }
