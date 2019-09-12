@@ -32,12 +32,6 @@ using graphtools::GraphAlignment;
 using std::list;
 using std::string;
 
-void GraphFeature::process(
-    const Read& /*read*/, const GraphFeature::Alignments& /*readAlignments*/, const Read& /*mate*/,
-    const GraphFeature::Alignments& /*mateAlignments*/)
-{
-}
-
 GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const HeuristicParameters& heuristics)
     : RegionModel(RegionModel::Type::kTarget)
     , referenceRegion_(std::move(referenceRegion))
@@ -70,9 +64,9 @@ void GraphModel::analyze(Read read, boost::optional<Read> mate)
 
     if (!readAlignments.empty() && !mateAlignments.empty())
     {
-        for (const auto& feature : features_)
+        for (auto& featurePtr : featurePtrs_)
         {
-            feature->process(read, readAlignments, *mate, mateAlignments);
+            static_cast<GraphFeature*>(featurePtr)->process(read, readAlignments, *mate, mateAlignments);
         }
     }
 }
@@ -92,6 +86,5 @@ list<GraphAlignment> GraphModel::align(Read& read) const
 
     return aligner_.align(read.sequence());
 }
-void GraphModel::addFeature(GraphFeature* featurePtr) { features_.push_back(featurePtr); }
 
 }

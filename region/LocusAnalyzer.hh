@@ -44,6 +44,6 @@ protected:
     std::vector<VariantAnalyzer::SPtr> variantAnalyzerPtrs_;
 };
 
-std::vector<RegionModel::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusAnalyzerPtrs);
+std::vector<RegionModel::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusPtrs);
 
 }

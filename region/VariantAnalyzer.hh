@@ -21,11 +21,10 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
-#include "region/GraphModel.hh"
+#include "region/ModelFeature.hh"
 #include "region/VariantFindings.hh"
 #include "stats/LocusStats.hh"
 
@@ -43,12 +42,11 @@ public:
     const std::string& variantId() const { return variantId_; }
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
 
-    const std::vector<GraphFeature::SPtr>& regionFeaturePtrs() const { return regionFeaturePtrs_; }
+    const std::vector<ModelFeature::SPtr>& featurePtrs() const { return featurePtrs_; }
 
 private:
     std::string variantId_;
-    // TODO: Introduce general "features"
-    std::vector<GraphFeature::SPtr> regionFeaturePtrs_;
+    std::vector<ModelFeature::SPtr> featurePtrs_;
 };
 
 }

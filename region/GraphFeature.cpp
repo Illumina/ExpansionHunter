@@ -19,32 +19,16 @@
 //
 //
 
-#include "region/LocusAnalyzer.hh"
-
-#include <unordered_set>
-
-using std::unordered_set;
-using std::vector;
+#include "region/GraphFeature.hh"
 
 namespace ehunter
 {
 
-vector<RegionModel::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusPtrs)
+/*
+void GraphFeature::process(
+    const Read& read, const GraphFeature::Alignments& readAligns, const Read& mate,
+    const GraphFeature::Alignments& mateAligns)
 {
-    unordered_set<RegionModel::SPtr> modelPtrs;
-
-    for (const auto& locusPtr : locusPtrs)
-    {
-        for (const auto& variantPtr : locusPtr->variantAnalyzerPtrs())
-        {
-            for (const auto& featurePtr : variantPtr->featurePtrs())
-            {
-                modelPtrs.insert(featurePtr->modelPtr());
-            }
-        }
-    }
-
-    return vector<RegionModel::SPtr>(modelPtrs.begin(), modelPtrs.end());
-}
+} */
 
 }

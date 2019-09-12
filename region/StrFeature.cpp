@@ -20,6 +20,9 @@
 //
 
 #include "region/StrFeature.hh"
+//#include "region/GraphModel.hh"
+
+using std::static_pointer_cast;
 
 namespace ehunter
 {
@@ -41,6 +44,9 @@ void StrFeature::process(const Read& read, const Alignments& readAligns, const R
 
 graphtools::NodeId StrFeature::motifNodeId() const { return nodeIds_.front(); }
 
-const std::string& StrFeature::motif() const { return graphModelPtr_->graph().nodeSeq(motifNodeId()); }
+const std::string& StrFeature::motif() const
+{
+    return static_pointer_cast<GraphModel>(modelPtr_)->graph().nodeSeq(motifNodeId());
+}
 
 }

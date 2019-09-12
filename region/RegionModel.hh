@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -32,6 +31,8 @@
 
 namespace ehunter
 {
+
+class ModelFeature;
 
 class RegionModel
 {
@@ -53,8 +54,11 @@ public:
     virtual void analyze(Read read, boost::optional<Read> mate) = 0;
 
 protected:
+    std::vector<ModelFeature*> featurePtrs_;
+
     Type type_;
     std::vector<GenomicRegion> readExtractionRegions_;
+
     // ChromType typeOfChromLocusLocatedOn_;
 };
 

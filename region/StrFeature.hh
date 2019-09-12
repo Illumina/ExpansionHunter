@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 
+#include "region/GraphFeature.hh"
 #include "region/GraphModel.hh"
 
 #include "classification/AlignmentSummary.hh"
@@ -36,7 +37,7 @@ class StrFeature : public GraphFeature
 {
 public:
     explicit StrFeature(GraphModel::SPtr graphModelPtr, graphtools::NodeId nodeId)
-        : GraphFeature(std::move(graphModelPtr), { nodeId })
+        : GraphFeature(graphModelPtr, { nodeId })
         , alignmentClassifier_(graphModelPtr->graph(), nodeId)
     {
     }

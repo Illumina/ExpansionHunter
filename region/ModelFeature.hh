@@ -19,32 +19,30 @@
 //
 //
 
-#include "region/LocusAnalyzer.hh"
+#pragma once
 
-#include <unordered_set>
-
-using std::unordered_set;
-using std::vector;
+#include <memory>
 
 namespace ehunter
 {
 
-vector<RegionModel::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusPtrs)
-{
-    unordered_set<RegionModel::SPtr> modelPtrs;
+class RegionModel;
 
-    for (const auto& locusPtr : locusPtrs)
+class ModelFeature
+{
+public:
+    using SPtr = std::shared_ptr<ModelFeature>;
+
+    ModelFeature(std::shared_ptr<RegionModel> modelPtr)
+        : modelPtr_(modelPtr)
     {
-        for (const auto& variantPtr : locusPtr->variantAnalyzerPtrs())
-        {
-            for (const auto& featurePtr : variantPtr->featurePtrs())
-            {
-                modelPtrs.insert(featurePtr->modelPtr());
-            }
-        }
     }
 
-    return vector<RegionModel::SPtr>(modelPtrs.begin(), modelPtrs.end());
-}
+    virtual ~ModelFeature() = default;
+    std::shared_ptr<RegionModel> modelPtr() { return modelPtr_; }
+
+protected:
+    std::shared_ptr<RegionModel> modelPtr_;
+};
 
 }

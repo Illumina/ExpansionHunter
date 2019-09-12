@@ -25,15 +25,17 @@
 #include <vector>
 
 #include "classification/SmallVariantAlignmentClassifier.hh"
-#include "region/GraphModel.hh"
+#include "region/GraphFeature.hh"
 
 namespace ehunter
 {
 
-class SmallVariantFeature : GraphFeature
+class SmallVariantFeature : public GraphFeature
 {
-    explicit SmallVariantFeature(GraphModel::SPtr regionPtr, std::vector<graphtools::NodeId> nodeIds)
-        : GraphFeature(regionPtr, std::move(nodeIds))
+    ~SmallVariantFeature() override = default;
+
+    explicit SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
+        : GraphFeature(modelPtr, std::move(nodeIds))
         , alignmentClassifier_(nodeIds_)
     {
     }

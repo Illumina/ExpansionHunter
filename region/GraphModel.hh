@@ -33,11 +33,11 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "filtering/OrientationPredictor.hh"
+#include "region/GraphFeature.hh"
+#include "region/RegionModel.hh"
 
 namespace ehunter
 {
-
-class GraphFeature;
 
 class GraphModel : public RegionModel
 {
@@ -49,7 +49,7 @@ public:
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
     const GenomicRegion& referenceRegion() const { return referenceRegion_; }
-    void addFeature(GraphFeature* featurePtr);
+    // void addFeature(GraphFeature* featurePtr);
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
@@ -58,30 +58,6 @@ private:
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
-
-    std::vector<GraphFeature*> features_;
-};
-
-class GraphFeature
-{
-public:
-    using SPtr = std::shared_ptr<GraphFeature>;
-
-    explicit GraphFeature(GraphModel::SPtr regionModelPtr, std::vector<graphtools::NodeId> nodeIds)
-        : graphModelPtr_(std::move(regionModelPtr))
-        , nodeIds_(std::move(nodeIds))
-    {
-    }
-    virtual ~GraphFeature() = default;
-
-    using Alignments = std::list<graphtools::GraphAlignment>;
-    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
-        = 0;
-    GraphModel::SPtr regionModelPtr() const { return graphModelPtr_; }
-
-protected:
-    GraphModel::SPtr graphModelPtr_;
-    std::vector<graphtools::NodeId> nodeIds_;
 };
 
 }

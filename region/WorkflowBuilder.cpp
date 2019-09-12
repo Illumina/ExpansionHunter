@@ -53,11 +53,11 @@ LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, cons
         if (variantSpec.classification().type == VariantType::kRepeat)
         {
             const int motifNode = variantSpec.nodes().front();
-
             auto strFeaturePtr = std::make_shared<StrFeature>(graphModelPtr, motifNode);
-            graphModelPtr->addFeature(strFeaturePtr.get());
 
-            auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(variantSpec.id(), strFeaturePtr);
+            // graphModelPtr->addFeature(std::move(strFeaturePtr));
+
+            // auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(variantSpec.id(), strFeaturePtr.get());
 
             /*
             weightedPurityCalculators.emplace(std::make_pair(repeatUnit, WeightedPurityCalculator(repeatUnit)));
