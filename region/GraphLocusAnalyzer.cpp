@@ -19,18 +19,21 @@
 //
 //
 
-#include "region/GraphLocus.hh"
+#include "region/GraphLocusAnalyzer.hh"
 
 #include <string>
 
-#include "region/VariantAnalyzer.hh"
+#include "GraphVariantAnalyzer.hh"
+#include "region/FeatureAnalyzer.hh"
 
 using std::string;
 
 namespace ehunter
 {
 
-LocusFindings GraphLocus::analyze(Sex /*sampleSex*/) const
+using std::static_pointer_cast;
+
+LocusFindings GraphLocusAnalyzer::analyze(Sex /*sampleSex*/) const
 {
     LocusFindings locusFindings;
 
@@ -39,13 +42,16 @@ LocusFindings GraphLocus::analyze(Sex /*sampleSex*/) const
     // if (locusFindings.optionalStats
     //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
     //{
-    for (auto& variantPtr : variantPtrs_)
+
+    for (auto& analyzerPtr : variantPtrs_)
     {
+        auto graphAnalyzerPtr = static_pointer_cast<GraphVariantAnalyzer>(analyzerPtr);
         const LocusStats& locusStats = *locusFindings.optionalStats;
-        std::unique_ptr<VariantFindings> variantFindingsPtr = variantPtr->analyze(locusStats);
-        const string& variantId = variantPtr->variantId();
+        std::unique_ptr<VariantFindings> variantFindingsPtr = graphAnalyzerPtr->analyze(locusStats);
+        const string& variantId = graphAnalyzerPtr->variantId();
         locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
     }
+
     //}
 
     return locusFindings;

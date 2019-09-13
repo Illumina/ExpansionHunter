@@ -24,6 +24,11 @@
 namespace ehunter
 {
 
+CountingModel::CountingModel(std::vector<GenomicRegion> readExtractionRegions)
+    : RegionModel(std::move(readExtractionRegions), Type::kTarget)
+{
+}
+
 void CountingModel::analyze(Read read, boost::optional<Read> mate)
 {
     readLengthAccumulator_(read.sequence().length());

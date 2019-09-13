@@ -21,36 +21,19 @@
 
 #pragma once
 
-#include <list>
 #include <memory>
 
-#include "graphalign/GraphAlignment.hh"
-#include "graphcore/Graph.hh"
-
-#include "reads/Read.hh"
 #include "region/ModelFeature.hh"
 
 namespace ehunter
 {
 
-class GraphModel;
+class CountingModel;
 
-class GraphFeature : public ModelFeature
+class CountingFeature : public ModelFeature
 {
 public:
-    using SPtr = std::shared_ptr<GraphFeature>;
-    using UPtr = std::unique_ptr<GraphFeature>;
-
-    explicit GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
-    ~GraphFeature() override = default;
-
-    using Alignments = std::list<graphtools::GraphAlignment>;
-    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
-        = 0;
-
-protected:
-    // const GraphModel* graphModelPtr_;
-    std::vector<graphtools::NodeId> nodeIds_;
+    explicit CountingFeature(std::shared_ptr<CountingModel> modelPtr);
 };
 
 }

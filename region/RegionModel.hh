@@ -44,8 +44,7 @@ public:
         kOfftarget
     };
 
-    // TODO: Add read extraction regions
-    explicit RegionModel(Type type);
+    explicit RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type);
     virtual ~RegionModel() = default;
 
     Type type() const { return type_; }
@@ -57,8 +56,8 @@ public:
 protected:
     std::vector<ModelFeature*> featurePtrs_;
 
-    Type type_;
     std::vector<GenomicRegion> readExtractionRegions_;
+    Type type_;
 
     // ChromType typeOfChromLocusLocatedOn_;
 };

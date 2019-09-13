@@ -33,8 +33,7 @@ using std::list;
 using std::string;
 
 GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const HeuristicParameters& heuristics)
-    : RegionModel(RegionModel::Type::kTarget)
-    , referenceRegion_(std::move(referenceRegion))
+    : RegionModel({ referenceRegion }, RegionModel::Type::kTarget)
     , graph_(std::move(graph))
     , aligner_(
           &graph_, heuristics.kmerLenForAlignment(), heuristics.paddingLength(), heuristics.seedAffixTrimLength(),

@@ -19,25 +19,16 @@
 //
 //
 
-#pragma once
+#include "region/CountingFeature.hh"
 
-#include <memory>
-#include <string>
-
-#include "region/GraphVariantAnalyzer.hh"
-#include "region/StrFeature.hh"
+#include "region/CountingModel.hh"
 
 namespace ehunter
 {
 
-class StrAnalyzer : public GraphVariantAnalyzer
+CountingFeature::CountingFeature(std::shared_ptr<CountingModel> modelPtr)
+    : ModelFeature(std::static_pointer_cast<RegionModel>(std::move(modelPtr)))
 {
-public:
-    explicit StrAnalyzer(std::string variantId);
-    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
-
-private:
-    std::shared_ptr<StrFeature> strFeaturePtr_;
-};
+}
 
 }

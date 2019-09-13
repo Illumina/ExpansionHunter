@@ -19,16 +19,16 @@
 //
 //
 
-#include "region/LocusAnalyzer.hh"
+#include "region/GraphVariantAnalyzer.hh"
+
+using std::string;
 
 namespace ehunter
 {
 
-class GraphLocus : public LocusAnalyzer
+GraphVariantAnalyzer::GraphVariantAnalyzer(string variantId)
+    : variantId_(std::move(variantId))
 {
-public:
-    LocusFindings analyze(Sex sampleSex) const override;
-    ~GraphLocus() override = default;
-};
+}
 
 }

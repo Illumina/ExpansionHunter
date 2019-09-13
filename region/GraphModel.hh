@@ -48,12 +48,10 @@ public:
 
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
-    const GenomicRegion& referenceRegion() const { return referenceRegion_; }
-    
+
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
 
-    GenomicRegion referenceRegion_;
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;

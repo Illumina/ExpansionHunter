@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
 #include <boost/optional.hpp>
@@ -33,6 +35,10 @@ namespace ehunter
 class CountingModel : public RegionModel
 {
 public:
+    CountingModel() = delete;
+    explicit CountingModel(std::vector<GenomicRegion> readExtractionRegions);
+    ~CountingModel() override = default;
+
     void analyze(Read read, boost::optional<Read> mate) override;
     int readCount() const;
     int meanReadLength() const;

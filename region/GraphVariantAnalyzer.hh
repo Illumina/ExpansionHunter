@@ -21,36 +21,24 @@
 
 #pragma once
 
-#include <list>
 #include <memory>
 
-#include "graphalign/GraphAlignment.hh"
-#include "graphcore/Graph.hh"
-
-#include "reads/Read.hh"
-#include "region/ModelFeature.hh"
+#include "region/FeatureAnalyzer.hh"
+#include "region/VariantFindings.hh"
+#include "stats/LocusStats.hh"
 
 namespace ehunter
 {
 
-class GraphModel;
-
-class GraphFeature : public ModelFeature
+class GraphVariantAnalyzer : public FeatureAnalyzer
 {
 public:
-    using SPtr = std::shared_ptr<GraphFeature>;
-    using UPtr = std::unique_ptr<GraphFeature>;
-
-    explicit GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
-    ~GraphFeature() override = default;
-
-    using Alignments = std::list<graphtools::GraphAlignment>;
-    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
-        = 0;
+    explicit GraphVariantAnalyzer(std::string variantId);
+    virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
+    const std::string& variantId() const { return variantId_; }
 
 protected:
-    // const GraphModel* graphModelPtr_;
-    std::vector<graphtools::NodeId> nodeIds_;
+    std::string variantId_;
 };
 
 }

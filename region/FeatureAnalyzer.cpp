@@ -19,37 +19,18 @@
 //
 //
 
-#pragma once
+#include "FeatureAnalyzer.hh"
 
 #include <memory>
-#include <string>
-#include <vector>
 
-#include "region/VariantFindings.hh"
-#include "stats/LocusStats.hh"
+using std::string;
 
 namespace ehunter
 {
 
-class ModelFeature;
-
-class VariantAnalyzer
+void FeatureAnalyzer::connect(std::shared_ptr<ModelFeature> featurePtr)
 {
-public:
-    using SPtr = std::shared_ptr<VariantAnalyzer>;
-
-    explicit VariantAnalyzer(std::string variantId);
-    virtual ~VariantAnalyzer() = default;
-
-    const std::string& variantId() const { return variantId_; }
-    virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
-
-    void connect(std::shared_ptr<ModelFeature> featurePtr);
-    const std::vector<std::shared_ptr<ModelFeature>>& featurePtrs() const { return featurePtrs_; }
-
-private:
-    std::string variantId_;
-    std::vector<std::shared_ptr<ModelFeature>> featurePtrs_;
-};
+    featurePtrs_.push_back(std::move(featurePtr));
+}
 
 }

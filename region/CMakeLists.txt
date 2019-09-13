@@ -4,7 +4,7 @@ add_library(region STATIC
         StrFeature.cpp StrFeature.hh
         SmallVariantFeature.cpp SmallVariantFeature.hh
         StrAnalyzer.cpp StrAnalyzer.hh
-        VariantAnalyzer.cpp VariantAnalyzer.hh
-        VariantFindings.cpp VariantFindings.hh WorkflowBuilder.cpp WorkflowBuilder.hh LocusAnalyzer.cpp LocusAnalyzer.hh LocusFindings.cpp LocusFindings.hh GraphLocus.cpp GraphLocus.hh CountingModel.cpp CountingModel.hh ModelFeature.cpp ModelFeature.hh GraphFeature.cpp GraphFeature.hh)
+        FeatureAnalyzer.cpp FeatureAnalyzer.hh
+        VariantFindings.cpp VariantFindings.hh WorkflowBuilder.cpp WorkflowBuilder.hh LocusAnalyzer.cpp LocusAnalyzer.hh LocusFindings.cpp LocusFindings.hh GraphLocusAnalyzer.cpp GraphLocusAnalyzer.hh CountingModel.cpp CountingModel.hh ModelFeature.cpp ModelFeature.hh GraphFeature.cpp GraphFeature.hh CountingFeature.cpp CountingFeature.hh StatsAnalyzer.cpp StatsAnalyzer.hh GraphVariantAnalyzer.cpp GraphVariantAnalyzer.hh)
 
 target_link_libraries(region reads alignment filtering region_spec common)

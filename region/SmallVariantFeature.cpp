@@ -41,4 +41,11 @@ void SmallVariantFeature::processRead(const Read& read, const std::list<graphtoo
     }
 }
 
+SmallVariantFeature::SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
+    : GraphFeature(modelPtr, std::move(nodeIds))
+    , alignmentClassifier_(nodeIds_)
+
+{
+}
+
 }

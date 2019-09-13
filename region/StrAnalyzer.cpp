@@ -82,7 +82,7 @@ static vector<int> generateCandidateAlleleSizes(
 }
 
 StrAnalyzer::StrAnalyzer(string variantId)
-    : VariantAnalyzer(std::move(variantId))
+    : GraphVariantAnalyzer(std::move(variantId))
 {
 }
 

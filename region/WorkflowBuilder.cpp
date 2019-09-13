@@ -25,9 +25,13 @@
 #include <stdexcept>
 #include <string>
 
-#include "region/GraphLocus.hh"
+#include "region/CountingFeature.hh"
+#include "region/CountingModel.hh"
+#include "region/GraphLocusAnalyzer.hh"
+#include "region/StatsAnalyzer.hh"
 #include "region/StrAnalyzer.hh"
 
+using std::static_pointer_cast;
 using std::string;
 using std::unordered_set;
 using std::vector;
@@ -37,11 +41,8 @@ namespace ehunter
 
 LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
-    // TODO: Build GraphLocus
-    // TODO: It should be initialized with LocusStats and analyzer ptrs
-    auto graphLocus = std::make_shared<GraphLocus>();
+    auto graphLocusPtr = std::make_shared<GraphLocusAnalyzer>();
 
-    // Construct graph model
     if (locusSpec.targetReadExtractionRegions().size() != 1)
     {
         const string message
@@ -50,6 +51,30 @@ LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, cons
     }
 
     const auto& regionForGraphModel = locusSpec.targetReadExtractionRegions().front();
+
+    // Construct counting model
+
+    // Initialize counting model
+    const int kFlankLength = 1000;
+    const int64_t leftFlankEnd = regionForGraphModel.start() + kFlankLength;
+    GenomicRegion leftFlank(regionForGraphModel.contigIndex(), regionForGraphModel.start(), leftFlankEnd);
+
+    const int64_t rightFlankStart = regionForGraphModel.end() - kFlankLength;
+    GenomicRegion rightFlank(regionForGraphModel.contigIndex(), rightFlankStart, regionForGraphModel.end());
+
+    auto countingModelPtr
+        = std::make_shared<CountingModel>(std::initializer_list<GenomicRegion> { leftFlank, rightFlank });
+
+    // TODO: Initialize stats feature
+    auto countingFeaturePtr = std::make_shared<CountingFeature>(countingModelPtr);
+
+    auto statsAnalyzer = std::make_shared<StatsAnalyzer>();
+    statsAnalyzer->connect(static_pointer_cast<ModelFeature>(countingFeaturePtr));
+
+    // TODO: Add stats analyzer to the locus
+    graphLocusPtr->connect(statsAnalyzer);
+
+    // Construct graph model
     auto graphModelPtr = std::make_shared<GraphModel>(regionForGraphModel, locusSpec.regionGraph(), heuristics);
 
     // Construct graph features and variant analyzers
@@ -65,7 +90,7 @@ LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, cons
             auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(variantSpec.id());
             strAnalyzerPtr->connect(strFeaturePtr);
 
-            graphLocus->connect(strAnalyzerPtr);
+            graphLocusPtr->connect(strAnalyzerPtr);
 
             /*
             weightedPurityCalculators.emplace(std::make_pair(repeatUnit, WeightedPurityCalculator(repeatUnit)));
@@ -95,7 +120,7 @@ LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, cons
         }
     }
 
-    return graphLocus;
+    return graphLocusPtr;
 }
 
 vector<RegionModel::SPtr> extractRegionModels(const vector<LocusAnalyzer::SPtr>& locusPtrs)

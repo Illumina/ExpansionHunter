@@ -19,25 +19,9 @@
 //
 //
 
-#pragma once
-
-#include <memory>
-#include <string>
-
-#include "region/GraphVariantAnalyzer.hh"
-#include "region/StrFeature.hh"
+#include "region/StatsAnalyzer.hh"
 
 namespace ehunter
 {
-
-class StrAnalyzer : public GraphVariantAnalyzer
-{
-public:
-    explicit StrAnalyzer(std::string variantId);
-    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
-
-private:
-    std::shared_ptr<StrFeature> strFeaturePtr_;
-};
 
 }

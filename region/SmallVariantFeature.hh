@@ -34,11 +34,7 @@ class SmallVariantFeature : public GraphFeature
 {
     ~SmallVariantFeature() override = default;
 
-    explicit SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
-        : GraphFeature(modelPtr, std::move(nodeIds))
-        , alignmentClassifier_(nodeIds_)
-    {
-    }
+    explicit SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
 
     void
     process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;

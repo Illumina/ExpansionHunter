@@ -29,7 +29,7 @@
 namespace ehunter
 {
 
-class VariantAnalyzer;
+class FeatureAnalyzer;
 
 class LocusAnalyzer
 {
@@ -38,12 +38,12 @@ public:
     virtual LocusFindings analyze(Sex sampleSex) const = 0;
     virtual ~LocusAnalyzer() = default;
 
-    const std::vector<std::shared_ptr<VariantAnalyzer>>& variantAnalyzerPtrs() const { return variantPtrs_; }
+    const std::vector<std::shared_ptr<FeatureAnalyzer>>& variantAnalyzerPtrs() const { return variantPtrs_; }
 
-    void connect(std::shared_ptr<VariantAnalyzer> variantPtr);
+    void connect(std::shared_ptr<FeatureAnalyzer> variantPtr);
 
 protected:
-    std::vector<std::shared_ptr<VariantAnalyzer>> variantPtrs_;
+    std::vector<std::shared_ptr<FeatureAnalyzer>> variantPtrs_;
 };
 
 }

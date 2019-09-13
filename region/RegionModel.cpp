@@ -26,8 +26,9 @@ namespace ehunter
 
 using std::string;
 
-RegionModel::RegionModel(Type type)
-    : type_(type)
+RegionModel::RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type)
+    : readExtractionRegions_(std::move(readExtractionRegions))
+    , type_(type)
 {
 }
 

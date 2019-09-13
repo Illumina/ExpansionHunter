@@ -19,20 +19,18 @@
 //
 //
 
-#include "VariantAnalyzer.hh"
+#pragma once
 
 #include <memory>
 
-using std::string;
+#include "region/FeatureAnalyzer.hh"
 
 namespace ehunter
 {
 
-VariantAnalyzer::VariantAnalyzer(string variantId)
-    : variantId_(std::move(variantId))
+class StatsAnalyzer : public FeatureAnalyzer
 {
-}
-
-void VariantAnalyzer::connect(std::shared_ptr<ModelFeature> featurePtr) { featurePtrs_.push_back(featurePtr); }
+public:
+};
 
 }
