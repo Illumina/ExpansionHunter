@@ -41,6 +41,7 @@
 #include "sample_analysis/IndexBasedDepthEstimate.hh"
 #include "sample_analysis/MateExtractor.hh"
 #include "sample_analysis/ModelFinder.hh"
+#include "sample_analysis/ReadDispatch.hh"
 
 namespace ehunter
 {
@@ -201,6 +202,16 @@ namespace
 
         const int64_t readEnd = readStats.pos + read.sequence().length();
         const int64_t mateEnd = mateStats.pos + mate.sequence().length();
+
+        unordered_set<RegionModel*> readModels = analyzerFinder.query(readStats.chromId, readStats.pos, readEnd);
+        unordered_set<RegionModel*> mateModels = analyzerFinder.query(readStats.chromId, readStats.pos, mateEnd);
+
+        readModels.insert(mateModels.begin(), mateModels.end());
+        dispatch(
+            readStats.chromId, readStats.pos, readEnd, read, readStats.chromId, readStats.pos, mateEnd, mate,
+            readModels);
+
+        /*
         vector<AnalyzerBundle> analyzers = analyzerFinder.query(
             readStats.chromId, readStats.pos, readEnd, mateStats.chromId, mateStats.pos, mateEnd);
 
@@ -223,9 +234,10 @@ namespace
         else if (bundle.inputType == AnalyzerInputType::kMateOnly)
         {
             bundle.regionPtr->analyze(mate, boost::none);
-        }
+        } */
     }
 
+    /*
     void analyzeRead(ModelFinder& analyzerFinder, const Read& read, const AlignmentStatsCatalog& alignmentStats)
     {
         const auto readStatsIter = alignmentStats.find(read.readId());
@@ -238,7 +250,7 @@ namespace
         const LinearAlignmentStats& readStats = readStatsIter->second;
         const int64_t readEnd = readStats.pos + read.sequence().length();
 
-        vector<AnalyzerBundle> analyzers = analyzerFinder.query(readStats.chromId, readStats.pos, readEnd);
+        vector<RegionModel*> analyzers = analyzerFinder.query(readStats.chromId, readStats.pos, readEnd);
 
         if (analyzers.empty())
         {
@@ -249,6 +261,7 @@ namespace
         const AnalyzerBundle& bundle = analyzers.front();
         bundle.regionPtr->analyze(read, boost::none);
     }
+    */
 
     void processReads(
         const ReadPairs& candidateReadPairs, const AlignmentStatsCatalog& alignmentStats, ModelFinder& analyzerFinder)
@@ -260,11 +273,11 @@ namespace
             {
                 analyzeReadPair(analyzerFinder, *readPair.firstMate, *readPair.secondMate, alignmentStats);
             }
-            else
-            {
-                const Read& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-                analyzeRead(analyzerFinder, read, alignmentStats);
-            }
+            // else
+            //{
+            //    const Read& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+            //    analyzeRead(analyzerFinder, read, alignmentStats);
+            //}
         }
     }
 }

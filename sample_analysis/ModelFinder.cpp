@@ -39,12 +39,8 @@ namespace ehunter
 
 namespace
 {
-    bool areMatesNearby(int32_t readContigId, int64_t readPosition, int32_t mateContigId, int64_t matePosition)
-    {
-        const int kMaxMateDistance = 1000;
-        return ((readContigId == mateContigId) && (std::abs(readPosition - matePosition) < kMaxMateDistance));
-    }
 
+    /*
     vector<AnalyzerBundle>
     coalesceCommonBundles(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
     {
@@ -69,9 +65,10 @@ namespace
         }
 
         return commonBundles;
-    }
+    } */
 
     // We ignore nearby pairs where one mate is inside and one mate is outside of the offtarget region
+    /*
     vector<AnalyzerBundle>
     coalesceBundlesForNearbyMates(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
     {
@@ -96,8 +93,9 @@ namespace
         }
 
         return bundles;
-    }
+    } */
 
+    /*
     vector<AnalyzerBundle>
     coalesceBundlesForFarawayMates(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
     {
@@ -116,57 +114,57 @@ namespace
         }
 
         return bundles;
-    }
+    } */
 }
 
 ModelFinder::ModelFinder(vector<shared_ptr<RegionModel>>& models)
 {
-    using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, AnalyzerBundle>;
+    using IntervalWithModel = ehunter::Interval<std::size_t, RegionModel*>;
 
-    unordered_map<int, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
+    unordered_map<int, vector<IntervalWithModel>> contigToIntervals;
     for (auto& regionModelPtr : models)
     {
         for (const auto& genomicRegion : regionModelPtr->readExtractionRegions())
         {
-            AnalyzerBundle bundle(regionModelPtr.get());
             contigToIntervals[genomicRegion.contigIndex()].emplace_back(
-                genomicRegion.start(), genomicRegion.end(), bundle);
+                genomicRegion.start(), genomicRegion.end(), regionModelPtr.get());
         }
     }
 
     for (auto& contigAndIntervals : contigToIntervals)
     {
-        int32_t contigIndex = contigAndIntervals.first;
+        int contigIndex = contigAndIntervals.first;
         auto intervals = contigAndIntervals.second;
 
-        intervalTrees_.emplace(std::make_pair(contigIndex, AnalyzerIntervalTree(std::move(intervals))));
+        contigToModelTrees_.emplace(std::make_pair(contigIndex, ModelTree(std::move(intervals))));
     }
 }
 
-vector<AnalyzerBundle> ModelFinder::query(int32_t contigId, int64_t start, int64_t end) const
+unordered_set<RegionModel*> ModelFinder::query(int contigId, int64_t start, int64_t end) const
 {
-    const auto contigTreeIterator = intervalTrees_.find(contigId);
-    if (contigTreeIterator == intervalTrees_.end())
+    const auto iter = contigToModelTrees_.find(contigId);
+    if (iter == contigToModelTrees_.end())
     {
-        return vector<AnalyzerBundle>();
+        return unordered_set<RegionModel*>();
     }
 
-    const auto& intervalsWithBundles = contigTreeIterator->second.findOverlapping(start, end);
+    const auto& intervalsWithModels = iter->second.findOverlapping(start, end);
 
-    vector<AnalyzerBundle> analyzerBundles;
-    for (const auto& intervalWithBundle : intervalsWithBundles)
+    unordered_set<RegionModel*> models;
+    for (const auto& interval : intervalsWithModels)
     {
-        const bool isReadContainedInInterval = static_cast<int64_t>(intervalWithBundle.start) <= start
-            && end <= static_cast<int64_t>(intervalWithBundle.stop);
-        if (isReadContainedInInterval)
-        {
-            analyzerBundles.push_back(intervalWithBundle.value);
-        }
+        // const bool fullContainment
+        //    = static_cast<int64_t>(interval.start) <= start && end <= static_cast<int64_t>(interval.stop);
+        // if (fullContainment)
+        //{
+        models.insert(interval.value);
+        //}
     }
 
-    return analyzerBundles;
+    return models;
 }
 
+/*
 vector<AnalyzerBundle> ModelFinder::query(
     int readContigId, int64_t readStart, int64_t readEnd, int mateContigId, int64_t mateStart, int64_t mateEnd) const
 {
@@ -186,6 +184,6 @@ vector<AnalyzerBundle> ModelFinder::query(
     {
         return coalesceBundlesForFarawayMates(readAnalyzerBundles, mateAnalyzerBundles);
     }
-}
+} */
 
 }

@@ -23,6 +23,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "common/HtsHelpers.hh"
 #include "common/WorkflowContext.hh"
@@ -30,16 +31,24 @@
 #include "region/WorkflowBuilder.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
+#include "sample_analysis/ReadDispatch.hh"
 
 using graphtools::AlignmentWriter;
 using std::map;
 using std::shared_ptr;
 using std::string;
 using std::unordered_map;
+using std::unordered_set;
 using std::vector;
 
 namespace ehunter
 {
+
+// static bool areMatesNearby(int readContigId, int64_t readPosition, int mateContigId, int64_t matePosition)
+//{
+//    const int kMaxMateDistance = 1000;
+//    return ((readContigId == mateContigId) && (std::abs(readPosition - matePosition) < kMaxMateDistance));
+//}
 
 SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
@@ -93,7 +102,33 @@ SampleFindings htsStreamingSampleAnalysis(
         const int64_t readEnd = readStreamer.currentReadPosition() + read.sequence().length();
         const int64_t mateEnd = readStreamer.currentMatePosition() + mate.sequence().length();
 
-        vector<AnalyzerBundle> analyzerBundles = genomeQuery.analyzerFinder.query(
+        unordered_set<RegionModel*> readModels = genomeQuery.analyzerFinder.query(
+            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd);
+
+        unordered_set<RegionModel*> mateModels = genomeQuery.analyzerFinder.query(
+            readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd);
+
+        readModels.insert(mateModels.begin(), mateModels.end());
+        dispatch(
+            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd, read,
+            readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd, mate, readModels);
+
+        /*
+        if (areMatesNearby(
+                readStreamer.currentReadContigId(), readStreamer.currentReadPosition(),
+                readStreamer.currentMateContigId(), readStreamer.currentMateContigId()))
+        {
+            const int fragmentContig = readStreamer.currentReadContigId();
+            const int64_t fragmentStart
+                = std::min(readStreamer.currentReadPosition(), readStreamer.currentMatePosition());
+            const int64_t fragmentEnd = std::max(readEnd, mateEnd);
+
+            vector<RegionModel*> models = genomeQuery.analyzerFinder.query(fragmentContig, fragmentStart, fragmentEnd);
+            dispatch(read, mate, models);
+        } */
+
+        /*
+        vector<RegionModel*> models = genomeQuery.analyzerFinder.query(
             readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd,
             readStreamer.currentMateContigId(), readStreamer.currentMatePosition(), mateEnd);
 
@@ -113,7 +148,7 @@ SampleFindings htsStreamingSampleAnalysis(
                 analyzerPtr->analyze(std::move(mate), boost::none);
                 break;
             }
-        }
+        } */
     }
 
     SampleFindings sampleFindings;
