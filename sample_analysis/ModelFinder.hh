@@ -58,18 +58,18 @@ struct AnalyzerBundle
 };
 
 // Enables retrieval of appropriate locus analyzers by genomic coordinates of read alignments
-class AnalyzerFinder
+class ModelFinder
 {
 public:
-    explicit AnalyzerFinder(std::vector<std::shared_ptr<RegionModel>>& locusAnalyzerPtrs);
+    explicit ModelFinder(std::vector<std::shared_ptr<RegionModel>>& models);
 
     // Retrieves analyzers appropriate for the given read pair
     std::vector<AnalyzerBundle> query(
-        int32_t readContigId, int64_t readStart, int64_t readEnd, int32_t mateContigId, int64_t mateStart,
+        int readContigId, int64_t readStart, int64_t readEnd, int mateContigId, int64_t mateStart,
         int64_t mateEnd) const;
 
     // Retrieves analyzers appropriate for the given read
-    std::vector<AnalyzerBundle> query(int32_t readContigId, int64_t readStart, int64_t readEnd) const;
+    std::vector<AnalyzerBundle> query(int contigId, int64_t start, int64_t end) const;
 
 private:
     using AnalyzerIntervalTree = ehunter::IntervalTree<std::size_t, AnalyzerBundle>;

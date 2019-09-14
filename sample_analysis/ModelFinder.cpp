@@ -20,7 +20,7 @@
 //
 //
 
-#include "sample_analysis/AnalyzerFinder.hh"
+#include "sample_analysis/ModelFinder.hh"
 
 #include <memory>
 
@@ -119,12 +119,12 @@ namespace
     }
 }
 
-AnalyzerFinder::AnalyzerFinder(vector<shared_ptr<RegionModel>>& regionModelPtrs)
+ModelFinder::ModelFinder(vector<shared_ptr<RegionModel>>& models)
 {
     using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, AnalyzerBundle>;
 
     unordered_map<int, vector<IntervalWithLocusTypeAndAnalyzer>> contigToIntervals;
-    for (auto& regionModelPtr : regionModelPtrs)
+    for (auto& regionModelPtr : models)
     {
         for (const auto& genomicRegion : regionModelPtr->readExtractionRegions())
         {
@@ -143,9 +143,9 @@ AnalyzerFinder::AnalyzerFinder(vector<shared_ptr<RegionModel>>& regionModelPtrs)
     }
 }
 
-vector<AnalyzerBundle> AnalyzerFinder::query(int32_t contigIndex, int64_t start, int64_t end) const
+vector<AnalyzerBundle> ModelFinder::query(int32_t contigId, int64_t start, int64_t end) const
 {
-    const auto contigTreeIterator = intervalTrees_.find(contigIndex);
+    const auto contigTreeIterator = intervalTrees_.find(contigId);
     if (contigTreeIterator == intervalTrees_.end())
     {
         return vector<AnalyzerBundle>();
@@ -167,9 +167,8 @@ vector<AnalyzerBundle> AnalyzerFinder::query(int32_t contigIndex, int64_t start,
     return analyzerBundles;
 }
 
-vector<AnalyzerBundle> AnalyzerFinder::query(
-    int32_t readContigId, int64_t readStart, int64_t readEnd, int32_t mateContigId, int64_t mateStart,
-    int64_t mateEnd) const
+vector<AnalyzerBundle> ModelFinder::query(
+    int readContigId, int64_t readStart, int64_t readEnd, int mateContigId, int64_t mateStart, int64_t mateEnd) const
 {
     vector<AnalyzerBundle> readAnalyzerBundles = query(readContigId, readStart, readEnd);
     vector<AnalyzerBundle> mateAnalyzerBundles = query(mateContigId, mateStart, mateEnd);

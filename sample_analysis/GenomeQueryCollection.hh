@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include "sample_analysis/AnalyzerFinder.hh"
 #include "sample_analysis/GenomeMask.hh"
+#include "sample_analysis/ModelFinder.hh"
 
 namespace ehunter
 {
@@ -32,7 +32,7 @@ struct GenomeQueryCollection
 {
     GenomeQueryCollection(std::vector<std::shared_ptr<RegionModel>>& regions);
 
-    AnalyzerFinder analyzerFinder; // Analyzers searchable by targeted region
+    ModelFinder analyzerFinder; // Analyzers searchable by targeted region
     GenomeMask targetRegionMask; // Marks targeted regions to enable fast read screening
 };
 

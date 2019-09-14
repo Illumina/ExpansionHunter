@@ -37,10 +37,10 @@
 #include "reads/ReadPairs.hh"
 #include "region/LocusAnalyzer.hh"
 #include "region/WorkflowBuilder.hh"
-#include "sample_analysis/AnalyzerFinder.hh"
 #include "sample_analysis/HtsFileSeeker.hh"
 #include "sample_analysis/IndexBasedDepthEstimate.hh"
 #include "sample_analysis/MateExtractor.hh"
+#include "sample_analysis/ModelFinder.hh"
 
 namespace ehunter
 {
@@ -186,7 +186,7 @@ namespace
     }
 
     void analyzeReadPair(
-        AnalyzerFinder& analyzerFinder, const Read& read, const Read& mate, const AlignmentStatsCatalog& alignmentStats)
+        ModelFinder& analyzerFinder, const Read& read, const Read& mate, const AlignmentStatsCatalog& alignmentStats)
     {
         const auto readStatsIter = alignmentStats.find(read.readId());
         const auto mateStatsIter = alignmentStats.find(mate.readId());
@@ -226,7 +226,7 @@ namespace
         }
     }
 
-    void analyzeRead(AnalyzerFinder& analyzerFinder, const Read& read, const AlignmentStatsCatalog& alignmentStats)
+    void analyzeRead(ModelFinder& analyzerFinder, const Read& read, const AlignmentStatsCatalog& alignmentStats)
     {
         const auto readStatsIter = alignmentStats.find(read.readId());
 
@@ -251,8 +251,7 @@ namespace
     }
 
     void processReads(
-        const ReadPairs& candidateReadPairs, const AlignmentStatsCatalog& alignmentStats,
-        AnalyzerFinder& analyzerFinder)
+        const ReadPairs& candidateReadPairs, const AlignmentStatsCatalog& alignmentStats, ModelFinder& analyzerFinder)
     {
         for (const auto& fragmentIdAndReads : candidateReadPairs)
         {
@@ -291,7 +290,7 @@ SampleFindings htsSeekingSampleAnalysis(
         // vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
         // locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
         vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
-        AnalyzerFinder analyzerFinder(regionModelPtrs);
+        ModelFinder analyzerFinder(regionModelPtrs);
 
         AlignmentStatsCatalog alignmentStats;
         ReadPairs readPairs = collectCandidateReads(

@@ -50,15 +50,15 @@ class BaseMatchingDagAligner : public graphalign::dagAligner::Aligner<
 public:
     BaseMatchingDagAligner(const PenaltyMatrix& penaltyMatrix, Score gapOpen, Score gapExt)
         : graphalign::dagAligner::Aligner<
-              graphalign::dagAligner::AffineAlignMatrixVectorized<PenaltyMatrix, penalizeMove>, clipFront>(
-              penaltyMatrix, gapOpen, gapExt)
+            graphalign::dagAligner::AffineAlignMatrixVectorized<PenaltyMatrix, penalizeMove>, clipFront>(
+            penaltyMatrix, gapOpen, gapExt)
     {
     }
 
     BaseMatchingDagAligner(graphalign::dagAligner::Score match, Score mismatch, Score gapOpen, Score gapExt)
         : graphalign::dagAligner::Aligner<
-              graphalign::dagAligner::AffineAlignMatrixVectorized<PenaltyMatrix, penalizeMove>, clipFront>(
-              PenaltyMatrix(match, mismatch), gapOpen, gapExt)
+            graphalign::dagAligner::AffineAlignMatrixVectorized<PenaltyMatrix, penalizeMove>, clipFront>(
+            PenaltyMatrix(match, mismatch), gapOpen, gapExt)
     {
     }
 };
