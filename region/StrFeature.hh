@@ -21,27 +21,23 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "region/GraphFeature.hh"
-#include "region/GraphModel.hh"
-
 #include "classification/AlignmentSummary.hh"
 #include "classification/StrAlignmentClassifier.hh"
+#include "region/GraphFeature.hh"
 
 namespace ehunter
 {
 
+class GraphModel;
+
 class StrFeature : public GraphFeature
 {
 public:
-    explicit StrFeature(GraphModel::SPtr graphModelPtr, graphtools::NodeId nodeId)
-        : GraphFeature(graphModelPtr, { nodeId })
-        , alignmentClassifier_(graphModelPtr->graph(), nodeId)
-    {
-    }
-
+    StrFeature(std::shared_ptr<GraphModel> graphModelPtr, graphtools::NodeId nodeId);
     void
     process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
 

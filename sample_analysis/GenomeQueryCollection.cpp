@@ -22,6 +22,7 @@
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "region_spec/LocusSpecification.hh"
 
+using std::shared_ptr;
 using std::vector;
 
 namespace ehunter
@@ -29,7 +30,7 @@ namespace ehunter
 
 namespace
 {
-    void initializeGenomeMask(GenomeMask& genomeMask, vector<RegionModel::SPtr>& regionModelPtrs)
+    void initializeGenomeMask(GenomeMask& genomeMask, vector<shared_ptr<RegionModel>>& regionModelPtrs)
     {
         for (auto& regionModelPtr : regionModelPtrs)
         {
@@ -41,7 +42,7 @@ namespace
     }
 }
 
-GenomeQueryCollection::GenomeQueryCollection(vector<RegionModel::SPtr>& regions)
+GenomeQueryCollection::GenomeQueryCollection(vector<shared_ptr<RegionModel>>& regions)
     : analyzerFinder(regions)
 {
     initializeGenomeMask(targetRegionMask, regions);

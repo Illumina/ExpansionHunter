@@ -61,7 +61,7 @@ struct AnalyzerBundle
 class AnalyzerFinder
 {
 public:
-    explicit AnalyzerFinder(std::vector<RegionModel::SPtr>& locusAnalyzerPtrs);
+    explicit AnalyzerFinder(std::vector<std::shared_ptr<RegionModel>>& locusAnalyzerPtrs);
 
     // Retrieves analyzers appropriate for the given read pair
     std::vector<AnalyzerBundle> query(

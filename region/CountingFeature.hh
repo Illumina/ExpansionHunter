@@ -34,6 +34,12 @@ class CountingFeature : public ModelFeature
 {
 public:
     explicit CountingFeature(std::shared_ptr<CountingModel> modelPtr);
+    ~CountingFeature() override = default;
+
+    std::shared_ptr<RegionModel> model() override;
+
+private:
+    std::shared_ptr<CountingModel> modelPtr_;
 };
 
 }

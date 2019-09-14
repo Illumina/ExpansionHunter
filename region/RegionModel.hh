@@ -21,7 +21,6 @@
 
 #pragma once
 
-#include <string>
 #include <vector>
 
 #include <boost/optional.hpp>
@@ -37,25 +36,22 @@ class ModelFeature;
 class RegionModel
 {
 public:
-    using SPtr = std::shared_ptr<RegionModel>;
     enum class Type
     {
         kTarget,
         kOfftarget
     };
 
-    explicit RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type);
+    RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type);
     virtual ~RegionModel() = default;
 
     Type type() const { return type_; }
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
 
     virtual void analyze(Read read, boost::optional<Read> mate) = 0;
-    void connect(ModelFeature* featurePtr);
+    virtual std::vector<ModelFeature*> modelFeatures() = 0;
 
 protected:
-    std::vector<ModelFeature*> featurePtrs_;
-
     std::vector<GenomicRegion> readExtractionRegions_;
     Type type_;
 

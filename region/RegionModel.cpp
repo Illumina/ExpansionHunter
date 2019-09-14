@@ -24,14 +24,10 @@
 namespace ehunter
 {
 
-using std::string;
-
 RegionModel::RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type)
     : readExtractionRegions_(std::move(readExtractionRegions))
     , type_(type)
 {
 }
-
-void RegionModel::connect(ModelFeature* featurePtr) { featurePtrs_.push_back(featurePtr); }
 
 }

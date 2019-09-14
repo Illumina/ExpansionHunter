@@ -37,12 +37,7 @@ class FeatureAnalyzer
 {
 public:
     virtual ~FeatureAnalyzer() = default;
-
-    void connect(std::shared_ptr<ModelFeature> featurePtr);
-    const std::vector<std::shared_ptr<ModelFeature>>& featurePtrs() const { return featurePtrs_; }
-
-private:
-    std::vector<std::shared_ptr<ModelFeature>> featurePtrs_;
+    virtual std::vector<std::shared_ptr<ModelFeature>> features() = 0;
 };
 
 }

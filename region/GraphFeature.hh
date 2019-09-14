@@ -38,18 +38,17 @@ class GraphModel;
 class GraphFeature : public ModelFeature
 {
 public:
-    using SPtr = std::shared_ptr<GraphFeature>;
-    using UPtr = std::unique_ptr<GraphFeature>;
-
-    explicit GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
+    GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
     ~GraphFeature() override = default;
 
     using Alignments = std::list<graphtools::GraphAlignment>;
     virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
         = 0;
 
+    std::shared_ptr<RegionModel> model() override;
+
 protected:
-    // const GraphModel* graphModelPtr_;
+    std::shared_ptr<GraphModel> modelPtr_;
     std::vector<graphtools::NodeId> nodeIds_;
 };
 

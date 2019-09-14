@@ -49,6 +49,7 @@ using boost::optional;
 using graphtools::AlignmentWriter;
 using htshelpers::HtsFileSeeker;
 using std::ostream;
+using std::shared_ptr;
 using std::string;
 using std::unique_ptr;
 using std::unordered_map;
@@ -283,13 +284,13 @@ SampleFindings htsSeekingSampleAnalysis(
 
         // TODO: Initialize regions
         WorkflowContext context;
-        LocusAnalyzer::SPtr locusAnalyzerPtr = buildLocusWorkflow(locusSpec, context.heuristics());
+        shared_ptr<LocusAnalyzer> locusAnalyzerPtr = buildLocusWorkflow(locusSpec, context.heuristics());
 
         // TODO: For each region: collect reads and pass them into regions
 
         // vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
         // locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
-        vector<RegionModel::SPtr> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
+        vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
         AnalyzerFinder analyzerFinder(regionModelPtrs);
 
         AlignmentStatsCatalog alignmentStats;

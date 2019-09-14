@@ -34,16 +34,9 @@ class FeatureAnalyzer;
 class LocusAnalyzer
 {
 public:
-    using SPtr = std::shared_ptr<LocusAnalyzer>;
-    virtual LocusFindings analyze(Sex sampleSex) const = 0;
     virtual ~LocusAnalyzer() = default;
-
-    const std::vector<std::shared_ptr<FeatureAnalyzer>>& variantAnalyzerPtrs() const { return variantPtrs_; }
-
-    void connect(std::shared_ptr<FeatureAnalyzer> variantPtr);
-
-protected:
-    std::vector<std::shared_ptr<FeatureAnalyzer>> variantPtrs_;
+    virtual LocusFindings analyze(Sex sampleSex) const = 0;
+    virtual std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() = 0;
 };
 
 }

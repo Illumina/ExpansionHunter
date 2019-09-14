@@ -21,6 +21,10 @@
 
 #include "region/CountingModel.hh"
 
+#include "region/CountingFeature.hh"
+
+using std::vector;
+
 namespace ehunter
 {
 
@@ -58,6 +62,18 @@ double CountingModel::depth() const
  */
 
     return 0;
+}
+
+vector<ModelFeature*> CountingModel::modelFeatures()
+{
+    vector<ModelFeature*> modelFeatures;
+
+    for (const auto& countingFeature : featurePtrs_)
+    {
+        modelFeatures.push_back(countingFeature);
+    }
+
+    return modelFeatures;
 }
 
 }

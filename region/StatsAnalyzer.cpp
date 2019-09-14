@@ -21,7 +21,17 @@
 
 #include "region/StatsAnalyzer.hh"
 
+using std::shared_ptr;
+using std::vector;
+
 namespace ehunter
 {
+
+StatsAnalyzer::StatsAnalyzer(std::shared_ptr<CountingFeature> feature)
+    : feature_(std::move(feature))
+{
+}
+
+vector<shared_ptr<ModelFeature>> StatsAnalyzer::features() { return { feature_ }; }
 
 }

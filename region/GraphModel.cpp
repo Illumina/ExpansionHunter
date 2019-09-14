@@ -22,6 +22,7 @@
 #include "region/GraphModel.hh"
 
 #include "alignment/AlignmentFilters.hh"
+#include "region/GraphFeature.hh"
 
 namespace ehunter
 {
@@ -65,7 +66,7 @@ void GraphModel::analyze(Read read, boost::optional<Read> mate)
     {
         for (auto& featurePtr : featurePtrs_)
         {
-            static_cast<GraphFeature*>(featurePtr)->process(read, readAlignments, *mate, mateAlignments);
+            featurePtr->process(read, readAlignments, *mate, mateAlignments);
         }
     }
 }
@@ -84,6 +85,19 @@ list<GraphAlignment> GraphModel::align(Read& read) const
     }
 
     return aligner_.align(read.sequence());
+}
+
+void GraphModel::addFeature(GraphFeature* featurePtr) { featurePtrs_.push_back(featurePtr); }
+
+std::vector<ModelFeature*> GraphModel::modelFeatures()
+{
+    std::vector<ModelFeature*> modelFeatures;
+    for (const auto& graphFeature : featurePtrs_)
+    {
+        modelFeatures.push_back(graphFeature);
+    }
+
+    return modelFeatures;
 }
 
 }

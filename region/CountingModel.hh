@@ -32,6 +32,8 @@
 namespace ehunter
 {
 
+class CountingFeature;
+
 class CountingModel : public RegionModel
 {
 public:
@@ -39,12 +41,16 @@ public:
     explicit CountingModel(std::vector<GenomicRegion> readExtractionRegions);
     ~CountingModel() override = default;
 
+    std::vector<ModelFeature*> modelFeatures() override;
+
     void analyze(Read read, boost::optional<Read> mate) override;
     int readCount() const;
     int meanReadLength() const;
     double depth() const;
 
 private:
+    std::vector<CountingFeature*> featurePtrs_;
+
     using AccumulatorStats
         = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
     using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;

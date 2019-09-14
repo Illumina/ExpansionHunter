@@ -20,12 +20,19 @@
 //
 
 #include "region/StrFeature.hh"
-//#include "region/GraphModel.hh"
+#include "region/GraphModel.hh"
 
+using std::shared_ptr;
 using std::static_pointer_cast;
 
 namespace ehunter
 {
+
+StrFeature::StrFeature(std::shared_ptr<GraphModel> graphModelPtr, graphtools::NodeId nodeId)
+    : GraphFeature(std::move(graphModelPtr), { nodeId })
+    , alignmentClassifier_(graphModelPtr->graph(), nodeId)
+{
+}
 
 void StrFeature::process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
 {
@@ -44,9 +51,6 @@ void StrFeature::process(const Read& read, const Alignments& readAligns, const R
 
 graphtools::NodeId StrFeature::motifNodeId() const { return nodeIds_.front(); }
 
-const std::string& StrFeature::motif() const
-{
-    return static_pointer_cast<GraphModel>(modelPtr_)->graph().nodeSeq(motifNodeId());
-}
+const std::string& StrFeature::motif() const { return modelPtr_->graph().nodeSeq(motifNodeId()); }
 
 }

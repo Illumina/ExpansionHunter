@@ -20,10 +20,14 @@
 //
 
 #include "region/StrAnalyzer.hh"
+
+#include "classification/AlignmentSummary.hh"
 #include "common/CountTable.hh"
 #include "genotyping/RepeatGenotyper.hh"
+#include "region/StrFeature.hh"
 
 using boost::optional;
+using std::shared_ptr;
 using std::string;
 using std::vector;
 
@@ -81,20 +85,22 @@ static vector<int> generateCandidateAlleleSizes(
     return candidateSizes;
 }
 
-StrAnalyzer::StrAnalyzer(string variantId)
+StrAnalyzer::StrAnalyzer(shared_ptr<StrFeature> strFeature, string variantId)
     : GraphVariantAnalyzer(std::move(variantId))
+    , strFeature_(std::move(strFeature))
 {
 }
 
 std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) const
 {
+    assert(strFeature_);
+
     CountTable spanningReads;
     CountTable flankingReads;
     CountTable inrepeatReads;
-    populateCountTables(strFeaturePtr_->readSummaries(), spanningReads, flankingReads, inrepeatReads);
+    populateCountTables(strFeature_->readSummaries(), spanningReads, flankingReads, inrepeatReads);
 
-    assert(strFeaturePtr_);
-    const string& motif = strFeaturePtr_->motif();
+    const string& motif = strFeature_->motif();
     const int maxNumUnitsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(motif.length()));
     auto truncatedSpanningTable = collapseTopElements(spanningReads, maxNumUnitsInRead);
     auto truncatedFlankingTable = collapseTopElements(flankingReads, maxNumUnitsInRead);
@@ -119,5 +125,7 @@ std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) c
         new StrFindings(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, genotype));
     return findingsPtr;
 }
+
+vector<shared_ptr<ModelFeature>> StrAnalyzer::features() { return { strFeature_ }; }
 
 }

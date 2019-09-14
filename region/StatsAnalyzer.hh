@@ -23,6 +23,7 @@
 
 #include <memory>
 
+#include "region/CountingFeature.hh"
 #include "region/FeatureAnalyzer.hh"
 
 namespace ehunter
@@ -31,6 +32,13 @@ namespace ehunter
 class StatsAnalyzer : public FeatureAnalyzer
 {
 public:
+    explicit StatsAnalyzer(std::shared_ptr<CountingFeature> feature);
+    ~StatsAnalyzer() override = default;
+
+    std::vector<std::shared_ptr<ModelFeature>> features() override;
+
+private:
+    std::shared_ptr<CountingFeature> feature_;
 };
 
 }

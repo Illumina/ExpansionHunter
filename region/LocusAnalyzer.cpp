@@ -29,5 +29,4 @@ using std::vector;
 namespace ehunter
 {
 
-void LocusAnalyzer::connect(std::shared_ptr<FeatureAnalyzer> variantPtr) { variantPtrs_.push_back(variantPtr); }
 }

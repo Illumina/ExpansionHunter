@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "common/Parameters.hh"
 #include "region/LocusAnalyzer.hh"
 #include "region/RegionModel.hh"
@@ -29,8 +31,9 @@
 namespace ehunter
 {
 
-LocusAnalyzer::SPtr buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
+std::shared_ptr<LocusAnalyzer>
+buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
 
-std::vector<RegionModel::SPtr> extractRegionModels(const std::vector<LocusAnalyzer::SPtr>& locusPtrs);
+std::vector<std::shared_ptr<RegionModel>> extractRegionModels(const std::vector<std::shared_ptr<LocusAnalyzer>>& loci);
 
 }

@@ -33,6 +33,7 @@
 
 using graphtools::AlignmentWriter;
 using std::map;
+using std::shared_ptr;
 using std::string;
 using std::unordered_map;
 using std::vector;
@@ -44,14 +45,14 @@ SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*bamletWriter*/)
 {
-    vector<RegionModel::SPtr> regionModelPtrs;
+    vector<shared_ptr<RegionModel>> regionModelPtrs;
 
     WorkflowContext context;
 
     for (const auto& locusIdAndLocusSpec : regionCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
-        LocusAnalyzer::SPtr locusModelPtr = buildLocusWorkflow(locusSpec, context.heuristics());
+        shared_ptr<LocusAnalyzer> locusModelPtr = buildLocusWorkflow(locusSpec, context.heuristics());
     }
 
     //= initializeLocusAnalyzers(regionCatalog, bamletWriter);

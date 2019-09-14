@@ -34,6 +34,7 @@ class GraphVariantAnalyzer : public FeatureAnalyzer
 {
 public:
     explicit GraphVariantAnalyzer(std::string variantId);
+    ~GraphVariantAnalyzer() override = default;
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
     const std::string& variantId() const { return variantId_; }
 

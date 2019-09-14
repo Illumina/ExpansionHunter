@@ -26,12 +26,24 @@
 #include "GraphVariantAnalyzer.hh"
 #include "region/FeatureAnalyzer.hh"
 
+using std::shared_ptr;
 using std::string;
+using std::vector;
 
 namespace ehunter
 {
 
 using std::static_pointer_cast;
+
+void GraphLocusAnalyzer::setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer)
+{
+    statsAnalyzer_ = std::move(statsAnalyzer);
+}
+
+void GraphLocusAnalyzer::addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer)
+{
+    variantAnalyzers_.push_back(variantAnalyzer);
+}
 
 LocusFindings GraphLocusAnalyzer::analyze(Sex /*sampleSex*/) const
 {
@@ -43,18 +55,28 @@ LocusFindings GraphLocusAnalyzer::analyze(Sex /*sampleSex*/) const
     //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
     //{
 
-    for (auto& analyzerPtr : variantPtrs_)
+    for (auto& analyzerPtr : variantAnalyzers_)
     {
-        auto graphAnalyzerPtr = static_pointer_cast<GraphVariantAnalyzer>(analyzerPtr);
         const LocusStats& locusStats = *locusFindings.optionalStats;
-        std::unique_ptr<VariantFindings> variantFindingsPtr = graphAnalyzerPtr->analyze(locusStats);
-        const string& variantId = graphAnalyzerPtr->variantId();
+        std::unique_ptr<VariantFindings> variantFindingsPtr = analyzerPtr->analyze(locusStats);
+        const string& variantId = analyzerPtr->variantId();
         locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
     }
 
     //}
 
     return locusFindings;
+}
+
+vector<shared_ptr<FeatureAnalyzer>> GraphLocusAnalyzer::featureAnalyzers()
+{
+    vector<shared_ptr<FeatureAnalyzer>> features;
+    for (const auto& variant : variantAnalyzers_)
+    {
+        features.push_back(variant);
+    }
+
+    return features;
 }
 
 }

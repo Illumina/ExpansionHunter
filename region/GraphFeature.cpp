@@ -26,17 +26,12 @@
 namespace ehunter
 {
 
-/*
-void GraphFeature::process(
-    const Read& read, const GraphFeature::Alignments& readAligns, const Read& mate,
-    const GraphFeature::Alignments& mateAligns)
-{
-} */
-
 GraphFeature::GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
-    : ModelFeature(std::static_pointer_cast<RegionModel>(modelPtr))
+    : modelPtr_(std::move(modelPtr))
     , nodeIds_(std::move(nodeIds))
 {
 }
+
+std::shared_ptr<RegionModel> GraphFeature::model() { return modelPtr_; }
 
 }

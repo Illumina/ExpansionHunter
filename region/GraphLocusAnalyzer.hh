@@ -19,16 +19,30 @@
 //
 //
 
+#include <memory>
+#include <vector>
+
 #include "region/LocusAnalyzer.hh"
 
 namespace ehunter
 {
 
+class GraphVariantAnalyzer;
+class StatsAnalyzer;
+
 class GraphLocusAnalyzer : public LocusAnalyzer
 {
 public:
-    LocusFindings analyze(Sex sampleSex) const override;
     ~GraphLocusAnalyzer() override = default;
+
+    void setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer);
+    void addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer);
+    LocusFindings analyze(Sex sampleSex) const override;
+    std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
+
+private:
+    std::shared_ptr<StatsAnalyzer> statsAnalyzer_;
+    std::vector<std::shared_ptr<GraphVariantAnalyzer>> variantAnalyzers_;
 };
 
 }

@@ -23,12 +23,16 @@
 
 #include "region/CountingModel.hh"
 
+using std::shared_ptr;
+
 namespace ehunter
 {
 
 CountingFeature::CountingFeature(std::shared_ptr<CountingModel> modelPtr)
-    : ModelFeature(std::static_pointer_cast<RegionModel>(std::move(modelPtr)))
+    : modelPtr_(std::move(modelPtr))
 {
 }
+
+shared_ptr<RegionModel> CountingFeature::model() { return modelPtr_; }
 
 }

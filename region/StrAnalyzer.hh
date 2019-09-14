@@ -25,19 +25,23 @@
 #include <string>
 
 #include "region/GraphVariantAnalyzer.hh"
-#include "region/StrFeature.hh"
 
 namespace ehunter
 {
 
+class StrFeature;
+
 class StrAnalyzer : public GraphVariantAnalyzer
 {
 public:
-    explicit StrAnalyzer(std::string variantId);
+    explicit StrAnalyzer(std::shared_ptr<StrFeature> strFeature, std::string variantId);
+    ~StrAnalyzer() override = default;
+
+    std::vector<std::shared_ptr<ModelFeature>> features() override;
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
 private:
-    std::shared_ptr<StrFeature> strFeaturePtr_;
+    std::shared_ptr<StrFeature> strFeature_;
 };
 
 }

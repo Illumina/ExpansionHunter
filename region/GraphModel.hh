@@ -33,11 +33,12 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "filtering/OrientationPredictor.hh"
-#include "region/GraphFeature.hh"
 #include "region/RegionModel.hh"
 
 namespace ehunter
 {
+
+class GraphFeature;
 
 class GraphModel : public RegionModel
 {
@@ -48,9 +49,13 @@ public:
 
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
+    void addFeature(GraphFeature* featurePtr);
+    std::vector<ModelFeature*> modelFeatures() override;
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
+
+    std::vector<GraphFeature*> featurePtrs_;
 
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;

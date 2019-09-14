@@ -21,9 +21,14 @@
 //
 
 #include "sample_analysis/AnalyzerFinder.hh"
+
+#include <memory>
+
+#include "region/RegionModel.hh"
 #include "region_spec/LocusSpecification.hh"
 
 using boost::optional;
+using std::shared_ptr;
 using std::unique_ptr;
 using std::unordered_map;
 using std::unordered_set;
@@ -114,7 +119,7 @@ namespace
     }
 }
 
-AnalyzerFinder::AnalyzerFinder(vector<RegionModel::SPtr>& regionModelPtrs)
+AnalyzerFinder::AnalyzerFinder(vector<shared_ptr<RegionModel>>& regionModelPtrs)
 {
     using IntervalWithLocusTypeAndAnalyzer = ehunter::Interval<std::size_t, AnalyzerBundle>;
 

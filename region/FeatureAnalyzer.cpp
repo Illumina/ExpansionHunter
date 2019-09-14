@@ -28,9 +28,4 @@ using std::string;
 namespace ehunter
 {
 
-void FeatureAnalyzer::connect(std::shared_ptr<ModelFeature> featurePtr)
-{
-    featurePtrs_.push_back(std::move(featurePtr));
-}
-
 }

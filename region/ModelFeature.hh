@@ -31,18 +31,8 @@ class RegionModel;
 class ModelFeature
 {
 public:
-    using SPtr = std::shared_ptr<ModelFeature>;
-
-    explicit ModelFeature(std::shared_ptr<RegionModel> modelPtr)
-        : modelPtr_(std::move(modelPtr))
-    {
-    }
-
     virtual ~ModelFeature() = default;
-    std::shared_ptr<RegionModel> modelPtr() { return modelPtr_; }
-
-protected:
-    std::shared_ptr<RegionModel> modelPtr_;
+    virtual std::shared_ptr<RegionModel> model() = 0;
 };
 
 }
