@@ -29,7 +29,7 @@ using std::vector;
 namespace ehunter
 {
 
-void ReadPairs::Add(Read read)
+void ReadPairs::Add(MappedRead read)
 {
     ReadPair& readPair = readPairs_[read.fragmentId()];
     const int originalMateCount = readPair.numMatesSet();
@@ -49,7 +49,7 @@ void ReadPairs::Add(Read read)
     numReads_ += mateCountAfterAdd - originalMateCount;
 }
 
-void ReadPairs::AddMateToExistingRead(Read mate)
+void ReadPairs::AddMateToExistingRead(MappedRead mate)
 {
     ReadPair& readPair = readPairs_.at(mate.fragmentId());
     if (mate.isFirstMate() && readPair.firstMate == boost::none)

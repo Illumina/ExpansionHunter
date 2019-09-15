@@ -62,7 +62,7 @@ namespace htshelpers
 
         bool isStreamingAlignedReads() const;
 
-        Read decodeRead(LinearAlignmentStats& alignmentStats) const;
+        MappedRead decodeRead() const;
 
     private:
         enum class Status

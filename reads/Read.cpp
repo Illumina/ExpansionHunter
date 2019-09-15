@@ -30,6 +30,40 @@ using std::string;
 namespace ehunter
 {
 
+Read::Read(ReadId readId, string sequence, bool isReversed)
+    : readId_(std::move(readId))
+    , sequence_(std::move(sequence))
+    , isReversed_(isReversed)
+{
+    if (sequence_.empty())
+    {
+        std::ostringstream encoding;
+        encoding << readId_;
+        throw std::logic_error("Encountered empty query for " + encoding.str());
+    }
+}
+
+void Read::reverseComplement()
+{
+    sequence_ = graphtools::reverseComplement(sequence_);
+    isReversed_ = !isReversed_;
+}
+
+MappedRead::MappedRead(
+    ReadId readId, string sequence, bool isReversed, int contigIndex, int64_t pos, int mapq, int mateContigIndex,
+    int64_t matePos, bool isPaired, bool isMapped, bool isMateMapped)
+    : Read(std::move(readId), std::move(sequence), isReversed)
+    , contigIndex_(contigIndex)
+    , pos_(pos)
+    , mapq_(mapq)
+    , mateContigIndex_(mateContigIndex)
+    , matePos_(matePos)
+    , isPaired_(isPaired)
+    , isMapped_(isMapped)
+    , isMateMapped_(isMateMapped)
+{
+}
+
 bool operator==(const Read& read, const Read& mate)
 {
     const bool idsAreEqual = read.readId() == mate.readId();
@@ -37,19 +71,20 @@ bool operator==(const Read& read, const Read& mate)
     return (idsAreEqual && sequencesAreEqual);
 }
 
-bool operator==(const LinearAlignmentStats& statsA, const LinearAlignmentStats& statsB)
+bool operator==(const MappedRead& read, const MappedRead& mate)
 {
-    const bool contigsEqual = statsA.chromId == statsB.chromId;
-    const bool positionsEqual = statsA.pos == statsB.pos;
-    const bool mapqsEqual = statsA.mapq == statsB.mapq;
-    const bool mateContigsEqual = statsA.mateChromId == statsB.mateChromId;
-    const bool matePositionsEqual = statsA.matePos == statsB.matePos;
-    const bool mappingStatusesEqual = statsA.isMapped == statsB.isMapped;
-    const bool mateMappingStatusesEqual = statsA.isMateMapped == statsB.isMateMapped;
+    const bool readEqual = static_cast<const Read&>(read) == static_cast<const Read&>(mate);
+    const bool contigEqual = read.contigIndex() == mate.contigIndex();
+    const bool positionsEqual = read.pos() == mate.pos();
+    const bool mapqsEqual = read.mapq() == mate.mapq();
+    const bool mateContigsEqual = read.mateContigIndex() == mate.mateContigIndex();
+    const bool matePositionsEqual = read.matePos() == mate.matePos();
+    const bool mappingStatusesEqual = read.isMapped() == mate.isMapped();
+    const bool mateMappingStatusesEqual = read.isMateMapped() == mate.isMateMapped();
 
     return (
-        contigsEqual && positionsEqual && mapqsEqual && mateContigsEqual && matePositionsEqual && mappingStatusesEqual
-        && mateMappingStatusesEqual);
+        readEqual && contigEqual && positionsEqual && mapqsEqual && mateContigsEqual && matePositionsEqual
+        && mappingStatusesEqual && mateMappingStatusesEqual);
 }
 
 std::ostream& operator<<(std::ostream& out, const ReadId& readId)

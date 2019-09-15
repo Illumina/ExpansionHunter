@@ -90,11 +90,7 @@ namespace htshelpers
         return status_ != Status::kFinishedStreaming && currentReadContigId() != -1;
     }
 
-    Read HtsFileStreamer::decodeRead(LinearAlignmentStats& alignmentStats) const
-    {
-        alignmentStats = decodeAlignmentStats(htsAlignmentPtr_);
-        return htshelpers::decodeRead(htsAlignmentPtr_);
-    }
+    MappedRead HtsFileStreamer::decodeRead() const { return htshelpers::decodeRead(htsAlignmentPtr_); }
 
     HtsFileStreamer::~HtsFileStreamer()
     {

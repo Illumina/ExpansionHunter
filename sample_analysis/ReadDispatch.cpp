@@ -32,9 +32,7 @@ bool isFullyContained(int readContig, int64_t readStart, int64_t readEnd, const 
     return ((readContig == region.contigIndex()) && (region.start() <= readStart && readEnd <= region.end()));
 }
 
-void dispatch(
-    int readContig, int64_t readStart, int64_t readEnd, const Read& read, int mateContig, int64_t mateStart,
-    int64_t mateEnd, const Read& mate, const std::unordered_set<RegionModel*>& models)
+void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models)
 {
     for (auto model : models)
     {
@@ -42,12 +40,12 @@ void dispatch(
         bool mateIsFullyContained = false;
         for (const auto& region : model->readExtractionRegions())
         {
-            if (isFullyContained(readContig, readStart, readEnd, region))
+            if (isFullyContained(read.contigIndex(), read.pos(), read.approximateEnd(), region))
             {
                 readIsFullyContained = true;
             }
 
-            if (isFullyContained(mateContig, mateStart, mateEnd, region))
+            if (isFullyContained(mate.contigIndex(), mate.pos(), mate.approximateEnd(), region))
             {
                 mateIsFullyContained = true;
             }

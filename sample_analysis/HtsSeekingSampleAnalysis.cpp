@@ -59,7 +59,7 @@ using std::vector;
 
 namespace
 {
-    using AlignmentStatsCatalog = unordered_map<ReadId, LinearAlignmentStats, boost::hash<ReadId>>;
+    using ReadCatalog = unordered_map<ReadId, MappedRead, boost::hash<ReadId>>;
 
     vector<GenomicRegion>
     combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
@@ -69,16 +69,13 @@ namespace
         return combinedRegions;
     }
 
-    bool checkIfMatesWereMappedNearby(const LinearAlignmentStats& alignmentStats)
+    bool checkIfMatesWereMappedNearby(const MappedRead& read)
     {
-        const int kMaxMateDistance = 1000;
-        return (alignmentStats.chromId == alignmentStats.mateChromId)
-            && (std::abs(alignmentStats.pos - alignmentStats.matePos) < kMaxMateDistance);
+        const int kMaxDistance = 1000;
+        return (read.contigIndex() == read.mateContigIndex()) && (std::abs(read.pos() - read.matePos()) < kMaxDistance);
     }
 
-    void recoverMates(
-        const string& htsFilePath, const string& htsReferencePath, AlignmentStatsCatalog& alignmentStatsCatalog,
-        ReadPairs& readPairs)
+    void recoverMates(const string& htsFilePath, const string& htsReferencePath, ReadPairs& readPairs)
     {
         htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
 
@@ -91,23 +88,14 @@ namespace
                 continue;
             }
 
-            const Read& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+            const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
 
-            const auto alignmentStatsIterator = alignmentStatsCatalog.find(read.readId());
-            if (alignmentStatsIterator == alignmentStatsCatalog.end())
+            if (!checkIfMatesWereMappedNearby(read))
             {
-                throw std::logic_error("Cannot recover mate of uncatalogued read");
-            }
-            const LinearAlignmentStats& alignmentStats = alignmentStatsIterator->second;
-
-            if (!checkIfMatesWereMappedNearby(alignmentStats))
-            {
-                LinearAlignmentStats mateStats;
-                optional<Read> optionalMate = mateExtractor.extractMate(read, alignmentStats, mateStats);
+                optional<MappedRead> optionalMate = mateExtractor.extractMate(read);
                 if (optionalMate)
                 {
-                    const Read& mate = *optionalMate;
-                    alignmentStatsCatalog.emplace(std::make_pair(mate.readId(), alignmentStats));
+                    const MappedRead& mate = *optionalMate;
                     readPairs.AddMateToExistingRead(mate);
                 }
                 else
@@ -141,7 +129,7 @@ namespace
 
     ReadPairs collectCandidateReads(
         const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-        AlignmentStatsCatalog& alignmentStatsCatalog, const string& htsFilePath, const string& htsReferencePath)
+        const string& htsFilePath, const string& htsReferencePath)
     {
         auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
 
@@ -155,11 +143,9 @@ namespace
             htsFileSeeker.setRegion(regionWithReads);
             while (htsFileSeeker.trySeekingToNextPrimaryAlignment())
             {
-                LinearAlignmentStats alignmentStats;
-                Read read = htsFileSeeker.decodeRead(alignmentStats);
-                if (alignmentStats.isPaired)
+                MappedRead read = htsFileSeeker.decodeRead();
+                if (read.isPaired())
                 {
-                    alignmentStatsCatalog.emplace(std::make_pair(read.readId(), alignmentStats));
                     readPairs.Add(std::move(read));
                 }
                 else
@@ -179,37 +165,24 @@ namespace
         }
 
         const int numReadsBeforeRecovery = readPairs.NumReads();
-        recoverMates(htsFilePath, htsReferencePath, alignmentStatsCatalog, readPairs);
+        recoverMates(htsFilePath, htsReferencePath, readPairs);
         const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
         console->debug("Recovered {} reads", numReadsAfterRecovery);
 
         return readPairs;
     }
 
-    void analyzeReadPair(
-        ModelFinder& analyzerFinder, const Read& read, const Read& mate, const AlignmentStatsCatalog& alignmentStats)
+    void analyzeReadPair(ModelFinder& analyzerFinder, const MappedRead& read, const MappedRead& mate)
     {
-        const auto readStatsIter = alignmentStats.find(read.readId());
-        const auto mateStatsIter = alignmentStats.find(mate.readId());
 
-        if (readStatsIter == alignmentStats.end() || mateStatsIter == alignmentStats.end())
-        {
-            throw std::logic_error("Could not to find alignment stats for " + read.fragmentId());
-        }
+        const int64_t readEnd = read.pos() + read.sequence().length();
+        const int64_t mateEnd = mate.pos() + mate.sequence().length();
 
-        const LinearAlignmentStats& readStats = readStatsIter->second;
-        const LinearAlignmentStats& mateStats = mateStatsIter->second;
-
-        const int64_t readEnd = readStats.pos + read.sequence().length();
-        const int64_t mateEnd = mateStats.pos + mate.sequence().length();
-
-        unordered_set<RegionModel*> readModels = analyzerFinder.query(readStats.chromId, readStats.pos, readEnd);
-        unordered_set<RegionModel*> mateModels = analyzerFinder.query(readStats.chromId, readStats.pos, mateEnd);
+        unordered_set<RegionModel*> readModels = analyzerFinder.query(read.contigIndex(), read.pos(), readEnd);
+        unordered_set<RegionModel*> mateModels = analyzerFinder.query(mate.contigIndex(), mate.pos(), mateEnd);
 
         readModels.insert(mateModels.begin(), mateModels.end());
-        dispatch(
-            readStats.chromId, readStats.pos, readEnd, read, readStats.chromId, readStats.pos, mateEnd, mate,
-            readModels);
+        dispatch(read, mate, readModels);
 
         /*
         vector<AnalyzerBundle> analyzers = analyzerFinder.query(
@@ -263,15 +236,14 @@ namespace
     }
     */
 
-    void processReads(
-        const ReadPairs& candidateReadPairs, const AlignmentStatsCatalog& alignmentStats, ModelFinder& analyzerFinder)
+    void processReads(const ReadPairs& candidateReadPairs, ModelFinder& analyzerFinder)
     {
         for (const auto& fragmentIdAndReads : candidateReadPairs)
         {
             const auto& readPair = fragmentIdAndReads.second;
             if (readPair.numMatesSet() == 2)
             {
-                analyzeReadPair(analyzerFinder, *readPair.firstMate, *readPair.secondMate, alignmentStats);
+                analyzeReadPair(analyzerFinder, *readPair.firstMate, *readPair.secondMate);
             }
             // else
             //{
@@ -305,12 +277,11 @@ SampleFindings htsSeekingSampleAnalysis(
         vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
         ModelFinder analyzerFinder(regionModelPtrs);
 
-        AlignmentStatsCatalog alignmentStats;
         ReadPairs readPairs = collectCandidateReads(
-            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), alignmentStats,
-            inputPaths.htsFile(), inputPaths.reference());
+            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), inputPaths.htsFile(),
+            inputPaths.reference());
 
-        processReads(readPairs, alignmentStats, analyzerFinder);
+        processReads(readPairs, analyzerFinder);
 
         // auto variantFindings = locusAnalyzers.front()->analyze(sampleSex);
         // sampleFindings.emplace(locusId, std::move(variantFindings));

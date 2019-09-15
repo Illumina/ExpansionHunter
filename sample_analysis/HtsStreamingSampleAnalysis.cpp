@@ -68,7 +68,7 @@ SampleFindings htsStreamingSampleAnalysis(
 
     GenomeQueryCollection genomeQuery(regionModelPtrs);
 
-    using ReadCatalog = std::unordered_map<std::string, Read>;
+    using ReadCatalog = std::unordered_map<std::string, MappedRead>;
     ReadCatalog unpairedReads;
 
     htshelpers::HtsFileStreamer readStreamer(inputPaths.htsFile());
@@ -83,9 +83,8 @@ SampleFindings htsStreamingSampleAnalysis(
             continue;
         }
 
-        LinearAlignmentStats alignmentStats;
-        Read read = readStreamer.decodeRead(alignmentStats);
-        if (!alignmentStats.isPaired)
+        MappedRead read = readStreamer.decodeRead();
+        if (!read.isPaired())
         {
             continue;
         }
@@ -96,7 +95,7 @@ SampleFindings htsStreamingSampleAnalysis(
             unpairedReads.emplace(std::make_pair(read.fragmentId(), std::move(read)));
             continue;
         }
-        Read mate = std::move(mateIterator->second);
+        MappedRead mate = std::move(mateIterator->second);
         unpairedReads.erase(mateIterator);
 
         const int64_t readEnd = readStreamer.currentReadPosition() + read.sequence().length();
@@ -109,9 +108,7 @@ SampleFindings htsStreamingSampleAnalysis(
             readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd);
 
         readModels.insert(mateModels.begin(), mateModels.end());
-        dispatch(
-            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd, read,
-            readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd, mate, readModels);
+        dispatch(read, mate, readModels);
 
         /*
         if (areMatesNearby(
