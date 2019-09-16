@@ -45,10 +45,50 @@ MappedRead generateRead2(int contigIndex, int64_t pos, int length)
 TEST(ReadClassification, TargetPair_Classified)
 {
     GenomicRegion target(2, 1000, 3000);
-    ReadClassifier classifier(target);
+    ReadClassifier classifier({ target });
 
-    MappedRead read = generateRead1(1, 2000, 150);
-    MappedRead mate = generateRead2(1, 2300, 150);
+    {
+        MappedRead read = generateRead1(2, 2000, 150);
+        MappedRead mate = generateRead2(2, 2300, 150);
 
-    EXPECT_EQ(PairType::kTarget, classifier.classify(read, mate));
+        EXPECT_EQ(PairType::kTarget, classifier.classify(read, mate));
+    }
+
+    {
+        MappedRead read = generateRead1(2, 2000, 150);
+        MappedRead mate = generateRead2(5, 100, 150);
+
+        EXPECT_EQ(PairType::kTarget, classifier.classify(read, mate));
+    }
+}
+
+TEST(ReadClassification, OfftargetPair_Classified)
+{
+    GenomicRegion target(2, 2000, 4000);
+    ReadClassifier classifier({ target });
+
+    MappedRead read = generateRead1(2, 500, 150);
+    MappedRead mate = generateRead2(5, 2300, 150);
+
+    EXPECT_EQ(PairType::kOfftarget, classifier.classify(read, mate));
+}
+
+TEST(ReadClassification, OtherPair_Classified)
+{
+    GenomicRegion target(2, 1000, 3000);
+    ReadClassifier classifier({ target });
+
+    {
+        MappedRead read = generateRead1(2, 900, 150);
+        MappedRead mate = generateRead2(5, 2300, 150);
+
+        EXPECT_EQ(PairType::kOther, classifier.classify(read, mate));
+    }
+
+    {
+        MappedRead read = generateRead1(1, 900, 150);
+        MappedRead mate = generateRead2(2, 2900, 150);
+
+        EXPECT_EQ(PairType::kOther, classifier.classify(read, mate));
+    }
 }

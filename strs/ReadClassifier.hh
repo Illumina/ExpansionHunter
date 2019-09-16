@@ -22,6 +22,7 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
 #include "common/GenomicRegion.hh"
 #include "reads/Read.hh"
@@ -39,12 +40,21 @@ enum class PairType
 class ReadClassifier
 {
 public:
-    ReadClassifier(GenomicRegion target);
+    ReadClassifier(std::vector<GenomicRegion> targetRegions);
 
     PairType classify(const MappedRead& read, const MappedRead& mate) const;
 
 private:
-    GenomicRegion targetRegion_;
+    enum class ReadType
+    {
+        kTarget,
+        kOfftarget,
+        kOther
+    };
+    ReadType classify(const MappedRead& read) const;
+
+    int kMinOfftargetDistance_ = 1000;
+    std::vector<GenomicRegion> targetRegions_;
 };
 
 std::ostream& operator<<(std::ostream& outer, PairType type);

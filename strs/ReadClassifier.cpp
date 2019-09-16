@@ -21,17 +21,57 @@
 
 #include "strs/ReadClassifier.hh"
 
+using std::vector;
+
 namespace ehunter
 {
 
-ReadClassifier::ReadClassifier(GenomicRegion target)
-    : targetRegion_(std::move(target))
+ReadClassifier::ReadClassifier(vector<GenomicRegion> targetRegions)
+    : targetRegions_(std::move(targetRegions))
 {
 }
 
-PairType ReadClassifier::classify(const MappedRead& /*read*/, const MappedRead& /*mate*/) const
+ReadClassifier::ReadType ReadClassifier::classify(const MappedRead& read) const
 {
-    return PairType::kOther;
+    ReadType classification = ReadType::kOfftarget;
+    const int64_t readEnd = read.approximateEnd();
+    for (const auto& region : targetRegions_)
+    {
+        if (read.contigIndex() != region.contigIndex())
+        {
+            continue;
+        }
+
+        if (region.start() <= read.pos() && readEnd <= region.end())
+        {
+            return ReadType::kTarget;
+        }
+
+        if (region.start() - kMinOfftargetDistance_ <= read.pos() && readEnd <= region.end() + kMinOfftargetDistance_)
+        {
+            classification = ReadType::kOther;
+        }
+    }
+
+    return classification;
+}
+
+PairType ReadClassifier::classify(const MappedRead& read, const MappedRead& mate) const
+{
+    ReadType readType = classify(read);
+    ReadType mateType = classify(mate);
+
+    if (readType == ReadType::kTarget || mateType == ReadType::kTarget)
+    {
+        return PairType::kTarget;
+    }
+
+    if (readType == ReadType::kOther || mateType == ReadType::kOther)
+    {
+        return PairType::kOther;
+    }
+
+    return PairType::kOfftarget;
 }
 
 std::ostream& operator<<(std::ostream& out, PairType type)
