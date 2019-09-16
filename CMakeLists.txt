@@ -85,12 +85,13 @@ add_subdirectory(alignment)
 add_subdirectory(stats)
 add_subdirectory(filtering)
 add_subdirectory(region)
+add_subdirectory(strs)
 
 file(GLOB SOURCES "src/*.cpp")
 add_executable(ExpansionHunter ${SOURCES})
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 target_link_libraries(ExpansionHunter graphtools common region genotyping region_spec sample_analysis input output
-        alignment filtering stats classification pthread ${Boost_LIBRARIES})
+        alignment filtering stats classification strs pthread ${Boost_LIBRARIES})
 install(TARGETS ExpansionHunter DESTINATION bin)
 
 add_dependencies(htslib zlib)
