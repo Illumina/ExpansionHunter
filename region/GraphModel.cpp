@@ -23,6 +23,7 @@
 
 #include "alignment/AlignmentFilters.hh"
 #include "region/GraphFeature.hh"
+#include "spdlog/spdlog.h"
 
 namespace ehunter
 {
@@ -45,6 +46,7 @@ GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const Heurist
 
 void GraphModel::analyze(Read read, boost::optional<Read> mate)
 {
+    ++numPairsProcessed_;
     list<GraphAlignment> readAlignments = align(read);
     list<GraphAlignment> mateAlignments;
     if (mate)
@@ -98,6 +100,13 @@ std::vector<ModelFeature*> GraphModel::modelFeatures()
     }
 
     return modelFeatures;
+}
+
+GraphModel::~GraphModel()
+{
+    std::ostringstream message;
+    message << "Model of " << readExtractionRegions_.front() << " processed " << numPairsProcessed_ << " read pairs";
+    spdlog::info(message.str());
 }
 
 }

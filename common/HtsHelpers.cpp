@@ -28,7 +28,7 @@
 #include <string>
 #include <utility>
 
-#include "thirdparty/spdlog/spdlog.h"
+#include "spdlog/spdlog.h"
 
 using std::pair;
 using std::string;

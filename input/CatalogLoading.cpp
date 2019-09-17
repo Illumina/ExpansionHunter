@@ -33,8 +33,8 @@
 
 #include <boost/optional.hpp>
 
+#include "spdlog/spdlog.h"
 #include "thirdparty/json/json.hpp"
-#include "thirdparty/spdlog/spdlog.h"
 
 #include "common/Common.hh"
 #include "common/Reference.hh"

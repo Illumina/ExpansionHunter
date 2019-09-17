@@ -30,8 +30,8 @@
 #include <utility>
 #include <vector>
 
-#include "thirdparty/spdlog/fmt/ostr.h"
-#include "thirdparty/spdlog/spdlog.h"
+#include "spdlog/fmt/ostr.h"
+#include "spdlog/spdlog.h"
 
 #include "common/Parameters.hh"
 #include "common/WorkflowContext.hh"
@@ -87,12 +87,11 @@ void setLogLevel(LogLevel logLevel)
 
 int main(int argc, char** argv)
 {
-    auto console = spd::stderr_color_mt("console");
-    console->set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
+    spdlog::set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
 
     try
     {
-        console->info("Starting {}", kProgramVersion);
+        spdlog::info("Starting {}", kProgramVersion);
 
         auto optionalProgramParameters = tryLoadingProgramParameters(argc, argv);
         if (!optionalProgramParameters)
@@ -105,18 +104,18 @@ int main(int argc, char** argv)
 
         // Low-level pass through parameters are stored in the context object.
         initializeWorkflowContext(params.heuristics());
-        console->info("Workflow parameter object is initialized with {}", WorkflowContext());
+        spdlog::info("Workflow parameter object is initialized with {}", WorkflowContext());
 
         SampleParameters& sampleParams = params.sample();
 
-        console->info("Analyzing sample {}", sampleParams.id());
+        spdlog::info("Analyzing sample {}", sampleParams.id());
 
         const InputPaths& inputPaths = params.inputPaths();
 
-        console->info("Initializing reference {}", inputPaths.reference());
+        spdlog::info("Initializing reference {}", inputPaths.reference());
         FastaReference reference(inputPaths.reference(), extractReferenceContigInfo(inputPaths.htsFile()));
 
-        console->info("Loading variant catalog from disk {}", inputPaths.catalog());
+        spdlog::info("Loading variant catalog from disk {}", inputPaths.catalog());
         const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), reference);
 
         const OutputPaths& outputPaths = params.outputPaths();
@@ -126,16 +125,16 @@ int main(int argc, char** argv)
         SampleFindings sampleFindings;
         if (params.analysisMode() == AnalysisMode::kSeeking)
         {
-            console->info("Running sample analysis in seeking mode");
+            spdlog::info("Running sample analysis in seeking mode");
             sampleFindings = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
         }
         else
         {
-            console->info("Running sample analysis in streaming mode");
+            spdlog::info("Running sample analysis in streaming mode");
             sampleFindings = htsStreamingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
         }
 
-        console->info("Writing output to disk");
+        spdlog::info("Writing output to disk");
         VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
         writeToFile(outputPaths.vcf(), vcfWriter);
 
@@ -144,7 +143,7 @@ int main(int argc, char** argv)
     }
     catch (const std::exception& e)
     {
-        console->error(e.what());
+        spdlog::error(e.what());
         return 1;
     }
 

@@ -87,6 +87,7 @@ add_subdirectory(filtering)
 add_subdirectory(region)
 add_subdirectory(strs)
 
+
 file(GLOB SOURCES "src/*.cpp")
 add_executable(ExpansionHunter ${SOURCES})
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)

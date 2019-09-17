@@ -31,7 +31,7 @@
 #include <boost/functional/hash.hpp>
 #include <boost/optional.hpp>
 
-#include "thirdparty/spdlog/spdlog.h"
+#include "spdlog/spdlog.h"
 
 #include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
@@ -131,8 +131,6 @@ namespace
         const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
         const string& htsFilePath, const string& htsReferencePath)
     {
-        auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
-
         vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
         HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
         ReadPairs readPairs;
@@ -167,7 +165,7 @@ namespace
         const int numReadsBeforeRecovery = readPairs.NumReads();
         recoverMates(htsFilePath, htsReferencePath, readPairs);
         const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
-        console->debug("Recovered {} reads", numReadsAfterRecovery);
+        spdlog::debug("Recovered {} reads", numReadsAfterRecovery);
 
         return readPairs;
     }
@@ -258,8 +256,6 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*alignmentWriter*/)
 {
-    auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
-
     SampleFindings sampleFindings;
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {

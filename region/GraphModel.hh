@@ -45,7 +45,7 @@ class GraphModel : public RegionModel
 public:
     using SPtr = std::shared_ptr<GraphModel>;
     explicit GraphModel(GenomicRegion referenceRegion, graphtools::Graph graph, const HeuristicParameters& heuristics);
-    ~GraphModel() override = default;
+    ~GraphModel() override;
 
     void analyze(Read read, boost::optional<Read> mate) override;
     const graphtools::Graph& graph() const { return graph_; }
@@ -60,6 +60,9 @@ private:
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
+
+    // Stats
+    int numPairsProcessed_ = 0;
 };
 
 }
