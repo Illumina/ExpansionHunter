@@ -38,57 +38,48 @@ boost::optional<int> callCopyNumber(
     {
         return boost::none;
     }
+
+    const std::set<boost::optional<int>> baselineCopyNumberSet(baselineCopyNumbers.begin(), baselineCopyNumbers.end());
+    const int baselineCopyNumberSetSize = (int)baselineCopyNumberSet.size();
+    const bool hasNoCall = baselineCopyNumberSet.find(boost::none) != baselineCopyNumberSet.end();
+    // For overlapping CNVs. Baseline no-calls are not allowed. No need to match expected baseline CN
+    if (!baselineExpectedNormal)
+    {
+        if (baselineCopyNumberSetSize == 1 && !hasNoCall)
+        {
+            auto firstElement = baselineCopyNumberSet.begin();
+            return *targetCopyNumber - **firstElement;
+        }
+
+        return boost::none;
+    }
+    // For non-overlapping CNVs. Baseline no-calls are allowed.
     else
     {
-        const std::set<boost::optional<int>> baselineCopyNumberSet(
-            baselineCopyNumbers.begin(), baselineCopyNumbers.end());
-        const int baselineCopyNumberSetSize = (int)baselineCopyNumberSet.size();
-        const bool hasNoCall = baselineCopyNumberSet.find(boost::none) != baselineCopyNumberSet.end();
-        // For overlapping CNVs. Baseline no-calls are not allowed. No need to match expected baseline CN
-        if (!baselineExpectedNormal)
+        // Baseline CN is no-call, use expected baseline CN
+        if (baselineCopyNumberSetSize == 1 && hasNoCall)
         {
-            if (baselineCopyNumberSetSize == 1 && !hasNoCall)
-            {
-                auto firstElement = baselineCopyNumberSet.begin();
-                return *targetCopyNumber - **firstElement;
-            }
-            else
-            {
-                return boost::none;
-            }
+            return *targetCopyNumber - expectedBaselineCopyNumber;
         }
-        // For non-overlapping CNVs. Baseline no-calls are allowed.
-        else
+        // Baseline CNs have to agree with each other
+        // and match either expected baseline CN or target CN
+        if ((baselineCopyNumberSetSize == 1) || (baselineCopyNumberSetSize == 2 && hasNoCall))
         {
-            // Baseline CN is no-call, use expected baseline CN
-            if (baselineCopyNumberSetSize == 1 && hasNoCall)
+            auto nonNoCallElement = baselineCopyNumberSet.begin();
+            if (*nonNoCallElement == boost::none)
             {
-                return *targetCopyNumber - expectedBaselineCopyNumber;
+                std::advance(nonNoCallElement, 1);
             }
-            // Baseline CNs have to agree with each other
-            // and match either expected baseline CN or target CN
-            else if ((baselineCopyNumberSetSize == 1) || (baselineCopyNumberSetSize == 2 && hasNoCall))
+            const int baselineCopyNumber = **nonNoCallElement;
+            if (baselineCopyNumber == expectedBaselineCopyNumber || baselineCopyNumber == *targetCopyNumber)
             {
-                auto nonNoCallElement = baselineCopyNumberSet.begin();
-                if (*nonNoCallElement == boost::none)
-                {
-                    std::advance(nonNoCallElement, 1);
-                }
-                const int baselineCopyNumber = **nonNoCallElement;
-                if (baselineCopyNumber == expectedBaselineCopyNumber || baselineCopyNumber == *targetCopyNumber)
-                {
-                    return *targetCopyNumber - baselineCopyNumber;
-                }
-                else
-                {
-                    return boost::none;
-                }
+                return *targetCopyNumber - baselineCopyNumber;
             }
-            else
-            {
-                return boost::none;
-            }
+
+            return boost::none;
         }
+
+        return boost::none;
     }
 }
 }
