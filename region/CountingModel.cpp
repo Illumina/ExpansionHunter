@@ -33,14 +33,13 @@ CountingModel::CountingModel(std::vector<GenomicRegion> readExtractionRegions)
 {
 }
 
-void CountingModel::analyze(Read read, boost::optional<Read> mate)
+void CountingModel::analyze(MappedRead read, MappedRead mate)
 {
-    readLengthAccumulator_(read.sequence().length());
-    if (mate)
-    {
-        readLengthAccumulator_(mate->sequence().length());
-    }
+    analyze(read);
+    analyze(mate);
 }
+
+void CountingModel::analyze(MappedRead read) { readLengthAccumulator_(read.sequence().length()); }
 
 int CountingModel::readCount() const { return boost::accumulators::count(readLengthAccumulator_); }
 

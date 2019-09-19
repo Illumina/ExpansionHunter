@@ -31,5 +31,6 @@ namespace ehunter
 {
 
 void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models);
+void dispatch(const MappedRead& read, const std::unordered_set<RegionModel*>& models);
 
 }

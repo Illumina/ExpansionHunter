@@ -44,15 +44,11 @@ GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const Heurist
 {
 }
 
-void GraphModel::analyze(Read read, boost::optional<Read> mate)
+void GraphModel::analyze(MappedRead read, MappedRead mate)
 {
     ++numPairsProcessed_;
     list<GraphAlignment> readAlignments = align(read);
-    list<GraphAlignment> mateAlignments;
-    if (mate)
-    {
-        mateAlignments = align(*mate);
-    }
+    list<GraphAlignment> mateAlignments = align(mate);
 
     int numMatchingBases = static_cast<int>(read.sequence().length() / 7.5);
     numMatchingBases = std::max(numMatchingBases, 10);
@@ -68,7 +64,7 @@ void GraphModel::analyze(Read read, boost::optional<Read> mate)
     {
         for (auto& featurePtr : featurePtrs_)
         {
-            featurePtr->process(read, readAlignments, *mate, mateAlignments);
+            featurePtr->process(read, readAlignments, mate, mateAlignments);
         }
     }
 }

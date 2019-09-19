@@ -48,7 +48,9 @@ public:
     Type type() const { return type_; }
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
 
-    virtual void analyze(Read read, boost::optional<Read> mate) = 0;
+    virtual void analyze(MappedRead read, MappedRead mate) = 0;
+    virtual void analyze(MappedRead read) = 0;
+
     virtual std::vector<ModelFeature*> modelFeatures() = 0;
 
 protected:

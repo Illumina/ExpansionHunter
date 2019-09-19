@@ -54,15 +54,16 @@ SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*bamletWriter*/)
 {
-    vector<shared_ptr<RegionModel>> regionModelPtrs;
-
     WorkflowContext context;
+    vector<shared_ptr<LocusAnalyzer>> locusAnalyzers;
 
     for (const auto& locusIdAndLocusSpec : regionCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
-        shared_ptr<LocusAnalyzer> locusModelPtr = buildLocusWorkflow(locusSpec, context.heuristics());
+        locusAnalyzers.push_back(buildLocusWorkflow(locusSpec, context.heuristics()));
     }
+
+    vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels(locusAnalyzers);
 
     //= initializeLocusAnalyzers(regionCatalog, bamletWriter);
 
@@ -108,6 +109,7 @@ SampleFindings htsStreamingSampleAnalysis(
             readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd);
 
         readModels.insert(mateModels.begin(), mateModels.end());
+        assert(false);
         dispatch(read, mate, readModels);
 
         /*
@@ -157,5 +159,4 @@ SampleFindings htsStreamingSampleAnalysis(
 
     return sampleFindings;
 }
-
 }

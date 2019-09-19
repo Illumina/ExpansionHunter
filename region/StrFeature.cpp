@@ -30,7 +30,7 @@ namespace ehunter
 
 StrFeature::StrFeature(std::shared_ptr<GraphModel> graphModelPtr, graphtools::NodeId nodeId)
     : GraphFeature(std::move(graphModelPtr), { nodeId })
-    , alignmentClassifier_(graphModelPtr->graph(), nodeId)
+    , alignmentClassifier_(modelPtr_->graph(), nodeId)
 {
 }
 

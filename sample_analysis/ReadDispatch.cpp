@@ -22,17 +22,26 @@
 
 #include "sample_analysis/ReadDispatch.hh"
 
+using std::unordered_set;
 using std::vector;
 
 namespace ehunter
 {
 
-bool isFullyContained(int readContig, int64_t readStart, int64_t readEnd, const GenomicRegion& region)
+bool isFullyContained(const MappedRead& read, const GenomicRegion& region)
 {
-    return ((readContig == region.contigIndex()) && (region.start() <= readStart && readEnd <= region.end()));
+    return (
+        (read.contigIndex() == region.contigIndex())
+        && (region.start() <= read.pos() && read.approximateEnd() <= region.end()));
 }
 
-void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models)
+bool checkIfMapNearby(const MappedRead& read, const MappedRead& mate)
+{
+    const int kMaxDistance = 1000;
+    return (read.contigIndex() == mate.contigIndex()) && (std::abs(read.pos() - mate.pos()) < kMaxDistance);
+}
+
+void dispatch(const MappedRead& read, const MappedRead& mate, const unordered_set<RegionModel*>& models)
 {
     for (auto model : models)
     {
@@ -40,12 +49,12 @@ void dispatch(const MappedRead& read, const MappedRead& mate, const std::unorder
         bool mateIsFullyContained = false;
         for (const auto& region : model->readExtractionRegions())
         {
-            if (isFullyContained(read.contigIndex(), read.pos(), read.approximateEnd(), region))
+            if (isFullyContained(read, region))
             {
                 readIsFullyContained = true;
             }
 
-            if (isFullyContained(mate.contigIndex(), mate.pos(), mate.approximateEnd(), region))
+            if (isFullyContained(mate, region))
             {
                 mateIsFullyContained = true;
             }
@@ -53,18 +62,33 @@ void dispatch(const MappedRead& read, const MappedRead& mate, const std::unorder
 
         if (readIsFullyContained && mateIsFullyContained)
         {
-            // model->processFullHit(read, mate);
+            model->analyze(read, mate);
+        }
+        else if (!checkIfMapNearby(read, mate) && (readIsFullyContained || mateIsFullyContained))
+        {
             model->analyze(read, mate);
         }
         else if (readIsFullyContained)
         {
-            // model->processPartialHit(read, mate);
-            model->analyze(read, boost::none);
+            model->analyze(read);
         }
         else if (mateIsFullyContained)
         {
-            // model->processPartialHit(mate, read);
-            model->analyze(mate, boost::none);
+            model->analyze(mate);
+        }
+    }
+}
+
+void dispatch(const MappedRead& read, const unordered_set<RegionModel*>& models)
+{
+    for (auto model : models)
+    {
+        for (const auto& region : model->readExtractionRegions())
+        {
+            if (isFullyContained(read, region))
+            {
+                model->analyze(read);
+            }
         }
     }
 }

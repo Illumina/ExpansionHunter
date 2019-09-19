@@ -47,7 +47,8 @@ public:
     explicit GraphModel(GenomicRegion referenceRegion, graphtools::Graph graph, const HeuristicParameters& heuristics);
     ~GraphModel() override;
 
-    void analyze(Read read, boost::optional<Read> mate) override;
+    void analyze(MappedRead read, MappedRead mate) override;
+    void analyze(MappedRead read) override {};
     const graphtools::Graph& graph() const { return graph_; }
     void addFeature(GraphFeature* featurePtr);
     std::vector<ModelFeature*> modelFeatures() override;

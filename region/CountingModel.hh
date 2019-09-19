@@ -43,7 +43,8 @@ public:
 
     std::vector<ModelFeature*> modelFeatures() override;
 
-    void analyze(Read read, boost::optional<Read> mate) override;
+    void analyze(MappedRead read, MappedRead mate) override;
+    void analyze(MappedRead read) override;
     int readCount() const;
     int meanReadLength() const;
     double depth() const;

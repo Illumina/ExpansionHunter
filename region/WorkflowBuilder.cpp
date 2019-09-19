@@ -136,5 +136,4 @@ vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<Locu
 
     return vector<shared_ptr<RegionModel>>(models.begin(), models.end());
 }
-
 }
