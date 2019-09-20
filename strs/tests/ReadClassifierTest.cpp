@@ -51,14 +51,14 @@ TEST(ReadClassification, TargetPair_Classified)
         MappedRead read = generateRead1(2, 2000, 150);
         MappedRead mate = generateRead2(2, 2300, 150);
 
-        EXPECT_EQ(PairType::kTarget, classifier.classify(read, mate));
+        EXPECT_EQ(RegionProximity::kInside, classifier.classify(read, mate));
     }
 
     {
         MappedRead read = generateRead1(2, 2000, 150);
         MappedRead mate = generateRead2(5, 100, 150);
 
-        EXPECT_EQ(PairType::kTarget, classifier.classify(read, mate));
+        EXPECT_EQ(RegionProximity::kInside, classifier.classify(read, mate));
     }
 }
 
@@ -70,7 +70,7 @@ TEST(ReadClassification, OfftargetPair_Classified)
     MappedRead read = generateRead1(2, 500, 150);
     MappedRead mate = generateRead2(5, 2300, 150);
 
-    EXPECT_EQ(PairType::kOfftarget, classifier.classify(read, mate));
+    EXPECT_EQ(RegionProximity::kFar, classifier.classify(read, mate));
 }
 
 TEST(ReadClassification, OtherPair_Classified)
@@ -82,13 +82,13 @@ TEST(ReadClassification, OtherPair_Classified)
         MappedRead read = generateRead1(2, 900, 150);
         MappedRead mate = generateRead2(5, 2300, 150);
 
-        EXPECT_EQ(PairType::kOther, classifier.classify(read, mate));
+        EXPECT_EQ(RegionProximity::kOverlapsOrNear, classifier.classify(read, mate));
     }
 
     {
         MappedRead read = generateRead1(1, 900, 150);
         MappedRead mate = generateRead2(2, 2900, 150);
 
-        EXPECT_EQ(PairType::kOther, classifier.classify(read, mate));
+        EXPECT_EQ(RegionProximity::kOverlapsOrNear, classifier.classify(read, mate));
     }
 }

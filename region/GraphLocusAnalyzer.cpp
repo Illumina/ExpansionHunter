@@ -25,6 +25,7 @@
 
 #include "GraphVariantAnalyzer.hh"
 #include "region/FeatureAnalyzer.hh"
+#include "region/StatsAnalyzer.hh"
 
 using std::shared_ptr;
 using std::string;
@@ -74,6 +75,11 @@ vector<shared_ptr<FeatureAnalyzer>> GraphLocusAnalyzer::featureAnalyzers()
     for (const auto& variant : variantAnalyzers_)
     {
         features.push_back(variant);
+    }
+
+    if (statsAnalyzer_ != nullptr)
+    {
+        features.push_back(static_pointer_cast<FeatureAnalyzer>(statsAnalyzer_));
     }
 
     return features;

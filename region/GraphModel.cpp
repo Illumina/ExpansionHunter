@@ -36,6 +36,7 @@ using std::string;
 
 GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const HeuristicParameters& heuristics)
     : RegionModel({ referenceRegion }, RegionModel::Type::kTarget)
+    , readClassifier_(readExtractionRegions_)
     , graph_(std::move(graph))
     , aligner_(
           &graph_, heuristics.kmerLenForAlignment(), heuristics.paddingLength(), heuristics.seedAffixTrimLength(),
@@ -46,6 +47,13 @@ GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const Heurist
 
 void GraphModel::analyze(MappedRead read, MappedRead mate)
 {
+    RegionProximity type = readClassifier_.classify(read, mate);
+
+    if (type != RegionProximity::kInside)
+    {
+        return;
+    }
+
     ++numPairsProcessed_;
     list<GraphAlignment> readAlignments = align(read);
     list<GraphAlignment> mateAlignments = align(mate);

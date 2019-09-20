@@ -31,9 +31,9 @@ ReadClassifier::ReadClassifier(vector<GenomicRegion> targetRegions)
 {
 }
 
-ReadClassifier::ReadType ReadClassifier::classify(const MappedRead& read) const
+RegionProximity ReadClassifier::classify(const MappedRead& read) const
 {
-    ReadType classification = ReadType::kOfftarget;
+    RegionProximity proximity = RegionProximity::kFar;
     const int64_t readEnd = read.approximateEnd();
     for (const auto& region : targetRegions_)
     {
@@ -44,48 +44,48 @@ ReadClassifier::ReadType ReadClassifier::classify(const MappedRead& read) const
 
         if (region.start() <= read.pos() && readEnd <= region.end())
         {
-            return ReadType::kTarget;
+            return RegionProximity::kInside;
         }
 
         if (region.start() - kMinOfftargetDistance_ <= read.pos() && readEnd <= region.end() + kMinOfftargetDistance_)
         {
-            classification = ReadType::kOther;
+            proximity = RegionProximity::kOverlapsOrNear;
         }
     }
 
-    return classification;
+    return proximity;
 }
 
-PairType ReadClassifier::classify(const MappedRead& read, const MappedRead& mate) const
+RegionProximity ReadClassifier::classify(const MappedRead& read, const MappedRead& mate) const
 {
-    ReadType readType = classify(read);
-    ReadType mateType = classify(mate);
+    RegionProximity readProximity = classify(read);
+    RegionProximity mateProximity = classify(mate);
 
-    if (readType == ReadType::kTarget || mateType == ReadType::kTarget)
+    if (readProximity == RegionProximity::kInside || mateProximity == RegionProximity::kInside)
     {
-        return PairType::kTarget;
+        return RegionProximity::kInside;
     }
 
-    if (readType == ReadType::kOther || mateType == ReadType::kOther)
+    if (readProximity == RegionProximity::kOverlapsOrNear || mateProximity == RegionProximity::kOverlapsOrNear)
     {
-        return PairType::kOther;
+        return RegionProximity::kOverlapsOrNear;
     }
 
-    return PairType::kOfftarget;
+    return RegionProximity::kFar;
 }
 
-std::ostream& operator<<(std::ostream& out, PairType type)
+std::ostream& operator<<(std::ostream& out, RegionProximity type)
 {
     switch (type)
     {
-    case PairType::kOther:
-        out << "PairType::kOther";
+    case RegionProximity::kInside:
+        out << "RegionProximity::kInside";
         break;
-    case PairType::kTarget:
-        out << "PairType::kTarget";
+    case RegionProximity::kOverlapsOrNear:
+        out << "RegionProximity::kOverlapsOrNear";
         break;
-    case PairType::kOfftarget:
-        out << "PairType::kOfftarget";
+    case RegionProximity::kFar:
+        out << "RegionProximity::kFar";
         break;
     }
 

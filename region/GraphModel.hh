@@ -25,8 +25,6 @@
 #include <memory>
 #include <vector>
 
-#include "region/RegionModel.hh"
-
 #include "graphalign/GappedAligner.hh"
 #include "graphcore/Graph.hh"
 
@@ -34,6 +32,7 @@
 #include "common/Parameters.hh"
 #include "filtering/OrientationPredictor.hh"
 #include "region/RegionModel.hh"
+#include "strs/ReadClassifier.hh"
 
 namespace ehunter
 {
@@ -58,6 +57,7 @@ private:
 
     std::vector<GraphFeature*> featurePtrs_;
 
+    ReadClassifier readClassifier_;
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;

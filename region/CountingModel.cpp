@@ -22,6 +22,7 @@
 #include "region/CountingModel.hh"
 
 #include "region/CountingFeature.hh"
+#include "spdlog/spdlog.h"
 
 using std::vector;
 
@@ -30,6 +31,7 @@ namespace ehunter
 
 CountingModel::CountingModel(std::vector<GenomicRegion> readExtractionRegions)
     : RegionModel(std::move(readExtractionRegions), Type::kTarget)
+    , proximityClassifier_(readExtractionRegions_)
 {
 }
 
@@ -39,13 +41,20 @@ void CountingModel::analyze(MappedRead read, MappedRead mate)
     analyze(mate);
 }
 
-void CountingModel::analyze(MappedRead read) { readLengthAccumulator_(read.sequence().length()); }
-
-int CountingModel::readCount() const { return boost::accumulators::count(readLengthAccumulator_); }
-
-int CountingModel::meanReadLength() const
+void CountingModel::analyze(MappedRead read)
 {
-    if (readCount() == 0)
+    const RegionProximity proximity = proximityClassifier_.classify(read);
+    if (proximity == RegionProximity::kInside)
+    {
+        readLengthAccumulator_(read.sequence().length());
+    }
+}
+
+int CountingModel::countReads() const { return boost::accumulators::count(readLengthAccumulator_); }
+
+int CountingModel::calculateReadLength() const
+{
+    if (countReads() == 0)
     {
         return 0;
     }
@@ -53,14 +62,21 @@ int CountingModel::meanReadLength() const
     return boost::accumulators::mean(readLengthAccumulator_);
 }
 
-double CountingModel::depth() const
+double CountingModel::calculateDepth() const
 {
-    /*
-    const int numberOfStartPositions = leftFlankLength_ + rightFlankLength_ - meanReadLength;
-    const double depth = meanReadLength * (static_cast<double>(readCount) / numberOfStartPositions);
- */
+    int readLength = calculateReadLength();
+    const int readCount = countReads();
+    assert(readLength != 0 && readCount != 0);
+    int numberOfStartPositions = 0;
 
-    return 0;
+    for (const auto& region : readExtractionRegions())
+    {
+        numberOfStartPositions += region.length() - readLength;
+    }
+
+    const double depth = readLength * (static_cast<double>(readCount) / numberOfStartPositions);
+
+    return depth;
 }
 
 vector<ModelFeature*> CountingModel::modelFeatures()
@@ -73,6 +89,18 @@ vector<ModelFeature*> CountingModel::modelFeatures()
     }
 
     return modelFeatures;
+}
+
+CountingModel::~CountingModel()
+{
+    std::ostringstream regionEncoding;
+    regionEncoding << readExtractionRegions_.front();
+    regionEncoding << " - ";
+    regionEncoding << readExtractionRegions_.back();
+    spdlog::info("Region = {}", regionEncoding.str());
+    spdlog::info("\tcountReads() = {}", countReads());
+    spdlog::info("\tcalculateReadLength() = {}", calculateReadLength());
+    spdlog::info("\tcalculateDepth() = {}", calculateDepth());
 }
 
 }

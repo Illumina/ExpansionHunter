@@ -30,33 +30,26 @@
 namespace ehunter
 {
 
-enum class PairType
+enum class RegionProximity
 {
-    kTarget,
-    kOfftarget,
-    kOther
+    kInside,
+    kOverlapsOrNear,
+    kFar
 };
 
 class ReadClassifier
 {
 public:
-    ReadClassifier(std::vector<GenomicRegion> targetRegions);
+    explicit ReadClassifier(std::vector<GenomicRegion> targetRegions);
 
-    PairType classify(const MappedRead& read, const MappedRead& mate) const;
+    RegionProximity classify(const MappedRead& read, const MappedRead& mate) const;
+    RegionProximity classify(const MappedRead& read) const;
 
 private:
-    enum class ReadType
-    {
-        kTarget,
-        kOfftarget,
-        kOther
-    };
-    ReadType classify(const MappedRead& read) const;
-
     int kMinOfftargetDistance_ = 1000;
     std::vector<GenomicRegion> targetRegions_;
 };
 
-std::ostream& operator<<(std::ostream& outer, PairType type);
+std::ostream& operator<<(std::ostream& outer, RegionProximity type);
 
 }

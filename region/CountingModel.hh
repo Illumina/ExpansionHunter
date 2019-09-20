@@ -28,6 +28,7 @@
 #include <boost/optional.hpp>
 
 #include "region/RegionModel.hh"
+#include "strs/ReadClassifier.hh"
 
 namespace ehunter
 {
@@ -39,18 +40,20 @@ class CountingModel : public RegionModel
 public:
     CountingModel() = delete;
     explicit CountingModel(std::vector<GenomicRegion> readExtractionRegions);
-    ~CountingModel() override = default;
+    ~CountingModel() override;
 
     std::vector<ModelFeature*> modelFeatures() override;
 
     void analyze(MappedRead read, MappedRead mate) override;
     void analyze(MappedRead read) override;
-    int readCount() const;
-    int meanReadLength() const;
-    double depth() const;
+    int countReads() const;
+    int calculateReadLength() const;
+    double calculateDepth() const;
 
 private:
     std::vector<CountingFeature*> featurePtrs_;
+
+    ReadClassifier proximityClassifier_;
 
     using AccumulatorStats
         = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
