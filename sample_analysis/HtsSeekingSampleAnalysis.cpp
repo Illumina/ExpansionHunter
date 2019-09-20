@@ -213,14 +213,9 @@ SampleFindings htsSeekingSampleAnalysis(
         // const string& locusId = locusIdAndRegionSpec.first;
         const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
 
-        // TODO: Initialize regions
         WorkflowContext context;
         shared_ptr<LocusAnalyzer> locusAnalyzerPtr = buildLocusWorkflow(locusSpec, context.heuristics());
 
-        // TODO: For each region: collect reads and pass them into regions
-
-        // vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
-        // locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
         vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
         ModelFinder analyzerFinder(regionModelPtrs);
 
