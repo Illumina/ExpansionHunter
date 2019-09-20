@@ -57,197 +57,148 @@ using std::unordered_map;
 using std::unordered_set;
 using std::vector;
 
-namespace
+using ReadCatalog = unordered_map<ReadId, MappedRead, boost::hash<ReadId>>;
+
+static vector<GenomicRegion>
+combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
 {
-    using ReadCatalog = unordered_map<ReadId, MappedRead, boost::hash<ReadId>>;
+    vector<GenomicRegion> combinedRegions(targetRegions);
+    combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
+    return combinedRegions;
+}
 
-    vector<GenomicRegion>
-    combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
+static bool checkIfMatesWereMappedNearby(const MappedRead& read)
+{
+    const int kMaxDistance = 1000;
+    return (read.contigIndex() == read.mateContigIndex()) && (std::abs(read.pos() - read.matePos()) < kMaxDistance);
+}
+
+static void recoverMates(const string& htsFilePath, const string& htsReferencePath, ReadPairs& readPairs)
+{
+    htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
+
+    for (auto& fragmentIdAndReadPair : readPairs)
     {
-        vector<GenomicRegion> combinedRegions(targetRegions);
-        combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
-        return combinedRegions;
-    }
+        ReadPair& readPair = fragmentIdAndReadPair.second;
 
-    bool checkIfMatesWereMappedNearby(const MappedRead& read)
-    {
-        const int kMaxDistance = 1000;
-        return (read.contigIndex() == read.mateContigIndex()) && (std::abs(read.pos() - read.matePos()) < kMaxDistance);
-    }
-
-    void recoverMates(const string& htsFilePath, const string& htsReferencePath, ReadPairs& readPairs)
-    {
-        htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
-
-        for (auto& fragmentIdAndReadPair : readPairs)
+        if (readPair.numMatesSet() == 2)
         {
-            ReadPair& readPair = fragmentIdAndReadPair.second;
+            continue;
+        }
 
-            if (readPair.numMatesSet() == 2)
+        const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+
+        if (!checkIfMatesWereMappedNearby(read))
+        {
+            optional<MappedRead> optionalMate = mateExtractor.extractMate(read);
+            if (optionalMate)
             {
-                continue;
+                const MappedRead& mate = *optionalMate;
+                readPairs.AddMateToExistingRead(mate);
             }
+            else
+            {
+                // TODO: Uncomment
+                // auto console = spdlog::get("console") ? spdlog::get("console") :
+                // spdlog::stderr_color_mt("console"); console->warn("Could not recover the mate of {}",
+                // read.readId());
+            }
+        }
+    }
+}
 
+static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
+{
+    int readCountCap;
+    // hardcoded for now
+    int sampleDepth = 100;
+    int readLength = 150;
+    float depthMultiplier = 10;
+
+    int64_t regionLength = 0;
+    for (const auto& regionWithReads : regionsWithReads)
+    {
+        regionLength += regionWithReads.length();
+    }
+
+    readCountCap = regionLength / (float)readLength * sampleDepth * depthMultiplier;
+    return readCountCap;
+}
+
+static ReadPairs collectCandidateReads(
+    const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
+    const string& htsFilePath, const string& htsReferencePath)
+{
+    vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
+    HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
+    ReadPairs readPairs;
+
+    for (const auto& regionWithReads : regionsWithReads)
+    {
+        // const int numReadsBeforeCollection = readPairs.NumReads();
+        htsFileSeeker.setRegion(regionWithReads);
+        while (htsFileSeeker.trySeekingToNextPrimaryAlignment())
+        {
+            MappedRead read = htsFileSeeker.decodeRead();
+            if (read.isPaired())
+            {
+                readPairs.Add(std::move(read));
+            }
+            else
+            {
+                // TODO: Uncomment
+                // console->warn("Skipping {} because it is unpaired", read.readId());
+            }
+        }
+        // const int numReadsCollected = readPairs.NumReads() - numReadsBeforeCollection;
+        // console->debug("Collected {} reads from {}", numReadsCollected, regionWithReads);
+    }
+
+    // add a cap for reads
+    if (readPairs.NumReads() > getReadCountCap(regionsWithReads))
+    {
+        readPairs.Clear();
+    }
+
+    const int numReadsBeforeRecovery = readPairs.NumReads();
+    recoverMates(htsFilePath, htsReferencePath, readPairs);
+    const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
+    spdlog::debug("Recovered {} reads", numReadsAfterRecovery);
+
+    return readPairs;
+}
+
+static void processReads(const ReadPairs& candidateReadPairs, ModelFinder& analyzerFinder)
+{
+    for (const auto& fragmentIdAndReads : candidateReadPairs)
+    {
+        const auto& readPair = fragmentIdAndReads.second;
+        if (readPair.numMatesSet() == 2)
+        {
+            const MappedRead& read = *readPair.firstMate;
+            const MappedRead& mate = *readPair.secondMate;
+
+            unordered_set<RegionModel*> readModels
+                = analyzerFinder.query(read.contigIndex(), read.pos(), read.approximateEnd());
+            unordered_set<RegionModel*> mateModels
+                = analyzerFinder.query(mate.contigIndex(), mate.pos(), mate.approximateEnd());
+
+            readModels.insert(mateModels.begin(), mateModels.end());
+
+            for (auto model : readModels)
+            {
+                model->analyze(read, mate);
+            }
+        }
+        else
+        {
             const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-
-            if (!checkIfMatesWereMappedNearby(read))
+            unordered_set<RegionModel*> readModels
+                = analyzerFinder.query(read.contigIndex(), read.pos(), read.approximateEnd());
+            for (auto model : readModels)
             {
-                optional<MappedRead> optionalMate = mateExtractor.extractMate(read);
-                if (optionalMate)
-                {
-                    const MappedRead& mate = *optionalMate;
-                    readPairs.AddMateToExistingRead(mate);
-                }
-                else
-                {
-                    // TODO: Uncomment
-                    // auto console = spdlog::get("console") ? spdlog::get("console") :
-                    // spdlog::stderr_color_mt("console"); console->warn("Could not recover the mate of {}",
-                    // read.readId());
-                }
+                model->analyze(read);
             }
-        }
-    }
-
-    int32_t getReadCountCap(vector<GenomicRegion>& regionsWithReads)
-    {
-        int32_t readCountCap;
-        // hardcoded for now
-        int32_t sampleDepth = 100;
-        int32_t readLength = 150;
-        float depthMultiplier = 10;
-
-        int64_t regionLength = 0;
-        for (const auto& regionWithReads : regionsWithReads)
-        {
-            regionLength += regionWithReads.length();
-        }
-
-        readCountCap = regionLength / (float)readLength * sampleDepth * depthMultiplier;
-        return readCountCap;
-    }
-
-    ReadPairs collectCandidateReads(
-        const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-        const string& htsFilePath, const string& htsReferencePath)
-    {
-        vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
-        HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
-        ReadPairs readPairs;
-
-        for (const auto& regionWithReads : regionsWithReads)
-        {
-            // const int numReadsBeforeCollection = readPairs.NumReads();
-            htsFileSeeker.setRegion(regionWithReads);
-            while (htsFileSeeker.trySeekingToNextPrimaryAlignment())
-            {
-                MappedRead read = htsFileSeeker.decodeRead();
-                if (read.isPaired())
-                {
-                    readPairs.Add(std::move(read));
-                }
-                else
-                {
-                    // TODO: Uncomment
-                    // console->warn("Skipping {} because it is unpaired", read.readId());
-                }
-            }
-            // const int numReadsCollected = readPairs.NumReads() - numReadsBeforeCollection;
-            // console->debug("Collected {} reads from {}", numReadsCollected, regionWithReads);
-        }
-
-        // add a cap for reads
-        if (readPairs.NumReads() > getReadCountCap(regionsWithReads))
-        {
-            readPairs.Clear();
-        }
-
-        const int numReadsBeforeRecovery = readPairs.NumReads();
-        recoverMates(htsFilePath, htsReferencePath, readPairs);
-        const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
-        spdlog::debug("Recovered {} reads", numReadsAfterRecovery);
-
-        return readPairs;
-    }
-
-    void analyzeReadPair(ModelFinder& analyzerFinder, const MappedRead& read, const MappedRead& mate)
-    {
-
-        const int64_t readEnd = read.pos() + read.sequence().length();
-        const int64_t mateEnd = mate.pos() + mate.sequence().length();
-
-        unordered_set<RegionModel*> readModels = analyzerFinder.query(read.contigIndex(), read.pos(), readEnd);
-        unordered_set<RegionModel*> mateModels = analyzerFinder.query(mate.contigIndex(), mate.pos(), mateEnd);
-
-        readModels.insert(mateModels.begin(), mateModels.end());
-        dispatch(read, mate, readModels);
-
-        /*
-        vector<AnalyzerBundle> analyzers = analyzerFinder.query(
-            readStats.chromId, readStats.pos, readEnd, mateStats.chromId, mateStats.pos, mateEnd);
-
-        if (analyzers.empty())
-        {
-            return;
-        }
-
-        assert(analyzers.size() == 1);
-        const AnalyzerBundle& bundle = analyzers.front();
-
-        if (bundle.inputType == AnalyzerInputType::kBothReads)
-        {
-            bundle.regionPtr->analyze(read, mate);
-        }
-        else if (bundle.inputType == AnalyzerInputType::kReadOnly)
-        {
-            bundle.regionPtr->analyze(read, boost::none);
-        }
-        else if (bundle.inputType == AnalyzerInputType::kMateOnly)
-        {
-            bundle.regionPtr->analyze(mate, boost::none);
-        } */
-    }
-
-    /*
-    void analyzeRead(ModelFinder& analyzerFinder, const Read& read, const AlignmentStatsCatalog& alignmentStats)
-    {
-        const auto readStatsIter = alignmentStats.find(read.readId());
-
-        if (readStatsIter == alignmentStats.end())
-        {
-            throw std::logic_error("Could not to find alignment stats for " + read.fragmentId());
-        }
-
-        const LinearAlignmentStats& readStats = readStatsIter->second;
-        const int64_t readEnd = readStats.pos + read.sequence().length();
-
-        vector<RegionModel*> analyzers = analyzerFinder.query(readStats.chromId, readStats.pos, readEnd);
-
-        if (analyzers.empty())
-        {
-            return;
-        }
-
-        assert(analyzers.size() == 1);
-        const AnalyzerBundle& bundle = analyzers.front();
-        bundle.regionPtr->analyze(read, boost::none);
-    }
-    */
-
-    void processReads(const ReadPairs& candidateReadPairs, ModelFinder& analyzerFinder)
-    {
-        for (const auto& fragmentIdAndReads : candidateReadPairs)
-        {
-            const auto& readPair = fragmentIdAndReads.second;
-            if (readPair.numMatesSet() == 2)
-            {
-                analyzeReadPair(analyzerFinder, *readPair.firstMate, *readPair.secondMate);
-            }
-            // else
-            //{
-            //    const Read& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-            //    analyzeRead(analyzerFinder, read, alignmentStats);
-            //}
         }
     }
 }

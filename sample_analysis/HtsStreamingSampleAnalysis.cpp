@@ -44,12 +44,6 @@ using std::vector;
 namespace ehunter
 {
 
-// static bool areMatesNearby(int readContigId, int64_t readPosition, int mateContigId, int64_t matePosition)
-//{
-//    const int kMaxMateDistance = 1000;
-//    return ((readContigId == mateContigId) && (std::abs(readPosition - matePosition) < kMaxMateDistance));
-//}
-
 SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*bamletWriter*/)
@@ -109,45 +103,11 @@ SampleFindings htsStreamingSampleAnalysis(
             readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd);
 
         readModels.insert(mateModels.begin(), mateModels.end());
-        assert(false);
-        dispatch(read, mate, readModels);
 
-        /*
-        if (areMatesNearby(
-                readStreamer.currentReadContigId(), readStreamer.currentReadPosition(),
-                readStreamer.currentMateContigId(), readStreamer.currentMateContigId()))
+        for (auto model : readModels)
         {
-            const int fragmentContig = readStreamer.currentReadContigId();
-            const int64_t fragmentStart
-                = std::min(readStreamer.currentReadPosition(), readStreamer.currentMatePosition());
-            const int64_t fragmentEnd = std::max(readEnd, mateEnd);
-
-            vector<RegionModel*> models = genomeQuery.analyzerFinder.query(fragmentContig, fragmentStart, fragmentEnd);
-            dispatch(read, mate, models);
-        } */
-
-        /*
-        vector<RegionModel*> models = genomeQuery.analyzerFinder.query(
-            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd,
-            readStreamer.currentMateContigId(), readStreamer.currentMatePosition(), mateEnd);
-
-        for (auto& analyzerBundle : analyzerBundles)
-        {
-            const auto analyzerPtr = analyzerBundle.regionPtr;
-
-            switch (analyzerBundle.inputType)
-            {
-            case AnalyzerInputType::kBothReads:
-                analyzerPtr->analyze(std::move(read), std::move(mate));
-                break;
-            case AnalyzerInputType::kReadOnly:
-                analyzerPtr->analyze(std::move(read), boost::none);
-                break;
-            case AnalyzerInputType::kMateOnly:
-                analyzerPtr->analyze(std::move(mate), boost::none);
-                break;
-            }
-        } */
+            model->analyze(read, mate);
+        }
     }
 
     SampleFindings sampleFindings;
