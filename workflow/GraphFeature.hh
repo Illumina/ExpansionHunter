@@ -21,21 +21,35 @@
 
 #pragma once
 
+#include <list>
 #include <memory>
-#include <string>
-#include <vector>
 
-#include "graphio/AlignmentWriter.hh"
+#include "graphalign/GraphAlignment.hh"
+#include "graphcore/Graph.hh"
 
-#include "common/Parameters.hh"
-#include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
+#include "reads/Read.hh"
+#include "workflow/ModelFeature.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+class GraphModel;
+
+class GraphFeature : public ModelFeature
+{
+public:
+    GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
+    ~GraphFeature() override = default;
+
+    using Alignments = std::list<graphtools::GraphAlignment>;
+    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+        = 0;
+
+    std::shared_ptr<RegionModel> model() override;
+
+protected:
+    std::shared_ptr<GraphModel> modelPtr_;
+    std::vector<graphtools::NodeId> nodeIds_;
+};
 
 }

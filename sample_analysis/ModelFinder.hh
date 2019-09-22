@@ -30,8 +30,8 @@
 #include "thirdparty/intervaltree/IntervalTree.h"
 
 #include "reads/Read.hh"
-#include "region/RegionModel.hh"
 #include "sample_analysis/GenomeMask.hh"
+#include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
@@ -68,7 +68,7 @@ public:
     //    int readContigId, int64_t readStart, int64_t readEnd, int mateContigId, int64_t mateStart,
     //    int64_t mateEnd) const;
 
-    // Retrieves models whose regions fully contain the given region
+    // Retrieves models whose regions fully contain the given workflow
     std::unordered_set<RegionModel*> query(int contigId, int64_t start, int64_t end) const;
 
 private:

@@ -3,8 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Felix Schlesinger <fschlesinger@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,15 +21,24 @@
 
 #pragma once
 
-#include <unordered_set>
+#include <unordered_map>
 
-#include "reads/Read.hh"
-#include "workflow/RegionModel.hh"
+#include <boost/optional.hpp>
+
+#include "stats/LocusStats.hh"
+#include "workflow/VariantFindings.hh"
 
 namespace ehunter
 {
 
-void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models);
-void dispatch(const MappedRead& read, const std::unordered_set<RegionModel*>& models);
+// Container with per-locus analysis results
+struct LocusFindings
+{
+    boost::optional<LocusStats> optionalStats;
+    // VariantFindings is an abstract class from which findings for all variant types are derived
+    std::unordered_map<std::string, std::unique_ptr<VariantFindings>> findingsForEachVariant;
+};
+
+using SampleFindings = std::unordered_map<std::string, LocusFindings>;
 
 }

@@ -47,7 +47,7 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
 
     NodeToRegionAssociation dummyAssociation;
     GenotyperParameters params;
-    LocusSpecification locusSpec("region", ChromType::kAutosome, referenceRegions, graph, dummyAssociation, params);
+    LocusSpecification locusSpec("workflow", ChromType::kAutosome, referenceRegions, graph, dummyAssociation, params);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
     locusSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
 

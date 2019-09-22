@@ -3,8 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Felix Schlesinger <fschlesinger@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,17 +19,15 @@
 //
 //
 
-#pragma once
-
-#include <unordered_set>
-
-#include "reads/Read.hh"
 #include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
 
-void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models);
-void dispatch(const MappedRead& read, const std::unordered_set<RegionModel*>& models);
+RegionModel::RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type)
+    : readExtractionRegions_(std::move(readExtractionRegions))
+    , type_(type)
+{
+}
 
 }

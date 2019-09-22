@@ -54,7 +54,7 @@ public:
         std::vector<double>& residuals) const;
 
 private:
-    // find the neighboring region to perform local fit
+    // find the neighboring workflow to perform local fit
     void findNeighbor(
         const std::vector<double>& inputXValues, int currentPointIndex, int& leftBoundary, int& rightBoundary) const;
 

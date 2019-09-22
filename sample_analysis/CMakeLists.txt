@@ -10,5 +10,5 @@ add_library(sample_analysis
         HtsStreamingSampleAnalysis.hh HtsStreamingSampleAnalysis.cpp
         MateExtractor.hh MateExtractor.cpp
         ReadDispatch.cpp ReadDispatch.hh)
-target_link_libraries(sample_analysis region common)
+target_link_libraries(sample_analysis workflow common)
 add_subdirectory(tests)

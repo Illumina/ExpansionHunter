@@ -24,8 +24,8 @@
 
 #include <memory>
 
-#include "region/RegionModel.hh"
 #include "region_spec/LocusSpecification.hh"
+#include "workflow/RegionModel.hh"
 
 using boost::optional;
 using std::shared_ptr;
@@ -67,7 +67,7 @@ namespace
         return commonBundles;
     } */
 
-    // We ignore nearby pairs where one mate is inside and one mate is outside of the offtarget region
+    // We ignore nearby pairs where one mate is inside and one mate is outside of the offtarget workflow
     /*
     vector<AnalyzerBundle>
     coalesceBundlesForNearbyMates(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)

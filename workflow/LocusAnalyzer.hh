@@ -3,8 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Felix Schlesinger <fschlesinger@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,15 +21,22 @@
 
 #pragma once
 
-#include <unordered_set>
+#include <memory>
+#include <vector>
 
-#include "reads/Read.hh"
-#include "workflow/RegionModel.hh"
+#include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
 
-void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models);
-void dispatch(const MappedRead& read, const std::unordered_set<RegionModel*>& models);
+class FeatureAnalyzer;
+
+class LocusAnalyzer
+{
+public:
+    virtual ~LocusAnalyzer() = default;
+    virtual LocusFindings analyze(Sex sampleSex) const = 0;
+    virtual std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() = 0;
+};
 
 }

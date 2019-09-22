@@ -27,11 +27,11 @@
 
 #include "common/HtsHelpers.hh"
 #include "common/WorkflowContext.hh"
-#include "region/LocusAnalyzer.hh"
-#include "region/WorkflowBuilder.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
 #include "sample_analysis/ReadDispatch.hh"
+#include "workflow/LocusAnalyzer.hh"
+#include "workflow/WorkflowBuilder.hh"
 
 using graphtools::AlignmentWriter;
 using std::map;

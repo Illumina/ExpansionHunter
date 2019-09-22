@@ -25,17 +25,29 @@
 #include <string>
 #include <vector>
 
-#include "graphio/AlignmentWriter.hh"
-
-#include "common/Parameters.hh"
-#include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
+#include "classification/AlignmentSummary.hh"
+#include "classification/StrAlignmentClassifier.hh"
+#include "workflow/GraphFeature.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+class GraphModel;
+
+class StrFeature : public GraphFeature
+{
+public:
+    StrFeature(std::shared_ptr<GraphModel> graphModelPtr, graphtools::NodeId nodeId);
+    void
+    process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+
+    const std::string& motif() const;
+    const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
+
+private:
+    graphtools::NodeId motifNodeId() const;
+    StrAlignmentClassifier alignmentClassifier_;
+    std::vector<ReadSummaryForStr> readSummaries_;
+};
 
 }

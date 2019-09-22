@@ -29,8 +29,8 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
+#include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {

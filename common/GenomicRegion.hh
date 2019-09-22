@@ -33,7 +33,7 @@
 namespace ehunter
 {
 
-// Represents a contiguous region of a genome using 0-based half-open coordinates
+// Represents a contiguous workflow of a genome using 0-based half-open coordinates
 class GenomicRegion
 {
 public:

@@ -19,23 +19,30 @@
 //
 //
 
-#pragma once
-
 #include <memory>
-#include <string>
 #include <vector>
 
-#include "graphio/AlignmentWriter.hh"
-
-#include "common/Parameters.hh"
-#include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
+#include "workflow/LocusAnalyzer.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+class GraphVariantAnalyzer;
+class StatsAnalyzer;
+
+class GraphLocusAnalyzer : public LocusAnalyzer
+{
+public:
+    ~GraphLocusAnalyzer() override = default;
+
+    void setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer);
+    void addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer);
+    LocusFindings analyze(Sex sampleSex) const override;
+    std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
+
+private:
+    std::shared_ptr<StatsAnalyzer> statsAnalyzer_;
+    std::vector<std::shared_ptr<GraphVariantAnalyzer>> variantAnalyzers_;
+};
 
 }

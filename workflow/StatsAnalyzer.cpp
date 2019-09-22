@@ -3,8 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Felix Schlesinger <fschlesinger@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,17 +19,19 @@
 //
 //
 
-#pragma once
+#include "workflow/StatsAnalyzer.hh"
 
-#include <unordered_set>
-
-#include "reads/Read.hh"
-#include "workflow/RegionModel.hh"
+using std::shared_ptr;
+using std::vector;
 
 namespace ehunter
 {
 
-void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models);
-void dispatch(const MappedRead& read, const std::unordered_set<RegionModel*>& models);
+StatsAnalyzer::StatsAnalyzer(std::shared_ptr<CountingFeature> feature)
+    : feature_(std::move(feature))
+{
+}
+
+vector<shared_ptr<ModelFeature>> StatsAnalyzer::features() { return { feature_ }; }
 
 }

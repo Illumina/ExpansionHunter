@@ -32,7 +32,7 @@ struct GenomeQueryCollection
 {
     GenomeQueryCollection(std::vector<std::shared_ptr<RegionModel>>& regions);
 
-    ModelFinder analyzerFinder; // Analyzers searchable by targeted region
+    ModelFinder analyzerFinder; // Analyzers searchable by targeted workflow
     GenomeMask targetRegionMask; // Marks targeted regions to enable fast read screening
 };
 

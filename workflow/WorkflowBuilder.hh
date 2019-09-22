@@ -3,8 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Felix Schlesinger <fschlesinger@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,15 +21,19 @@
 
 #pragma once
 
-#include <unordered_set>
+#include <memory>
 
-#include "reads/Read.hh"
+#include "common/Parameters.hh"
+#include "region_spec/LocusSpecification.hh"
+#include "workflow/LocusAnalyzer.hh"
 #include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
 
-void dispatch(const MappedRead& read, const MappedRead& mate, const std::unordered_set<RegionModel*>& models);
-void dispatch(const MappedRead& read, const std::unordered_set<RegionModel*>& models);
+std::shared_ptr<LocusAnalyzer>
+buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
+
+std::vector<std::shared_ptr<RegionModel>> extractRegionModels(const std::vector<std::shared_ptr<LocusAnalyzer>>& loci);
 
 }

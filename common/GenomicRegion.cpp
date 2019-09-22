@@ -129,7 +129,7 @@ vector<GenomicRegion> merge(vector<GenomicRegion> regions, int maxMergeDist)
 }
 
 // Returns the range extended by flankSize upstream and downstream.
-// NOTE: The right boundary of the extended region may stick past chromosome
+// NOTE: The right boundary of the extended workflow may stick past chromosome
 // end.
 GenomicRegion GenomicRegion::extend(int length) const
 {

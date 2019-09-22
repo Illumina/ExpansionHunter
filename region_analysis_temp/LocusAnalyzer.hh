@@ -51,7 +51,7 @@ namespace ehunter
 {
 
 // Regions of the reference genome that can contain reads that originated in a given locus are partitioned into target
-// and offtarget regions. Target regions typically consist of the reference region of the locus and possibly other
+// and offtarget regions. Target regions typically consist of the reference workflow of the locus and possibly other
 // highly-similar regions where reads typically misalign. Offtarget regions are regions where certain kinds of
 // relevant reads might occasionally misalign and that require special handling (usually for efficiency reasons).
 enum class RegionType
