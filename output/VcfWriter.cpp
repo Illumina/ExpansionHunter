@@ -248,8 +248,7 @@ void VariantVcfWriter::visit(StrFindings& strFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-/*
-void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
+void VariantVcfWriter::visit(SmallVariantFindings& findings)
 {
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
@@ -307,19 +306,19 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
     vector<string> sampleFields;
     vector<string> sampleValues;
 
-    auto genotype = smallVariantFindingsPtr->optionalGenotype();
+    auto genotype = findings.optionalGenotype();
     sampleFields.emplace_back("GT");
     sampleValues.push_back(genotype ? streamToString(*genotype) : ".");
 
     sampleFields.emplace_back("AD");
     std::ostringstream adEncoding;
-    adEncoding << smallVariantFindingsPtr->numRefReads() << "," << smallVariantFindingsPtr->numAltReads();
+    adEncoding << findings.numRefReads() << "," << findings.numAltReads();
     sampleValues.push_back(adEncoding.str());
 
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         string dst;
-        switch (smallVariantFindingsPtr->refAllelePresenceStatus().status)
+        switch (findings.refAllelePresenceStatus().status)
         {
         case AlleleStatus::kAbsent:
             dst = "+";
@@ -334,7 +333,7 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
         sampleFields.emplace_back("DST");
         sampleValues.push_back(dst);
         sampleFields.emplace_back("RPL");
-        sampleValues.push_back(streamToString(smallVariantFindingsPtr->refAllelePresenceStatus().logLikelihoodRatio));
+        sampleValues.push_back(streamToString(findings.refAllelePresenceStatus().logLikelihoodRatio));
     }
 
     sampleFields.emplace_back("LC");
@@ -348,6 +347,6 @@ void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr
         sampleValue
     };
     out_ << boost::algorithm::join(line, "\t") << std::endl;
-} */
+}
 
 }

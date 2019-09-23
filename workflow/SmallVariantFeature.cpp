@@ -24,6 +24,13 @@
 namespace ehunter
 {
 
+SmallVariantFeature::SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
+    : GraphFeature(modelPtr, std::move(nodeIds))
+    , alignmentClassifier_(nodeIds_)
+
+{
+}
+
 void SmallVariantFeature::process(
     const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
 {
@@ -37,15 +44,47 @@ void SmallVariantFeature::processRead(const Read& read, const std::list<graphtoo
 
     if (smallVariantRead.numAlignments() > 0)
     {
-        readSummaries_.push_back(std::move(smallVariantRead));
+        readSummaries_.push_back(smallVariantRead);
+    }
+
+    const auto& smallVariantAlignment = smallVariantRead.alignments().front();
+
+    if (smallVariantAlignment.type() == SmallVariantAlignment::Type::kSpanning)
+    {
+        if (smallVariantAlignment.nodeId() == SmallVariantAlignmentClassifier::kInvalidNodeId)
+        {
+            numBypassingReads_ += 1;
+        }
+        else
+        {
+            countsOfSpanningReads_.incrementCountOf(smallVariantAlignment.nodeId());
+        }
+    }
+
+    if (smallVariantAlignment.type() == SmallVariantAlignment::Type::kUpstreamFlanking)
+    {
+        countsOfReadsFlankingUpstream_.incrementCountOf(smallVariantAlignment.nodeId());
+    }
+
+    if (smallVariantAlignment.type() == SmallVariantAlignment::Type::kDownstreamFlanking)
+    {
+        countsOfReadsFlankingDownstream_.incrementCountOf(smallVariantAlignment.nodeId());
     }
 }
 
-SmallVariantFeature::SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
-    : GraphFeature(modelPtr, std::move(nodeIds))
-    , alignmentClassifier_(nodeIds_)
-
+int SmallVariantFeature::countReadsSupportingNode(graphtools::NodeId nodeId) const
 {
-}
+    if (nodeId == SmallVariantAlignmentClassifier::kInvalidNodeId)
+    {
+        return numBypassingReads_;
+    }
+
+    const int numReadsSupportingUpstreamFlank
+        = countsOfReadsFlankingUpstream_.countOf(nodeId) + countsOfSpanningReads_.countOf(nodeId);
+    const int numReadsSupportingDownstreamFlank
+        = countsOfReadsFlankingDownstream_.countOf(nodeId) + countsOfSpanningReads_.countOf(nodeId);
+
+    return (numReadsSupportingUpstreamFlank + numReadsSupportingDownstreamFlank) / 2;
+};
 
 }

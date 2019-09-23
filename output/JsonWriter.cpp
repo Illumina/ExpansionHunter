@@ -145,10 +145,8 @@ void VariantJsonWriter::visit(StrFindings& strFindings)
     }
 }
 
-/*
-void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
+void VariantJsonWriter::visit(SmallVariantFindings& findings)
 {
-    const SmallVariantFindings& findings = *smallVariantFindingsPtr;
     record_.clear();
     record_["VariantId"] = variantSpec_.id();
     record_["VariantType"] = streamToString(variantSpec_.classification().type);
@@ -164,6 +162,6 @@ void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPt
     {
         record_["Genotype"] = streamToString(*findings.optionalGenotype());
     }
-} */
+}
 
 }

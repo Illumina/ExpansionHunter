@@ -29,6 +29,8 @@
 #include "workflow/GraphLocusAnalyzer.hh"
 #include "workflow/GraphModel.hh"
 #include "workflow/PairedIrrFeature.hh"
+#include "workflow/SmallVariantAnalyzer.hh"
+#include "workflow/SmallVariantFeature.hh"
 #include "workflow/StatsAnalyzer.hh"
 #include "workflow/StrAnalyzer.hh"
 #include "workflow/StrFeature.hh"
@@ -97,12 +99,18 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
                 strAnalyzerPtr->addPairedIrrFeature(pairedIrrFeaturePtr);
             }
         }
-        // else if (variantSpec.classification().type == VariantType::kSmallVariant)
-        //{
-        //    variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
-        //        variantSpec.id(), variantSpec.classification().subtype, locusSpec.regionGraph(), variantSpec.nodes(),
-        //        variantSpec.optionalRefNode(), locusSpec.genotyperParameters()));
-        //}
+        else if (variantSpec.classification().type == VariantType::kSmallVariant)
+        {
+            auto smallVariantFeature = std::make_shared<SmallVariantFeature>(graphModelPtr, variantSpec.nodes());
+            graphModelPtr->addFeature(smallVariantFeature.get());
+
+            auto smallVariantAnalyzer = std::make_shared<SmallVariantAnalyzer>(
+                smallVariantFeature, variantSpec.id(), variantSpec.classification().subtype,
+                variantSpec.optionalRefNode());
+            //    variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
+            //        variantSpec.id(), variantSpec.classification().subtype, locusSpec.regionGraph(),
+            //        variantSpec.nodes(), variantSpec.optionalRefNode(), locusSpec.genotyperParameters()));
+        }
         else
         {
             std::stringstream encoding;

@@ -25,6 +25,7 @@
 #include <vector>
 
 #include "classification/SmallVariantAlignmentClassifier.hh"
+#include "genotyping/SmallVariantGenotyper.hh"
 #include "workflow/GraphFeature.hh"
 
 namespace ehunter
@@ -32,13 +33,14 @@ namespace ehunter
 
 class SmallVariantFeature : public GraphFeature
 {
+public:
+    SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
     ~SmallVariantFeature() override = default;
-
-    explicit SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
 
     void
     process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
 
+    int countReadsSupportingNode(graphtools::NodeId nodeId) const;
     const std::vector<ReadSummaryForSmallVariant>& readSummaries() const { return readSummaries_; }
 
 private:
@@ -46,6 +48,11 @@ private:
 
     SmallVariantAlignmentClassifier alignmentClassifier_;
     std::vector<ReadSummaryForSmallVariant> readSummaries_;
+
+    CountTable countsOfReadsFlankingUpstream_;
+    CountTable countsOfReadsFlankingDownstream_;
+    CountTable countsOfSpanningReads_;
+    int numBypassingReads_ = 0;
 };
 
 }

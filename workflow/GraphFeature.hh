@@ -41,11 +41,11 @@ public:
     GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
     ~GraphFeature() override = default;
 
+    std::shared_ptr<RegionModel> model() override;
     using Alignments = std::list<graphtools::GraphAlignment>;
     virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
         = 0;
-
-    std::shared_ptr<RegionModel> model() override;
+    const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
 
 protected:
     std::shared_ptr<GraphModel> modelPtr_;

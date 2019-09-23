@@ -24,16 +24,20 @@
 #include <boost/optional.hpp>
 
 #include "common/CountTable.hh"
+#include "genotyping/AlleleChecker.hh"
 #include "genotyping/RepeatGenotype.hh"
+#include "genotyping/SmallVariantGenotype.hh"
 
 namespace ehunter
 {
 
 class StrFindings;
+class SmallVariantFindings;
 
 struct VariantFindingsVisitor
 {
     virtual void visit(StrFindings& strFindings) = 0;
+    virtual void visit(SmallVariantFindings& smallVariantFindings) = 0;
 };
 
 struct VariantFindings
@@ -75,6 +79,38 @@ private:
     CountTable countsOfFlankingReads_;
     CountTable countsOfInrepeatReads_;
     boost::optional<RepeatGenotype> optionalGenotype_;
+};
+
+class SmallVariantFindings : public VariantFindings
+{
+public:
+    SmallVariantFindings(
+        int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus, AlleleCheckSummary altAlleleStatus,
+        boost::optional<SmallVariantGenotype> optionalGenotype)
+        : numRefReads_(numRefReads)
+        , numAltReads_(numAltReads)
+        , refAlleleStatus_(refAlleleStatus)
+        , altAlleleStatus_(altAlleleStatus)
+        , optionalGenotype_(std::move(optionalGenotype))
+    {
+    }
+
+    ~SmallVariantFindings() override = default;
+    void accept(VariantFindingsVisitor& visitorPtr) override { visitorPtr.visit(*this); }
+
+    int numRefReads() const { return numRefReads_; }
+    int numAltReads() const { return numAltReads_; }
+    const boost::optional<SmallVariantGenotype>& optionalGenotype() const { return optionalGenotype_; }
+
+    AlleleCheckSummary refAllelePresenceStatus() const { return refAlleleStatus_; }
+    AlleleCheckSummary altAllelePresenceStatus() const { return altAlleleStatus_; }
+
+private:
+    int numRefReads_;
+    int numAltReads_;
+    AlleleCheckSummary refAlleleStatus_;
+    AlleleCheckSummary altAlleleStatus_;
+    boost::optional<SmallVariantGenotype> optionalGenotype_;
 };
 
 }

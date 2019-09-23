@@ -95,10 +95,9 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
-/*
-void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
+void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
 {
-    if (!smallVariantFindingsPtr->optionalGenotype())
+    if (!findings.optionalGenotype())
     {
         return;
     }
@@ -113,7 +112,7 @@ void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindi
             FieldType::kFormat, "DST", "1", "Character",
             "Result ('+' detected, '-' undetected, '?' undetermined) of the test represented by the variant");
     }
-} */
+}
 
 void FieldDescriptionWriter::tryAddingFieldDescription(
     FieldType fieldType, const string& id, const string& number, const string& contentType, const string& description)

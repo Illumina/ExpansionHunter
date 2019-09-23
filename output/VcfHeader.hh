@@ -66,7 +66,7 @@ public:
     ~FieldDescriptionWriter() = default;
 
     void visit(StrFindings& strFindings) override;
-    // void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
+    void visit(SmallVariantFindings& findings) override;
 
     void tryAddingFieldDescription(
         FieldType fieldType, const std::string& id, const std::string& number, const std::string& contentType,
