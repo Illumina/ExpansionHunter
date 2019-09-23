@@ -23,10 +23,6 @@
 
 #include <vector>
 
-#include <boost/accumulators/accumulators.hpp>
-#include <boost/accumulators/statistics.hpp>
-#include <boost/optional.hpp>
-
 #include "strs/ReadClassifier.hh"
 #include "workflow/RegionModel.hh"
 
@@ -42,24 +38,15 @@ public:
     explicit CountingModel(std::vector<GenomicRegion> readExtractionRegions);
     ~CountingModel() override;
 
+    void addFeature(CountingFeature* featurePtr);
     std::vector<ModelFeature*> modelFeatures() override;
 
     void analyze(MappedRead read, MappedRead mate) override;
     void analyze(MappedRead read) override;
-    int countReads() const;
-    int calculateReadLength() const;
-    double calculateDepth() const;
 
 private:
     std::vector<CountingFeature*> featurePtrs_;
-
     ReadClassifier proximityClassifier_;
-
-    using AccumulatorStats
-        = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
-    using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;
-
-    Accumulator readLengthAccumulator_;
 };
 
 }

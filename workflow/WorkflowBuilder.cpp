@@ -43,7 +43,7 @@ namespace ehunter
 
 shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
-    auto graphLocusPtr = std::make_shared<GraphLocusAnalyzer>();
+    auto graphLocusPtr = std::make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
 
     if (locusSpec.targetReadExtractionRegions().size() != 1)
     {
@@ -64,11 +64,11 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
     const int64_t rightFlankStart = regionForGraphModel.end() - kFlankLength;
     GenomicRegion rightFlank(regionForGraphModel.contigIndex(), rightFlankStart, regionForGraphModel.end());
 
-    auto countingModelPtr
-        = std::make_shared<CountingModel>(std::initializer_list<GenomicRegion> { leftFlank, rightFlank });
-
     // Initialize stats feature
-    auto countingFeaturePtr = std::make_shared<CountingFeature>(countingModelPtr);
+    vector<GenomicRegion> statsRegions = { leftFlank, rightFlank };
+    auto countingModelPtr = std::make_shared<CountingModel>(statsRegions);
+    auto countingFeaturePtr = std::make_shared<CountingFeature>(countingModelPtr, statsRegions);
+    countingModelPtr->addFeature(countingFeaturePtr.get());
     auto statsAnalyzerPtr = std::make_shared<StatsAnalyzer>(countingFeaturePtr);
     graphLocusPtr->setStats(statsAnalyzerPtr);
 

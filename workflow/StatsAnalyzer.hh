@@ -23,6 +23,8 @@
 
 #include <memory>
 
+#include "common/Common.hh"
+#include "stats/LocusStats.hh"
 #include "workflow/CountingFeature.hh"
 #include "workflow/FeatureAnalyzer.hh"
 
@@ -36,6 +38,7 @@ public:
     ~StatsAnalyzer() override = default;
 
     std::vector<std::shared_ptr<ModelFeature>> features() override;
+    LocusStats estimate(Sex sampleSex) const;
 
 private:
     std::shared_ptr<CountingFeature> feature_;

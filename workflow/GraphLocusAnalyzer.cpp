@@ -23,6 +23,8 @@
 
 #include <string>
 
+#include "spdlog/spdlog.h"
+
 #include "GraphVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
 #include "workflow/StatsAnalyzer.hh"
@@ -36,6 +38,11 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
+GraphLocusAnalyzer::GraphLocusAnalyzer(string locusId)
+    : locusId_(std::move(locusId))
+{
+}
+
 void GraphLocusAnalyzer::setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer)
 {
     statsAnalyzer_ = std::move(statsAnalyzer);
@@ -46,25 +53,30 @@ void GraphLocusAnalyzer::addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> varia
     variantAnalyzers_.push_back(variantAnalyzer);
 }
 
-LocusFindings GraphLocusAnalyzer::analyze(Sex /*sampleSex*/) const
+LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex) const
 {
     LocusFindings locusFindings;
 
-    // locusFindings.optionalStats = statsCalculator_.estimate(sampleSex);
+    locusFindings.optionalStats = statsAnalyzer_->estimate(sampleSex);
 
-    // if (locusFindings.optionalStats
-    //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
-    //{
+    spdlog::info(
+        "Locus: {} depth: {} read length: {}", locusId_, locusFindings.optionalStats->depth(),
+        locusFindings.optionalStats->meanReadLength());
 
-    for (auto& analyzerPtr : variantAnalyzers_)
+    if (locusFindings.optionalStats->depth() >= 10.0)
     {
-        const LocusStats& locusStats = *locusFindings.optionalStats;
-        std::unique_ptr<VariantFindings> variantFindingsPtr = analyzerPtr->analyze(locusStats);
-        const string& variantId = analyzerPtr->variantId();
-        locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
-    }
 
-    //}
+        // if (locusFindings.optionalStats
+        //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
+
+        for (auto& analyzerPtr : variantAnalyzers_)
+        {
+            const LocusStats& locusStats = *locusFindings.optionalStats;
+            std::unique_ptr<VariantFindings> variantFindingsPtr = analyzerPtr->analyze(locusStats);
+            const string& variantId = analyzerPtr->variantId();
+            locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
+        }
+    }
 
     return locusFindings;
 }

@@ -45,8 +45,7 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
-    AlignmentWriter& /*bamletWriter*/)
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& /*bamletWriter*/)
 {
     WorkflowContext context;
     vector<shared_ptr<LocusAnalyzer>> locusAnalyzers;
@@ -111,11 +110,11 @@ SampleFindings htsStreamingSampleAnalysis(
     }
 
     SampleFindings sampleFindings;
-    // for (auto& locusAnalyzer : regionModelPtrs)
-    //{
-    //    auto locusFindings = locusAnalyzer->analyze(sampleSex);
-    //    sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
-    //}
+    for (auto& locusAnalyzer : locusAnalyzers)
+    {
+        auto locusFindings = locusAnalyzer->analyze(sampleSex);
+        sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
+    }
 
     return sampleFindings;
 }

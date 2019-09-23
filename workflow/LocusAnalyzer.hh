@@ -22,6 +22,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "workflow/LocusFindings.hh"
@@ -37,6 +38,7 @@ public:
     virtual ~LocusAnalyzer() = default;
     virtual LocusFindings analyze(Sex sampleSex) const = 0;
     virtual std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() = 0;
+    virtual const std::string& locusId() const = 0;
 };
 
 }

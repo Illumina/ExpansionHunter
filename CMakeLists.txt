@@ -88,8 +88,7 @@ add_subdirectory(workflow)
 add_subdirectory(strs)
 
 
-file(GLOB SOURCES "src/*.cpp")
-add_executable(ExpansionHunter ${SOURCES})
+add_executable(ExpansionHunter src/Version.hh src/ExpansionHunter.cpp)
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 target_link_libraries(ExpansionHunter graphtools common workflow genotyping region_spec sample_analysis input output
         alignment filtering stats classification strs pthread ${Boost_LIBRARIES})

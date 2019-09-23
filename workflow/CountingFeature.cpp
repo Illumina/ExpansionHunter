@@ -24,15 +24,49 @@
 #include "workflow/CountingModel.hh"
 
 using std::shared_ptr;
+using std::vector;
 
 namespace ehunter
 {
 
-CountingFeature::CountingFeature(std::shared_ptr<CountingModel> modelPtr)
+CountingFeature::CountingFeature(shared_ptr<CountingModel> modelPtr, vector<GenomicRegion> targetRegions)
     : modelPtr_(std::move(modelPtr))
+    , targetRegions_(std::move(targetRegions))
 {
 }
 
 shared_ptr<RegionModel> CountingFeature::model() { return modelPtr_; }
+
+int CountingFeature::getReadLength() const
+{
+    if (numReads_ == 0)
+    {
+        return 0;
+    }
+
+    return static_cast<int>(totalReadLength_ / numReads_);
+}
+
+double CountingFeature::getDepth() const
+{
+    const int readLength = getReadLength();
+    std::int64_t numberOfStartPositions = 0;
+
+    for (const auto& region : targetRegions_)
+    {
+        numberOfStartPositions += region.length() - readLength;
+    }
+
+    assert(numberOfStartPositions > 0);
+    const double depth = readLength * (static_cast<double>(numReads()) / numberOfStartPositions);
+
+    return depth;
+}
+
+void CountingFeature::addReadInfo(int readLength)
+{
+    ++numReads_;
+    totalReadLength_ += readLength;
+}
 
 }

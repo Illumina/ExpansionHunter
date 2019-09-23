@@ -20,6 +20,7 @@
 //
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "workflow/LocusAnalyzer.hh"
@@ -33,14 +34,17 @@ class StatsAnalyzer;
 class GraphLocusAnalyzer : public LocusAnalyzer
 {
 public:
+    explicit GraphLocusAnalyzer(std::string locusId);
     ~GraphLocusAnalyzer() override = default;
 
+    const std::string& locusId() const override { return locusId_; }
     void setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer);
     void addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer);
     LocusFindings analyze(Sex sampleSex) const override;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
 private:
+    std::string locusId_;
     std::shared_ptr<StatsAnalyzer> statsAnalyzer_;
     std::vector<std::shared_ptr<GraphVariantAnalyzer>> variantAnalyzers_;
 };

@@ -21,8 +21,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <vector>
 
+#include "common/GenomicRegion.hh"
 #include "workflow/ModelFeature.hh"
 
 namespace ehunter
@@ -33,12 +36,20 @@ class CountingModel;
 class CountingFeature : public ModelFeature
 {
 public:
-    explicit CountingFeature(std::shared_ptr<CountingModel> modelPtr);
+    CountingFeature(std::shared_ptr<CountingModel> modelPtr, std::vector<GenomicRegion> targetRegions);
     ~CountingFeature() override = default;
 
     std::shared_ptr<RegionModel> model() override;
+    std::int64_t numReads() const { return numReads_; }
+    int getReadLength() const;
+    double getDepth() const;
+
+    void addReadInfo(int readLength);
 
 private:
+    std::vector<GenomicRegion> targetRegions_;
+    std::int64_t numReads_ = 0;
+    std::int64_t totalReadLength_ = 0;
     std::shared_ptr<CountingModel> modelPtr_;
 };
 

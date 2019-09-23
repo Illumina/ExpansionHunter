@@ -46,37 +46,11 @@ void CountingModel::analyze(MappedRead read)
     const RegionProximity proximity = proximityClassifier_.classify(read);
     if (proximity == RegionProximity::kInside)
     {
-        readLengthAccumulator_(read.sequence().length());
+        for (const auto& feature : featurePtrs_)
+        {
+            feature->addReadInfo(read.sequence().length());
+        }
     }
-}
-
-int CountingModel::countReads() const { return boost::accumulators::count(readLengthAccumulator_); }
-
-int CountingModel::calculateReadLength() const
-{
-    if (countReads() == 0)
-    {
-        return 0;
-    }
-
-    return boost::accumulators::mean(readLengthAccumulator_);
-}
-
-double CountingModel::calculateDepth() const
-{
-    int readLength = calculateReadLength();
-    const int readCount = countReads();
-    assert(readLength != 0 && readCount != 0);
-    int numberOfStartPositions = 0;
-
-    for (const auto& region : readExtractionRegions())
-    {
-        numberOfStartPositions += region.length() - readLength;
-    }
-
-    const double depth = readLength * (static_cast<double>(readCount) / numberOfStartPositions);
-
-    return depth;
 }
 
 vector<ModelFeature*> CountingModel::modelFeatures()
@@ -93,14 +67,16 @@ vector<ModelFeature*> CountingModel::modelFeatures()
 
 CountingModel::~CountingModel()
 {
-    std::ostringstream regionEncoding;
-    regionEncoding << readExtractionRegions_.front();
-    regionEncoding << " - ";
-    regionEncoding << readExtractionRegions_.back();
-    spdlog::info("Region = {}", regionEncoding.str());
-    spdlog::info("\tcountReads() = {}", countReads());
-    spdlog::info("\tcalculateReadLength() = {}", calculateReadLength());
-    spdlog::info("\tcalculateDepth() = {}", calculateDepth());
+    /*    std::ostringstream regionEncoding;
+        regionEncoding << readExtractionRegions_.front();
+        regionEncoding << " - ";
+        regionEncoding << readExtractionRegions_.back();
+        spdlog::info("Region = {}", regionEncoding.str());
+        spdlog::info("\tcountReads() = {}", countReads());
+        spdlog::info("\tcalculateReadLength() = {}", calculateReadLength());
+        spdlog::info("\tcalculateDepth() = {}", calculateDepth()); */
 }
+
+void CountingModel::addFeature(CountingFeature* featurePtr) { featurePtrs_.push_back(featurePtr); }
 
 }
