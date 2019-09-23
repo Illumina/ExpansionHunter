@@ -50,7 +50,7 @@ void GraphLocusAnalyzer::setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer)
 
 void GraphLocusAnalyzer::addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer)
 {
-    variantAnalyzers_.push_back(variantAnalyzer);
+    variantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
 LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex) const
@@ -65,7 +65,6 @@ LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex) const
 
     if (locusFindings.optionalStats->depth() >= 10.0)
     {
-
         // if (locusFindings.optionalStats
         //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
 

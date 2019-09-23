@@ -71,7 +71,7 @@ include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
 
 add_subdirectory(thirdparty/graph-tools-master)
 
-#add_compile_options(-Werror -pedantic -Wall -Wextra)
+add_compile_options(-Werror -pedantic -Wall -Wextra)
 
 add_subdirectory(common)
 add_subdirectory(genotyping)

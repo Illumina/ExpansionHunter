@@ -19,27 +19,34 @@
 //
 //
 
-#include "workflow/StatsAnalyzer.hh"
+#include "workflow/PairedIrrFeature.hh"
+
+#include "workflow/GraphModel.hh"
 
 using std::shared_ptr;
-using std::vector;
+using std::string;
 
 namespace ehunter
 {
 
-StatsAnalyzer::StatsAnalyzer(std::shared_ptr<CountingFeature> feature)
-    : feature_(std::move(feature))
+PairedIrrFeature::PairedIrrFeature(shared_ptr<GraphModel> modelPtr, string motif)
+    : modelPtr_(std::move(modelPtr))
+    , motif_(std::move(motif))
+    , weightedPurityCalculator_(motif_)
 {
 }
 
-vector<shared_ptr<ModelFeature>> StatsAnalyzer::features() { return { feature_ }; }
+shared_ptr<RegionModel> PairedIrrFeature::model() { return modelPtr_; }
 
-LocusStats StatsAnalyzer::estimate(Sex /*sampleSex*/) const
+void PairedIrrFeature::process(const MappedRead& read, const MappedRead& mate)
 {
-    const int readLength = feature_->getReadLength();
-    const double depth = feature_->getDepth();
+    const bool isFirstReadInrepeat = weightedPurityCalculator_.score(read.sequence()) >= 0.90;
+    const bool isSecondReadInrepeat = weightedPurityCalculator_.score(mate.sequence()) >= 0.90;
 
-    return { AlleleCount::kTwo, readLength, depth };
+    if (isFirstReadInrepeat && isSecondReadInrepeat)
+    {
+        ++numIrrPairs_;
+    }
 }
 
 }

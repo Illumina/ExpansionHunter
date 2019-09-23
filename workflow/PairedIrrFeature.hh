@@ -24,28 +24,30 @@
 #include <memory>
 #include <string>
 
-#include "workflow/GraphVariantAnalyzer.hh"
+#include "reads/Read.hh"
+#include "stats/WeightedPurityCalculator.hh"
+#include "workflow/ModelFeature.hh"
 
 namespace ehunter
 {
 
-class StrFeature;
-class PairedIrrFeature;
+class GraphModel;
 
-class StrAnalyzer : public GraphVariantAnalyzer
+class PairedIrrFeature : public ModelFeature
 {
 public:
-    explicit StrAnalyzer(std::shared_ptr<StrFeature> strFeature, std::string variantId);
-    ~StrAnalyzer() override = default;
+    PairedIrrFeature(std::shared_ptr<GraphModel> modelPtr, std::string motif);
+    ~PairedIrrFeature() override = default;
+    std::shared_ptr<RegionModel> model() override;
 
-    std::vector<std::shared_ptr<ModelFeature>> features() override;
-    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
-
-    void addPairedIrrFeature(std::shared_ptr<PairedIrrFeature> featurePtr);
+    void process(const MappedRead& read, const MappedRead& mate);
+    int numIrrPairs() const { return numIrrPairs_; }
 
 private:
-    std::shared_ptr<PairedIrrFeature> pairedIrrFeature_;
-    std::shared_ptr<StrFeature> strFeature_;
+    std::shared_ptr<GraphModel> modelPtr_;
+    std::string motif_;
+    WeightedPurityCalculator weightedPurityCalculator_;
+    int numIrrPairs_;
 };
 
 }

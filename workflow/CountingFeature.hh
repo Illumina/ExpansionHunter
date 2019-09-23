@@ -47,10 +47,10 @@ public:
     void addReadInfo(int readLength);
 
 private:
+    std::shared_ptr<CountingModel> modelPtr_;
     std::vector<GenomicRegion> targetRegions_;
     std::int64_t numReads_ = 0;
     std::int64_t totalReadLength_ = 0;
-    std::shared_ptr<CountingModel> modelPtr_;
 };
 
 }

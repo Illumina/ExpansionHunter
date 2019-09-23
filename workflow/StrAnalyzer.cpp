@@ -24,6 +24,7 @@
 #include "classification/AlignmentSummary.hh"
 #include "common/CountTable.hh"
 #include "genotyping/RepeatGenotyper.hh"
+#include "workflow/PairedIrrFeature.hh"
 #include "workflow/StrFeature.hh"
 
 using boost::optional;
@@ -112,12 +113,11 @@ std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) c
     const double propCorrectMolecules = 0.97;
     const double haplotypeDepth = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
 
-    // TODO: Set correct count
-    int countOfInrepeatReadPairs = 0;
+    const int numIrrPairs = pairedIrrFeature_ ? pairedIrrFeature_->numIrrPairs() : 0;
 
     RepeatGenotyper repeatGenotyper(
         haplotypeDepth, stats.alleleCount(), motif.length(), maxNumUnitsInRead, propCorrectMolecules,
-        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, countOfInrepeatReadPairs);
+        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, numIrrPairs);
 
     optional<RepeatGenotype> genotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
 
@@ -127,5 +127,10 @@ std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) c
 }
 
 vector<shared_ptr<ModelFeature>> StrAnalyzer::features() { return { strFeature_ }; }
+
+void StrAnalyzer::addPairedIrrFeature(shared_ptr<PairedIrrFeature> featurePtr)
+{
+    pairedIrrFeature_ = std::move(featurePtr);
+}
 
 }

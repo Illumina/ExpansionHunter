@@ -28,6 +28,7 @@
 #include "workflow/CountingModel.hh"
 #include "workflow/GraphLocusAnalyzer.hh"
 #include "workflow/GraphModel.hh"
+#include "workflow/PairedIrrFeature.hh"
 #include "workflow/StatsAnalyzer.hh"
 #include "workflow/StrAnalyzer.hh"
 #include "workflow/StrFeature.hh"
@@ -88,19 +89,13 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
             auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(strFeaturePtr, variantSpec.id());
             graphLocusPtr->addAnalyzer(strAnalyzerPtr);
 
-            /*
-            weightedPurityCalculators.emplace(std::make_pair(repeatUnit, WeightedPurityCalculator(repeatUnit)));
-
             if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
             {
-                if (optionalUnitOfRareRepeat_)
-                {
-                    const string errorMessage
-                        = "Region " + locusSpec_.locusId() + " is not permitted to have more than one rare variant";
-                    throw std::logic_error(errorMessage);
-                }
-                optionalUnitOfRareRepeat_ = repeatUnit;
-            } */
+                const string& motif = graphModelPtr->graph().nodeSeq(motifNode);
+                auto pairedIrrFeaturePtr = std::make_shared<PairedIrrFeature>(graphModelPtr, motif);
+                graphModelPtr->addPairedIrrFeature(pairedIrrFeaturePtr.get());
+                strAnalyzerPtr->addPairedIrrFeature(pairedIrrFeaturePtr);
+            }
         }
         // else if (variantSpec.classification().type == VariantType::kSmallVariant)
         //{

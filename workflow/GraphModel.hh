@@ -38,6 +38,7 @@ namespace ehunter
 {
 
 class GraphFeature;
+class PairedIrrFeature;
 
 class GraphModel : public RegionModel
 {
@@ -47,15 +48,17 @@ public:
     ~GraphModel() override;
 
     void analyze(MappedRead read, MappedRead mate) override;
-    void analyze(MappedRead read) override {};
+    void analyze(MappedRead /*read*/) override {};
     const graphtools::Graph& graph() const { return graph_; }
     void addFeature(GraphFeature* featurePtr);
+    void addPairedIrrFeature(PairedIrrFeature* featurePtr);
     std::vector<ModelFeature*> modelFeatures() override;
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
 
     std::vector<GraphFeature*> featurePtrs_;
+    PairedIrrFeature* pairedIrrFeaturePtr_ = nullptr;
 
     ReadClassifier readClassifier_;
     graphtools::Graph graph_;

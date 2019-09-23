@@ -24,6 +24,7 @@
 #include "alignment/AlignmentFilters.hh"
 #include "spdlog/spdlog.h"
 #include "workflow/GraphFeature.hh"
+#include "workflow/PairedIrrFeature.hh"
 
 namespace ehunter
 {
@@ -49,9 +50,14 @@ void GraphModel::analyze(MappedRead read, MappedRead mate)
 {
     RegionProximity type = readClassifier_.classify(read, mate);
 
-    if (type != RegionProximity::kInside)
+    if (type == RegionProximity::kOverlapsOrNear)
     {
         return;
+    }
+
+    if (type == RegionProximity::kFar && pairedIrrFeaturePtr_ != nullptr)
+    {
+        pairedIrrFeaturePtr_->process(read, mate);
     }
 
     ++numPairsProcessed_;
@@ -65,6 +71,11 @@ void GraphModel::analyze(MappedRead read, MappedRead mate)
 
     if (!checkIfComesFromGraphLocus(readAlignments, mateAlignments, kMinNonRepeatAlignmentScore))
     {
+        if (pairedIrrFeaturePtr_ != nullptr)
+        {
+            pairedIrrFeaturePtr_->process(read, mate);
+        }
+
         return;
     }
 
@@ -103,6 +114,11 @@ std::vector<ModelFeature*> GraphModel::modelFeatures()
         modelFeatures.push_back(graphFeature);
     }
 
+    if (pairedIrrFeaturePtr_ != nullptr)
+    {
+        modelFeatures.push_back(pairedIrrFeaturePtr_);
+    }
+
     return modelFeatures;
 }
 
@@ -111,6 +127,16 @@ GraphModel::~GraphModel()
     std::ostringstream message;
     message << "Model of " << readExtractionRegions_.front() << " processed " << numPairsProcessed_ << " read pairs";
     spdlog::info(message.str());
+}
+
+void GraphModel::addPairedIrrFeature(PairedIrrFeature* featurePtr)
+{
+    if (pairedIrrFeaturePtr_ != nullptr)
+    {
+        throw std::runtime_error("Attempting to define multiple rare repeats");
+    }
+
+    pairedIrrFeaturePtr_ = featurePtr;
 }
 
 }
