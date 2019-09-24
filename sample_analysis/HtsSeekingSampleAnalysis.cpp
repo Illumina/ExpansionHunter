@@ -204,13 +204,13 @@ static void processReads(const ReadPairs& candidateReadPairs, ModelFinder& analy
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex /*sampleSex*/, const RegionCatalog& regionCatalog,
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*alignmentWriter*/)
 {
     SampleFindings sampleFindings;
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
-        // const string& locusId = locusIdAndRegionSpec.first;
+        const string& locusId = locusIdAndRegionSpec.first;
         const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
 
         WorkflowContext context;
@@ -225,8 +225,8 @@ SampleFindings htsSeekingSampleAnalysis(
 
         processReads(readPairs, analyzerFinder);
 
-        // auto variantFindings = locusAnalyzers.front()->analyze(sampleSex);
-        // sampleFindings.emplace(locusId, std::move(variantFindings));
+        auto variantFindings = locusAnalyzerPtr->analyze(sampleSex);
+        sampleFindings.emplace(locusId, std::move(variantFindings));
     }
 
     return sampleFindings;
