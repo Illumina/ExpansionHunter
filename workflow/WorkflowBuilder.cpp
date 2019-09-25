@@ -75,10 +75,7 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
     auto statsAnalyzerPtr = std::make_shared<StatsAnalyzer>(countingFeaturePtr);
     graphLocusPtr->setStats(statsAnalyzerPtr);
 
-    // Construct graph model
     auto graphModelPtr = std::make_shared<GraphModel>(regionForGraphModel, locusSpec.regionGraph(), heuristics);
-
-    // Construct graph features and variant analyzers
 
     for (const auto& variantSpec : locusSpec.variantSpecs())
     {
@@ -107,9 +104,6 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
             auto smallVariantAnalyzer = std::make_shared<SmallVariantAnalyzer>(
                 smallVariantFeature, variantSpec.id(), variantSpec.classification().subtype,
                 variantSpec.optionalRefNode());
-            //    variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
-            //        variantSpec.id(), variantSpec.classification().subtype, locusSpec.regionGraph(),
-            //        variantSpec.nodes(), variantSpec.optionalRefNode(), locusSpec.genotyperParameters()));
         }
         else
         {

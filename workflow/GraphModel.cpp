@@ -36,7 +36,7 @@ using std::list;
 using std::string;
 
 GraphModel::GraphModel(GenomicRegion referenceRegion, Graph graph, const HeuristicParameters& heuristics)
-    : RegionModel({ referenceRegion }, RegionModel::Type::kTarget)
+    : RegionModel({ referenceRegion })
     , readClassifier_(readExtractionRegions_)
     , graph_(std::move(graph))
     , aligner_(

@@ -30,7 +30,7 @@ namespace ehunter
 {
 
 CountingModel::CountingModel(std::vector<GenomicRegion> readExtractionRegions)
-    : RegionModel(std::move(readExtractionRegions), Type::kTarget)
+    : RegionModel(std::move(readExtractionRegions))
     , proximityClassifier_(readExtractionRegions_)
 {
 }

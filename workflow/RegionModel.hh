@@ -36,16 +36,9 @@ class ModelFeature;
 class RegionModel
 {
 public:
-    enum class Type
-    {
-        kTarget,
-        kOfftarget
-    };
-
-    RegionModel(std::vector<GenomicRegion> readExtractionRegions, Type type);
+    explicit RegionModel(std::vector<GenomicRegion> readExtractionRegions);
     virtual ~RegionModel() = default;
 
-    Type type() const { return type_; }
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
 
     virtual void analyze(MappedRead read, MappedRead mate) = 0;
@@ -55,7 +48,6 @@ public:
 
 protected:
     std::vector<GenomicRegion> readExtractionRegions_;
-    Type type_;
 
     // ChromType typeOfChromLocusLocatedOn_;
 };
