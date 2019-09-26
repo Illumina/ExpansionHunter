@@ -28,18 +28,18 @@
 #include "graphcore/Graph.hh"
 
 #include "reads/Read.hh"
-#include "workflow/ModelFeature.hh"
+#include "workflow/RegionModelFeature.hh"
 
 namespace ehunter
 {
 
 class GraphModel;
 
-class GraphFeature : public ModelFeature
+class GraphVariant : public RegionModelFeature
 {
 public:
-    GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
-    ~GraphFeature() override = default;
+    GraphVariant(std::shared_ptr<GraphModel> model, std::vector<graphtools::NodeId> nodeIds);
+    ~GraphVariant() override = default;
 
     std::shared_ptr<RegionModel> model() override;
     using Alignments = std::list<graphtools::GraphAlignment>;
@@ -48,7 +48,7 @@ public:
     const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
 
 protected:
-    std::shared_ptr<GraphModel> modelPtr_;
+    std::shared_ptr<GraphModel> model_;
     std::vector<graphtools::NodeId> nodeIds_;
 };
 

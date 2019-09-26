@@ -36,21 +36,21 @@
 namespace ehunter
 {
 
-class SmallVariantFeature;
+class GraphSmallVariant;
 
-class SmallVariantAnalyzer : public GraphVariantAnalyzer
+class GraphSmallVariantAnalyzer : public GraphVariantAnalyzer
 {
 public:
-    SmallVariantAnalyzer(
-        std::shared_ptr<SmallVariantFeature> smallVariantFeature, std::string variantId, VariantSubtype variantSubtype,
+    GraphSmallVariantAnalyzer(
+        std::shared_ptr<GraphSmallVariant> smallVariantFeature, std::string variantId, VariantSubtype variantSubtype,
         boost::optional<graphtools::NodeId> optionalRefNode);
-    ~SmallVariantAnalyzer() override = default;
+    ~GraphSmallVariantAnalyzer() override = default;
 
-    std::vector<std::shared_ptr<ModelFeature>> features() override;
+    std::vector<std::shared_ptr<RegionModelFeature>> features() override;
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
 private:
-    std::shared_ptr<SmallVariantFeature> smallVariantFeature_;
+    std::shared_ptr<GraphSmallVariant> smallVariantFeature_;
     VariantSubtype variantSubtype_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
     GenotyperParameters genotyperParams_;

@@ -19,9 +19,9 @@
 //
 //
 
-#include "workflow/SmallVariantAnalyzer.hh"
+#include "workflow/GraphSmallVariantAnalyzer.hh"
 
-#include "workflow/SmallVariantFeature.hh"
+#include "workflow/GraphSmallVariant.hh"
 
 using graphtools::NodeId;
 using std::shared_ptr;
@@ -31,8 +31,8 @@ using std::vector;
 namespace ehunter
 {
 
-SmallVariantAnalyzer::SmallVariantAnalyzer(
-    std::shared_ptr<SmallVariantFeature> smallVariantFeature, std::string variantId, VariantSubtype variantSubtype,
+GraphSmallVariantAnalyzer::GraphSmallVariantAnalyzer(
+    std::shared_ptr<GraphSmallVariant> smallVariantFeature, std::string variantId, VariantSubtype variantSubtype,
     boost::optional<graphtools::NodeId> optionalRefNode)
     : GraphVariantAnalyzer(std::move(variantId))
     , smallVariantFeature_(std::move(smallVariantFeature))
@@ -42,7 +42,7 @@ SmallVariantAnalyzer::SmallVariantAnalyzer(
 {
 }
 
-unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats& stats) const
+unique_ptr<VariantFindings> GraphSmallVariantAnalyzer::analyze(const LocusStats& stats) const
 {
     NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : SmallVariantAlignmentClassifier::kInvalidNodeId;
     NodeId altNode = SmallVariantAlignmentClassifier::kInvalidNodeId;
@@ -86,6 +86,6 @@ unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats& stat
         new SmallVariantFindings(refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
 }
 
-vector<shared_ptr<ModelFeature>> SmallVariantAnalyzer::features() { return { smallVariantFeature_ }; }
+vector<shared_ptr<RegionModelFeature>> GraphSmallVariantAnalyzer::features() { return { smallVariantFeature_ }; }
 
 }

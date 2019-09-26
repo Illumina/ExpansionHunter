@@ -2,7 +2,7 @@
 // Created by Dolzhenko, Egor on 9/11/19.
 //
 
-#include "workflow/ModelFeature.hh"
+#include "workflow/RegionModelFeature.hh"
 
 namespace ehunter
 {

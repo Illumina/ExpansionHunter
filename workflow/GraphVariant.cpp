@@ -19,33 +19,19 @@
 //
 //
 
-#pragma once
+#include "workflow/GraphVariant.hh"
 
-#include <memory>
-#include <string>
-
-#include "workflow/GraphVariantAnalyzer.hh"
+#include "workflow/GraphModel.hh"
 
 namespace ehunter
 {
 
-class StrFeature;
-class PairedIrrFeature;
-
-class StrAnalyzer : public GraphVariantAnalyzer
+GraphVariant::GraphVariant(std::shared_ptr<GraphModel> model, std::vector<graphtools::NodeId> nodeIds)
+    : model_(std::move(model))
+    , nodeIds_(std::move(nodeIds))
 {
-public:
-    explicit StrAnalyzer(std::shared_ptr<StrFeature> strFeature, std::string variantId);
-    ~StrAnalyzer() override = default;
+}
 
-    std::vector<std::shared_ptr<ModelFeature>> features() override;
-    std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
-
-    void addPairedIrrFeature(std::shared_ptr<PairedIrrFeature> featurePtr);
-
-private:
-    std::shared_ptr<PairedIrrFeature> pairedIrrFeature_;
-    std::shared_ptr<StrFeature> strFeature_;
-};
+std::shared_ptr<RegionModel> GraphVariant::model() { return model_; }
 
 }

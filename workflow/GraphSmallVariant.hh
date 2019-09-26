@@ -26,16 +26,16 @@
 
 #include "classification/SmallVariantAlignmentClassifier.hh"
 #include "genotyping/SmallVariantGenotyper.hh"
-#include "workflow/GraphFeature.hh"
+#include "workflow/GraphVariant.hh"
 
 namespace ehunter
 {
 
-class SmallVariantFeature : public GraphFeature
+class GraphSmallVariant : public GraphVariant
 {
 public:
-    SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
-    ~SmallVariantFeature() override = default;
+    GraphSmallVariant(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
+    ~GraphSmallVariant() override = default;
 
     void
     process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;

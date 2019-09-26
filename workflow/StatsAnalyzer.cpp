@@ -27,12 +27,12 @@ using std::vector;
 namespace ehunter
 {
 
-StatsAnalyzer::StatsAnalyzer(std::shared_ptr<CountingFeature> feature)
+StatsAnalyzer::StatsAnalyzer(std::shared_ptr<LinearModelFeature> feature)
     : feature_(std::move(feature))
 {
 }
 
-vector<shared_ptr<ModelFeature>> StatsAnalyzer::features() { return { feature_ }; }
+vector<shared_ptr<RegionModelFeature>> StatsAnalyzer::features() { return { feature_ }; }
 
 LocusStats StatsAnalyzer::estimate(Sex /*sampleSex*/) const
 {

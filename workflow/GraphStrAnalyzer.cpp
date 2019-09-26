@@ -19,13 +19,13 @@
 //
 //
 
-#include "workflow/StrAnalyzer.hh"
+#include "workflow/GraphStrAnalyzer.hh"
 
 #include "classification/AlignmentSummary.hh"
 #include "common/CountTable.hh"
 #include "genotyping/RepeatGenotyper.hh"
-#include "workflow/PairedIrrFeature.hh"
-#include "workflow/StrFeature.hh"
+#include "workflow/GraphStr.hh"
+#include "workflow/OfftargetFeature.hh"
 
 using boost::optional;
 using std::shared_ptr;
@@ -86,13 +86,13 @@ static vector<int> generateCandidateAlleleSizes(
     return candidateSizes;
 }
 
-StrAnalyzer::StrAnalyzer(shared_ptr<StrFeature> strFeature, string variantId)
+GraphStrAnalyzer::GraphStrAnalyzer(shared_ptr<GraphStr> strFeature, string variantId)
     : GraphVariantAnalyzer(std::move(variantId))
     , strFeature_(std::move(strFeature))
 {
 }
 
-std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) const
+std::unique_ptr<VariantFindings> GraphStrAnalyzer::analyze(const LocusStats& stats) const
 {
     assert(strFeature_);
 
@@ -126,9 +126,9 @@ std::unique_ptr<VariantFindings> StrAnalyzer::analyze(const LocusStats& stats) c
     return findingsPtr;
 }
 
-vector<shared_ptr<ModelFeature>> StrAnalyzer::features() { return { strFeature_ }; }
+vector<shared_ptr<RegionModelFeature>> GraphStrAnalyzer::features() { return { strFeature_ }; }
 
-void StrAnalyzer::addPairedIrrFeature(shared_ptr<PairedIrrFeature> featurePtr)
+void GraphStrAnalyzer::addPairedIrrFeature(shared_ptr<OfftargetFeature> featurePtr)
 {
     pairedIrrFeature_ = std::move(featurePtr);
 }

@@ -21,32 +21,33 @@
 
 #pragma once
 
-#include <vector>
+#include <memory>
+#include <string>
 
-#include "strs/ReadClassifier.hh"
-#include "workflow/RegionModel.hh"
+#include "reads/Read.hh"
+#include "stats/WeightedPurityCalculator.hh"
+#include "workflow/RegionModelFeature.hh"
 
 namespace ehunter
 {
 
-class CountingFeature;
+class GraphModel;
 
-class CountingModel : public RegionModel
+class OfftargetFeature : public RegionModelFeature
 {
 public:
-    CountingModel() = delete;
-    explicit CountingModel(std::vector<GenomicRegion> readExtractionRegions);
-    ~CountingModel() override;
+    OfftargetFeature(std::shared_ptr<GraphModel> model, std::string motif);
+    ~OfftargetFeature() override = default;
+    std::shared_ptr<RegionModel> model() override;
 
-    void addFeature(CountingFeature* featurePtr);
-    std::vector<ModelFeature*> modelFeatures() override;
-
-    void analyze(MappedRead read, MappedRead mate) override;
-    void analyze(MappedRead read) override;
+    void process(const MappedRead& read, const MappedRead& mate);
+    int numIrrPairs() const { return numIrrPairs_; }
 
 private:
-    std::vector<CountingFeature*> featurePtrs_;
-    ReadClassifier proximityClassifier_;
+    std::shared_ptr<GraphModel> model_;
+    std::string motif_;
+    WeightedPurityCalculator weightedPurityCalculator_;
+    int numIrrPairs_ = 0;
 };
 
 }

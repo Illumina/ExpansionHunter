@@ -25,8 +25,8 @@
 
 #include "common/Common.hh"
 #include "stats/LocusStats.hh"
-#include "workflow/CountingFeature.hh"
 #include "workflow/FeatureAnalyzer.hh"
+#include "workflow/LinearModelFeature.hh"
 
 namespace ehunter
 {
@@ -34,14 +34,14 @@ namespace ehunter
 class StatsAnalyzer : public FeatureAnalyzer
 {
 public:
-    explicit StatsAnalyzer(std::shared_ptr<CountingFeature> feature);
+    explicit StatsAnalyzer(std::shared_ptr<LinearModelFeature> feature);
     ~StatsAnalyzer() override = default;
 
-    std::vector<std::shared_ptr<ModelFeature>> features() override;
+    std::vector<std::shared_ptr<RegionModelFeature>> features() override;
     LocusStats estimate(Sex sampleSex) const;
 
 private:
-    std::shared_ptr<CountingFeature> feature_;
+    std::shared_ptr<LinearModelFeature> feature_;
 };
 
 }

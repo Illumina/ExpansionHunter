@@ -19,26 +19,26 @@
 //
 //
 
-#include "workflow/SmallVariantFeature.hh"
+#include "workflow/GraphSmallVariant.hh"
 
 namespace ehunter
 {
 
-SmallVariantFeature::SmallVariantFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
-    : GraphFeature(modelPtr, std::move(nodeIds))
+GraphSmallVariant::GraphSmallVariant(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
+    : GraphVariant(modelPtr, std::move(nodeIds))
     , alignmentClassifier_(nodeIds_)
 
 {
 }
 
-void SmallVariantFeature::process(
+void GraphSmallVariant::process(
     const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
 {
     processRead(read, readAligns);
     processRead(mate, mateAligns);
 }
 
-void SmallVariantFeature::processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
+void GraphSmallVariant::processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
 {
     ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read.sequence(), alignments);
 
@@ -72,7 +72,7 @@ void SmallVariantFeature::processRead(const Read& read, const std::list<graphtoo
     }
 }
 
-int SmallVariantFeature::countReadsSupportingNode(graphtools::NodeId nodeId) const
+int GraphSmallVariant::countReadsSupportingNode(graphtools::NodeId nodeId) const
 {
     if (nodeId == SmallVariantAlignmentClassifier::kInvalidNodeId)
     {

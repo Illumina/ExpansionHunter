@@ -19,9 +19,9 @@
 //
 //
 
-#include "workflow/CountingFeature.hh"
+#include "workflow/LinearModelFeature.hh"
 
-#include "workflow/CountingModel.hh"
+#include "workflow/LinearModel.hh"
 
 using std::shared_ptr;
 using std::vector;
@@ -29,15 +29,15 @@ using std::vector;
 namespace ehunter
 {
 
-CountingFeature::CountingFeature(shared_ptr<CountingModel> modelPtr, vector<GenomicRegion> targetRegions)
+LinearModelFeature::LinearModelFeature(shared_ptr<LinearModel> modelPtr, vector<GenomicRegion> targetRegions)
     : modelPtr_(std::move(modelPtr))
     , targetRegions_(std::move(targetRegions))
 {
 }
 
-shared_ptr<RegionModel> CountingFeature::model() { return modelPtr_; }
+shared_ptr<RegionModel> LinearModelFeature::model() { return modelPtr_; }
 
-int CountingFeature::getReadLength() const
+int LinearModelFeature::getReadLength() const
 {
     if (numReads_ == 0)
     {
@@ -47,7 +47,7 @@ int CountingFeature::getReadLength() const
     return static_cast<int>(totalReadLength_ / numReads_);
 }
 
-double CountingFeature::getDepth() const
+double LinearModelFeature::getDepth() const
 {
     const int readLength = getReadLength();
     std::int64_t numberOfStartPositions = 0;
@@ -63,7 +63,7 @@ double CountingFeature::getDepth() const
     return depth;
 }
 
-void CountingFeature::addReadInfo(int readLength)
+void LinearModelFeature::addReadInfo(int readLength)
 {
     ++numReads_;
     totalReadLength_ += readLength;

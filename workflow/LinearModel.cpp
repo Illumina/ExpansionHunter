@@ -19,45 +19,45 @@
 //
 //
 
-#include "workflow/CountingModel.hh"
+#include "workflow/LinearModel.hh"
 
 #include "spdlog/spdlog.h"
-#include "workflow/CountingFeature.hh"
+#include "workflow/LinearModelFeature.hh"
 
 using std::vector;
 
 namespace ehunter
 {
 
-CountingModel::CountingModel(std::vector<GenomicRegion> readExtractionRegions)
+LinearModel::LinearModel(std::vector<GenomicRegion> readExtractionRegions)
     : RegionModel(std::move(readExtractionRegions))
     , proximityClassifier_(readExtractionRegions_)
 {
 }
 
-void CountingModel::analyze(MappedRead read, MappedRead mate)
+void LinearModel::analyze(MappedRead read, MappedRead mate)
 {
     analyze(read);
     analyze(mate);
 }
 
-void CountingModel::analyze(MappedRead read)
+void LinearModel::analyze(MappedRead read)
 {
     const RegionProximity proximity = proximityClassifier_.classify(read);
     if (proximity == RegionProximity::kInside)
     {
-        for (const auto& feature : featurePtrs_)
+        for (const auto& feature : features_)
         {
             feature->addReadInfo(read.sequence().length());
         }
     }
 }
 
-vector<ModelFeature*> CountingModel::modelFeatures()
+vector<RegionModelFeature*> LinearModel::modelFeatures()
 {
-    vector<ModelFeature*> modelFeatures;
+    vector<RegionModelFeature*> modelFeatures;
 
-    for (const auto& countingFeature : featurePtrs_)
+    for (const auto& countingFeature : features_)
     {
         modelFeatures.push_back(countingFeature);
     }
@@ -65,7 +65,7 @@ vector<ModelFeature*> CountingModel::modelFeatures()
     return modelFeatures;
 }
 
-CountingModel::~CountingModel()
+LinearModel::~LinearModel()
 {
     /*    std::ostringstream regionEncoding;
         regionEncoding << readExtractionRegions_.front();
@@ -77,6 +77,6 @@ CountingModel::~CountingModel()
         spdlog::info("\tcalculateDepth() = {}", calculateDepth()); */
 }
 
-void CountingModel::addFeature(CountingFeature* featurePtr) { featurePtrs_.push_back(featurePtr); }
+void LinearModel::addFeature(LinearModelFeature* feature) { features_.push_back(feature); }
 
 }

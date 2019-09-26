@@ -21,33 +21,32 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
 #include <vector>
 
-#include "classification/AlignmentSummary.hh"
-#include "classification/StrAlignmentClassifier.hh"
-#include "workflow/GraphFeature.hh"
+#include "strs/ReadClassifier.hh"
+#include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
 
-class GraphModel;
+class LinearModelFeature;
 
-class StrFeature : public GraphFeature
+class LinearModel : public RegionModel
 {
 public:
-    StrFeature(std::shared_ptr<GraphModel> graphModelPtr, graphtools::NodeId nodeId);
-    void
-    process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+    LinearModel() = delete;
+    explicit LinearModel(std::vector<GenomicRegion> readExtractionRegions);
+    ~LinearModel() override;
 
-    const std::string& motif() const;
-    const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
+    void addFeature(LinearModelFeature* feature);
+    std::vector<RegionModelFeature*> modelFeatures() override;
+
+    void analyze(MappedRead read, MappedRead mate) override;
+    void analyze(MappedRead read) override;
 
 private:
-    graphtools::NodeId motifNodeId() const;
-    StrAlignmentClassifier alignmentClassifier_;
-    std::vector<ReadSummaryForStr> readSummaries_;
+    std::vector<LinearModelFeature*> features_;
+    ReadClassifier proximityClassifier_;
 };
 
 }

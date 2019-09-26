@@ -19,7 +19,7 @@
 //
 //
 
-#include "workflow/PairedIrrFeature.hh"
+#include "workflow/OfftargetFeature.hh"
 
 #include "workflow/GraphModel.hh"
 
@@ -29,16 +29,16 @@ using std::string;
 namespace ehunter
 {
 
-PairedIrrFeature::PairedIrrFeature(shared_ptr<GraphModel> modelPtr, string motif)
-    : modelPtr_(std::move(modelPtr))
+OfftargetFeature::OfftargetFeature(shared_ptr<GraphModel> model, string motif)
+    : model_(std::move(model))
     , motif_(std::move(motif))
     , weightedPurityCalculator_(motif_)
 {
 }
 
-shared_ptr<RegionModel> PairedIrrFeature::model() { return modelPtr_; }
+shared_ptr<RegionModel> OfftargetFeature::model() { return model_; }
 
-void PairedIrrFeature::process(const MappedRead& read, const MappedRead& mate)
+void OfftargetFeature::process(const MappedRead& read, const MappedRead& mate)
 {
     const bool isFirstReadInrepeat = weightedPurityCalculator_.score(read.sequence()) >= 0.90;
     const bool isSecondReadInrepeat = weightedPurityCalculator_.score(mate.sequence()) >= 0.90;

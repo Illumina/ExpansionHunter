@@ -24,16 +24,16 @@
 #include <stdexcept>
 #include <string>
 
-#include "workflow/CountingFeature.hh"
-#include "workflow/CountingModel.hh"
 #include "workflow/GraphLocusAnalyzer.hh"
 #include "workflow/GraphModel.hh"
-#include "workflow/PairedIrrFeature.hh"
-#include "workflow/SmallVariantAnalyzer.hh"
-#include "workflow/SmallVariantFeature.hh"
+#include "workflow/GraphSmallVariant.hh"
+#include "workflow/GraphSmallVariantAnalyzer.hh"
+#include "workflow/GraphStr.hh"
+#include "workflow/GraphStrAnalyzer.hh"
+#include "workflow/LinearModel.hh"
+#include "workflow/LinearModelFeature.hh"
+#include "workflow/OfftargetFeature.hh"
 #include "workflow/StatsAnalyzer.hh"
-#include "workflow/StrAnalyzer.hh"
-#include "workflow/StrFeature.hh"
 
 using std::shared_ptr;
 using std::static_pointer_cast;
@@ -46,62 +46,58 @@ namespace ehunter
 
 shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
-    auto graphLocusPtr = std::make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
-
     if (locusSpec.targetReadExtractionRegions().size() != 1)
     {
-        const string message
-            = "Locus " + locusSpec.locusId() + " must be associated with exactly one read extraction workflow";
+        const string message = "Locus " + locusSpec.locusId() + " must be associated with one read extraction region";
         throw std::runtime_error(message);
     }
 
-    const auto& regionForGraphModel = locusSpec.targetReadExtractionRegions().front();
-
-    // Construct counting model
+    const auto& extractionRegion = locusSpec.targetReadExtractionRegions().front();
 
     // Initialize counting model
-    const int kFlankLength = 1000;
-    const int64_t leftFlankEnd = regionForGraphModel.start() + kFlankLength;
-    GenomicRegion leftFlank(regionForGraphModel.contigIndex(), regionForGraphModel.start(), leftFlankEnd);
+    const int64_t leftFlankEnd = extractionRegion.start() + heuristics.regionExtensionLength();
+    GenomicRegion leftFlank(extractionRegion.contigIndex(), extractionRegion.start(), leftFlankEnd);
 
-    const int64_t rightFlankStart = regionForGraphModel.end() - kFlankLength;
-    GenomicRegion rightFlank(regionForGraphModel.contigIndex(), rightFlankStart, regionForGraphModel.end());
+    const int64_t rightFlankStart = extractionRegion.end() - heuristics.regionExtensionLength();
+    GenomicRegion rightFlank(extractionRegion.contigIndex(), rightFlankStart, extractionRegion.end());
 
     // Initialize stats feature
-    vector<GenomicRegion> statsRegions = { leftFlank, rightFlank };
-    auto countingModelPtr = std::make_shared<CountingModel>(statsRegions);
-    auto countingFeaturePtr = std::make_shared<CountingFeature>(countingModelPtr, statsRegions);
-    countingModelPtr->addFeature(countingFeaturePtr.get());
-    auto statsAnalyzerPtr = std::make_shared<StatsAnalyzer>(countingFeaturePtr);
-    graphLocusPtr->setStats(statsAnalyzerPtr);
+    vector<GenomicRegion> baselineRegions = { leftFlank, rightFlank };
+    auto linearModel = std::make_shared<LinearModel>(baselineRegions);
+    auto countingFeature = std::make_shared<LinearModelFeature>(linearModel, baselineRegions);
+    linearModel->addFeature(countingFeature.get());
+    auto statsAnalyzer = std::make_shared<StatsAnalyzer>(countingFeature);
 
-    auto graphModelPtr = std::make_shared<GraphModel>(regionForGraphModel, locusSpec.regionGraph(), heuristics);
+    auto locus = std::make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
+    locus->setStats(statsAnalyzer);
+
+    auto graphModel = std::make_shared<GraphModel>(extractionRegion, locusSpec.regionGraph(), heuristics);
 
     for (const auto& variantSpec : locusSpec.variantSpecs())
     {
         if (variantSpec.classification().type == VariantType::kRepeat)
         {
             const int motifNode = variantSpec.nodes().front();
-            auto strFeaturePtr = std::make_shared<StrFeature>(graphModelPtr, motifNode);
-            graphModelPtr->addFeature(strFeaturePtr.get());
+            auto strFeaturePtr = std::make_shared<GraphStr>(graphModel, motifNode);
+            graphModel->addVariant(strFeaturePtr.get());
 
-            auto strAnalyzerPtr = std::make_shared<StrAnalyzer>(strFeaturePtr, variantSpec.id());
-            graphLocusPtr->addAnalyzer(strAnalyzerPtr);
+            auto strAnalyzerPtr = std::make_shared<GraphStrAnalyzer>(strFeaturePtr, variantSpec.id());
+            locus->addAnalyzer(strAnalyzerPtr);
 
             if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
             {
-                const string& motif = graphModelPtr->graph().nodeSeq(motifNode);
-                auto pairedIrrFeaturePtr = std::make_shared<PairedIrrFeature>(graphModelPtr, motif);
-                graphModelPtr->addPairedIrrFeature(pairedIrrFeaturePtr.get());
+                const string& motif = graphModel->graph().nodeSeq(motifNode);
+                auto pairedIrrFeaturePtr = std::make_shared<OfftargetFeature>(graphModel, motif);
+                graphModel->addOfftargetFeature(pairedIrrFeaturePtr.get());
                 strAnalyzerPtr->addPairedIrrFeature(pairedIrrFeaturePtr);
             }
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {
-            auto smallVariantFeature = std::make_shared<SmallVariantFeature>(graphModelPtr, variantSpec.nodes());
-            graphModelPtr->addFeature(smallVariantFeature.get());
+            auto smallVariantFeature = std::make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
+            graphModel->addVariant(smallVariantFeature.get());
 
-            auto smallVariantAnalyzer = std::make_shared<SmallVariantAnalyzer>(
+            auto smallVariantAnalyzer = std::make_shared<GraphSmallVariantAnalyzer>(
                 smallVariantFeature, variantSpec.id(), variantSpec.classification().subtype,
                 variantSpec.optionalRefNode());
         }
@@ -113,7 +109,7 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
         }
     }
 
-    return graphLocusPtr;
+    return locus;
 }
 
 vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<LocusAnalyzer>>& loci)

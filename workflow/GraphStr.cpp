@@ -19,7 +19,7 @@
 //
 //
 
-#include "workflow/StrFeature.hh"
+#include "workflow/GraphStr.hh"
 #include "workflow/GraphModel.hh"
 
 using std::shared_ptr;
@@ -28,13 +28,13 @@ using std::static_pointer_cast;
 namespace ehunter
 {
 
-StrFeature::StrFeature(std::shared_ptr<GraphModel> graphModelPtr, graphtools::NodeId nodeId)
-    : GraphFeature(std::move(graphModelPtr), { nodeId })
-    , alignmentClassifier_(modelPtr_->graph(), nodeId)
+GraphStr::GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId nodeId)
+    : GraphVariant(std::move(model), { nodeId })
+    , alignmentClassifier_(model_->graph(), nodeId)
 {
 }
 
-void StrFeature::process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+void GraphStr::process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
 {
     ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read.sequence(), readAligns);
     if (strRead.hasAlignments())
@@ -49,8 +49,8 @@ void StrFeature::process(const Read& read, const Alignments& readAligns, const R
     }
 }
 
-graphtools::NodeId StrFeature::motifNodeId() const { return nodeIds_.front(); }
+graphtools::NodeId GraphStr::motifNodeId() const { return nodeIds_.front(); }
 
-const std::string& StrFeature::motif() const { return modelPtr_->graph().nodeSeq(motifNodeId()); }
+const std::string& GraphStr::motif() const { return model_->graph().nodeSeq(motifNodeId()); }
 
 }

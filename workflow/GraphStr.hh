@@ -22,17 +22,32 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
+
+#include "classification/AlignmentSummary.hh"
+#include "classification/StrAlignmentClassifier.hh"
+#include "workflow/GraphVariant.hh"
 
 namespace ehunter
 {
 
-class RegionModel;
+class GraphModel;
 
-class ModelFeature
+class GraphStr : public GraphVariant
 {
 public:
-    virtual ~ModelFeature() = default;
-    virtual std::shared_ptr<RegionModel> model() = 0;
+    GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId nodeId);
+    void
+    process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+
+    const std::string& motif() const;
+    const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
+
+private:
+    graphtools::NodeId motifNodeId() const;
+    StrAlignmentClassifier alignmentClassifier_;
+    std::vector<ReadSummaryForStr> readSummaries_;
 };
 
 }

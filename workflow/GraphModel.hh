@@ -37,36 +37,32 @@
 namespace ehunter
 {
 
-class GraphFeature;
-class PairedIrrFeature;
+class GraphVariant;
+class OfftargetFeature;
 
 class GraphModel : public RegionModel
 {
 public:
-    using SPtr = std::shared_ptr<GraphModel>;
     explicit GraphModel(GenomicRegion referenceRegion, graphtools::Graph graph, const HeuristicParameters& heuristics);
-    ~GraphModel() override;
+    ~GraphModel() override = default;
 
     void analyze(MappedRead read, MappedRead mate) override;
     void analyze(MappedRead /*read*/) override {};
     const graphtools::Graph& graph() const { return graph_; }
-    void addFeature(GraphFeature* featurePtr);
-    void addPairedIrrFeature(PairedIrrFeature* featurePtr);
-    std::vector<ModelFeature*> modelFeatures() override;
+    void addVariant(GraphVariant* variant);
+    void addOfftargetFeature(OfftargetFeature* feature);
+    std::vector<RegionModelFeature*> modelFeatures() override;
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
 
-    std::vector<GraphFeature*> featurePtrs_;
-    PairedIrrFeature* pairedIrrFeaturePtr_ = nullptr;
+    std::vector<GraphVariant*> variants_;
+    OfftargetFeature* offtargetFeature_ = nullptr;
 
     ReadClassifier readClassifier_;
     graphtools::Graph graph_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
-
-    // Stats
-    int numPairsProcessed_ = 0;
 };
 
 }

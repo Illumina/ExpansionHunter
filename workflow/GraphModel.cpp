@@ -23,8 +23,8 @@
 
 #include "alignment/AlignmentFilters.hh"
 #include "spdlog/spdlog.h"
-#include "workflow/GraphFeature.hh"
-#include "workflow/PairedIrrFeature.hh"
+#include "workflow/GraphVariant.hh"
+#include "workflow/OfftargetFeature.hh"
 
 namespace ehunter
 {
@@ -55,12 +55,11 @@ void GraphModel::analyze(MappedRead read, MappedRead mate)
         return;
     }
 
-    if (type == RegionProximity::kFar && pairedIrrFeaturePtr_ != nullptr)
+    if (type == RegionProximity::kFar && offtargetFeature_ != nullptr)
     {
-        pairedIrrFeaturePtr_->process(read, mate);
+        offtargetFeature_->process(read, mate);
     }
 
-    ++numPairsProcessed_;
     list<GraphAlignment> readAlignments = align(read);
     list<GraphAlignment> mateAlignments = align(mate);
 
@@ -71,9 +70,9 @@ void GraphModel::analyze(MappedRead read, MappedRead mate)
 
     if (!checkIfComesFromGraphLocus(readAlignments, mateAlignments, kMinNonRepeatAlignmentScore))
     {
-        if (pairedIrrFeaturePtr_ != nullptr)
+        if (offtargetFeature_ != nullptr)
         {
-            pairedIrrFeaturePtr_->process(read, mate);
+            offtargetFeature_->process(read, mate);
         }
 
         return;
@@ -81,7 +80,7 @@ void GraphModel::analyze(MappedRead read, MappedRead mate)
 
     if (!readAlignments.empty() && !mateAlignments.empty())
     {
-        for (auto& featurePtr : featurePtrs_)
+        for (auto& featurePtr : variants_)
         {
             featurePtr->process(read, readAlignments, mate, mateAlignments);
         }
@@ -104,39 +103,32 @@ list<GraphAlignment> GraphModel::align(Read& read) const
     return aligner_.align(read.sequence());
 }
 
-void GraphModel::addFeature(GraphFeature* featurePtr) { featurePtrs_.push_back(featurePtr); }
+void GraphModel::addVariant(GraphVariant* variant) { variants_.push_back(variant); }
 
-std::vector<ModelFeature*> GraphModel::modelFeatures()
+std::vector<RegionModelFeature*> GraphModel::modelFeatures()
 {
-    std::vector<ModelFeature*> modelFeatures;
-    for (const auto& graphFeature : featurePtrs_)
+    std::vector<RegionModelFeature*> modelFeatures;
+    for (const auto& variant : variants_)
     {
-        modelFeatures.push_back(graphFeature);
+        modelFeatures.push_back(variant);
     }
 
-    if (pairedIrrFeaturePtr_ != nullptr)
+    if (offtargetFeature_ != nullptr)
     {
-        modelFeatures.push_back(pairedIrrFeaturePtr_);
+        modelFeatures.push_back(offtargetFeature_);
     }
 
     return modelFeatures;
 }
 
-GraphModel::~GraphModel()
+void GraphModel::addOfftargetFeature(OfftargetFeature* feature)
 {
-    std::ostringstream message;
-    message << "Model of " << readExtractionRegions_.front() << " processed " << numPairsProcessed_ << " read pairs";
-    spdlog::info(message.str());
-}
-
-void GraphModel::addPairedIrrFeature(PairedIrrFeature* featurePtr)
-{
-    if (pairedIrrFeaturePtr_ != nullptr)
+    if (offtargetFeature_ != nullptr)
     {
-        throw std::runtime_error("Attempting to define multiple rare repeats");
+        throw std::runtime_error("Multiple rare repeats at the same locus are not allowed");
     }
 
-    pairedIrrFeaturePtr_ = featurePtr;
+    offtargetFeature_ = feature;
 }
 
 }

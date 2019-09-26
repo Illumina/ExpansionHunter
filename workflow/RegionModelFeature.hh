@@ -19,19 +19,20 @@
 //
 //
 
-#include "workflow/GraphFeature.hh"
+#pragma once
 
-#include "workflow/GraphModel.hh"
+#include <memory>
 
 namespace ehunter
 {
 
-GraphFeature::GraphFeature(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
-    : modelPtr_(std::move(modelPtr))
-    , nodeIds_(std::move(nodeIds))
-{
-}
+class RegionModel;
 
-std::shared_ptr<RegionModel> GraphFeature::model() { return modelPtr_; }
+class RegionModelFeature
+{
+public:
+    virtual ~RegionModelFeature() = default;
+    virtual std::shared_ptr<RegionModel> model() = 0;
+};
 
 }

@@ -26,18 +26,18 @@
 #include <vector>
 
 #include "common/GenomicRegion.hh"
-#include "workflow/ModelFeature.hh"
+#include "workflow/RegionModelFeature.hh"
 
 namespace ehunter
 {
 
-class CountingModel;
+class LinearModel;
 
-class CountingFeature : public ModelFeature
+class LinearModelFeature : public RegionModelFeature
 {
 public:
-    CountingFeature(std::shared_ptr<CountingModel> modelPtr, std::vector<GenomicRegion> targetRegions);
-    ~CountingFeature() override = default;
+    LinearModelFeature(std::shared_ptr<LinearModel> modelPtr, std::vector<GenomicRegion> targetRegions);
+    ~LinearModelFeature() override = default;
 
     std::shared_ptr<RegionModel> model() override;
     std::int64_t numReads() const { return numReads_; }
@@ -47,7 +47,7 @@ public:
     void addReadInfo(int readLength);
 
 private:
-    std::shared_ptr<CountingModel> modelPtr_;
+    std::shared_ptr<LinearModel> modelPtr_;
     std::vector<GenomicRegion> targetRegions_;
     std::int64_t numReads_ = 0;
     std::int64_t totalReadLength_ = 0;
