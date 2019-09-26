@@ -57,8 +57,8 @@ static vector<GenomicRegion> addFlankingRegions(int kExtensionLength, const vect
     return regions;
 }
 
-static string extendLocusStructure(
-    const Reference& reference, const vector<GenomicRegion>& referenceRegions, const string& flanklessLocusStructure)
+static string extendLocusStructure( 
+    const Reference& reference, const vector<GenomicRegion>& referenceRegions, const string& flanklessLocusStructure, const HeuristicParameters& heuristicParams)
 {
 
     const auto& leftFlankRegion = referenceRegions.front();
@@ -73,9 +73,15 @@ static string extendLocusStructure(
 
     if (numNsInLeftFlank + numNsInRightFlank > maxNsAllowedInFlanks)
     {
-        const string message = "Flanks can contain at most " + to_string(maxNsAllowedInFlanks)
-            + " characters N but found " + to_string(numNsInLeftFlank + numNsInRightFlank) + " Ns";
-        throw std::runtime_error(message);
+	if (heuristicParams.continueOnLocusFlankError()) {
+            const string message = "Warning: Flanks can contain at most " + to_string(maxNsAllowedInFlanks)
+            + " characters N but found " + to_string(numNsInLeftFlank + numNsInRightFlank) + ". Skipping...\n";
+	    throw message;
+	} else {
+            const string message = "Flanks can contain at most " + to_string(maxNsAllowedInFlanks)
+            + " characters N but found " + to_string(numNsInLeftFlank + numNsInRightFlank);
+            throw std::runtime_error(message);
+        }
     }
 
     return leftFlank + flanklessLocusStructure + rightFlank;
@@ -263,7 +269,7 @@ LocusSpecification decodeLocusSpecification(
         const int kExtensionLength = heuristicParams.regionExtensionLength();
         auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.referenceRegions);
         auto completeLocusStructure
-            = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
+            = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure, heuristicParams);
 
         GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
         graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);

@@ -60,6 +60,7 @@ struct UserParameters
     int regionExtensionLength;
     int qualityCutoffForGoodBaseCall;
     bool skipUnaligned;
+    bool continueOnLocusFlankError;
 
     string analysisMode;
     string logLevel;
@@ -87,7 +88,8 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     po::options_description advancedOptions("Advanced options");
     advancedOptions.add_options()
         ("aligner,a", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Specify which aligner to use (dag-aligner or path-aligner)")
-        ("analysis-mode,m", po::value<string>(&params.analysisMode)->default_value("seeking"), "Specify which analysis workflow to use (seeking or streaming)");
+        ("analysis-mode,m", po::value<string>(&params.analysisMode)->default_value("seeking"), "Specify which analysis workflow to use (seeking or streaming)")
+        ("continue-on-locus-flank-error,c", po::bool_switch(&params.continueOnLocusFlankError)->default_value(false), "Skip the locus, rather than terminate the program, when encountering a locus with more than 5 N characters");
     // clang-format on
 
     po::options_description cmdlineOptions;
@@ -278,7 +280,7 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     SampleParameters sampleParameters = decodeSampleParameters(userParams);
     HeuristicParameters heuristicParameters(
         userParams.regionExtensionLength, userParams.qualityCutoffForGoodBaseCall, userParams.skipUnaligned,
-        userParams.alignerType);
+        userParams.alignerType, userParams.continueOnLocusFlankError);
 
     LogLevel logLevel;
     try
