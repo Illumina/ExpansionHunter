@@ -112,12 +112,13 @@ class HeuristicParameters
 {
 public:
     HeuristicParameters(
-        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType,
+        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType, bool continueOnLocusFlankError,
         int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 14)
         : regionExtensionLength_(regionExtensionLength)
         , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
         , skipUnaligned_(skipUnaligned)
         , alignerType_(alignerType)
+	, continueOnLocusFlankError_(continueOnLocusFlankError)
         , kmerLenForAlignment_(kmerLenForAlignment)
         , paddingLength_(paddingLength)
         , seedAffixTrimLength_(seedAffixTrimLength)
@@ -129,6 +130,7 @@ public:
     int qualityCutoffForGoodBaseCall() const { return qualityCutoffForGoodBaseCall_; }
     bool skipUnaligned() const { return skipUnaligned_; }
     const std::string& alignerType() const { return alignerType_; }
+    bool continueOnLocusFlankError() const { return continueOnLocusFlankError_; }
     int kmerLenForAlignment() const { return kmerLenForAlignment_; }
     int paddingLength() const { return paddingLength_; }
     int seedAffixTrimLength() const { return seedAffixTrimLength_; }
@@ -138,6 +140,7 @@ private:
     int qualityCutoffForGoodBaseCall_;
     bool skipUnaligned_;
     std::string alignerType_;
+    bool continueOnLocusFlankError_;
     int kmerLenForAlignment_;
     int paddingLength_;
     int seedAffixTrimLength_;
