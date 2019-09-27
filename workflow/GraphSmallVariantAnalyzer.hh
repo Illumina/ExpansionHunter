@@ -46,7 +46,7 @@ public:
         boost::optional<graphtools::NodeId> optionalRefNode);
     ~GraphSmallVariantAnalyzer() override = default;
 
-    std::vector<std::shared_ptr<RegionModelFeature>> features() override;
+    std::vector<std::shared_ptr<Feature>> features() override;
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
 private:

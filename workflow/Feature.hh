@@ -19,27 +19,20 @@
 //
 //
 
-#include "workflow/StatsAnalyzer.hh"
+#pragma once
 
-using std::shared_ptr;
-using std::vector;
+#include <memory>
 
 namespace ehunter
 {
 
-StatsAnalyzer::StatsAnalyzer(std::shared_ptr<LinearModelFeature> feature)
-    : feature_(std::move(feature))
+class RegionModel;
+
+class Feature
 {
-}
-
-vector<shared_ptr<RegionModelFeature>> StatsAnalyzer::features() { return { feature_ }; }
-
-LocusStats StatsAnalyzer::estimate(Sex /*sampleSex*/) const
-{
-    const int readLength = feature_->getReadLength();
-    const double depth = feature_->getDepth();
-
-    return { AlleleCount::kTwo, readLength, depth };
-}
+public:
+    virtual ~Feature() = default;
+    virtual std::shared_ptr<RegionModel> model() = 0;
+};
 
 }

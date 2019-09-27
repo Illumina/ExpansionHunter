@@ -27,7 +27,7 @@
 
 #include "GraphVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
-#include "workflow/StatsAnalyzer.hh"
+#include "workflow/ReadCountAnalyzer.hh"
 
 using std::shared_ptr;
 using std::string;
@@ -43,9 +43,9 @@ GraphLocusAnalyzer::GraphLocusAnalyzer(string locusId)
 {
 }
 
-void GraphLocusAnalyzer::setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer)
+void GraphLocusAnalyzer::setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer)
 {
-    statsAnalyzer_ = std::move(statsAnalyzer);
+    readCountAnalyzer_ = std::move(statsAnalyzer);
 }
 
 void GraphLocusAnalyzer::addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer)
@@ -57,7 +57,7 @@ LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex) const
 {
     LocusFindings locusFindings;
 
-    locusFindings.optionalStats = statsAnalyzer_->estimate(sampleSex);
+    locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
 
     spdlog::info(
         "Locus: {} depth: {} read length: {}", locusId_, locusFindings.optionalStats->depth(),
@@ -88,9 +88,9 @@ vector<shared_ptr<FeatureAnalyzer>> GraphLocusAnalyzer::featureAnalyzers()
         features.push_back(variant);
     }
 
-    if (statsAnalyzer_ != nullptr)
+    if (readCountAnalyzer_ != nullptr)
     {
-        features.push_back(static_pointer_cast<FeatureAnalyzer>(statsAnalyzer_));
+        features.push_back(static_pointer_cast<FeatureAnalyzer>(readCountAnalyzer_));
     }
 
     return features;

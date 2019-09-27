@@ -19,35 +19,9 @@
 //
 //
 
-#pragma once
-
-#include <memory>
-#include <string>
-
-#include "reads/Read.hh"
-#include "stats/WeightedPurityCalculator.hh"
-#include "workflow/RegionModelFeature.hh"
+#include "workflow/LinearFeature.hh"
 
 namespace ehunter
 {
-
-class GraphModel;
-
-class OfftargetFeature : public RegionModelFeature
-{
-public:
-    OfftargetFeature(std::shared_ptr<GraphModel> model, std::string motif);
-    ~OfftargetFeature() override = default;
-    std::shared_ptr<RegionModel> model() override;
-
-    void process(const MappedRead& read, const MappedRead& mate);
-    int numIrrPairs() const { return numIrrPairs_; }
-
-private:
-    std::shared_ptr<GraphModel> model_;
-    std::string motif_;
-    WeightedPurityCalculator weightedPurityCalculator_;
-    int numIrrPairs_ = 0;
-};
 
 }

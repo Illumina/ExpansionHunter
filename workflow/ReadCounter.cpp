@@ -19,7 +19,7 @@
 //
 //
 
-#include "workflow/LinearModelFeature.hh"
+#include "workflow/ReadCounter.hh"
 
 #include "workflow/LinearModel.hh"
 
@@ -29,15 +29,15 @@ using std::vector;
 namespace ehunter
 {
 
-LinearModelFeature::LinearModelFeature(shared_ptr<LinearModel> modelPtr, vector<GenomicRegion> targetRegions)
-    : modelPtr_(std::move(modelPtr))
+ReadCounter::ReadCounter(shared_ptr<LinearModel> model, vector<GenomicRegion> targetRegions)
+    : model_(std::move(model))
     , targetRegions_(std::move(targetRegions))
 {
 }
 
-shared_ptr<RegionModel> LinearModelFeature::model() { return modelPtr_; }
+shared_ptr<RegionModel> ReadCounter::model() { return model_; }
 
-int LinearModelFeature::getReadLength() const
+int ReadCounter::getReadLength() const
 {
     if (numReads_ == 0)
     {
@@ -47,7 +47,7 @@ int LinearModelFeature::getReadLength() const
     return static_cast<int>(totalReadLength_ / numReads_);
 }
 
-double LinearModelFeature::getDepth() const
+double ReadCounter::getDepth() const
 {
     const int readLength = getReadLength();
     std::int64_t numberOfStartPositions = 0;
@@ -63,10 +63,16 @@ double LinearModelFeature::getDepth() const
     return depth;
 }
 
-void LinearModelFeature::addReadInfo(int readLength)
+void ReadCounter::summarize(MappedRead read)
 {
     ++numReads_;
-    totalReadLength_ += readLength;
+    totalReadLength_ += read.sequence().length();
+}
+
+void ReadCounter::summarize(MappedRead read, MappedRead mate)
+{
+    summarize(read);
+    summarize(mate);
 }
 
 }

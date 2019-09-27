@@ -19,19 +19,9 @@
 //
 //
 
-#include "workflow/GraphVariant.hh"
-
-#include "workflow/GraphModel.hh"
+#include "workflow/GraphFeature.hh"
 
 namespace ehunter
 {
-
-GraphVariant::GraphVariant(std::shared_ptr<GraphModel> model, std::vector<graphtools::NodeId> nodeIds)
-    : model_(std::move(model))
-    , nodeIds_(std::move(nodeIds))
-{
-}
-
-std::shared_ptr<RegionModel> GraphVariant::model() { return model_; }
 
 }

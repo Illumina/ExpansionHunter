@@ -31,7 +31,7 @@
 namespace ehunter
 {
 
-class RegionModelFeature;
+class Feature;
 
 class RegionModel
 {
@@ -44,7 +44,7 @@ public:
     virtual void analyze(MappedRead read, MappedRead mate) = 0;
     virtual void analyze(MappedRead read) = 0;
 
-    virtual std::vector<RegionModelFeature*> modelFeatures() = 0;
+    virtual std::vector<Feature*> modelFeatures() = 0;
 
 protected:
     std::vector<GenomicRegion> readExtractionRegions_;

@@ -25,7 +25,7 @@
 #include "common/CountTable.hh"
 #include "genotyping/RepeatGenotyper.hh"
 #include "workflow/GraphStr.hh"
-#include "workflow/OfftargetFeature.hh"
+#include "workflow/IrrPairDetector.hh"
 
 using boost::optional;
 using std::shared_ptr;
@@ -126,9 +126,9 @@ std::unique_ptr<VariantFindings> GraphStrAnalyzer::analyze(const LocusStats& sta
     return findingsPtr;
 }
 
-vector<shared_ptr<RegionModelFeature>> GraphStrAnalyzer::features() { return { strFeature_ }; }
+vector<shared_ptr<Feature>> GraphStrAnalyzer::features() { return { strFeature_ }; }
 
-void GraphStrAnalyzer::addPairedIrrFeature(shared_ptr<OfftargetFeature> featurePtr)
+void GraphStrAnalyzer::addPairedIrrFeature(shared_ptr<IrrPairDetector> featurePtr)
 {
     pairedIrrFeature_ = std::move(featurePtr);
 }

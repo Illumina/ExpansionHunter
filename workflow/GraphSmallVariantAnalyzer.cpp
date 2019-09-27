@@ -86,6 +86,6 @@ unique_ptr<VariantFindings> GraphSmallVariantAnalyzer::analyze(const LocusStats&
         new SmallVariantFindings(refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
 }
 
-vector<shared_ptr<RegionModelFeature>> GraphSmallVariantAnalyzer::features() { return { smallVariantFeature_ }; }
+vector<shared_ptr<Feature>> GraphSmallVariantAnalyzer::features() { return { smallVariantFeature_ }; }
 
 }

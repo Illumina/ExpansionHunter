@@ -32,13 +32,14 @@
 #include "common/Parameters.hh"
 #include "filtering/OrientationPredictor.hh"
 #include "strs/ReadClassifier.hh"
+#include "workflow/LinearFeature.hh"
 #include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
 
-class GraphVariant;
-class OfftargetFeature;
+class GraphFeature;
+class IrrPairDetector;
 
 class GraphModel : public RegionModel
 {
@@ -49,15 +50,15 @@ public:
     void analyze(MappedRead read, MappedRead mate) override;
     void analyze(MappedRead /*read*/) override {};
     const graphtools::Graph& graph() const { return graph_; }
-    void addVariant(GraphVariant* variant);
-    void addOfftargetFeature(OfftargetFeature* feature);
-    std::vector<RegionModelFeature*> modelFeatures() override;
+    void addGraphFeature(GraphFeature* feature);
+    void addOfftargetReadProcessor(LinearFeature* offtargetProcessor);
+    std::vector<Feature*> modelFeatures() override;
 
 private:
     std::list<graphtools::GraphAlignment> align(Read& read) const;
 
-    std::vector<GraphVariant*> variants_;
-    OfftargetFeature* offtargetFeature_ = nullptr;
+    std::vector<GraphFeature*> features_;
+    LinearFeature* offtargetProcessor_ = nullptr;
 
     ReadClassifier readClassifier_;
     graphtools::Graph graph_;

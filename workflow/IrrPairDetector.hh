@@ -21,36 +21,34 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
-#include <vector>
+#include <string>
 
-#include "common/GenomicRegion.hh"
-#include "workflow/RegionModelFeature.hh"
+#include "reads/Read.hh"
+#include "stats/WeightedPurityCalculator.hh"
+#include "workflow/LinearFeature.hh"
 
 namespace ehunter
 {
 
-class LinearModel;
+class GraphModel;
 
-class LinearModelFeature : public RegionModelFeature
+class IrrPairDetector : public LinearFeature
 {
 public:
-    LinearModelFeature(std::shared_ptr<LinearModel> modelPtr, std::vector<GenomicRegion> targetRegions);
-    ~LinearModelFeature() override = default;
-
+    IrrPairDetector(std::shared_ptr<GraphModel> model, std::string motif);
+    ~IrrPairDetector() override = default;
     std::shared_ptr<RegionModel> model() override;
-    std::int64_t numReads() const { return numReads_; }
-    int getReadLength() const;
-    double getDepth() const;
 
-    void addReadInfo(int readLength);
+    void summarize(MappedRead read, MappedRead mate) override;
+    void summarize(MappedRead /*read*/) override {}
+    int numIrrPairs() const { return numIrrPairs_; }
 
 private:
-    std::shared_ptr<LinearModel> modelPtr_;
-    std::vector<GenomicRegion> targetRegions_;
-    std::int64_t numReads_ = 0;
-    std::int64_t totalReadLength_ = 0;
+    std::shared_ptr<GraphModel> model_;
+    std::string motif_;
+    WeightedPurityCalculator weightedPurityCalculator_;
+    int numIrrPairs_ = 0;
 };
 
 }

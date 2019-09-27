@@ -22,17 +22,22 @@
 #pragma once
 
 #include <memory>
+#include <vector>
+
+#include "common/GenomicRegion.hh"
+#include "reads/Read.hh"
+#include "workflow/Feature.hh"
 
 namespace ehunter
 {
 
-class RegionModel;
+class LinearModel;
 
-class RegionModelFeature
+class LinearFeature : public Feature
 {
 public:
-    virtual ~RegionModelFeature() = default;
-    virtual std::shared_ptr<RegionModel> model() = 0;
+    virtual void summarize(MappedRead read, MappedRead mate) = 0;
+    virtual void summarize(MappedRead read) = 0;
 };
 
 }

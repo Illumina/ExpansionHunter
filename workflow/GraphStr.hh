@@ -25,27 +25,34 @@
 #include <string>
 #include <vector>
 
+#include "graphcore/Graph.hh"
+
 #include "classification/AlignmentSummary.hh"
 #include "classification/StrAlignmentClassifier.hh"
-#include "workflow/GraphVariant.hh"
+#include "workflow/GraphFeature.hh"
 
 namespace ehunter
 {
 
 class GraphModel;
 
-class GraphStr : public GraphVariant
+class GraphStr : public GraphFeature
 {
 public:
-    GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId nodeId);
+    GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId motifNodeId);
+    ~GraphStr() override = default;
+    std::shared_ptr<RegionModel> model() override;
+
     void
-    process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+    summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
 
     const std::string& motif() const;
     const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
 
 private:
-    graphtools::NodeId motifNodeId() const;
+    std::shared_ptr<GraphModel> model_;
+    graphtools::NodeId motifNode_;
+
     StrAlignmentClassifier alignmentClassifier_;
     std::vector<ReadSummaryForStr> readSummaries_;
 };

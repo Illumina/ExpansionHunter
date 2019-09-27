@@ -30,10 +30,10 @@
 #include "workflow/GraphSmallVariantAnalyzer.hh"
 #include "workflow/GraphStr.hh"
 #include "workflow/GraphStrAnalyzer.hh"
+#include "workflow/IrrPairDetector.hh"
 #include "workflow/LinearModel.hh"
-#include "workflow/LinearModelFeature.hh"
-#include "workflow/OfftargetFeature.hh"
-#include "workflow/StatsAnalyzer.hh"
+#include "workflow/ReadCountAnalyzer.hh"
+#include "workflow/ReadCounter.hh"
 
 using std::shared_ptr;
 using std::static_pointer_cast;
@@ -64,9 +64,9 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
     // Initialize stats feature
     vector<GenomicRegion> baselineRegions = { leftFlank, rightFlank };
     auto linearModel = std::make_shared<LinearModel>(baselineRegions);
-    auto countingFeature = std::make_shared<LinearModelFeature>(linearModel, baselineRegions);
+    auto countingFeature = std::make_shared<ReadCounter>(linearModel, baselineRegions);
     linearModel->addFeature(countingFeature.get());
-    auto statsAnalyzer = std::make_shared<StatsAnalyzer>(countingFeature);
+    auto statsAnalyzer = std::make_shared<ReadCountAnalyzer>(countingFeature);
 
     auto locus = std::make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
     locus->setStats(statsAnalyzer);
@@ -78,28 +78,27 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
         if (variantSpec.classification().type == VariantType::kRepeat)
         {
             const int motifNode = variantSpec.nodes().front();
-            auto strFeaturePtr = std::make_shared<GraphStr>(graphModel, motifNode);
-            graphModel->addVariant(strFeaturePtr.get());
+            auto str = std::make_shared<GraphStr>(graphModel, motifNode);
+            graphModel->addGraphFeature(str.get());
 
-            auto strAnalyzerPtr = std::make_shared<GraphStrAnalyzer>(strFeaturePtr, variantSpec.id());
+            auto strAnalyzerPtr = std::make_shared<GraphStrAnalyzer>(str, variantSpec.id());
             locus->addAnalyzer(strAnalyzerPtr);
 
             if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
             {
                 const string& motif = graphModel->graph().nodeSeq(motifNode);
-                auto pairedIrrFeaturePtr = std::make_shared<OfftargetFeature>(graphModel, motif);
-                graphModel->addOfftargetFeature(pairedIrrFeaturePtr.get());
+                auto pairedIrrFeaturePtr = std::make_shared<IrrPairDetector>(graphModel, motif);
+                graphModel->addOfftargetReadProcessor(pairedIrrFeaturePtr.get());
                 strAnalyzerPtr->addPairedIrrFeature(pairedIrrFeaturePtr);
             }
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {
-            auto smallVariantFeature = std::make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
-            graphModel->addVariant(smallVariantFeature.get());
+            auto smallVariant = std::make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
+            graphModel->addGraphFeature(smallVariant.get());
 
             auto smallVariantAnalyzer = std::make_shared<GraphSmallVariantAnalyzer>(
-                smallVariantFeature, variantSpec.id(), variantSpec.classification().subtype,
-                variantSpec.optionalRefNode());
+                smallVariant, variantSpec.id(), variantSpec.classification().subtype, variantSpec.optionalRefNode());
         }
         else
         {

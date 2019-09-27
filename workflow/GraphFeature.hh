@@ -21,35 +21,19 @@
 
 #pragma once
 
-#include <list>
-#include <memory>
-
-#include "graphalign/GraphAlignment.hh"
-#include "graphcore/Graph.hh"
-
 #include "reads/Read.hh"
-#include "workflow/RegionModelFeature.hh"
+#include "workflow/Feature.hh"
 
 namespace ehunter
 {
 
-class GraphModel;
-
-class GraphVariant : public RegionModelFeature
+class GraphFeature : public Feature
 {
 public:
-    GraphVariant(std::shared_ptr<GraphModel> model, std::vector<graphtools::NodeId> nodeIds);
-    ~GraphVariant() override = default;
-
-    std::shared_ptr<RegionModel> model() override;
     using Alignments = std::list<graphtools::GraphAlignment>;
-    virtual void process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+    virtual void
+    summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
         = 0;
-    const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
-
-protected:
-    std::shared_ptr<GraphModel> model_;
-    std::vector<graphtools::NodeId> nodeIds_;
 };
 
 }

@@ -22,7 +22,7 @@
 #include "workflow/LinearModel.hh"
 
 #include "spdlog/spdlog.h"
-#include "workflow/LinearModelFeature.hh"
+#include "workflow/LinearFeature.hh"
 
 using std::vector;
 
@@ -48,14 +48,14 @@ void LinearModel::analyze(MappedRead read)
     {
         for (const auto& feature : features_)
         {
-            feature->addReadInfo(read.sequence().length());
+            feature->summarize(read);
         }
     }
 }
 
-vector<RegionModelFeature*> LinearModel::modelFeatures()
+vector<Feature*> LinearModel::modelFeatures()
 {
-    vector<RegionModelFeature*> modelFeatures;
+    vector<Feature*> modelFeatures;
 
     for (const auto& countingFeature : features_)
     {
@@ -77,6 +77,6 @@ LinearModel::~LinearModel()
         spdlog::info("\tcalculateDepth() = {}", calculateDepth()); */
 }
 
-void LinearModel::addFeature(LinearModelFeature* feature) { features_.push_back(feature); }
+void LinearModel::addFeature(LinearFeature* feature) { features_.push_back(feature); }
 
 }

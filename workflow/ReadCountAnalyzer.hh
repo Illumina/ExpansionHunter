@@ -26,22 +26,22 @@
 #include "common/Common.hh"
 #include "stats/LocusStats.hh"
 #include "workflow/FeatureAnalyzer.hh"
-#include "workflow/LinearModelFeature.hh"
+#include "workflow/ReadCounter.hh"
 
 namespace ehunter
 {
 
-class StatsAnalyzer : public FeatureAnalyzer
+class ReadCountAnalyzer : public FeatureAnalyzer
 {
 public:
-    explicit StatsAnalyzer(std::shared_ptr<LinearModelFeature> feature);
-    ~StatsAnalyzer() override = default;
+    explicit ReadCountAnalyzer(std::shared_ptr<ReadCounter> feature);
+    ~ReadCountAnalyzer() override = default;
 
-    std::vector<std::shared_ptr<RegionModelFeature>> features() override;
+    std::vector<std::shared_ptr<Feature>> features() override;
     LocusStats estimate(Sex sampleSex) const;
 
 private:
-    std::shared_ptr<LinearModelFeature> feature_;
+    std::shared_ptr<ReadCounter> counter_;
 };
 
 }

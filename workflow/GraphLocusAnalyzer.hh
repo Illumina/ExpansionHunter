@@ -29,7 +29,7 @@ namespace ehunter
 {
 
 class GraphVariantAnalyzer;
-class StatsAnalyzer;
+class ReadCountAnalyzer;
 
 class GraphLocusAnalyzer : public LocusAnalyzer
 {
@@ -38,14 +38,14 @@ public:
     ~GraphLocusAnalyzer() override = default;
 
     const std::string& locusId() const override { return locusId_; }
-    void setStats(std::shared_ptr<StatsAnalyzer> statsAnalyzer);
+    void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
     void addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> variantAnalyzer);
     LocusFindings analyze(Sex sampleSex) const override;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
 private:
     std::string locusId_;
-    std::shared_ptr<StatsAnalyzer> statsAnalyzer_;
+    std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
     std::vector<std::shared_ptr<GraphVariantAnalyzer>> variantAnalyzers_;
 };
 

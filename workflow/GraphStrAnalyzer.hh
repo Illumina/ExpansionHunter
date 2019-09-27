@@ -30,7 +30,7 @@ namespace ehunter
 {
 
 class GraphStr;
-class OfftargetFeature;
+class IrrPairDetector;
 
 class GraphStrAnalyzer : public GraphVariantAnalyzer
 {
@@ -38,13 +38,13 @@ public:
     explicit GraphStrAnalyzer(std::shared_ptr<GraphStr> strFeature, std::string variantId);
     ~GraphStrAnalyzer() override = default;
 
-    std::vector<std::shared_ptr<RegionModelFeature>> features() override;
+    std::vector<std::shared_ptr<Feature>> features() override;
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
-    void addPairedIrrFeature(std::shared_ptr<OfftargetFeature> featurePtr);
+    void addPairedIrrFeature(std::shared_ptr<IrrPairDetector> featurePtr);
 
 private:
-    std::shared_ptr<OfftargetFeature> pairedIrrFeature_;
+    std::shared_ptr<IrrPairDetector> pairedIrrFeature_;
     std::shared_ptr<GraphStr> strFeature_;
 };
 

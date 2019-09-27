@@ -21,32 +21,32 @@
 
 #pragma once
 
-#include <vector>
+#include <cstdint>
 
-#include "strs/ReadClassifier.hh"
-#include "workflow/RegionModel.hh"
+#include "workflow/LinearFeature.hh"
 
 namespace ehunter
 {
 
-class LinearFeature;
-
-class LinearModel : public RegionModel
+class ReadCounter : public LinearFeature
 {
 public:
-    LinearModel() = delete;
-    explicit LinearModel(std::vector<GenomicRegion> readExtractionRegions);
-    ~LinearModel() override;
+    ReadCounter(std::shared_ptr<LinearModel> model, std::vector<GenomicRegion> targetRegions);
+    ~ReadCounter() override = default;
+    std::shared_ptr<RegionModel> model() override;
+    void summarize(MappedRead read, MappedRead mate) override;
+    void summarize(MappedRead read) override;
 
-    void addFeature(LinearFeature* feature);
-    std::vector<Feature*> modelFeatures() override;
-
-    void analyze(MappedRead read, MappedRead mate) override;
-    void analyze(MappedRead read) override;
+    std::int64_t numReads() const { return numReads_; }
+    int getReadLength() const;
+    double getDepth() const;
 
 private:
-    std::vector<LinearFeature*> features_;
-    ReadClassifier proximityClassifier_;
+    std::shared_ptr<LinearModel> model_;
+    std::vector<GenomicRegion> targetRegions_;
+
+    std::int64_t numReads_ = 0;
+    std::int64_t totalReadLength_ = 0;
 };
 
 }

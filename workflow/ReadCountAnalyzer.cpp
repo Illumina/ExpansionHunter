@@ -19,34 +19,27 @@
 //
 //
 
-#pragma once
+#include "workflow/ReadCountAnalyzer.hh"
 
-#include <vector>
-
-#include "strs/ReadClassifier.hh"
-#include "workflow/RegionModel.hh"
+using std::shared_ptr;
+using std::vector;
 
 namespace ehunter
 {
 
-class LinearFeature;
-
-class LinearModel : public RegionModel
+ReadCountAnalyzer::ReadCountAnalyzer(std::shared_ptr<ReadCounter> counter)
+    : counter_(std::move(counter))
 {
-public:
-    LinearModel() = delete;
-    explicit LinearModel(std::vector<GenomicRegion> readExtractionRegions);
-    ~LinearModel() override;
+}
 
-    void addFeature(LinearFeature* feature);
-    std::vector<Feature*> modelFeatures() override;
+vector<shared_ptr<Feature>> ReadCountAnalyzer::features() { return { counter_ }; }
 
-    void analyze(MappedRead read, MappedRead mate) override;
-    void analyze(MappedRead read) override;
+LocusStats ReadCountAnalyzer::estimate(Sex /*sampleSex*/) const
+{
+    const int readLength = counter_->getReadLength();
+    const double depth = counter_->getDepth();
 
-private:
-    std::vector<LinearFeature*> features_;
-    ReadClassifier proximityClassifier_;
-};
+    return { AlleleCount::kTwo, readLength, depth };
+}
 
 }

@@ -31,13 +31,13 @@
 namespace ehunter
 {
 
-class RegionModelFeature;
+class Feature;
 
 class FeatureAnalyzer
 {
 public:
     virtual ~FeatureAnalyzer() = default;
-    virtual std::vector<std::shared_ptr<RegionModelFeature>> features() = 0;
+    virtual std::vector<std::shared_ptr<Feature>> features() = 0;
 };
 
 }

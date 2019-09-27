@@ -21,24 +21,28 @@
 
 #include "workflow/GraphSmallVariant.hh"
 
+#include "workflow/GraphModel.hh"
+
+using std::shared_ptr;
+
 namespace ehunter
 {
 
-GraphSmallVariant::GraphSmallVariant(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds)
-    : GraphVariant(modelPtr, std::move(nodeIds))
-    , alignmentClassifier_(nodeIds_)
-
+GraphSmallVariant::GraphSmallVariant(shared_ptr<GraphModel> model, std::vector<graphtools::NodeId> nodeIds)
+    : model_(model)
+    , nodeIds_(nodeIds)
+    , alignmentClassifier_(nodeIds)
 {
 }
 
-void GraphSmallVariant::process(
+void GraphSmallVariant::summarize(
     const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
 {
-    processRead(read, readAligns);
-    processRead(mate, mateAligns);
+    summarize(read, readAligns);
+    summarize(mate, mateAligns);
 }
 
-void GraphSmallVariant::processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
+void GraphSmallVariant::summarize(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
 {
     ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read.sequence(), alignments);
 
@@ -85,6 +89,8 @@ int GraphSmallVariant::countReadsSupportingNode(graphtools::NodeId nodeId) const
         = countsOfReadsFlankingDownstream_.countOf(nodeId) + countsOfSpanningReads_.countOf(nodeId);
 
     return (numReadsSupportingUpstreamFlank + numReadsSupportingDownstreamFlank) / 2;
-};
+}
+
+std::shared_ptr<RegionModel> GraphSmallVariant::model() { return model_; };
 
 }

@@ -22,29 +22,37 @@
 #pragma once
 
 #include <cassert>
+#include <memory>
 #include <vector>
 
 #include "classification/SmallVariantAlignmentClassifier.hh"
 #include "genotyping/SmallVariantGenotyper.hh"
-#include "workflow/GraphVariant.hh"
+#include "workflow/GraphFeature.hh"
 
 namespace ehunter
 {
 
-class GraphSmallVariant : public GraphVariant
+class GraphModel;
+
+class GraphSmallVariant : public GraphFeature
 {
 public:
     GraphSmallVariant(std::shared_ptr<GraphModel> modelPtr, std::vector<graphtools::NodeId> nodeIds);
     ~GraphSmallVariant() override = default;
+    std::shared_ptr<RegionModel> model() override;
 
+    const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
     void
-    process(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+    summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
 
     int countReadsSupportingNode(graphtools::NodeId nodeId) const;
     const std::vector<ReadSummaryForSmallVariant>& readSummaries() const { return readSummaries_; }
 
 private:
-    void processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments);
+    void summarize(const Read& read, const std::list<graphtools::GraphAlignment>& alignments);
+
+    std::shared_ptr<GraphModel> model_;
+    std::vector<graphtools::NodeId> nodeIds_;
 
     SmallVariantAlignmentClassifier alignmentClassifier_;
     std::vector<ReadSummaryForSmallVariant> readSummaries_;
