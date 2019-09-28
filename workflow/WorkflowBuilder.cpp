@@ -35,6 +35,7 @@
 #include "workflow/ReadCountAnalyzer.hh"
 #include "workflow/ReadCounter.hh"
 
+using std::make_shared;
 using std::shared_ptr;
 using std::static_pointer_cast;
 using std::string;
@@ -43,6 +44,21 @@ using std::vector;
 
 namespace ehunter
 {
+
+static shared_ptr<ReadCountAnalyzer> createStatsAnalyzer(const GenomicRegion& extractionRegion, int flankLength)
+{
+    const int64_t leftFlankEnd = extractionRegion.start() + flankLength;
+    GenomicRegion leftFlank(extractionRegion.contigIndex(), extractionRegion.start(), leftFlankEnd);
+
+    const int64_t rightFlankStart = extractionRegion.end() - flankLength;
+    GenomicRegion rightFlank(extractionRegion.contigIndex(), rightFlankStart, extractionRegion.end());
+
+    vector<GenomicRegion> baselineRegions = { leftFlank, rightFlank };
+    auto linearModel = make_shared<LinearModel>(baselineRegions);
+    auto readCounter = make_shared<ReadCounter>(linearModel, baselineRegions);
+    linearModel->addFeature(readCounter.get());
+    return make_shared<ReadCountAnalyzer>(readCounter);
+}
 
 shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
@@ -54,22 +70,8 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec
 
     const auto& extractionRegion = locusSpec.targetReadExtractionRegions().front();
 
-    // Initialize counting model
-    const int64_t leftFlankEnd = extractionRegion.start() + heuristics.regionExtensionLength();
-    GenomicRegion leftFlank(extractionRegion.contigIndex(), extractionRegion.start(), leftFlankEnd);
-
-    const int64_t rightFlankStart = extractionRegion.end() - heuristics.regionExtensionLength();
-    GenomicRegion rightFlank(extractionRegion.contigIndex(), rightFlankStart, extractionRegion.end());
-
-    // Initialize stats feature
-    vector<GenomicRegion> baselineRegions = { leftFlank, rightFlank };
-    auto linearModel = std::make_shared<LinearModel>(baselineRegions);
-    auto countingFeature = std::make_shared<ReadCounter>(linearModel, baselineRegions);
-    linearModel->addFeature(countingFeature.get());
-    auto statsAnalyzer = std::make_shared<ReadCountAnalyzer>(countingFeature);
-
     auto locus = std::make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
-    locus->setStats(statsAnalyzer);
+    locus->setStats(createStatsAnalyzer(extractionRegion, heuristics.regionExtensionLength()));
 
     auto graphModel = std::make_shared<GraphModel>(extractionRegion, locusSpec.regionGraph(), heuristics);
 
