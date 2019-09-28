@@ -36,6 +36,7 @@
 #include "workflow/ReadCounter.hh"
 
 using std::make_shared;
+using std::runtime_error;
 using std::shared_ptr;
 using std::static_pointer_cast;
 using std::string;
@@ -60,53 +61,65 @@ static shared_ptr<ReadCountAnalyzer> createStatsAnalyzer(const GenomicRegion& ex
     return make_shared<ReadCountAnalyzer>(readCounter);
 }
 
+static shared_ptr<GraphStrAnalyzer>
+createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpecification& variantSpec)
+{
+    const int motifNode = variantSpec.nodes().front();
+    auto str = make_shared<GraphStr>(graphModel, motifNode);
+    graphModel->addGraphFeature(str.get());
+    auto strAnalyzer = make_shared<GraphStrAnalyzer>(str, variantSpec.id());
+
+    if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
+    {
+        const string& motif = graphModel->graph().nodeSeq(motifNode);
+        auto irrPairDetector = make_shared<IrrPairDetector>(graphModel, motif);
+        graphModel->addOfftargetReadProcessor(irrPairDetector.get());
+        strAnalyzer->addPairedIrrFeature(irrPairDetector);
+    }
+
+    return strAnalyzer;
+}
+
+static shared_ptr<GraphSmallVariantAnalyzer>
+createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpecification& variantSpec)
+{
+    auto smallVariant = make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
+    graphModel->addGraphFeature(smallVariant.get());
+
+    auto smallVariantAnalyzer = make_shared<GraphSmallVariantAnalyzer>(
+        smallVariant, variantSpec.id(), variantSpec.classification().subtype, variantSpec.optionalRefNode());
+
+    return smallVariantAnalyzer;
+}
+
 shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
 {
     if (locusSpec.targetReadExtractionRegions().size() != 1)
     {
         const string message = "Locus " + locusSpec.locusId() + " must be associated with one read extraction region";
-        throw std::runtime_error(message);
+        throw runtime_error(message);
     }
 
+    auto locus = make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
     const auto& extractionRegion = locusSpec.targetReadExtractionRegions().front();
-
-    auto locus = std::make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
     locus->setStats(createStatsAnalyzer(extractionRegion, heuristics.regionExtensionLength()));
 
-    auto graphModel = std::make_shared<GraphModel>(extractionRegion, locusSpec.regionGraph(), heuristics);
-
+    auto graphModel = make_shared<GraphModel>(extractionRegion, locusSpec.regionGraph(), heuristics);
     for (const auto& variantSpec : locusSpec.variantSpecs())
     {
         if (variantSpec.classification().type == VariantType::kRepeat)
         {
-            const int motifNode = variantSpec.nodes().front();
-            auto str = std::make_shared<GraphStr>(graphModel, motifNode);
-            graphModel->addGraphFeature(str.get());
-
-            auto strAnalyzerPtr = std::make_shared<GraphStrAnalyzer>(str, variantSpec.id());
-            locus->addAnalyzer(strAnalyzerPtr);
-
-            if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
-            {
-                const string& motif = graphModel->graph().nodeSeq(motifNode);
-                auto pairedIrrFeaturePtr = std::make_shared<IrrPairDetector>(graphModel, motif);
-                graphModel->addOfftargetReadProcessor(pairedIrrFeaturePtr.get());
-                strAnalyzerPtr->addPairedIrrFeature(pairedIrrFeaturePtr);
-            }
+            locus->addAnalyzer(createStrAnalyzer(graphModel, variantSpec));
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {
-            auto smallVariant = std::make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
-            graphModel->addGraphFeature(smallVariant.get());
-
-            auto smallVariantAnalyzer = std::make_shared<GraphSmallVariantAnalyzer>(
-                smallVariant, variantSpec.id(), variantSpec.classification().subtype, variantSpec.optionalRefNode());
+            locus->addAnalyzer(createSmallVariantAnalyzer(graphModel, variantSpec));
         }
         else
         {
             std::stringstream encoding;
             encoding << variantSpec.classification().type << "/" << variantSpec.classification().subtype;
-            throw std::logic_error("Missing logic to create an analyzer for " + encoding.str());
+            throw runtime_error("Variant " + variantSpec.id() + " is of unknown type " + encoding.str());
         }
     }
 
@@ -130,4 +143,5 @@ vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<Locu
 
     return vector<shared_ptr<RegionModel>>(models.begin(), models.end());
 }
+
 }
