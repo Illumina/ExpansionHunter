@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -32,6 +33,7 @@ extern "C"
 
 #include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
+#include "sample_analysis/HtsReadRecord.hh"
 
 namespace ehunter
 {
@@ -42,8 +44,8 @@ namespace htshelpers
     class HtsFileStreamer
     {
     public:
-        HtsFileStreamer(const std::string& htsFilePath)
-            : htsFilePath_(htsFilePath)
+        HtsFileStreamer(std::string htsFilePath)
+            : htsFilePath_(std::move(htsFilePath))
             , contigInfo_({})
         {
             openHtsFile();
@@ -53,16 +55,8 @@ namespace htshelpers
         ~HtsFileStreamer();
 
         bool trySeekingToNextPrimaryAlignment();
-
-        int32_t currentReadContigId() const;
-        int32_t currentReadPosition() const;
-        int32_t currentReadLength() const;
-        int32_t currentMateContigId() const;
-        int32_t currentMatePosition() const;
-
         bool isStreamingAlignedReads() const;
-
-        MappedRead decodeRead() const;
+        HtsReadRecord getRead();
 
     private:
         enum class Status

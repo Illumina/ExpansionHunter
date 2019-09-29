@@ -59,16 +59,15 @@ SampleFindings htsStreamingSampleAnalysis(
     htshelpers::HtsFileStreamer readStreamer(inputPaths.htsFile());
     while (readStreamer.trySeekingToNextPrimaryAlignment() && readStreamer.isStreamingAlignedReads())
     {
-        const bool isReadNearTargetRegion = genomeQuery.targetRegionMask.query(
-            readStreamer.currentReadContigId(), readStreamer.currentReadPosition());
-        const bool isMateNearTargetRegion = genomeQuery.targetRegionMask.query(
-            readStreamer.currentMateContigId(), readStreamer.currentMatePosition());
-        if (!isReadNearTargetRegion && !isMateNearTargetRegion)
+        HtsReadRecord htsRead = readStreamer.getRead();
+        const bool readNearTarget = genomeQuery.targetRegionMask.query(htsRead.contigId(), htsRead.position());
+        const bool mateNearTarget = genomeQuery.targetRegionMask.query(htsRead.mateContigId(), htsRead.matePosition());
+        if (!readNearTarget && !mateNearTarget)
         {
             continue;
         }
 
-        MappedRead read = readStreamer.decodeRead();
+        MappedRead read = htsRead.decode();
         if (!read.isPaired())
         {
             continue;

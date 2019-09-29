@@ -130,20 +130,9 @@ private:
     bool isMateMapped_;
 };
 
-/*
-struct LinearAlignmentStats
+class ReadRecordWrapper
 {
-    int32_t chromId = -1;
-    int32_t pos = -1;
-    int32_t mapq = -1;
-    int32_t mateChromId = -1;
-    int32_t matePos = -1;
-    bool isPaired = false;
-    bool isMapped = false;
-    bool isMateMapped = false;
-}; */
-
-// using ReadIdToLinearAlignmentStats = std::unordered_map<std::string, LinearAlignmentStats>;
+};
 
 bool operator==(const Read& read, const Read& mate);
 bool operator==(const MappedRead& read, const MappedRead& mate);
