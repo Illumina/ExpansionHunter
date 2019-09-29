@@ -91,4 +91,5 @@ SampleFindings htsStreamingSampleAnalysis(
 
     return sampleFindings;
 }
+
 }

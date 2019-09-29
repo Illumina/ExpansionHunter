@@ -37,86 +37,6 @@ using std::vector;
 namespace ehunter
 {
 
-namespace
-{
-
-    /*
-    vector<AnalyzerBundle>
-    coalesceCommonBundles(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
-    {
-        vector<AnalyzerBundle> commonBundles;
-
-        for (const auto& readBundle : readBundles)
-        {
-            for (const auto& mateBundle : mateBundles)
-            {
-                if (readBundle.regionPtr == mateBundle.regionPtr)
-                {
-                    if (readBundle.regionPtr->type() == RegionModel::Type::kTarget)
-                    {
-                        commonBundles.push_back(readBundle);
-                    }
-                    else
-                    {
-                        commonBundles.push_back(mateBundle);
-                    }
-                }
-            }
-        }
-
-        return commonBundles;
-    } */
-
-    // We ignore nearby pairs where one mate is inside and one mate is outside of the offtarget workflow
-    /*
-    vector<AnalyzerBundle>
-    coalesceBundlesForNearbyMates(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
-    {
-        vector<AnalyzerBundle> bundles;
-
-        for (const auto& bundle : readBundles)
-        {
-            if (bundle.regionPtr->type() == RegionModel::Type::kTarget)
-            {
-                bundles.push_back(bundle);
-                bundles.back().inputType = AnalyzerInputType::kReadOnly;
-            }
-        }
-
-        for (const auto& bundle : mateBundles)
-        {
-            if (bundle.regionPtr->type() == RegionModel::Type::kTarget)
-            {
-                bundles.push_back(bundle);
-                bundles.back().inputType = AnalyzerInputType::kMateOnly;
-            }
-        }
-
-        return bundles;
-    } */
-
-    /*
-    vector<AnalyzerBundle>
-    coalesceBundlesForFarawayMates(const vector<AnalyzerBundle>& readBundles, const vector<AnalyzerBundle>& mateBundles)
-    {
-        vector<AnalyzerBundle> bundles;
-
-        for (const auto& bundle : readBundles)
-        {
-            bundles.push_back(bundle);
-            bundles.back().inputType = AnalyzerInputType::kBothReads;
-        }
-
-        for (const auto& bundle : mateBundles)
-        {
-            bundles.push_back(bundle);
-            bundles.back().inputType = AnalyzerInputType::kBothReads;
-        }
-
-        return bundles;
-    } */
-}
-
 ModelFinder::ModelFinder(const vector<shared_ptr<RegionModel>>& models)
 {
     using IntervalWithModel = ehunter::Interval<std::size_t, RegionModel*>;
@@ -153,37 +73,10 @@ unordered_set<RegionModel*> ModelFinder::query(int contigId, int64_t start, int6
     unordered_set<RegionModel*> models;
     for (const auto& interval : intervalsWithModels)
     {
-        // const bool fullContainment
-        //    = static_cast<int64_t>(interval.start) <= start && end <= static_cast<int64_t>(interval.stop);
-        // if (fullContainment)
-        //{
         models.insert(interval.value);
-        //}
     }
 
     return models;
 }
-
-/*
-vector<AnalyzerBundle> ModelFinder::query(
-    int readContigId, int64_t readStart, int64_t readEnd, int mateContigId, int64_t mateStart, int64_t mateEnd) const
-{
-    vector<AnalyzerBundle> readAnalyzerBundles = query(readContigId, readStart, readEnd);
-    vector<AnalyzerBundle> mateAnalyzerBundles = query(mateContigId, mateStart, mateEnd);
-    vector<AnalyzerBundle> commonBundles = coalesceCommonBundles(readAnalyzerBundles, mateAnalyzerBundles);
-
-    if (!commonBundles.empty())
-    {
-        return commonBundles;
-    }
-    else if (areMatesNearby(readContigId, readStart, mateContigId, mateStart))
-    {
-        return coalesceBundlesForNearbyMates(readAnalyzerBundles, mateAnalyzerBundles);
-    }
-    else
-    {
-        return coalesceBundlesForFarawayMates(readAnalyzerBundles, mateAnalyzerBundles);
-    }
-} */
 
 }

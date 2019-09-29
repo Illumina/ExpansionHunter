@@ -36,39 +36,13 @@
 namespace ehunter
 {
 
-// Specifies which mates should be processed with a given locus analyzer
-// enum class AnalyzerInputType
-//{
-//    kReadOnly,
-//    kMateOnly,
-//    kBothReads
-//};
-
-// Stores information needed to properly pass reads to the analyzer
-// struct AnalyzerBundle
-//{
-//    explicit AnalyzerBundle(RegionModel* regionPtr)
-//        : inputType(AnalyzerInputType::kBothReads)
-//        , regionPtr(regionPtr)
-//    {
-//    }
-//
-//    AnalyzerInputType inputType;
-//    RegionModel* regionPtr;
-//};
-
 // Enables retrieval of appropriate locus analyzers by genomic coordinates of read alignments
 class ModelFinder
 {
 public:
     explicit ModelFinder(const std::vector<std::shared_ptr<RegionModel>>& models);
 
-    // Retrieves analyzers appropriate for the given read pair
-    // std::vector<AnalyzerBundle> query(
-    //    int readContigId, int64_t readStart, int64_t readEnd, int mateContigId, int64_t mateStart,
-    //    int64_t mateEnd) const;
-
-    // Retrieves models whose regions fully contain the given workflow
+    // Retrieves models whose regions overlap the given interval
     std::unordered_set<RegionModel*> query(int contigId, int64_t start, int64_t end) const;
 
 private:

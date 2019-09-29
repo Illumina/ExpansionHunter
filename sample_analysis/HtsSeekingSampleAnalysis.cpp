@@ -37,12 +37,8 @@
 #include "reads/ReadPairs.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
 #include "sample_analysis/HtsFileSeeker.hh"
-#include "sample_analysis/IndexBasedDepthEstimate.hh"
 #include "sample_analysis/MateExtractor.hh"
-#include "sample_analysis/ModelFinder.hh"
-#include "sample_analysis/ReadDispatch.hh"
 #include "workflow/LocusAnalyzer.hh"
-#include "workflow/WorkflowBuilder.hh"
 
 namespace ehunter
 {
