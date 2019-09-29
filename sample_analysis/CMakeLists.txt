@@ -9,6 +9,6 @@ add_library(sample_analysis
         GenomeQueryCollection.hh GenomeQueryCollection.cpp
         HtsStreamingSampleAnalysis.hh HtsStreamingSampleAnalysis.cpp
         MateExtractor.hh MateExtractor.cpp
-        ReadDispatch.cpp ReadDispatch.hh)
+        ReadDispatch.cpp ReadDispatch.hh CatalogAnalyzer.cpp CatalogAnalyzer.hh)
 target_link_libraries(sample_analysis workflow common)
 add_subdirectory(tests)

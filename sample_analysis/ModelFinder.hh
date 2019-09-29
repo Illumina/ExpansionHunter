@@ -61,7 +61,7 @@ namespace ehunter
 class ModelFinder
 {
 public:
-    explicit ModelFinder(std::vector<std::shared_ptr<RegionModel>>& models);
+    explicit ModelFinder(const std::vector<std::shared_ptr<RegionModel>>& models);
 
     // Retrieves analyzers appropriate for the given read pair
     // std::vector<AnalyzerBundle> query(

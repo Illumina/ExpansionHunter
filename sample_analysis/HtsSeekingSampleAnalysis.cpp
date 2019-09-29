@@ -35,6 +35,7 @@
 
 #include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
+#include "sample_analysis/CatalogAnalyzer.hh"
 #include "sample_analysis/HtsFileSeeker.hh"
 #include "sample_analysis/IndexBasedDepthEstimate.hh"
 #include "sample_analysis/MateExtractor.hh"
@@ -168,41 +169,6 @@ static ReadPairs collectCandidateReads(
     return readPairs;
 }
 
-static void processReads(const ReadPairs& candidateReadPairs, ModelFinder& analyzerFinder)
-{
-    for (const auto& fragmentIdAndReads : candidateReadPairs)
-    {
-        const auto& readPair = fragmentIdAndReads.second;
-        if (readPair.numMatesSet() == 2)
-        {
-            const MappedRead& read = *readPair.firstMate;
-            const MappedRead& mate = *readPair.secondMate;
-
-            unordered_set<RegionModel*> readModels
-                = analyzerFinder.query(read.contigIndex(), read.pos(), read.approximateEnd());
-            unordered_set<RegionModel*> mateModels
-                = analyzerFinder.query(mate.contigIndex(), mate.pos(), mate.approximateEnd());
-
-            readModels.insert(mateModels.begin(), mateModels.end());
-
-            for (auto model : readModels)
-            {
-                model->analyze(read, mate);
-            }
-        }
-        else
-        {
-            const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-            unordered_set<RegionModel*> readModels
-                = analyzerFinder.query(read.contigIndex(), read.pos(), read.approximateEnd());
-            for (auto model : readModels)
-            {
-                model->analyze(read);
-            }
-        }
-    }
-}
-
 SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
     AlignmentWriter& /*alignmentWriter*/)
@@ -210,25 +176,35 @@ SampleFindings htsSeekingSampleAnalysis(
     SampleFindings sampleFindings;
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
-        const string& locusId = locusIdAndRegionSpec.first;
-        const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
-
-        WorkflowContext context;
-        shared_ptr<LocusAnalyzer> locusAnalyzerPtr = buildLocusWorkflow(locusSpec, context.heuristics());
-
-        vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels({ locusAnalyzerPtr });
-        ModelFinder analyzerFinder(regionModelPtrs);
+        const auto& locusId = locusIdAndRegionSpec.first;
+        const auto& locusSpec = locusIdAndRegionSpec.second;
 
         ReadPairs readPairs = collectCandidateReads(
             locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), inputPaths.htsFile(),
             inputPaths.reference());
 
-        processReads(readPairs, analyzerFinder);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } });
 
-        auto variantFindings = locusAnalyzerPtr->analyze(sampleSex);
-        sampleFindings.emplace(locusId, std::move(variantFindings));
+        for (const auto& fragmentIdAndReadPair : readPairs)
+        {
+            const auto& readPair = fragmentIdAndReadPair.second;
+            if (readPair.numMatesSet() == 2)
+            {
+                const MappedRead& read = *readPair.firstMate;
+                const MappedRead& mate = *readPair.secondMate;
+                catalogAnalyzer.analyze(read, mate);
+            }
+            else
+            {
+                const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+                catalogAnalyzer.analyze(read);
+            }
+        }
+
+        catalogAnalyzer.collectResults(sampleSex, sampleFindings);
     }
 
     return sampleFindings;
 }
+
 }

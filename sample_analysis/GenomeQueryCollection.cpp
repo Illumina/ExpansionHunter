@@ -30,7 +30,7 @@ namespace ehunter
 
 namespace
 {
-    void initializeGenomeMask(GenomeMask& genomeMask, vector<shared_ptr<RegionModel>>& regionModelPtrs)
+    void initializeGenomeMask(GenomeMask& genomeMask, const vector<shared_ptr<RegionModel>>& regionModelPtrs)
     {
         for (auto& regionModelPtr : regionModelPtrs)
         {
@@ -42,7 +42,7 @@ namespace
     }
 }
 
-GenomeQueryCollection::GenomeQueryCollection(vector<shared_ptr<RegionModel>>& regions)
+GenomeQueryCollection::GenomeQueryCollection(const vector<shared_ptr<RegionModel>>& regions)
     : analyzerFinder(regions)
 {
     initializeGenomeMask(targetRegionMask, regions);

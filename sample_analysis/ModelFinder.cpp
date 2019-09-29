@@ -117,7 +117,7 @@ namespace
     } */
 }
 
-ModelFinder::ModelFinder(vector<shared_ptr<RegionModel>>& models)
+ModelFinder::ModelFinder(const vector<shared_ptr<RegionModel>>& models)
 {
     using IntervalWithModel = ehunter::Interval<std::size_t, RegionModel*>;
 

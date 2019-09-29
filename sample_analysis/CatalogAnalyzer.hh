@@ -21,19 +21,33 @@
 
 #pragma once
 
-#include "sample_analysis/GenomeMask.hh"
+#include <memory>
+#include <vector>
+
+#include "reads/Read.hh"
+#include "region_spec/LocusSpecification.hh"
 #include "sample_analysis/ModelFinder.hh"
+#include "workflow/LocusAnalyzer.hh"
+#include "workflow/LocusFindings.hh"
+#include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
 
-// Aggregates various methods for querying genome
-struct GenomeQueryCollection
+class CatalogAnalyzer
 {
-    explicit GenomeQueryCollection(const std::vector<std::shared_ptr<RegionModel>>& regions);
+public:
+    explicit CatalogAnalyzer(const RegionCatalog& locusCatalog);
+    void analyze(MappedRead read, MappedRead mate);
+    void analyze(MappedRead read);
+    void collectResults(Sex sampleSex, SampleFindings& sampleFindings);
 
-    ModelFinder analyzerFinder; // Analyzers searchable by targeted workflow
-    GenomeMask targetRegionMask; // Marks targeted regions to enable fast read screening
+    const std::vector<std::shared_ptr<RegionModel>>& regionModels() const { return regionModels_; }
+
+private:
+    std::vector<std::shared_ptr<LocusAnalyzer>> locusAnalyzers_;
+    std::vector<std::shared_ptr<RegionModel>> regionModels_;
+    std::unique_ptr<ModelFinder> modelFinder_;
 };
 
 }

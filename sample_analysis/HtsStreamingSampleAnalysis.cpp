@@ -27,6 +27,7 @@
 
 #include "common/HtsHelpers.hh"
 #include "common/WorkflowContext.hh"
+#include "sample_analysis/CatalogAnalyzer.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
 #include "sample_analysis/ReadDispatch.hh"
@@ -47,20 +48,10 @@ namespace ehunter
 SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& /*bamletWriter*/)
 {
-    WorkflowContext context;
-    vector<shared_ptr<LocusAnalyzer>> locusAnalyzers;
+    CatalogAnalyzer catalogAnalyzer(regionCatalog);
 
-    for (const auto& locusIdAndLocusSpec : regionCatalog)
-    {
-        const auto& locusSpec = locusIdAndLocusSpec.second;
-        locusAnalyzers.push_back(buildLocusWorkflow(locusSpec, context.heuristics()));
-    }
-
-    vector<shared_ptr<RegionModel>> regionModelPtrs = extractRegionModels(locusAnalyzers);
-
-    //= initializeLocusAnalyzers(regionCatalog, bamletWriter);
-
-    GenomeQueryCollection genomeQuery(regionModelPtrs);
+    // TODO: Eliminate redundant initialization of model finders
+    GenomeQueryCollection genomeQuery(catalogAnalyzer.regionModels());
 
     using ReadCatalog = std::unordered_map<std::string, MappedRead>;
     ReadCatalog unpairedReads;
@@ -92,29 +83,11 @@ SampleFindings htsStreamingSampleAnalysis(
         MappedRead mate = std::move(mateIterator->second);
         unpairedReads.erase(mateIterator);
 
-        const int64_t readEnd = readStreamer.currentReadPosition() + read.sequence().length();
-        const int64_t mateEnd = readStreamer.currentMatePosition() + mate.sequence().length();
-
-        unordered_set<RegionModel*> readModels = genomeQuery.analyzerFinder.query(
-            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd);
-
-        unordered_set<RegionModel*> mateModels = genomeQuery.analyzerFinder.query(
-            readStreamer.currentMateContigId(), readStreamer.currentMateContigId(), mateEnd);
-
-        readModels.insert(mateModels.begin(), mateModels.end());
-
-        for (auto model : readModels)
-        {
-            model->analyze(read, mate);
-        }
+        catalogAnalyzer.analyze(read, mate);
     }
 
     SampleFindings sampleFindings;
-    for (auto& locusAnalyzer : locusAnalyzers)
-    {
-        auto locusFindings = locusAnalyzer->analyze(sampleSex);
-        sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
-    }
+    catalogAnalyzer.collectResults(sampleSex, sampleFindings);
 
     return sampleFindings;
 }
