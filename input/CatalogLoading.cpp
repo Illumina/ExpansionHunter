@@ -230,9 +230,8 @@ RegionCatalog loadLocusCatalogFromDisk(
             const string message = except.what();
             if (heuristicParams.permissive())
             {
-                auto console2 = spd::stderr_color_mt("console2");
-                console2->set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
-                console2->warn(message);
+                auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
+                console->warn(message);
             }
             else
             {
