@@ -224,9 +224,20 @@ RegionCatalog loadLocusCatalogFromDisk(
 	    LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
 	    catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
         }
-	catch (string s) {
-	    std::cerr << s;
-	    continue;   
+	catch (const std::exception& except)
+	{
+            //const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
+            const string message = except.what();
+            if (heuristicParams.permissive())
+            {
+                auto console2 = spd::stderr_color_mt("console2");
+                console2->set_pattern("%Y-%m-%dT%H:%M:%S,[%v]");
+                console2->warn(message);
+            }
+            else
+            {
+                throw std::runtime_error(message);
+            }
 	}
     }
 
