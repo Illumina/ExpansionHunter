@@ -107,10 +107,10 @@ void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindi
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         tryAddingFieldDescription(
-            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the ref allele");
+            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the reference allele");
         tryAddingFieldDescription(
             FieldType::kFormat, "DST", "1", "Character",
-            "Status ('+' affected, '-' unaffected, '?' uncertain) for the test specified by the DID value");
+            "Result ('+' detected, '-' undetected, '?' undetermined) of the test represented by the variant");
     }
 }
 

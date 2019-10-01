@@ -344,7 +344,7 @@ namespace dagAligner
             char getCharCode(const char matchChar = '=', const char mismatchChar = 'X') const
             {
                 const std::vector<char> CIGAR_CHARS
-                    = { 'M', 'I', 'D', 'N', 'S', 'H', 'P', matchChar, mismatchChar, '?' };
+                    = { 'M', 'I', 'D', 'N', 'S', 'H', 'P', matchChar, mismatchChar, '?', '[', ']' };
                 if (CIGAR_CHARS.size() > code_)
                 {
                     return CIGAR_CHARS[code_];
@@ -358,6 +358,11 @@ namespace dagAligner
             }
 
             bool operator==(const Operation& that) const { return code_ == that.code_ && value_ == that.value_; }
+
+            friend std::ostream& operator<<(std::ostream& os, const Operation& op)
+            {
+                return os << "Operation(" << op.getCharCode() << op.value_ << ")";
+            }
         };
 
         typedef std::vector<Operation> Operations;
@@ -382,6 +387,8 @@ namespace dagAligner
         {
             cigar_.insert(before, b, e);
         }
+
+        Operation back() const { return cigar_.back(); }
 
         std::size_t firstNode() const
         {

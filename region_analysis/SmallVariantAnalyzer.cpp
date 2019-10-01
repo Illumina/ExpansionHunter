@@ -23,10 +23,10 @@
 
 #include <vector>
 
-#include <boost/optional.hpp>
-
 using boost::optional;
+using graphtools::GraphAlignment;
 using graphtools::NodeId;
+using std::list;
 using std::string;
 using std::vector;
 
@@ -34,35 +34,66 @@ namespace ehunter
 {
 
 void SmallVariantAnalyzer::processMates(
-    const Read& /*read*/, const graphtools::GraphAlignment& readAlignment, const Read& /*mate*/,
-    const graphtools::GraphAlignment& mateAlignment)
+    const Read& read, const list<GraphAlignment>& readAlignments, const Read& mate,
+    const std::list<GraphAlignment>& mateAlignments)
 {
-    alignmentClassifier_.classify(readAlignment);
-    alignmentClassifier_.classify(mateAlignment);
+    processRead(read, readAlignments);
+    processRead(mate, mateAlignments);
+}
+
+void SmallVariantAnalyzer::processRead(const Read& read, const list<GraphAlignment>& alignments)
+{
+    ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read.sequence(), alignments);
+
+    if (smallVariantRead.numAlignments() != 1)
+    {
+        return;
+    }
+
+    const auto& smallVariantAlignment = smallVariantRead.alignments().front();
+
+    if (smallVariantAlignment.type() == SmallVariantAlignment::Type::kSpanning)
+    {
+        if (smallVariantAlignment.nodeId() == SmallVariantAlignmentClassifier::kInvalidNodeId)
+        {
+            numBypassingReads_ += 1;
+        }
+        else
+        {
+            countsOfSpanningReads_.incrementCountOf(smallVariantAlignment.nodeId());
+        }
+    }
+
+    if (smallVariantAlignment.type() == SmallVariantAlignment::Type::kUpstreamFlanking)
+    {
+        countsOfReadsFlankingUpstream_.incrementCountOf(smallVariantAlignment.nodeId());
+    }
+
+    if (smallVariantAlignment.type() == SmallVariantAlignment::Type::kDownstreamFlanking)
+    {
+        countsOfReadsFlankingDownstream_.incrementCountOf(smallVariantAlignment.nodeId());
+    }
 }
 
 int SmallVariantAnalyzer::countReadsSupportingNode(graphtools::NodeId nodeId) const
 {
-    if (nodeId == ClassifierOfAlignmentsToVariant::kInvalidNodeId)
+    if (nodeId == SmallVariantAlignmentClassifier::kInvalidNodeId)
     {
-        return alignmentClassifier_.numBypassingReads();
+        return numBypassingReads_;
     }
 
-    const auto& spanningCounts = alignmentClassifier_.countsOfSpanningReads();
-    const auto& upstreamFlankingCounts = alignmentClassifier_.countsOfReadsFlankingUpstream();
-    const auto& downstreamFlankingCounts = alignmentClassifier_.countsOfReadsFlankingDownstream();
-
-    const int numReadsSupportingUpstreamFlank = upstreamFlankingCounts.countOf(nodeId) + spanningCounts.countOf(nodeId);
+    const int numReadsSupportingUpstreamFlank
+        = countsOfReadsFlankingUpstream_.countOf(nodeId) + countsOfSpanningReads_.countOf(nodeId);
     const int numReadsSupportingDownstreamFlank
-        = downstreamFlankingCounts.countOf(nodeId) + spanningCounts.countOf(nodeId);
+        = countsOfReadsFlankingDownstream_.countOf(nodeId) + countsOfSpanningReads_.countOf(nodeId);
 
     return (numReadsSupportingUpstreamFlank + numReadsSupportingDownstreamFlank) / 2;
 }
 
 std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats& stats) const
 {
-    NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : ClassifierOfAlignmentsToVariant::kInvalidNodeId;
-    NodeId altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+    NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : SmallVariantAlignmentClassifier::kInvalidNodeId;
+    NodeId altNode = SmallVariantAlignmentClassifier::kInvalidNodeId;
 
     switch (variantSubtype_)
     {
@@ -70,7 +101,7 @@ std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats&
         altNode = nodeIds_.front();
         break;
     case VariantSubtype::kDeletion:
-        altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+        altNode = SmallVariantAlignmentClassifier::kInvalidNodeId;
         break;
     case VariantSubtype::kSwap:
         altNode = (refNode == nodeIds_.front()) ? nodeIds_.back() : nodeIds_.front();
@@ -89,9 +120,9 @@ std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats&
     const int refNodeSupport = countReadsSupportingNode(refNode);
     const int altNodeSupport = countReadsSupportingNode(altNode);
 
-    const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
+    const double haplotypeDepth = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
 
-    SmallVariantGenotyper smallVariantGenotyper(haplotypeDepth, expectedAlleleCount_);
+    SmallVariantGenotyper smallVariantGenotyper(haplotypeDepth, stats.alleleCount());
     auto genotype = smallVariantGenotyper.genotype(refNodeSupport, altNodeSupport);
 
     auto refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);

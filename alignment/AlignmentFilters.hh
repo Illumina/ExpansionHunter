@@ -21,9 +21,8 @@
 
 #pragma once
 
+#include <list>
 #include <string>
-
-#include <boost/optional.hpp>
 
 #include "graphalign/GraphAlignment.hh"
 
@@ -31,25 +30,24 @@ namespace ehunter
 {
 
 /**
- * Checks if a read pair is likely to have originated in the alignment region
+ * Checks if a read pair originated in the locus defined by the graph
  *
- * The check is performed by verifying that the alignment score to non-repeat nodes (combined for both mates) is
- * sufficiently high.
+ * Verifies that there is a pair of read/mate alignments with a sufficiently high combined score to non-repeat nodes
  *
- * @param readAlignment: Alignment of a read
- * @param mateAlignment: Alignment of read's mate
- * @param kMinNonRepeatAlignmentScore: Score threshold
- * @return true if the alignment score to non-repeat nodes exceeds the threshold
+ * @param readAlignments: Alignments of a read
+ * @param mateAlignments: Alignments of read's mate
+ * @param kMinNonRepeatAlignmentScore: Positive score threshold
+ * @return true if read/mate alignment with above properties exists
  */
-bool checkIfLocallyPlacedReadPair(
-    boost::optional<graphtools::GraphAlignment> readAlignment,
-    boost::optional<graphtools::GraphAlignment> mateAlignment, int kMinNonRepeatAlignmentScore);
+bool checkIfComesFromGraphLocus(
+    const std::list<graphtools::GraphAlignment>& readAlignments,
+    const std::list<graphtools::GraphAlignment>& mateAlignments, int kMinNonRepeatAlignmentScore);
 
 // Checks if alignment upstream of a given node is high quality
-bool checkIfUpstreamAlignmentIsGood(graphtools::NodeId nodeId, graphtools::GraphAlignment alignment);
+bool checkIfUpstreamAlignmentIsGood(graphtools::NodeId nodeId, const graphtools::GraphAlignment& alignment);
 
 // Checks if alignment downstream of a given node is high quality
-bool checkIfDownstreamAlignmentIsGood(graphtools::NodeId nodeId, graphtools::GraphAlignment alignment);
+bool checkIfDownstreamAlignmentIsGood(graphtools::NodeId nodeId, const graphtools::GraphAlignment& alignment);
 
 bool checkIfPassesAlignmentFilters(const graphtools::GraphAlignment& alignment);
 

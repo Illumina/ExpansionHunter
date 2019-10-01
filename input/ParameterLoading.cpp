@@ -60,6 +60,7 @@ struct UserParameters
     int regionExtensionLength;
     int qualityCutoffForGoodBaseCall;
     bool skipUnaligned;
+    bool permissive;
 
     string analysisMode;
     string logLevel;
@@ -72,8 +73,8 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     // clang-format off
     po::options_description basicOptions("Basic options");
     basicOptions.add_options()
-        ("help,h", "Print help message")
-        ("version,v", "Print version number")
+        ("help", "Print help message")
+        ("version", "Print version number")
         ("reads", po::value<string>(&params.htsFilePath)->required(), "BAM/CRAM file with aligned reads")
         ("reference", po::value<string>(&params.referencePath)->required(), "FASTA file with reference genome")
         ("variant-catalog", po::value<string>(&params.catalogPath)->required(), "JSON file with variants to genotype")
@@ -86,8 +87,10 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     // clang-format off
     po::options_description advancedOptions("Advanced options");
     advancedOptions.add_options()
-        ("aligner,a", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Specify which aligner to use (dag-aligner or path-aligner)")
-        ("analysis-mode,m", po::value<string>(&params.analysisMode)->default_value("seeking"), "Specify which analysis workflow to use (seeking or streaming)");
+        ("aligner", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Graph aligner type (dag-aligner or path-aligner)")
+        ("analysis-mode", po::value<string>(&params.analysisMode)->default_value("seeking"), "Analysis workflow type (seeking or streaming)")
+        ("good-base-call-cutoff", po::value<int>(&params.qualityCutoffForGoodBaseCall)->default_value(20), "Minimum score for a good base call");
+        ("permissive", po::bool_switch(&params.permissive)->default_value(false), "Skip the locus, rather than terminate the program, when encountering a locus with more than 5 N characters");
     // clang-format on
 
     po::options_description cmdlineOptions;
@@ -276,16 +279,17 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     const string bamletPath = userParams.outputPrefix + "_realigned.bam";
     OutputPaths outputPaths(vcfPath, jsonPath, bamletPath);
     SampleParameters sampleParameters = decodeSampleParameters(userParams);
+
     HeuristicParameters heuristicParameters(
         userParams.regionExtensionLength, userParams.qualityCutoffForGoodBaseCall, userParams.skipUnaligned,
-        userParams.alignerType);
+        userParams.alignerType, userParams.permissive);
 
     LogLevel logLevel;
     try
     {
         logLevel = decodeLogLevel(userParams.logLevel);
     }
-    catch (std::logic_error)
+    catch (std::logic_error&)
     {
         const string message = "Log level must be set to either trace, debug, info, warn, or error";
         throw std::invalid_argument(message);
@@ -296,7 +300,7 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     {
         analysisMode = decodeAnalysisMode(userParams.analysisMode);
     }
-    catch (std::logic_error)
+    catch (std::logic_error&)
     {
         const string message = "Analysis mode must be set to either streaming or seeking";
         throw std::invalid_argument(message);

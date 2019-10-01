@@ -133,7 +133,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     LocusDescriptionFromUser userDescription;
 
     assertFieldExists(locusJson, "LocusId");
-    userDescription.locusId = locusJson["LocusId"];
+    userDescription.locusId = locusJson["LocusId"].get<string>();
 
     assertFieldExists(locusJson, "ReferenceRegion");
     makeArray(locusJson["ReferenceRegion"]);
@@ -144,7 +144,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     }
 
     assertFieldExists(locusJson, "LocusStructure");
-    userDescription.locusStructure = locusJson["LocusStructure"];
+    userDescription.locusStructure = locusJson["LocusStructure"].get<string>();
 
     assertFieldExists(locusJson, "VariantType");
     makeArray(locusJson["VariantType"]);
@@ -202,8 +202,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     return userDescription;
 }
 
-RegionCatalog loadLocusCatalogFromDisk(
-    const string& catalogPath, Sex sampleSex, const HeuristicParameters& heuristicParams, const Reference& reference)
+RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -220,8 +219,24 @@ RegionCatalog loadLocusCatalogFromDisk(
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
-        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
-        catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+        try {
+	    LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
+	    catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+        }
+	catch (const std::exception& except)
+	{
+            //const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
+            const string message = except.what();
+            if (heuristicParams.permissive())
+            {
+                auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
+                console->warn(message);
+            }
+            else
+            {
+                throw std::runtime_error(message);
+            }
+	}
     }
 
     return catalog;

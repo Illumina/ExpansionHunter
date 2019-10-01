@@ -86,13 +86,14 @@ void BamletWriter::writeHeader()
     bamHeader_->text = strdup(initHeader.c_str());
     bamHeader_->n_targets = contigInfo_.numContigs();
 
-    // All this memory gets freed by the header (bam_hdr_destroy)
-    bamHeader_->target_name = new char*[contigInfo_.numContigs()];
-    bamHeader_->target_len = new uint32_t[contigInfo_.numContigs()];
+    // All this memory gets freed by the header (bam_hdr_destroy) using free
+    bamHeader_->target_len = (uint32_t*)calloc(contigInfo_.numContigs(), sizeof(uint32_t));
+    bamHeader_->target_name = (char**)calloc(contigInfo_.numContigs(), sizeof(char*));
+
     for (int index = 0; index != contigInfo_.numContigs(); ++index)
     {
         const string& contigName = contigInfo_.getContigName(index);
-        bamHeader_->target_name[index] = new char[contigName.length() + 1];
+        bamHeader_->target_name[index] = (char*)malloc(contigName.length() + 1);
         memcpy(bamHeader_->target_name[index], contigName.c_str(), contigName.length() + 1);
         bamHeader_->target_len[index] = contigInfo_.getContigSize(index);
     }

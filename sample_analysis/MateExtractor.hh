@@ -43,7 +43,7 @@ namespace htshelpers
     class MateExtractor
     {
     public:
-        MateExtractor(const std::string& htsFilePath);
+        MateExtractor(const std::string& htsFilePath, const std::string& htsReferencePath);
         ~MateExtractor();
 
         boost::optional<Read>
@@ -54,7 +54,8 @@ namespace htshelpers
         void loadHeader();
         void loadIndex();
 
-        const std::string htsFilePath_;
+        std::string htsFilePath_;
+        std::string htsReferencePath_;
         ReferenceContigInfo contigInfo_;
 
         htsFile* htsFilePtr_ = nullptr;

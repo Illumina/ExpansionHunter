@@ -22,39 +22,37 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 #include <vector>
+
+#include <boost/optional.hpp>
 
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
 
+#include "classification/AlignmentSummary.hh"
 #include "common/CountTable.hh"
 
-namespace ehunter {
+namespace ehunter
+{
 
-
-class ClassifierOfAlignmentsToVariant
+class SmallVariantAlignmentClassifier
 {
 public:
     static const graphtools::NodeId kInvalidNodeId;
 
-    ClassifierOfAlignmentsToVariant(std::vector<graphtools::NodeId> targetNodes);
+    explicit SmallVariantAlignmentClassifier(std::vector<graphtools::NodeId> targetNodes);
 
-    void classify(const graphtools::GraphAlignment& graphAlignment);
-
-    const CountTable& countsOfReadsFlankingUpstream() const { return countsOfReadsFlankingUpstream_; }
-    const CountTable& countsOfReadsFlankingDownstream() const { return countsOfReadsFlankingDownstream_; }
-    const CountTable& countsOfSpanningReads() const { return countsOfSpanningReads_; }
-    int numBypassingReads() const { return numBypassingReads_; }
+    // Classifies a read as flanking, spanning, and in-repeat based on its alignments. The read is classified only when
+    // all alignments have exactly the same classification.
+    ReadSummaryForSmallVariant classifyRead(const std::string& read, const std::list<graphtools::GraphAlignment>& alignments);
 
 private:
+    boost::optional<SmallVariantAlignment> classify(const graphtools::GraphAlignment& alignment);
+
     std::vector<graphtools::NodeId> targetNodes_;
     graphtools::NodeId firstBundleNode_;
     graphtools::NodeId lastBundleNode_;
-
-    CountTable countsOfReadsFlankingUpstream_;
-    CountTable countsOfReadsFlankingDownstream_;
-    CountTable countsOfSpanningReads_;
-    int numBypassingReads_ = 0;
 };
 
 }

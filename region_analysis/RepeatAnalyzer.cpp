@@ -21,12 +21,13 @@
 
 #include "region_analysis/RepeatAnalyzer.hh"
 
+#include <iterator>
+
 #include "thirdparty/spdlog/spdlog.h"
 
 #include "graphalign/GraphAlignmentOperations.hh"
 #include "graphutils/SequenceOperations.hh"
 
-#include "alignment/AlignmentFilters.hh"
 #include "alignment/OperationsOnAlignments.hh"
 #include "genotyping/RepeatGenotyper.hh"
 
@@ -39,98 +40,54 @@ using graphtools::NodeId;
 using graphtools::prettyPrint;
 using graphtools::splitStringByDelimiter;
 using std::list;
+using std::set;
 using std::string;
 using std::unique_ptr;
 using std::vector;
 
-static bool checkIfAlignmentIsConfident(
-    NodeId repeatNodeId, const GraphAlignment& alignment, const RepeatAlignmentStats& alignmentStats)
-{
-    if (!checkIfPassesAlignmentFilters(alignment))
-    {
-        return false;
-    }
-
-    const bool doesReadAlignWellOverLeftFlank = checkIfUpstreamAlignmentIsGood(repeatNodeId, alignment);
-    const bool doesReadAlignWellOverRightFlank = checkIfDownstreamAlignmentIsGood(repeatNodeId, alignment);
-
-    if (alignmentStats.canonicalAlignmentType() == AlignmentType::kFlanksRepeat)
-    {
-        if (!doesReadAlignWellOverLeftFlank && !doesReadAlignWellOverRightFlank)
-        {
-            return false;
-        }
-    }
-
-    if (alignmentStats.canonicalAlignmentType() == AlignmentType::kSpansRepeat)
-    {
-        if (!doesReadAlignWellOverLeftFlank || !doesReadAlignWellOverRightFlank)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void RepeatAnalyzer::processMates(
-    const Read& read, const GraphAlignment& readAlignment, const Read& mate, const GraphAlignment& mateAlignment)
+    const Read& read, const list<GraphAlignment>& readAlignments, const Read& mate,
+    const list<GraphAlignment>& mateAlignments)
 {
-    RepeatAlignmentStats readAlignmentStats = classifyReadAlignment(readAlignment);
-    RepeatAlignmentStats mateAlignmentStats = classifyReadAlignment(mateAlignment);
-
-    const bool isReadAlignmentConfident
-        = checkIfAlignmentIsConfident(repeatNodeId(), readAlignment, readAlignmentStats);
-    const bool isMateAlignmentConfident
-        = checkIfAlignmentIsConfident(repeatNodeId(), mateAlignment, mateAlignmentStats);
-
-    if (isReadAlignmentConfident)
+    ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read.sequence(), readAlignments);
+    if (strRead.hasAlignments())
     {
-        console_->trace(
-            "{} is {} for variant {}", read.readId(), readAlignmentStats.canonicalAlignmentType(), variantId_);
-        summarizeAlignmentsToReadCounts(readAlignmentStats);
+        const StrAlignment& strAlignment = strRead.alignments().front();
+        console_->trace("{} is {} for variant {}", read.readId(), strAlignment.type(), variantId_);
+        summarizeAlignmentsToReadCounts(strAlignment);
     }
     else
     {
         console_->debug(
-            "Could not confidently aligned {} to repeat node {} of {}\n{}", read.readId(), repeatNodeId(), variantId_,
-            prettyPrint(readAlignment, read.sequence()));
+            "Could not confidently align {} to repeat node {} of {}", read.readId(), repeatNodeId(), variantId_);
     }
 
-    if (isMateAlignmentConfident)
+    ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate.sequence(), mateAlignments);
+    if (strMate.hasAlignments())
     {
-        console_->trace(
-            "{} is {} for variant {}", mate.readId(), mateAlignmentStats.canonicalAlignmentType(), variantId_);
-        summarizeAlignmentsToReadCounts(mateAlignmentStats);
+        const StrAlignment& strAlignment = strMate.alignments().front();
+        console_->trace("{} is {} for variant {}", mate.readId(), strAlignment.type(), variantId_);
+        summarizeAlignmentsToReadCounts(strAlignment);
     }
     else
     {
         console_->debug(
-            "Could not confidently align {} to repeat node {} of {}\n{}", mate.readId(), repeatNodeId(), variantId_,
-            prettyPrint(mateAlignment, mate.sequence()));
+            "Could not confidently align {} to repeat node {} of {}", mate.readId(), repeatNodeId(), variantId_);
     }
 }
 
-RepeatAlignmentStats RepeatAnalyzer::classifyReadAlignment(const graphtools::GraphAlignment& alignment)
+void RepeatAnalyzer::summarizeAlignmentsToReadCounts(const StrAlignment& strAlignment)
 {
-    AlignmentType alignmentType = alignmentClassifier_.Classify(alignment);
-    int numRepeatUnitsOverlapped = countFullOverlaps(repeatNodeId(), alignment);
-
-    return RepeatAlignmentStats(alignment, alignmentType, numRepeatUnitsOverlapped);
-}
-
-void RepeatAnalyzer::summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats)
-{
-    switch (repeatAlignmentStats.canonicalAlignmentType())
+    switch (strAlignment.type())
     {
-    case AlignmentType::kSpansRepeat:
-        countsOfSpanningReads_.incrementCountOf(repeatAlignmentStats.numRepeatUnitsSpanned());
+    case StrAlignment::Type::kSpanning:
+        countsOfSpanningReads_.incrementCountOf(strAlignment.numUnits());
         break;
-    case AlignmentType::kFlanksRepeat:
-        countsOfFlankingReads_.incrementCountOf(repeatAlignmentStats.numRepeatUnitsSpanned());
+    case StrAlignment::Type::kFlanking:
+        countsOfFlankingReads_.incrementCountOf(strAlignment.numUnits());
         break;
-    case AlignmentType::kInsideRepeat:
-        countsOfInrepeatReads_.incrementCountOf(repeatAlignmentStats.numRepeatUnitsSpanned());
+    case StrAlignment::Type::kInrepeat:
+        countsOfInrepeatReads_.incrementCountOf(strAlignment.numUnits());
         break;
     default:
         break;
@@ -176,11 +133,11 @@ unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) con
     const vector<int32_t> candidateAlleleSizes
         = generateCandidateAlleleSizes(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable);
 
-    const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
+    const double haplotypeDepth = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
 
     RepeatGenotyper repeatGenotyper(
-        haplotypeDepth, expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
-        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable);
+        haplotypeDepth, stats.alleleCount(), repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
+        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, countOfInrepeatReadPairs_);
 
     optional<RepeatGenotype> repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
 
@@ -188,5 +145,4 @@ unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) con
         new RepeatFindings(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, repeatGenotype));
     return variantFindingsPtr;
 }
-
 }

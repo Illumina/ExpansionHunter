@@ -15,7 +15,11 @@ Prerequisites:
  - [Boost C++ Libraries](http://www.boost.org/) version 1.57.0 or
    above
 
-If you the above prerequisites are satisfied, you are ready to
+Users without root access to their system can obtain a new version of CMake
+by installing the popular [Anaconda Distribution](https://www.anaconda.com/distribution/)
+and then running `conda install -c anaconda cmake`.
+
+If the above prerequisites are satisfied, you are ready to
 build the program. Note that during the build procedure, cmake will 
 attempt to download and install [HTSlib](http://www.htslib.org) and 
 [zlib](https://github.com/madler/zlib) so an active internet 

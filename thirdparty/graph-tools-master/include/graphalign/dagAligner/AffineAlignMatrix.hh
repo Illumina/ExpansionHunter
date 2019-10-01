@@ -97,6 +97,10 @@ namespace dagAligner
 
         bool isInsertion(int q, int t) const
         {
+            if (-1 == q)
+            {
+                return false;
+            }
             const Score insExtScore = v_.at(q, t) - f_.at(q - 1, t);
             const Score insOpenScore = v_.at(q, t) - v_.at(q - 1, t);
             return gapExt_ == insExtScore || gapOpen_ + gapExt_ == insOpenScore;
@@ -104,6 +108,7 @@ namespace dagAligner
 
         bool isDeletion(int q, int t, int p) const
         {
+            // q == -1 is ok here, just check the score match as usual
             const Score delExtScore = v_.at(q, t) - e_.at(q, p);
             const Score delOpenScore = v_.at(q, t) - v_.at(q, p);
             return gapExt_ == delExtScore || gapOpen_ + gapExt_ == delOpenScore;
@@ -111,6 +116,11 @@ namespace dagAligner
 
         bool isMatch(int q, int t, int p) const
         {
+            if (-1 == q)
+            {
+                return false;
+            }
+
             typename PenaltyMatrix::QueryChar queryChar = query_[q];
             typename PenaltyMatrix::TargetChar targetChar = target_[t];
             const Score alnScore = v_.at(q, t) - v_.at(q - 1, p);
@@ -119,6 +129,11 @@ namespace dagAligner
 
         bool isMismatch(int q, int t, int p) const
         {
+            if (-1 == q)
+            {
+                return false;
+            }
+
             typename PenaltyMatrix::QueryChar queryChar = query_[q];
             typename PenaltyMatrix::TargetChar targetChar = target_[t];
             const Score alnScore = v_.at(q, t) - v_.at(q - 1, p);
