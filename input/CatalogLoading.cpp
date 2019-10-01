@@ -229,8 +229,7 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
         }
         catch (const std::exception& except)
         {
-            // const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
-            const string message = except.what();
+            const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
             if (context.heuristics().permissive())
             {
                 auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
