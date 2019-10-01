@@ -38,6 +38,7 @@
 
 #include "common/Common.hh"
 #include "common/Reference.hh"
+#include "common/WorkflowContext.hh"
 #include "input/LocusSpecDecoding.hh"
 
 using boost::optional;
@@ -215,12 +216,29 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
     inputStream >> catalogJson;
     makeArray(catalogJson);
 
+    WorkflowContext context;
+
     RegionCatalog catalog;
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
-        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, reference);
-        catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+        try
+        {
+            LocusSpecification locusSpec = decodeLocusSpecification(userDescription, reference);
+            catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+        }
+        catch (const std::exception& except)
+        {
+            const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
+            if (context.heuristics().permissive())
+            {
+                spdlog::warn(message);
+            }
+            else
+            {
+                throw std::runtime_error(message);
+            }
+        }
     }
 
     return catalog;
