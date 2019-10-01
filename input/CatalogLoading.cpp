@@ -219,8 +219,24 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
-        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, reference);
-        catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+        try {
+	    LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
+	    catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+        }
+	catch (const std::exception& except)
+	{
+            //const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
+            const string message = except.what();
+            if (heuristicParams.permissive())
+            {
+                auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
+                console->warn(message);
+            }
+            else
+            {
+                throw std::runtime_error(message);
+            }
+	}
     }
 
     return catalog;

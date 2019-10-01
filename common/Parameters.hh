@@ -52,43 +52,6 @@ enum class LogLevel
     kError
 };
 
-class HeuristicParameters
-{
-public:
-    HeuristicParameters(
-        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType,
-        int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 14)
-        : regionExtensionLength_(regionExtensionLength)
-        , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
-        , skipUnaligned_(skipUnaligned)
-        , alignerType_(alignerType)
-        , kmerLenForAlignment_(kmerLenForAlignment)
-        , paddingLength_(paddingLength)
-        , seedAffixTrimLength_(seedAffixTrimLength)
-
-    {
-    }
-
-    int regionExtensionLength() const { return regionExtensionLength_; }
-    int qualityCutoffForGoodBaseCall() const { return qualityCutoffForGoodBaseCall_; }
-    bool skipUnaligned() const { return skipUnaligned_; }
-    const std::string& alignerType() const { return alignerType_; }
-    int kmerLenForAlignment() const { return kmerLenForAlignment_; }
-    int paddingLength() const { return paddingLength_; }
-    int seedAffixTrimLength() const { return seedAffixTrimLength_; }
-
-private:
-    int regionExtensionLength_;
-    int qualityCutoffForGoodBaseCall_;
-    bool skipUnaligned_;
-    std::string alignerType_;
-    int kmerLenForAlignment_;
-    int paddingLength_;
-    int seedAffixTrimLength_;
-};
-
-std::ostream& operator<<(std::ostream& out, const HeuristicParameters& heuristics);
-
 class InputPaths
 {
 public:
@@ -145,6 +108,46 @@ private:
     std::string id_;
     Sex sex_;
 };
+
+class HeuristicParameters
+{
+public:
+    HeuristicParameters(
+        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType, bool permissive,
+        int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 14)
+        : regionExtensionLength_(regionExtensionLength)
+        , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
+        , skipUnaligned_(skipUnaligned)
+        , alignerType_(alignerType)
+	, permissive_(permissive)
+        , kmerLenForAlignment_(kmerLenForAlignment)
+        , paddingLength_(paddingLength)
+        , seedAffixTrimLength_(seedAffixTrimLength)
+
+    {
+    }
+
+    int regionExtensionLength() const { return regionExtensionLength_; }
+    int qualityCutoffForGoodBaseCall() const { return qualityCutoffForGoodBaseCall_; }
+    bool skipUnaligned() const { return skipUnaligned_; }
+    const std::string& alignerType() const { return alignerType_; }
+    bool permissive() const { return permissive_; }
+    int kmerLenForAlignment() const { return kmerLenForAlignment_; }
+    int paddingLength() const { return paddingLength_; }
+    int seedAffixTrimLength() const { return seedAffixTrimLength_; }
+
+private:
+    int regionExtensionLength_;
+    int qualityCutoffForGoodBaseCall_;
+    bool skipUnaligned_;
+    std::string alignerType_;
+    bool permissive_;
+    int kmerLenForAlignment_;
+    int paddingLength_;
+    int seedAffixTrimLength_;
+};
+
+std::ostream& operator<<(std::ostream& out, const HeuristicParameters& heuristics);
 
 // Per-locus parameters (settable from variant catalog) controlling genotyping
 struct GenotyperParameters
