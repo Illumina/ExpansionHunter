@@ -25,7 +25,6 @@
 
 extern "C"
 {
-//#include "htslib/hts.h"
 #include "htslib/sam.h"
 }
 
