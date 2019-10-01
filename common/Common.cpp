@@ -72,8 +72,6 @@ std::ostream& operator<<(std::ostream& out, ReadType readType)
     case ReadType::kSpanning:
         out << "SPANNING";
         break;
-    case ReadType::kOther:
-        out << "OTHER";
     }
     return out;
 }

@@ -117,6 +117,24 @@ namespace
         }
     }
 
+    int32_t getReadCountCap(vector<GenomicRegion>& regionsWithReads)
+    {
+        int32_t readCountCap;
+        // hardcoded for now
+        int32_t sampleDepth = 100;
+        int32_t readLength = 150;
+        float depthMultiplier = 10;
+
+        int64_t regionLength = 0;
+        for (const auto& regionWithReads : regionsWithReads)
+        {
+            regionLength += regionWithReads.length();
+        }
+
+        readCountCap = regionLength / (float)readLength * sampleDepth * depthMultiplier;
+        return readCountCap;
+    }
+
     ReadPairs collectCandidateReads(
         const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
         AlignmentStatsCatalog& alignmentStatsCatalog, const string& htsFilePath, const string& htsReferencePath)
@@ -147,6 +165,12 @@ namespace
             }
             const int numReadsCollected = readPairs.NumReads() - numReadsBeforeCollection;
             console->debug("Collected {} reads from {}", numReadsCollected, regionWithReads);
+        }
+
+        // add a cap for reads
+        if (readPairs.NumReads() > getReadCountCap(regionsWithReads))
+        {
+            readPairs.Clear();
         }
 
         const int numReadsBeforeRecovery = readPairs.NumReads();
@@ -243,8 +267,7 @@ namespace
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, const HeuristicParameters& heuristicParams, const RegionCatalog& regionCatalog,
-    AlignmentWriter& alignmentWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& alignmentWriter)
 {
     auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
 
@@ -255,7 +278,7 @@ SampleFindings htsSeekingSampleAnalysis(
         const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
 
         vector<unique_ptr<LocusAnalyzer>> locusAnalyzers;
-        locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, heuristicParams, alignmentWriter));
+        locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, alignmentWriter));
         AnalyzerFinder analyzerFinder(locusAnalyzers);
 
         AlignmentStatsCatalog alignmentStats;
@@ -265,11 +288,10 @@ SampleFindings htsSeekingSampleAnalysis(
 
         processReads(readPairs, alignmentStats, analyzerFinder);
 
-        auto variantFindings = locusAnalyzers.front()->analyze();
+        auto variantFindings = locusAnalyzers.front()->analyze(sampleSex);
         sampleFindings.emplace(locusId, std::move(variantFindings));
     }
 
     return sampleFindings;
 }
-
 }

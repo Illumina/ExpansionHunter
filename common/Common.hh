@@ -37,13 +37,19 @@ enum class ReadType
     kSpanning,
     kFlanking,
     kRepeat,
-    kOther
 };
 
 enum class Sex
 {
     kMale,
     kFemale
+};
+
+enum class ChromType
+{
+    kX,
+    kY,
+    kAutosome
 };
 
 Sex decodeSampleSex(const std::string& encoding);

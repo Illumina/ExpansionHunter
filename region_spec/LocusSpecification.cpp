@@ -53,11 +53,11 @@ namespace spd = spdlog;
 namespace ehunter
 {
 LocusSpecification::LocusSpecification(
-    RegionId locusId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
+    RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
     graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
     : locusId_(std::move(locusId))
+    , typeOfChromLocusLocatedOn_(typeOfChromLocusLocatedOn)
     , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
-    , expectedAlleleCount_(expectedAlleleCount)
     , regionGraph_(std::move(regionGraph))
     , referenceRegions_(std::move(referenceRegions))
     , parameters_(std::move(genotyperParams))

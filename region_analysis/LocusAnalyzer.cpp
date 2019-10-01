@@ -59,17 +59,15 @@ static const string encodeReadPair(const Read& read, const Read& mate)
 }
 */
 
-LocusAnalyzer::LocusAnalyzer(
-    const LocusSpecification& locusSpec, HeuristicParameters heuristicParams,
-    graphtools::AlignmentWriter& alignmentWriter)
+LocusAnalyzer::LocusAnalyzer(const LocusSpecification& locusSpec, graphtools::AlignmentWriter& alignmentWriter)
     : locusSpec_(locusSpec)
-    , heuristicParams_(heuristicParams)
     , alignmentWriter_(alignmentWriter)
     , orientationPredictor_(&locusSpec_.regionGraph())
     , graphAligner_(
-          &locusSpec_.regionGraph(), heuristicParams.alignerType(), heuristicParams_.kmerLenForAlignment(),
-          heuristicParams_.paddingLength(), heuristicParams_.seedAffixTrimLength())
-    , statsCalculator_(locusSpec_.regionGraph())
+          &locusSpec_.regionGraph(), workflowContext_.heuristics().alignerType(),
+          workflowContext_.heuristics().kmerLenForAlignment(), workflowContext_.heuristics().paddingLength(),
+          workflowContext_.heuristics().seedAffixTrimLength())
+    , statsCalculator_(locusSpec_.typeOfChromLocusLocatedOn(), locusSpec_.regionGraph())
     , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
 
 {
@@ -94,15 +92,14 @@ LocusAnalyzer::LocusAnalyzer(
                 optionalUnitOfRareRepeat_ = repeatUnit;
             }
 
-            variantAnalyzerPtrs_.emplace_back(new RepeatAnalyzer(
-                variantSpec.id(), locusSpec.expectedAlleleCount(), locusSpec.regionGraph(), repeatNodeId));
+            variantAnalyzerPtrs_.emplace_back(
+                new RepeatAnalyzer(variantSpec.id(), locusSpec.regionGraph(), repeatNodeId));
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {
             variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
-                variantSpec.id(), variantSpec.classification().subtype, locusSpec.expectedAlleleCount(),
-                locusSpec.regionGraph(), variantSpec.nodes(), variantSpec.optionalRefNode(),
-                locusSpec.genotyperParameters()));
+                variantSpec.id(), variantSpec.classification().subtype, locusSpec.regionGraph(), variantSpec.nodes(),
+                variantSpec.optionalRefNode(), locusSpec.genotyperParameters()));
         }
         else
         {
@@ -127,51 +124,40 @@ void LocusAnalyzer::processMates(Read read, optional<Read> mate, RegionType regi
 
 void LocusAnalyzer::processOntargetMates(Read read, optional<Read> mate)
 {
-    optional<GraphAlignment> readAlignment = alignRead(read);
-    optional<GraphAlignment> mateAlignment = mate ? alignRead(*mate) : boost::none;
+    list<GraphAlignment> readAlignments = alignRead(read);
+    list<GraphAlignment> mateAlignments;
+    if (mate)
+    {
+        mateAlignments = alignRead(*mate);
+    }
 
-    int numMatchingBases = read.sequence().length() / 7.5;
+    int numMatchingBases = static_cast<int>(read.sequence().length() / 7.5);
     numMatchingBases = std::max(numMatchingBases, 10);
     LinearAlignmentParameters parameters;
     const int kMinNonRepeatAlignmentScore = numMatchingBases * parameters.matchScore;
 
-    if (!checkIfLocallyPlacedReadPair(readAlignment, mateAlignment, kMinNonRepeatAlignmentScore))
+    if (!checkIfComesFromGraphLocus(readAlignments, mateAlignments, kMinNonRepeatAlignmentScore))
     {
-        console_->debug("Not locally placed read pair\n" + read.fragmentId());
+        if (mate && optionalUnitOfRareRepeat_)
+        {
+            processOfftargetMates(std::move(read), std::move(*mate));
+        }
+
         return;
     }
 
-    if (readAlignment)
+    if (!readAlignments.empty())
     {
-        statsCalculator_.inspect(*readAlignment);
+        statsCalculator_.inspect(readAlignments.front());
     }
-    if (mateAlignment)
+    if (!mateAlignments.empty())
     {
-        statsCalculator_.inspect(*mateAlignment);
+        statsCalculator_.inspect(mateAlignments.front());
     }
 
-    if (readAlignment && mateAlignment)
+    if (!readAlignments.empty() && !mateAlignments.empty())
     {
-        alignmentWriter_.write(
-            locusSpec_.locusId(), read.fragmentId(), read.sequence(), read.isFirstMate(), read.isReversed(), mate->isReversed(), *readAlignment);
-        alignmentWriter_.write(
-            locusSpec_.locusId(), mate->fragmentId(), mate->sequence(), mate->isFirstMate(), mate->isReversed(), read.isReversed(), *mateAlignment);
-
-        for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
-        {
-            variantAnalyzerPtr->processMates(read, *readAlignment, *mate, *mateAlignment);
-        }
-    }
-    else
-    {
-        const string readStatus = readAlignment ? "Able" : "Unable";
-        console_->debug("{} to align {} to {}: {}", readStatus, read.readId(), locusSpec_.locusId(), read.sequence());
-        if (mate)
-        {
-            const string mateStatus = mateAlignment ? "Able" : "Unable";
-            console_->debug(
-                "{} to align {} to {}: {}", mateStatus, mate->readId(), locusSpec_.locusId(), mate->sequence());
-        }
+        runVariantAnalysis(read, readAlignments, *mate, mateAlignments);
     }
 }
 
@@ -192,11 +178,42 @@ void LocusAnalyzer::processOfftargetMates(Read read, Read mate)
 
     if (isFirstReadInrepeat && isSecondReadInrepeat)
     {
-        processOntargetMates(std::move(read), std::move(mate));
+        int numAnalyzersFound = 0;
+        for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
+        {
+            auto repeatAnalyzerPtr = dynamic_cast<RepeatAnalyzer*>(variantAnalyzerPtr.get());
+            if (repeatAnalyzerPtr != nullptr && repeatAnalyzerPtr->repeatUnit() == repeatUnit)
+            {
+                numAnalyzersFound++;
+                repeatAnalyzerPtr->addInrepeatReadPair();
+            }
+        }
+
+        if (numAnalyzersFound != 1)
+        {
+            const string errorMessage = "Encountered inconsistently-specified locus " + locusSpec_.locusId();
+            throw std::logic_error(errorMessage);
+        }
     }
 }
 
-boost::optional<GraphAlignment> LocusAnalyzer::alignRead(Read& read) const
+void LocusAnalyzer::runVariantAnalysis(
+    const Read& read, const GraphAlignments& readAlignments, const Read& mate, const GraphAlignments& mateAlignments)
+{
+    alignmentWriter_.write(
+        locusSpec_.locusId(), read.fragmentId(), read.sequence(), read.isFirstMate(), read.isReversed(),
+        mate.isReversed(), readAlignments.front());
+    alignmentWriter_.write(
+        locusSpec_.locusId(), mate.fragmentId(), mate.sequence(), mate.isFirstMate(), mate.isReversed(),
+        read.isReversed(), mateAlignments.front());
+
+    for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
+    {
+        variantAnalyzerPtr->processMates(read, readAlignments, mate, mateAlignments);
+    }
+}
+
+list<GraphAlignment> LocusAnalyzer::alignRead(Read& read) const
 {
     OrientationPrediction predictedOrientation = orientationPredictor_.predict(read.sequence());
 
@@ -206,26 +223,19 @@ boost::optional<GraphAlignment> LocusAnalyzer::alignRead(Read& read) const
     }
     else if (predictedOrientation == OrientationPrediction::kDoesNotAlign)
     {
-        return boost::optional<GraphAlignment>();
+        return {};
     }
 
-    const list<GraphAlignment> alignments = graphAligner_.align(read.sequence());
-
-    if (alignments.empty())
-    {
-        return boost::optional<GraphAlignment>();
-    }
-
-    return computeCanonicalAlignment(alignments);
+    return graphAligner_.align(read.sequence());
 }
 
-LocusFindings LocusAnalyzer::analyze()
+LocusFindings LocusAnalyzer::analyze(Sex sampleSex)
 {
     LocusFindings locusFindings;
 
-    locusFindings.optionalStats = statsCalculator_.estimate();
-    if (locusFindings.optionalStats &&
-        locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
+    locusFindings.optionalStats = statsCalculator_.estimate(sampleSex);
+    if (locusFindings.optionalStats
+        && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
     {
         for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
         {
@@ -243,8 +253,8 @@ LocusFindings LocusAnalyzer::analyze()
     return locusFindings;
 }
 
-vector<std::unique_ptr<LocusAnalyzer>> initializeLocusAnalyzers(
-    const RegionCatalog& RegionCatalog, const HeuristicParameters& heuristicParams, AlignmentWriter& bamletWriter)
+vector<std::unique_ptr<LocusAnalyzer>>
+initializeLocusAnalyzers(const RegionCatalog& RegionCatalog, AlignmentWriter& bamletWriter)
 {
     vector<std::unique_ptr<LocusAnalyzer>> locusAnalyzers;
 
@@ -252,7 +262,7 @@ vector<std::unique_ptr<LocusAnalyzer>> initializeLocusAnalyzers(
     {
         const LocusSpecification& locusSpec = locusIdAndRegionSpec.second;
 
-        locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, heuristicParams, bamletWriter));
+        locusAnalyzers.emplace_back(new LocusAnalyzer(locusSpec, bamletWriter));
     }
 
     return locusAnalyzers;

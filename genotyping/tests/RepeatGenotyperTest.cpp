@@ -50,3 +50,17 @@ TEST(CountingInrepeatReads, HaploidNormal_IrrsCounted)
     const int maxNumUnitsInRead = 50;
     EXPECT_EQ(1, countFullLengthRepeatReads(maxNumUnitsInRead, countsOfFlankingReads, countsOfInrepeatReads));
 }
+
+TEST(GenotypeExtension, NoFlankingReadsWhenSomeAreExpected_ExtensionAborted)
+{
+    // haplotypeDepth, expectedAlleleCount, repeatUnitLen, maxNumUnitsInRead, propCorrectMolecules, ...
+    RepeatGenotyper genotyper(20, AlleleCount::kTwo, 10, 15, 0.8, CountTable(), CountTable(), CountTable(), 0);
+    RepeatGenotype genotype(10, { 2, 10 });
+    RepeatGenotype expectedGenotype(genotype);
+
+    genotyper.extendGenotypeWhenBothAllelesAreFlanking(genotype);
+    EXPECT_EQ(expectedGenotype, genotype);
+
+    genotyper.extendGenotypeWhenOneAlleleIsFlanking(genotype);
+    EXPECT_EQ(expectedGenotype, genotype);
+}

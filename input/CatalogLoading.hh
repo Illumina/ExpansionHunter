@@ -32,8 +32,6 @@
 namespace ehunter
 {
 
-RegionCatalog loadLocusCatalogFromDisk(
-    const std::string& catalogPath, Sex sampleSex, const HeuristicParameters& heuristicParams,
-    const Reference& reference);
+RegionCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
 
 }

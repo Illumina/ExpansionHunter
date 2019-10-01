@@ -22,6 +22,7 @@
 #pragma once
 
 #include <fstream>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -146,6 +147,8 @@ private:
     int seedAffixTrimLength_;
 };
 
+std::ostream& operator<<(std::ostream& out, const HeuristicParameters& heuristics);
+
 // Per-locus parameters (settable from variant catalog) controlling genotyping
 struct GenotyperParameters
 {
@@ -156,7 +159,6 @@ struct GenotyperParameters
     // Minimal estimated locus coverage (depth) to attempt genotyping
     double minLocusCoverage = 10;
 };
-
 
 class ProgramParameters
 {

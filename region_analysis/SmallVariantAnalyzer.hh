@@ -22,10 +22,11 @@
 #pragma once
 
 #include <boost/optional.hpp>
+#include <list>
 
 #include "thirdparty/spdlog/spdlog.h"
 
-#include "classification/ClassifierOfAlignmentsToVariant.hh"
+#include "classification/SmallVariantAlignmentClassifier.hh"
 #include "genotyping/AlleleChecker.hh"
 #include "genotyping/SmallVariantGenotyper.hh"
 #include "region_analysis/VariantAnalyzer.hh"
@@ -38,10 +39,10 @@ class SmallVariantAnalyzer : public VariantAnalyzer
 {
 public:
     SmallVariantAnalyzer(
-        std::string variantId, VariantSubtype variantSubtype, AlleleCount expectedAlleleCount,
-        const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds,
-        boost::optional<graphtools::NodeId> optionalRefNode, const GenotyperParameters& params)
-        : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, std::move(nodeIds))
+        std::string variantId, VariantSubtype variantSubtype, const graphtools::Graph& graph,
+        std::vector<graphtools::NodeId> nodeIds, boost::optional<graphtools::NodeId> optionalRefNode,
+        const GenotyperParameters& params)
+        : VariantAnalyzer(std::move(variantId), graph, std::move(nodeIds))
         , variantSubtype_(variantSubtype)
         , optionalRefNode_(optionalRefNode)
         , alignmentClassifier_(nodeIds_)
@@ -57,17 +58,23 @@ public:
     std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const override;
 
     void processMates(
-        const Read& read, const graphtools::GraphAlignment& readAlignment, const Read& mate,
-        const graphtools::GraphAlignment& mateAlignment) override;
+        const Read& read, const std::list<graphtools::GraphAlignment>& readAlignments, const Read& mate,
+        const std::list<graphtools::GraphAlignment>& mateAlignments) override;
 
 protected:
     int countReadsSupportingNode(graphtools::NodeId nodeId) const;
+    void processRead(const Read& read, const std::list<graphtools::GraphAlignment>& alignments);
 
     VariantSubtype variantSubtype_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
 
-    ClassifierOfAlignmentsToVariant alignmentClassifier_;
+    SmallVariantAlignmentClassifier alignmentClassifier_;
     AlleleChecker allelePresenceChecker_;
+
+    CountTable countsOfReadsFlankingUpstream_;
+    CountTable countsOfReadsFlankingDownstream_;
+    CountTable countsOfSpanningReads_;
+    int numBypassingReads_ = 0;
 
     std::shared_ptr<spdlog::logger> console_;
 };

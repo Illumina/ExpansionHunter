@@ -34,6 +34,7 @@
 #include "thirdparty/spdlog/spdlog.h"
 
 #include "common/Parameters.hh"
+#include "common/WorkflowContext.hh"
 #include "input/CatalogLoading.hh"
 #include "input/ParameterLoading.hh"
 #include "input/SampleStats.hh"
@@ -98,9 +99,13 @@ int main(int argc, char** argv)
         {
             return 0;
         }
-        ProgramParameters& params = *optionalProgramParameters;
 
+        ProgramParameters& params = *optionalProgramParameters;
         setLogLevel(params.logLevel());
+
+        // Low-level pass through parameters are stored in the context object.
+        initializeWorkflowContext(params.heuristics());
+        console->info("Workflow parameter object is initialized with {}", WorkflowContext());
 
         SampleParameters& sampleParams = params.sample();
 
@@ -112,9 +117,7 @@ int main(int argc, char** argv)
         FastaReference reference(inputPaths.reference(), extractReferenceContigInfo(inputPaths.htsFile()));
 
         console->info("Loading variant catalog from disk {}", inputPaths.catalog());
-        const HeuristicParameters& heuristicParams = params.heuristics();
-        const RegionCatalog regionCatalog
-            = loadLocusCatalogFromDisk(inputPaths.catalog(), sampleParams.sex(), heuristicParams, reference);
+        const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), reference);
 
         const OutputPaths& outputPaths = params.outputPaths();
 
@@ -124,12 +127,12 @@ int main(int argc, char** argv)
         if (params.analysisMode() == AnalysisMode::kSeeking)
         {
             console->info("Running sample analysis in seeking mode");
-            sampleFindings = htsSeekingSampleAnalysis(inputPaths, heuristicParams, regionCatalog, bamletWriter);
+            sampleFindings = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
         }
         else
         {
             console->info("Running sample analysis in streaming mode");
-            sampleFindings = htsStreamingSampleAnalysis(inputPaths, heuristicParams, regionCatalog, bamletWriter);
+            sampleFindings = htsStreamingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
         }
 
         console->info("Writing output to disk");

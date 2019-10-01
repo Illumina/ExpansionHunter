@@ -77,8 +77,14 @@ optional<RepeatGenotype> RepeatGenotyper::genotypeRepeat(const vector<int32_t>& 
 
     ShortRepeatGenotyper shortRepeatGenotyper(repeatUnitLen_, maxNumUnitsInRead_, propCorrectMolecules_);
 
-    const int repeatReadCount
+    int repeatReadCount
         = ::ehunter::countFullLengthRepeatReads(maxNumUnitsInRead_, countsOfFlankingReads_, countsOfInrepeatReads_);
+
+    const int minInrepeatReadsInLongExpansion = 1;
+    if (repeatReadCount >= minInrepeatReadsInLongExpansion)
+    {
+        repeatReadCount += 2 * countOfInrepeatReadPairs_;
+    }
 
     if (expectedAlleleCount_ == AlleleCount::kOne)
     {
@@ -143,6 +149,13 @@ optional<RepeatGenotype> RepeatGenotyper::genotypeRepeat(const vector<int32_t>& 
 
 void RepeatGenotyper::extendGenotypeWhenBothAllelesAreFlanking(RepeatGenotype& genotype) const
 {
+    // In some exceptional situations flanking reads might be filtered out before the extension step; if this happens,
+    // genotype extension is aborted.
+    if (countFlankingReadsLongerThanSpanning() == 0)
+    {
+        return;
+    }
+
     int32_t flankingAlleleSize, flankingAlleleCiLower, flankingAlleleCiUpper;
     estimateFlankingAlleleSize(flankingAlleleSize, flankingAlleleCiLower, flankingAlleleCiUpper);
 
@@ -158,6 +171,13 @@ void RepeatGenotyper::extendGenotypeWhenBothAllelesAreFlanking(RepeatGenotype& g
 
 void RepeatGenotyper::extendGenotypeWhenOneAlleleIsFlanking(RepeatGenotype& genotype) const
 {
+    // In some exceptional situations flanking reads might be filtered out before the extension step; if this happens,
+    // genotype extension is aborted.
+    if (countFlankingReadsLongerThanSpanning() == 0)
+    {
+        return;
+    }
+
     int32_t flankingAlleleSize, flankingAlleleCiLower, flankingAlleleCiUpper;
     estimateFlankingAlleleSize(flankingAlleleSize, flankingAlleleCiLower, flankingAlleleCiUpper);
 
@@ -219,18 +239,8 @@ void RepeatGenotyper::estimateFlankingAlleleSize(
 {
     const int32_t readLength = repeatUnitLen_ * maxNumUnitsInRead_;
 
-    const vector<int32_t>& spanningSizes = countsOfSpanningReads_.getElementsWithNonzeroCounts();
-    const int32_t longestSpanning
-        = spanningSizes.empty() ? 0 : *std::max_element(spanningSizes.begin(), spanningSizes.end());
-
-    int32_t numFlankingReadsLongerThanSpanning = 0;
-    for (int32_t repeatSize : countsOfFlankingReads_.getElementsWithNonzeroCounts())
-    {
-        if (repeatSize > longestSpanning)
-        {
-            numFlankingReadsLongerThanSpanning += countsOfFlankingReads_.countOf(repeatSize);
-        }
-    }
+    const int longestSpanning = calculateLongestSpanning();
+    const int numFlankingReadsLongerThanSpanning = countFlankingReadsLongerThanSpanning();
 
     // Haplotype depth should be twice as high because flanking reads come from both flanks of the repeat.
     estimateRegionLength(
@@ -275,6 +285,28 @@ int RepeatGenotyper::countFullLengthRepeatReads() const
     }
 
     return repeatReadCount;
+}
+
+int RepeatGenotyper::calculateLongestSpanning() const
+{
+    const vector<int32_t>& spanningSizes = countsOfSpanningReads_.getElementsWithNonzeroCounts();
+    const int longestSpanning
+        = spanningSizes.empty() ? 0 : *std::max_element(spanningSizes.begin(), spanningSizes.end());
+    return longestSpanning;
+}
+
+int RepeatGenotyper::countFlankingReadsLongerThanSpanning() const
+{
+    const int longestSpanning = calculateLongestSpanning();
+    int32_t numFlankingReadsLongerThanSpanning = 0;
+    for (int32_t repeatSize : countsOfFlankingReads_.getElementsWithNonzeroCounts())
+    {
+        if (repeatSize > longestSpanning)
+        {
+            numFlankingReadsLongerThanSpanning += countsOfFlankingReads_.countOf(repeatSize);
+        }
+    }
+    return numFlankingReadsLongerThanSpanning;
 }
 
 static int depthBasedCountOfInrepeatReads(

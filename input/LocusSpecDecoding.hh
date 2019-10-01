@@ -58,8 +58,7 @@ struct LocusDescriptionFromUser
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);
 
-LocusSpecification decodeLocusSpecification(
-    const LocusDescriptionFromUser& userDescription, Sex sampleSex, const Reference& reference,
-    const HeuristicParameters& heuristicParams);
+LocusSpecification
+decodeLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 
 }
