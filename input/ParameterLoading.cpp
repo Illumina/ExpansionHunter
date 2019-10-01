@@ -89,8 +89,8 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     advancedOptions.add_options()
         ("aligner", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Graph aligner type (dag-aligner or path-aligner)")
         ("analysis-mode", po::value<string>(&params.analysisMode)->default_value("seeking"), "Analysis workflow type (seeking or streaming)")
-        ("good-base-call-cutoff", po::value<int>(&params.qualityCutoffForGoodBaseCall)->default_value(20), "Minimum score for a good base call");
-        ("permissive", po::bool_switch(&params.permissive)->default_value(false), "Skip the locus, rather than terminate the program, when encountering a locus with more than 5 N characters");
+        ("good-base-call-cutoff", po::value<int>(&params.qualityCutoffForGoodBaseCall)->default_value(20), "Minimum score for a good base call")
+        ("permissive", po::bool_switch(&params.permissive)->default_value(false), "Continue execution on non-fatal errors");
     // clang-format on
 
     po::options_description cmdlineOptions;
