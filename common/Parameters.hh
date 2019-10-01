@@ -113,13 +113,13 @@ class HeuristicParameters
 {
 public:
     HeuristicParameters(
-        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType, bool permissive,
-        int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 14)
+        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned, const std::string& alignerType,
+        bool permissive, int kmerLenForAlignment = 14, int paddingLength = 10, int seedAffixTrimLength = 14)
         : regionExtensionLength_(regionExtensionLength)
         , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
         , skipUnaligned_(skipUnaligned)
         , alignerType_(alignerType)
-	, permissive_(permissive)
+        , permissive_(permissive)
         , kmerLenForAlignment_(kmerLenForAlignment)
         , paddingLength_(paddingLength)
         , seedAffixTrimLength_(seedAffixTrimLength)
