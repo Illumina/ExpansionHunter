@@ -79,7 +79,7 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
         ("reference", po::value<string>(&params.referencePath)->required(), "FASTA file with reference genome")
         ("variant-catalog", po::value<string>(&params.catalogPath)->required(), "JSON file with variants to genotype")
         ("output-prefix", po::value<string>(&params.outputPrefix)->required(), "Prefix for the output files")
-        ("workflow-extension-length", po::value<int>(&params.regionExtensionLength)->default_value(1000), "How far from on/off-target regions to search for informative reads")
+        ("region-extension-length", po::value<int>(&params.regionExtensionLength)->default_value(1000), "How far from on/off-target regions to search for informative reads")
         ("sex", po::value<string>(&params.sampleSexEncoding)->default_value("female"), "Sex of the sample; must be either male or female")
         ("log-level", po::value<string>(&params.logLevel)->default_value("info"), "trace, debug, info, warn, or error");
     // clang-format on
