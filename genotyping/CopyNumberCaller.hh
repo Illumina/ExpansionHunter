@@ -29,7 +29,11 @@
 
 namespace ehunter
 {
-boost::optional<int> callCopyNumber(
-    const std::vector<boost::optional<int>>& baselineCopyNumbers, boost::optional<int> targetCopyNumber,
-    bool baselineExpectedNormal, int expectedBaselineCopyNumber);
+boost::optional<int> callCopyNumberForOverlappingCNV(
+    boost::optional<int> targetCopyNumber, const std::vector<boost::optional<int>>& baselineCopyNumbers,
+    int expectedBaselineCopyNumber);
+
+boost::optional<int> callCopyNumberForNonOverlappingCNV(
+    boost::optional<int> targetCopyNumber, const std::vector<boost::optional<int>>& baselineCopyNumbers,
+    int expectedBaselineCopyNumber);
 }
