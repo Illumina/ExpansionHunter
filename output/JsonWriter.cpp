@@ -21,6 +21,7 @@
 
 #include "output/JsonWriter.hh"
 
+#include <iomanip>
 #include <sstream>
 #include <vector>
 
@@ -71,10 +72,10 @@ void JsonWriter::write(std::ostream& out)
 
         Json locusRecord;
         locusRecord["LocusId"] = locusId;
-        locusRecord["AlleleCount"] = static_cast<int>(locusSpec.expectedAlleleCount());
 
         if (locusFindings.optionalStats)
         {
+            locusRecord["AlleleCount"] = static_cast<int>(locusFindings.optionalStats->alleleCount());
             locusRecord["Coverage"] = locusFindings.optionalStats->depth();
             locusRecord["ReadLength"] = locusFindings.optionalStats->meanReadLength();
         }
@@ -86,7 +87,7 @@ void JsonWriter::write(std::ostream& out)
             const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
             VariantJsonWriter variantWriter(contigInfo_, locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(&variantWriter);
+            variantIdAndFindings.second->accept(variantWriter);
             variantRecords[variantId] = variantWriter.record();
         }
 
@@ -119,11 +120,9 @@ static string encodeGenotype(const RepeatGenotype& genotype)
     return encoding;
 }
 
-void VariantJsonWriter::visit(const RepeatFindings* repeatFindingsPtr)
+void VariantJsonWriter::visit(StrFindings& strFindings)
 {
     assert(variantSpec_.classification().type == VariantType::kRepeat);
-
-    const RepeatFindings& repeatFindings = *repeatFindingsPtr;
 
     record_.clear();
     record_["VariantId"] = variantSpec_.id();
@@ -135,20 +134,19 @@ void VariantJsonWriter::visit(const RepeatFindings* repeatFindingsPtr)
     const auto& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
     record_["RepeatUnit"] = repeatUnit;
 
-    record_["CountsOfSpanningReads"] = streamToString(repeatFindings.countsOfSpanningReads());
-    record_["CountsOfFlankingReads"] = streamToString(repeatFindings.countsOfFlankingReads());
-    record_["CountsOfInrepeatReads"] = streamToString(repeatFindings.countsOfInrepeatReads());
+    record_["CountsOfSpanningReads"] = streamToString(strFindings.countsOfSpanningReads());
+    record_["CountsOfFlankingReads"] = streamToString(strFindings.countsOfFlankingReads());
+    record_["CountsOfInrepeatReads"] = streamToString(strFindings.countsOfInrepeatReads());
 
-    if (repeatFindings.optionalGenotype())
+    if (strFindings.optionalGenotype())
     {
-        record_["Genotype"] = encodeGenotype(*repeatFindings.optionalGenotype());
-        record_["GenotypeConfidenceInterval"] = streamToString(*repeatFindings.optionalGenotype());
+        record_["Genotype"] = encodeGenotype(*strFindings.optionalGenotype());
+        record_["GenotypeConfidenceInterval"] = streamToString(*strFindings.optionalGenotype());
     }
 }
 
-void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
+void VariantJsonWriter::visit(SmallVariantFindings& findings)
 {
-    const SmallVariantFindings& findings = *smallVariantFindingsPtr;
     record_.clear();
     record_["VariantId"] = variantSpec_.id();
     record_["VariantType"] = streamToString(variantSpec_.classification().type);

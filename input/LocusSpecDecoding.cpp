@@ -27,6 +27,7 @@
 
 #include <boost/optional.hpp>
 
+#include "common/WorkflowContext.hh"
 #include "input/GraphBlueprint.hh"
 #include "input/RegionGraph.hh"
 
@@ -107,41 +108,19 @@ addReferenceRegionsForInterruptions(const GraphBlueprint& blueprint, const vecto
     return completedReferenceRegions;
 }
 
-static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
+static ContigCopyNumber determineCopyNumber(const string& contig)
 {
-    const int kMaxMergeDistance = 500;
-    vector<GenomicRegion> mergedReferenceRegions = merge(regions, kMaxMergeDistance);
-    if (mergedReferenceRegions.size() != 1)
+    if (contig == "chrY" || contig == "Y")
     {
-        std::stringstream out;
-        for (const GenomicRegion& region : regions)
-        {
-            out << region << " ";
-        }
-        throw std::runtime_error(
-            "Expected reference regions to be closer than " + to_string(kMaxMergeDistance)
-            + " from one another: " + out.str());
+        return ContigCopyNumber::kZeroInFemaleOneInMale;
     }
 
-    return mergedReferenceRegions.front();
-}
-
-AlleleCount determineExpectedAlleleCount(Sex sex, const string& chrom)
-{
-    // We assume that chrY always has copy number one; this seems more practical than skipping loci on this chromosome
-    // in females.
-    if (chrom == "chrY" || chrom == "Y")
+    if (contig == "chrX" || contig == "X")
     {
-        return AlleleCount::kOne;
+        return ContigCopyNumber::kTwoInFemaleOneInMale;
     }
 
-    const bool isChromX = chrom == "chrX" || chrom == "X";
-    if (isChromX && sex == Sex::kMale)
-    {
-        return AlleleCount::kOne;
-    }
-
-    return AlleleCount::kTwo;
+    return ContigCopyNumber::kTwoInFemaleTwoInMale;
 }
 
 static NodeToRegionAssociation associateNodesWithReferenceRegions(
@@ -252,24 +231,22 @@ static optional<NodeId> determineReferenceNode(
     return optionalReferenceNode;
 }
 
-LocusSpecification decodeLocusSpecification(
-    const LocusDescriptionFromUser& userDescription, Sex sampleSex, const Reference& reference,
-    const HeuristicParameters& heuristicParams)
+LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
 {
     try
     {
         assertValidity(userDescription);
 
-        const int kExtensionLength = heuristicParams.regionExtensionLength();
-        auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.referenceRegions);
+        WorkflowContext context;
+
+        const int kExtensionLength = context.heuristics().regionExtensionLength();
+        auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.variantLocations);
         auto completeLocusStructure
             = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
 
         GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
         graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);
         auto completeReferenceRegions = addReferenceRegionsForInterruptions(blueprint, referenceRegionsWithFlanks);
-
-        GenomicRegion referenceRegionForEntireLocus = mergeRegions(userDescription.referenceRegions);
 
         vector<GenomicRegion> targetReadExtractionRegions;
         for (const GenomicRegion& region : userDescription.targetRegions)
@@ -278,11 +255,12 @@ LocusSpecification decodeLocusSpecification(
         }
         if (targetReadExtractionRegions.empty())
         {
-            targetReadExtractionRegions.push_back(referenceRegionForEntireLocus.extend(kExtensionLength));
+
+            targetReadExtractionRegions.push_back(userDescription.locusLocation.extend(kExtensionLength));
         }
 
-        const auto& contigName = reference.contigInfo().getContigName(referenceRegionForEntireLocus.contigIndex());
-        AlleleCount expectedAlleleCount = determineExpectedAlleleCount(sampleSex, contigName);
+        const auto& contigName = reference.contigInfo().getContigName(userDescription.locusLocation.contigIndex());
+        auto copyNumber = determineCopyNumber(contigName);
 
         NodeToRegionAssociation referenceRegionsOfGraphNodes
             = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
@@ -302,7 +280,7 @@ LocusSpecification decodeLocusSpecification(
         }
 
         LocusSpecification locusSpec(
-            userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,
+            userDescription.locusId, copyNumber, userDescription.locusLocation, targetReadExtractionRegions, locusGraph,
             referenceRegionsOfGraphNodes, parameters);
         locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
@@ -311,7 +289,7 @@ LocusSpecification decodeLocusSpecification(
         {
             if (doesFeatureDefineVariant(feature.type))
             {
-                const GenomicRegion& referenceRegion = userDescription.referenceRegions.at(variantIndex);
+                const GenomicRegion& referenceRegion = userDescription.variantLocations.at(variantIndex);
 
                 VariantTypeFromUser variantDescription = userDescription.variantTypesFromUser.at(variantIndex);
                 const string& variantId = userDescription.variantIds[variantIndex];
@@ -355,7 +333,7 @@ void assertValidity(const LocusDescriptionFromUser& userDescription)
             "Locus " + userDescription.locusId + " must encode at least one variant " + userDescription.locusStructure);
     }
 
-    if (numVariants != static_cast<int>(userDescription.referenceRegions.size()))
+    if (numVariants != static_cast<int>(userDescription.variantLocations.size()))
     {
         throw std::runtime_error(
             "Locus " + userDescription.locusId + " must specify reference regions for " + to_string(numVariants)

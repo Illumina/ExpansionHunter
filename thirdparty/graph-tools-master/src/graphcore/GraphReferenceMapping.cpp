@@ -53,14 +53,14 @@ ReferenceInterval ReferenceInterval::parseRegion(std::string const& regionString
     boost::split(spl, regionString, boost::is_any_of(":"));
     if (spl.size() != 2)
     {
-        throw std::runtime_error("Invalid region string: " + regionString);
+        throw std::runtime_error("Invalid workflow string: " + regionString);
     }
     string const contig = spl[0];
     boost::replace_all(spl[1], ",", "");
     boost::split(spl, spl[1], boost::is_any_of("-"));
     if (spl.size() != 2)
     {
-        throw std::runtime_error("Invalid region string: " + regionString);
+        throw std::runtime_error("Invalid workflow string: " + regionString);
     }
     int const start = std::stoll(spl[0]);
     int const end = std::stoll(spl[1]);

@@ -79,9 +79,9 @@ string FastaReference::getSequence(const string& contigName, int64_t start, int6
         throw std::runtime_error(message);
     }
 
-    string sequence("N", extractedLength);
-    std::transform(sequencePtr, sequencePtr + extractedLength, sequence.begin(), ::toupper);
+    string sequence(sequencePtr);
     free(sequencePtr);
+    std::transform(sequence.begin(), sequence.end(), sequence.begin(), ::toupper);
 
     return sequence;
 }

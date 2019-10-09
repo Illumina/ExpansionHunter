@@ -36,9 +36,8 @@ namespace ehunter
 namespace htshelpers
 {
 
-    LinearAlignmentStats decodeAlignmentStats(bam1_t* htsAlignPtr);
     bool isPrimaryAlignment(bam1_t* htsAlignPtr);
-    Read decodeRead(bam1_t* htsAlignPtr);
+    MappedRead decodeRead(bam1_t* htsAlignPtr);
     ReferenceContigInfo decodeContigInfo(bam_hdr_t* htsHeaderPtr);
 
 } // namespace htshelpers

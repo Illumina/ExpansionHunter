@@ -21,6 +21,7 @@
 
 #include "alignment/AlignmentFilters.hh"
 
+#include <algorithm>
 #include <list>
 #include <vector>
 
@@ -43,26 +44,26 @@ using std::vector;
 namespace ehunter
 {
 
-bool checkIfLocallyPlacedReadPair(
-    boost::optional<GraphAlignment> readAlignment, boost::optional<GraphAlignment> mateAlignment,
+bool checkIfComesFromGraphLocus(
+    const list<GraphAlignment>& readAlignments, const list<GraphAlignment>& mateAlignments,
     int kMinNonRepeatAlignmentScore)
 {
-    int nonRepeatAlignmentScore = 0;
-
-    if (readAlignment)
+    int maxReadScore = 0;
+    for (const auto& alignment : readAlignments)
     {
-        nonRepeatAlignmentScore += scoreAlignmentToNonloopNodes(*readAlignment);
+        maxReadScore = std::max(maxReadScore, scoreAlignmentToNonloopNodes(alignment));
     }
 
-    if (mateAlignment)
+    int maxMateScore = 0;
+    for (const auto& alignment : mateAlignments)
     {
-        nonRepeatAlignmentScore += scoreAlignmentToNonloopNodes(*mateAlignment);
+        maxMateScore = std::max(maxMateScore, scoreAlignmentToNonloopNodes(alignment));
     }
 
-    return nonRepeatAlignmentScore >= kMinNonRepeatAlignmentScore;
+    return maxReadScore + maxMateScore >= kMinNonRepeatAlignmentScore;
 }
 
-bool checkIfUpstreamAlignmentIsGood(NodeId nodeId, GraphAlignment alignment)
+bool checkIfUpstreamAlignmentIsGood(NodeId nodeId, const GraphAlignment& alignment)
 {
     const list<int> repeatNodeIndexes = alignment.getIndexesOfNode(nodeId);
 
@@ -85,7 +86,7 @@ bool checkIfUpstreamAlignmentIsGood(NodeId nodeId, GraphAlignment alignment)
     return score >= kScoreCutoff;
 }
 
-bool checkIfDownstreamAlignmentIsGood(NodeId nodeId, GraphAlignment alignment)
+bool checkIfDownstreamAlignmentIsGood(NodeId nodeId, const GraphAlignment& alignment)
 {
     const list<int> repeatNodeIndexes = alignment.getIndexesOfNode(nodeId);
 
@@ -122,14 +123,7 @@ bool checkIfPassesAlignmentFilters(const GraphAlignment& alignment)
     const int percentQueryMatches = (100 * alignment.numMatches()) / clippedQueryLength;
     const int percentReferenceMatches = (100 * alignment.numMatches()) / referenceLength;
 
-    if (percentQueryMatches >= 80 && percentReferenceMatches >= 80)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+    return percentQueryMatches >= 80 && percentReferenceMatches >= 80;
 }
 
 }

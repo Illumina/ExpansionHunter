@@ -38,9 +38,9 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
 }
 
-void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
+void FieldDescriptionWriter::visit(StrFindings& strFindings)
 {
-    if (!repeatFindingsPtr->optionalGenotype())
+    if (!strFindings.optionalGenotype())
     {
         return;
     }
@@ -78,7 +78,7 @@ void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
-    const RepeatGenotype& genotype = repeatFindingsPtr->optionalGenotype().get();
+    const RepeatGenotype& genotype = strFindings.optionalGenotype().get();
 
     if (genotype.shortAlleleSizeInUnits() != referenceSize)
     {
@@ -95,9 +95,9 @@ void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
     }
 }
 
-void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
+void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
 {
-    if (!smallVariantFindingsPtr->optionalGenotype())
+    if (!findings.optionalGenotype())
     {
         return;
     }
@@ -107,10 +107,10 @@ void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindi
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         tryAddingFieldDescription(
-            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the ref allele");
+            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the reference allele");
         tryAddingFieldDescription(
             FieldType::kFormat, "DST", "1", "Character",
-            "Status ('+' affected, '-' unaffected, '?' uncertain) for the test specified by the DID value");
+            "Result ('+' detected, '-' undetected, '?' undetermined) of the test represented by the variant");
     }
 }
 
@@ -158,7 +158,7 @@ void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sa
             const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
             FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(&descriptionWriter);
+            variantIdAndFindings.second->accept(descriptionWriter);
             descriptionWriter.dumpTo(fieldDescriptionCatalog);
         }
     }

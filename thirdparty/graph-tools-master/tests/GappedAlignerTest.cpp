@@ -127,16 +127,27 @@ TEST_P(AlignerTests, PerformingGappedAlignment_UniquelyMappingQuery_AlignmentPer
     GappedGraphAligner aligner(
         &graph, kmer_len, padding_len, seed_affix_trim_len, GetParam(), LinearAlignmentParameters(5, -4, -8, 0));
 
-    // TTA-CG-CG-TAT
-    // ||  || |  |||
-    // TT--CG-C--TAT
+    {
+        // TTA-CG-CG-TAT
+        // ||  || |  |||
+        // TT--CG-C--TAT
 
-    list<GraphAlignment> alignments = aligner.align("TTCGCTAT");
+        list<GraphAlignment> alignments = aligner.align("TTCGCTAT");
 
-    list<GraphAlignment> expected_alignments = { decodeGraphAlignment(3, "0[2M1D]1[2M]1[1M1D]2[3M]", &graph) };
-    // with default m=5,mm=-4,go=-8,ge=-2 2M1D=10-8-2=0, 1M1X=5-4=1, so, test needs an update:
-    // list<GraphAlignment> expected_alignments = { decodeGraphAlignment(4, "0[1M1X]1[2M]1[1M1D]2[3M]", &graph) };
-    EXPECT_EQ(expected_alignments, alignments);
+        list<GraphAlignment> expected_alignments = { decodeGraphAlignment(3, "0[2M1D]1[2M]1[1M1D]2[3M]", &graph) };
+        // with default m=5,mm=-4,go=-8,ge=-2 2M1D=10-8-2=0, 1M1X=5-4=1, so, test needs an update:
+        // list<GraphAlignment> expected_alignments = { decodeGraphAlignment(4, "0[1M1X]1[2M]1[1M1D]2[3M]", &graph) };
+        EXPECT_EQ(expected_alignments, alignments);
+    }
+
+    {
+        list<GraphAlignment> alignments = aligner.align("ATTCGCTAT");
+
+        list<GraphAlignment> expected_alignments = { decodeGraphAlignment(2, "0[3M1D]1[2M]1[1M1D]2[3M]", &graph) };
+        // with default m=5,mm=-4,go=-8,ge=-2 2M1D=10-8-2=0, 1M1X=5-4=1, so, test needs an update:
+        // list<GraphAlignment> expected_alignments = { decodeGraphAlignment(4, "0[1M1X]1[2M]1[1M1D]2[3M]", &graph) };
+        EXPECT_EQ(expected_alignments, alignments);
+    }
 }
 
 TEST_P(AlignerTests, PerformingGappedAlignment_MultimappingQuery_BestAlignmentsComputed)
@@ -245,6 +256,52 @@ TEST_P(AlignerTests, PerformingGappedAlignment_IncorrectSeedKmer_ReadAligned)
 
         EXPECT_EQ(expected_alignments, alignments);
     }
+}
+
+TEST_P(AlignerTests, PerformingGappedAlignment_NoExceptionThrown)
+{
+    //     0       1          2          3  4     5       6     7
+    //<left flank>(AT)*(GATATATATATATAT)*G(AT)*TTATATATG(AT)*<right flank>
+    Graph graph(8);
+    graph.setNodeSeq(0, "AGGATGACAGTAATATTATCTTACTATCTTACTATGTGTTACTTTATTAGTTTTTCCCTTATATGTTTGTTTTGGGATATATGACTTGGCTC");
+    graph.setNodeSeq(1, "AT");
+    graph.setNodeSeq(2, "GATATATATATATAT");
+    graph.setNodeSeq(3, "G");
+    graph.setNodeSeq(4, "AT");
+    graph.setNodeSeq(5, "TTATATATG");
+    graph.setNodeSeq(6, "AT");
+    graph.setNodeSeq(7, "GATATATATTTATATTAAAAGGTGCTTTGTTCTTTGCAAAACAGTCTCCTATGTTATTTCCTCATTTTATTAAAATGTAACCTAAAACTGTT");
+
+    graph.addEdge(0, 1);
+    graph.addEdge(1, 2);
+    graph.addEdge(2, 3);
+    graph.addEdge(3, 4);
+    graph.addEdge(4, 5);
+    graph.addEdge(5, 6);
+    graph.addEdge(6, 7);
+
+    graph.addEdge(1, 1);
+    graph.addEdge(0, 2);
+    graph.addEdge(0, 3);
+
+    graph.addEdge(2, 2);
+    graph.addEdge(1, 3);
+
+    graph.addEdge(4, 4);
+    graph.addEdge(3, 5);
+
+    graph.addEdge(6, 6);
+    graph.addEdge(5, 7);
+
+    const size_t kmer_len = 14;
+    const size_t padding_len = 10;
+    const int32_t seed_affix_trim_len = 14;
+    GappedGraphAligner aligner(&graph, kmer_len, padding_len, seed_affix_trim_len, GetParam());
+
+    const string query = "ctTTttgaTTTtttccctcacatgTTTTTtatatGataTtTctcTtCtCtcataTAtttaTAtAtAttAtATtTAtAtataTctttTAtATAT"
+                         "AtaATaTaTaTATatCATATAtATaTATGATATATATATATATCATATATATATATG";
+
+    ASSERT_NO_THROW(aligner.align(query));
 }
 
 INSTANTIATE_TEST_CASE_P(

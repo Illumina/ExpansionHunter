@@ -248,7 +248,7 @@ namespace dagAligner
             std::vector<Cigar>& cigars) const
         {
             Cigar ret = base;
-            while (-1 != q && -1 != t)
+            while (-1 != t)
             {
                 const std::size_t curNodeId = edgeMap.getNodeId(t);
                 if (lastNodeId != curNodeId)
@@ -283,6 +283,8 @@ namespace dagAligner
                     ret.push_back(Cigar::Operation(Cigar::INSERT, q + 1));
                 }
             }
+            // TODO: according to while loop above, this cannot happen. Code below is legacy for
+            // the original termination condition of while loop
             else if (-1 != t) // we're either on -1 row or -1 column
             {
                 // count number of bases to the start of the last node
