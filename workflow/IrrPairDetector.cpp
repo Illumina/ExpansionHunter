@@ -38,7 +38,7 @@ IrrPairDetector::IrrPairDetector(shared_ptr<GraphModel> model, string motif)
 
 shared_ptr<RegionModel> IrrPairDetector::model() { return model_; }
 
-void IrrPairDetector::summarize(MappedRead read, MappedRead mate)
+void IrrPairDetector::summarize(const MappedRead& read, const MappedRead& mate)
 {
     const bool isFirstReadInrepeat = weightedPurityCalculator_.score(read.sequence()) >= 0.90;
     const bool isSecondReadInrepeat = weightedPurityCalculator_.score(mate.sequence()) >= 0.90;

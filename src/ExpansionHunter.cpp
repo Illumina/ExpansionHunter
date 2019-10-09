@@ -120,7 +120,7 @@ int main(int argc, char** argv)
 
         const OutputPaths& outputPaths = params.outputPaths();
 
-        BamletWriter bamletWriter(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
+        auto bamletWriter = std::make_shared<BamletWriter>(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
 
         SampleFindings sampleFindings;
         if (params.analysisMode() == AnalysisMode::kSeeking)

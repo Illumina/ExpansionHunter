@@ -94,7 +94,7 @@ public:
     // Return whether the read is reverse complemented relative to it's
     //  original direction during sequencing
     bool isReversed() const { return isReversed_; }
-    void reverseComplement();
+    Read reverseComplement();
 
 protected:
     ReadId readId_;

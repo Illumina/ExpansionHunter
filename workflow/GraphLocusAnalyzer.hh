@@ -34,7 +34,7 @@ class ReadCountAnalyzer;
 class GraphLocusAnalyzer : public LocusAnalyzer
 {
 public:
-    explicit GraphLocusAnalyzer(std::string locusId);
+    GraphLocusAnalyzer(double minLocusCoverage, std::string locusId);
     ~GraphLocusAnalyzer() override = default;
 
     const std::string& locusId() const override { return locusId_; }
@@ -47,6 +47,8 @@ private:
     std::string locusId_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
     std::vector<std::shared_ptr<GraphVariantAnalyzer>> variantAnalyzers_;
+
+    double minLocusCoverage_;
 };
 
 }

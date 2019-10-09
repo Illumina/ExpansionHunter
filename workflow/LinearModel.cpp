@@ -35,7 +35,7 @@ LinearModel::LinearModel(std::vector<GenomicRegion> readExtractionRegions)
 {
 }
 
-void LinearModel::analyze(MappedRead read, MappedRead mate)
+void LinearModel::analyze(const MappedRead& read, const MappedRead& mate)
 {
     analyze(read);
     analyze(mate);

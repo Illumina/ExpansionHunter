@@ -43,8 +43,9 @@ public:
     ~GraphStr() override = default;
     std::shared_ptr<RegionModel> model() override;
 
-    void
-    summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+    void summarize(
+        const std::string& read, const Alignments& readAligns, const std::string& mate,
+        const Alignments& mateAligns) override;
 
     const std::string& motif() const;
     const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }

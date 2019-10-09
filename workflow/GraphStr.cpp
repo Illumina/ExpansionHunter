@@ -36,15 +36,16 @@ GraphStr::GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId motifNo
 {
 }
 
-void GraphStr::summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+void GraphStr::summarize(
+    const std::string& read, const Alignments& readAligns, const std::string& mate, const Alignments& mateAligns)
 {
-    ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read.sequence(), readAligns);
+    ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read, readAligns);
     if (strRead.hasAlignments())
     {
         readSummaries_.push_back(std::move(strRead));
     }
 
-    ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate.sequence(), mateAligns);
+    ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate, mateAligns);
     if (strMate.hasAlignments())
     {
         readSummaries_.push_back(std::move(strMate));

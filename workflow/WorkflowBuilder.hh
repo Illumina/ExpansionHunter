@@ -24,6 +24,7 @@
 #include <memory>
 
 #include "common/Parameters.hh"
+#include "output/BamletWriter.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/RegionModel.hh"
@@ -31,8 +32,8 @@
 namespace ehunter
 {
 
-std::shared_ptr<LocusAnalyzer>
-buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics);
+std::shared_ptr<LocusAnalyzer> buildLocusWorkflow(
+    const LocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter);
 
 std::vector<std::shared_ptr<RegionModel>> extractRegionModels(const std::vector<std::shared_ptr<LocusAnalyzer>>& loci);
 

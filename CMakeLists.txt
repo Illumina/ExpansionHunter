@@ -84,8 +84,8 @@ add_subdirectory(output)
 add_subdirectory(alignment)
 add_subdirectory(stats)
 add_subdirectory(filtering)
-add_subdirectory(workflow)
 add_subdirectory(strs)
+add_subdirectory(workflow)
 
 
 add_executable(ExpansionHunter src/Version.hh src/ExpansionHunter.cpp)

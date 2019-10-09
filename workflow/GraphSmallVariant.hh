@@ -23,6 +23,7 @@
 
 #include <cassert>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "classification/SmallVariantAlignmentClassifier.hh"
@@ -42,14 +43,15 @@ public:
     std::shared_ptr<RegionModel> model() override;
 
     const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
-    void
-    summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns) override;
+    void summarize(
+        const std::string& read, const Alignments& readAligns, const std::string& mate,
+        const Alignments& mateAligns) override;
 
     int countReadsSupportingNode(graphtools::NodeId nodeId) const;
     const std::vector<ReadSummaryForSmallVariant>& readSummaries() const { return readSummaries_; }
 
 private:
-    void summarize(const Read& read, const std::list<graphtools::GraphAlignment>& alignments);
+    void summarize(const std::string& read, const std::list<graphtools::GraphAlignment>& alignments);
 
     std::shared_ptr<GraphModel> model_;
     std::vector<graphtools::NodeId> nodeIds_;

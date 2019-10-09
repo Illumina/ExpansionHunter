@@ -36,8 +36,8 @@ class LinearModel;
 class LinearFeature : public Feature
 {
 public:
-    virtual void summarize(MappedRead read, MappedRead mate) = 0;
-    virtual void summarize(MappedRead read) = 0;
+    virtual void summarize(const MappedRead& read, const MappedRead& mate) = 0;
+    virtual void summarize(const MappedRead& read) = 0;
 };
 
 }

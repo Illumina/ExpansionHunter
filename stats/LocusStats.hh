@@ -63,27 +63,4 @@ private:
 
 std::ostream& operator<<(std::ostream& out, const LocusStats& stats);
 
-// Computes read and coverage statistics for each locus from reads aligning to the flanks
-class LocusStatsCalculator
-{
-public:
-    LocusStatsCalculator(ChromType chromType, const graphtools::Graph& graph);
-
-    void inspect(const graphtools::GraphAlignment& alignment);
-
-    boost::optional<LocusStats> estimate(Sex sampleSex) const;
-
-private:
-    using AccumulatorStats
-        = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
-    using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;
-
-    ChromType chromType_;
-    Accumulator readLengthAccumulator_;
-    graphtools::NodeId leftFlankId_;
-    graphtools::NodeId rightFlankId_;
-    int leftFlankLength_;
-    int rightFlankLength_;
-};
-
 }

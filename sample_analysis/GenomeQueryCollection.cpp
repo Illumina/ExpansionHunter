@@ -28,24 +28,10 @@ using std::vector;
 namespace ehunter
 {
 
-namespace
-{
-    void initializeGenomeMask(GenomeMask& genomeMask, const vector<shared_ptr<RegionModel>>& regionModelPtrs)
-    {
-        for (auto& regionModelPtr : regionModelPtrs)
-        {
-            for (const auto& region : regionModelPtr->readExtractionRegions())
-            {
-                genomeMask.addRegion(region.contigIndex(), region.start(), region.end());
-            }
-        }
-    }
-}
-
 GenomeQueryCollection::GenomeQueryCollection(const vector<shared_ptr<RegionModel>>& regions)
     : analyzerFinder(regions)
+    , targetRegionMask(regions)
 {
-    initializeGenomeMask(targetRegionMask, regions);
 }
 
 }

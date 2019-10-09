@@ -31,23 +31,22 @@ using std::vector;
 namespace ehunter
 {
 
-CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog)
+CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriterPtr bamletWriter)
 {
     WorkflowContext context;
 
     for (const auto& locusIdAndLocusSpec : locusCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
-        locusAnalyzers_.push_back(buildLocusWorkflow(locusSpec, context.heuristics()));
+        locusAnalyzers_.push_back(buildLocusWorkflow(locusSpec, context.heuristics(), bamletWriter));
     }
 
-    vector<shared_ptr<RegionModel>> regionModels = extractRegionModels(locusAnalyzers_);
-    ModelFinder analyzerFinder(regionModels);
+    regionModels_ = extractRegionModels(locusAnalyzers_);
 
-    modelFinder_.reset(new ModelFinder(regionModels));
+    modelFinder_.reset(new ModelFinder(regionModels_));
 }
 
-void CatalogAnalyzer::analyze(MappedRead read, MappedRead mate)
+void CatalogAnalyzer::analyze(const MappedRead& read, const MappedRead& mate)
 {
     unordered_set<RegionModel*> readModels = modelFinder_->query(read.contigIndex(), read.pos(), read.approximateEnd());
     unordered_set<RegionModel*> mateModels = modelFinder_->query(mate.contigIndex(), mate.pos(), mate.approximateEnd());
@@ -60,7 +59,7 @@ void CatalogAnalyzer::analyze(MappedRead read, MappedRead mate)
     }
 }
 
-void CatalogAnalyzer::analyze(MappedRead read)
+void CatalogAnalyzer::analyze(const MappedRead& read)
 {
     unordered_set<RegionModel*> readModels = modelFinder_->query(read.contigIndex(), read.pos(), read.approximateEnd());
     for (auto model : readModels)

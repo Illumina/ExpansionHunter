@@ -35,7 +35,18 @@ namespace
     }
 }
 
-bool GenomeMask::query(int32_t contigId, int64_t pos) const
+GenomeMask::GenomeMask(const std::vector<std::shared_ptr<RegionModel>>& regionModels)
+{
+    for (auto& regionModel : regionModels)
+    {
+        for (const auto& region : regionModel->readExtractionRegions())
+        {
+            addRegion(region.contigIndex(), region.start(), region.end());
+        }
+    }
+}
+
+bool GenomeMask::query(int contigId, int64_t pos) const
 {
     if (contigId >= static_cast<int>(mask_.size()))
     {
@@ -45,7 +56,7 @@ bool GenomeMask::query(int32_t contigId, int64_t pos) const
     return ((binPos(pos) < cmask.size()) && cmask[binPos(pos)]);
 }
 
-void GenomeMask::addRegion(int32_t contigId, int64_t start, int64_t stop)
+void GenomeMask::addRegion(int contigId, int64_t start, int64_t stop)
 {
     assert(start <= stop);
     assert(start >= 0);

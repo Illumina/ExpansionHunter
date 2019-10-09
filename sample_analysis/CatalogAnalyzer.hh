@@ -24,6 +24,7 @@
 #include <memory>
 #include <vector>
 
+#include "output/BamletWriter.hh"
 #include "reads/Read.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "sample_analysis/ModelFinder.hh"
@@ -37,9 +38,9 @@ namespace ehunter
 class CatalogAnalyzer
 {
 public:
-    explicit CatalogAnalyzer(const RegionCatalog& locusCatalog);
-    void analyze(MappedRead read, MappedRead mate);
-    void analyze(MappedRead read);
+    CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriterPtr bamletWriter);
+    void analyze(const MappedRead& read, const MappedRead& mate);
+    void analyze(const MappedRead& read);
     void collectResults(Sex sampleSex, SampleFindings& sampleFindings);
 
     const std::vector<std::shared_ptr<RegionModel>>& regionModels() const { return regionModels_; }

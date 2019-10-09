@@ -46,19 +46,22 @@ using std::vector;
 namespace ehunter
 {
 
-static shared_ptr<ReadCountAnalyzer> createStatsAnalyzer(const GenomicRegion& extractionRegion, int flankLength)
+static shared_ptr<ReadCountAnalyzer>
+createStatsAnalyzer(ContigCopyNumber copyNumber, const GenomicRegion& locusLocation, int flankLength)
 {
-    const int64_t leftFlankEnd = extractionRegion.start() + flankLength;
-    GenomicRegion leftFlank(extractionRegion.contigIndex(), extractionRegion.start(), leftFlankEnd);
+    const int64_t leftFlankStart = locusLocation.start() - flankLength;
+    const int64_t leftFlankEnd = locusLocation.start();
+    GenomicRegion leftFlank(locusLocation.contigIndex(), leftFlankStart, leftFlankEnd);
 
-    const int64_t rightFlankStart = extractionRegion.end() - flankLength;
-    GenomicRegion rightFlank(extractionRegion.contigIndex(), rightFlankStart, extractionRegion.end());
+    const int64_t rightFlankStart = locusLocation.end();
+    const int64_t rightFlankEnd = locusLocation.end() + flankLength;
+    GenomicRegion rightFlank(locusLocation.contigIndex(), rightFlankStart, rightFlankEnd);
 
     vector<GenomicRegion> baselineRegions = { leftFlank, rightFlank };
     auto linearModel = make_shared<LinearModel>(baselineRegions);
     auto readCounter = make_shared<ReadCounter>(linearModel, baselineRegions);
     linearModel->addFeature(readCounter.get());
-    return make_shared<ReadCountAnalyzer>(readCounter);
+    return make_shared<ReadCountAnalyzer>(copyNumber, readCounter);
 }
 
 static shared_ptr<GraphStrAnalyzer>
@@ -92,19 +95,20 @@ createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const Varia
     return smallVariantAnalyzer;
 }
 
-shared_ptr<LocusAnalyzer> buildLocusWorkflow(const LocusSpecification& locusSpec, const HeuristicParameters& heuristics)
+shared_ptr<LocusAnalyzer> buildLocusWorkflow(
+    const LocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter)
 {
-    if (locusSpec.targetReadExtractionRegions().size() != 1)
-    {
-        const string message = "Locus " + locusSpec.locusId() + " must be associated with one read extraction region";
-        throw runtime_error(message);
-    }
+    const auto& locusLocation = locusSpec.locusLocation();
 
-    auto locus = make_shared<GraphLocusAnalyzer>(locusSpec.locusId());
-    const auto& extractionRegion = locusSpec.targetReadExtractionRegions().front();
-    locus->setStats(createStatsAnalyzer(extractionRegion, heuristics.regionExtensionLength()));
+    const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
+    auto locus = make_shared<GraphLocusAnalyzer>(minLocusCoverage, locusSpec.locusId());
+    auto statsAnalyzer
+        = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
+    locus->setStats(statsAnalyzer);
 
-    auto graphModel = make_shared<GraphModel>(extractionRegion, locusSpec.regionGraph(), heuristics);
+    auto graphModel = make_shared<GraphModel>(
+        locusSpec.locusId(), locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(),
+        locusSpec.regionGraph(), heuristics, bamletWriter);
     for (const auto& variantSpec : locusSpec.variantSpecs())
     {
         if (variantSpec.classification().type == VariantType::kRepeat)

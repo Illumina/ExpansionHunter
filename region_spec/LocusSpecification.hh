@@ -50,11 +50,14 @@ class LocusSpecification
 {
 public:
     LocusSpecification(
-        RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
-        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
+        RegionId locusId, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
+        std::vector<GenomicRegion> targetReadExtractionRegions, graphtools::Graph regionGraph,
+        NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
 
     const RegionId& locusId() const { return locusId_; }
-    ChromType typeOfChromLocusLocatedOn() const { return typeOfChromLocusLocatedOn_; }
+    ContigCopyNumber contigCopyNumber() const { return contigCopyNumber_; }
+
+    const GenomicRegion& locusLocation() const { return locusLocation_; }
     /*
      * List of all regions in the reference this graph describes
      * i.e. where we expect relevant reads to align
@@ -84,7 +87,8 @@ public:
 
 private:
     std::string locusId_;
-    ChromType typeOfChromLocusLocatedOn_;
+    ContigCopyNumber contigCopyNumber_;
+    GenomicRegion locusLocation_;
     std::vector<GenomicRegion> targetReadExtractionRegions_;
     std::vector<GenomicRegion> offtargetReadExtractionRegions_;
     graphtools::Graph regionGraph_;

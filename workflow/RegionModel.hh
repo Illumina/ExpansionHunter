@@ -41,15 +41,13 @@ public:
 
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
 
-    virtual void analyze(MappedRead read, MappedRead mate) = 0;
+    virtual void analyze(const MappedRead& read, const MappedRead& mate) = 0;
     virtual void analyze(MappedRead read) = 0;
 
     virtual std::vector<Feature*> modelFeatures() = 0;
 
 protected:
     std::vector<GenomicRegion> readExtractionRegions_;
-
-    // ChromType typeOfChromLocusLocatedOn_;
 };
 
 }

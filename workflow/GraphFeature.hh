@@ -21,7 +21,10 @@
 
 #pragma once
 
-#include "reads/Read.hh"
+#include <string>
+
+#include "graphalign/GraphAlignment.hh"
+
 #include "workflow/Feature.hh"
 
 namespace ehunter
@@ -31,8 +34,8 @@ class GraphFeature : public Feature
 {
 public:
     using Alignments = std::list<graphtools::GraphAlignment>;
-    virtual void
-    summarize(const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+    virtual void summarize(
+        const std::string& read, const Alignments& readAligns, const std::string& mate, const Alignments& mateAligns)
         = 0;
 };
 

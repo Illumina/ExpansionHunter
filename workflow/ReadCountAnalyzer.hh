@@ -34,13 +34,14 @@ namespace ehunter
 class ReadCountAnalyzer : public FeatureAnalyzer
 {
 public:
-    explicit ReadCountAnalyzer(std::shared_ptr<ReadCounter> feature);
+    ReadCountAnalyzer(ContigCopyNumber contigCopyNumber, std::shared_ptr<ReadCounter> feature);
     ~ReadCountAnalyzer() override = default;
 
     std::vector<std::shared_ptr<Feature>> features() override;
     LocusStats estimate(Sex sampleSex) const;
 
 private:
+    ContigCopyNumber contigCopyNumber_;
     std::shared_ptr<ReadCounter> counter_;
 };
 

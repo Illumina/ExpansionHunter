@@ -63,13 +63,13 @@ double ReadCounter::getDepth() const
     return depth;
 }
 
-void ReadCounter::summarize(MappedRead read)
+void ReadCounter::summarize(const MappedRead& read)
 {
     ++numReads_;
     totalReadLength_ += read.sequence().length();
 }
 
-void ReadCounter::summarize(MappedRead read, MappedRead mate)
+void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate)
 {
     summarize(read);
     summarize(mate);

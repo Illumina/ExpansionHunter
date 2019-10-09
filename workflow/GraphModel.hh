@@ -23,10 +23,12 @@
 
 #include <list>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "graphalign/GappedAligner.hh"
 #include "graphcore/Graph.hh"
+#include "graphio/AlignmentWriter.hh"
 
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
@@ -44,10 +46,34 @@ class IrrPairDetector;
 class GraphModel : public RegionModel
 {
 public:
-    explicit GraphModel(GenomicRegion referenceRegion, graphtools::Graph graph, const HeuristicParameters& heuristics);
+    using Alignments = std::list<graphtools::GraphAlignment>;
+    using AlignmentWriter = std::shared_ptr<graphtools::AlignmentWriter>;
+    using Regions = std::vector<GenomicRegion>;
+
+    enum class Origin
+    {
+        kTargetRegion,
+        kOfftargetRegion,
+        kOtherRegion
+    };
+
+    struct AlignmentBundle
+    {
+        AlignmentBundle(Alignments alignments, bool forwardOriented)
+            : alignments(std::move(alignments))
+            , forwardOriented(forwardOriented)
+        {
+        }
+        Alignments alignments;
+        bool forwardOriented;
+    };
+
+    GraphModel(
+        std::string graphId, const Regions& targetRegions, const Regions& offtargetRegions, graphtools::Graph graph,
+        const HeuristicParameters& heuristics, AlignmentWriter alignmentWriter);
     ~GraphModel() override = default;
 
-    void analyze(MappedRead read, MappedRead mate) override;
+    void analyze(const MappedRead& read, const MappedRead& mate) override;
     void analyze(MappedRead /*read*/) override {};
     const graphtools::Graph& graph() const { return graph_; }
     void addGraphFeature(GraphFeature* feature);
@@ -55,10 +81,21 @@ public:
     std::vector<Feature*> modelFeatures() override;
 
 private:
-    std::list<graphtools::GraphAlignment> align(Read& read) const;
+    Origin guessOrigin(const MappedRead& read, const MappedRead& mate);
+    Origin guessOrigin(int readLength, const Alignments& readAlignments, const Alignments& mateAlignments);
 
+    AlignmentBundle align(const std::string& sequence) const;
+    void analyzeOfftarget(const MappedRead& read, const MappedRead& mate);
+
+    void writeAlignments(
+        const MappedRead& read, const AlignmentBundle& readBundle, const MappedRead& mate,
+        const AlignmentBundle& mateBundle);
+
+    std::string graphId_;
+    Regions targetRegions_;
     std::vector<GraphFeature*> features_;
     LinearFeature* offtargetProcessor_ = nullptr;
+    AlignmentWriter alignmentWriter_;
 
     ReadClassifier readClassifier_;
     graphtools::Graph graph_;

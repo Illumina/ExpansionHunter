@@ -43,11 +43,7 @@ Read::Read(ReadId readId, string sequence, bool isReversed)
     }
 }
 
-void Read::reverseComplement()
-{
-    sequence_ = graphtools::reverseComplement(sequence_);
-    isReversed_ = !isReversed_;
-}
+Read Read::reverseComplement() { return Read(readId_, graphtools::reverseComplement(sequence_), !isReversed_); }
 
 MappedRead::MappedRead(
     ReadId readId, string sequence, bool isReversed, int contigIndex, int64_t pos, int mapq, int mateContigIndex,

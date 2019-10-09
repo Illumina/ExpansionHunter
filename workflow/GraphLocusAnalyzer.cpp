@@ -38,8 +38,9 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-GraphLocusAnalyzer::GraphLocusAnalyzer(string locusId)
+GraphLocusAnalyzer::GraphLocusAnalyzer(double minLocusCoverage, string locusId)
     : locusId_(std::move(locusId))
+    , minLocusCoverage_(minLocusCoverage)
 {
 }
 
@@ -59,15 +60,8 @@ LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex) const
 
     locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
 
-    spdlog::info(
-        "Locus: {} depth: {} read length: {}", locusId_, locusFindings.optionalStats->depth(),
-        locusFindings.optionalStats->meanReadLength());
-
-    if (locusFindings.optionalStats->depth() >= 10.0)
+    if (locusFindings.optionalStats && locusFindings.optionalStats->depth() >= minLocusCoverage_)
     {
-        // if (locusFindings.optionalStats
-        //    && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
-
         for (auto& analyzerPtr : variantAnalyzers_)
         {
             const LocusStats& locusStats = *locusFindings.optionalStats;

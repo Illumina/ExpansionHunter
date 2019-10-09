@@ -46,12 +46,10 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, AlignmentWriter& /*bamletWriter*/)
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
 {
-    CatalogAnalyzer catalogAnalyzer(regionCatalog);
-
-    // TODO: Eliminate redundant initialization of model finders
-    GenomeQueryCollection genomeQuery(catalogAnalyzer.regionModels());
+    CatalogAnalyzer catalogAnalyzer(regionCatalog, std::move(bamletWriter));
+    GenomeMask genomeMask(catalogAnalyzer.regionModels());
 
     using ReadCatalog = std::unordered_map<std::string, MappedRead>;
     ReadCatalog unpairedReads;
@@ -60,8 +58,9 @@ SampleFindings htsStreamingSampleAnalysis(
     while (readStreamer.trySeekingToNextPrimaryAlignment() && readStreamer.isStreamingAlignedReads())
     {
         HtsReadRecord htsRead = readStreamer.getRead();
-        const bool readNearTarget = genomeQuery.targetRegionMask.query(htsRead.contigId(), htsRead.position());
-        const bool mateNearTarget = genomeQuery.targetRegionMask.query(htsRead.mateContigId(), htsRead.matePosition());
+        const bool readNearTarget = genomeMask.query(htsRead.contigId(), htsRead.position());
+        const bool mateNearTarget = genomeMask.query(htsRead.mateContigId(), htsRead.matePosition());
+
         if (!readNearTarget && !mateNearTarget)
         {
             continue;

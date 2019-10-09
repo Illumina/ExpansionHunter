@@ -21,9 +21,12 @@
 
 #include "workflow/GraphSmallVariant.hh"
 
+#include "spdlog/spdlog.h"
+
 #include "workflow/GraphModel.hh"
 
 using std::shared_ptr;
+using std::string;
 
 namespace ehunter
 {
@@ -36,20 +39,22 @@ GraphSmallVariant::GraphSmallVariant(shared_ptr<GraphModel> model, std::vector<g
 }
 
 void GraphSmallVariant::summarize(
-    const Read& read, const Alignments& readAligns, const Read& mate, const Alignments& mateAligns)
+    const string& read, const Alignments& readAligns, const string& mate, const Alignments& mateAligns)
 {
     summarize(read, readAligns);
     summarize(mate, mateAligns);
 }
 
-void GraphSmallVariant::summarize(const Read& read, const std::list<graphtools::GraphAlignment>& alignments)
+void GraphSmallVariant::summarize(const string& read, const std::list<graphtools::GraphAlignment>& alignments)
 {
-    ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read.sequence(), alignments);
+    ReadSummaryForSmallVariant smallVariantRead = alignmentClassifier_.classifyRead(read, alignments);
 
-    if (smallVariantRead.numAlignments() > 0)
+    if (smallVariantRead.numAlignments() == 0)
     {
-        readSummaries_.push_back(smallVariantRead);
+        return;
     }
+
+    readSummaries_.push_back(smallVariantRead);
 
     const auto& smallVariantAlignment = smallVariantRead.alignments().front();
 
@@ -91,6 +96,6 @@ int GraphSmallVariant::countReadsSupportingNode(graphtools::NodeId nodeId) const
     return (numReadsSupportingUpstreamFlank + numReadsSupportingDownstreamFlank) / 2;
 }
 
-std::shared_ptr<RegionModel> GraphSmallVariant::model() { return model_; };
+std::shared_ptr<RegionModel> GraphSmallVariant::model() { return model_; }
 
 }

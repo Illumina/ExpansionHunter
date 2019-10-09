@@ -80,6 +80,9 @@ std::ostream& operator<<(std::ostream& out, AlleleCount alleleCount)
 {
     switch (alleleCount)
     {
+    case AlleleCount::kZero:
+        out << "Zero";
+        break;
     case AlleleCount::kOne:
         out << "One";
         break;

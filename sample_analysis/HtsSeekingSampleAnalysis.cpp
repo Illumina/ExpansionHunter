@@ -166,8 +166,7 @@ static ReadPairs collectCandidateReads(
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
-    AlignmentWriter& /*alignmentWriter*/)
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
 {
     SampleFindings sampleFindings;
     for (const auto& locusIdAndRegionSpec : regionCatalog)
@@ -179,7 +178,7 @@ SampleFindings htsSeekingSampleAnalysis(
             locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), inputPaths.htsFile(),
             inputPaths.reference());
 
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } });
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {

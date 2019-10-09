@@ -26,15 +26,14 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
-#include "graphalign/GaplessAligner.hh"
 #include "graphcore/Path.hh"
-#include "graphcore/PathOperations.hh"
 
-using graphtools::alignWithoutGaps;
+using graphtools::Graph;
 using graphtools::GraphAlignment;
-using graphtools::KmerIndex;
 using graphtools::Path;
+using graphtools::KmerIndex;
 using std::list;
 using std::string;
 using std::vector;
@@ -84,7 +83,7 @@ OrientationPrediction OrientationPredictor::predict(const std::string& query) co
     }
     else
     {
-        return OrientationPrediction::kAlignsInReverseComplementOrientation;
+        return OrientationPrediction::kAlignsInOppositeOrientation;
     }
 }
 
@@ -93,10 +92,10 @@ std::ostream& operator<<(std::ostream& out, OrientationPrediction orientationPre
     switch (orientationPrediction)
     {
     case OrientationPrediction::kAlignsInOriginalOrientation:
-        out << "kAlignsInReverseComplementOrientation";
+        out << "kAlignsInOriginalOrientation";
         break;
-    case OrientationPrediction::kAlignsInReverseComplementOrientation:
-        out << "kAlignsInReverseComplementOrientation";
+    case OrientationPrediction::kAlignsInOppositeOrientation:
+        out << "kAlignsInOppositeOrientation";
         break;
     case OrientationPrediction::kDoesNotAlign:
         out << "kDoesNotAlign";

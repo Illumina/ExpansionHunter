@@ -34,8 +34,8 @@ public:
     ReadCounter(std::shared_ptr<LinearModel> model, std::vector<GenomicRegion> targetRegions);
     ~ReadCounter() override = default;
     std::shared_ptr<RegionModel> model() override;
-    void summarize(MappedRead read, MappedRead mate) override;
-    void summarize(MappedRead read) override;
+    void summarize(const MappedRead& read, const MappedRead& mate) override;
+    void summarize(const MappedRead& read) override;
 
     std::int64_t numReads() const { return numReads_; }
     int getReadLength() const;

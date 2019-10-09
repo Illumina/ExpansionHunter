@@ -36,7 +36,7 @@ namespace ehunter
 enum class OrientationPrediction
 {
     kAlignsInOriginalOrientation,
-    kAlignsInReverseComplementOrientation,
+    kAlignsInOppositeOrientation,
     kDoesNotAlign
 };
 

@@ -21,25 +21,45 @@
 
 #include "workflow/ReadCountAnalyzer.hh"
 
+#include "common/Common.hh"
+
 using std::shared_ptr;
 using std::vector;
 
 namespace ehunter
 {
 
-ReadCountAnalyzer::ReadCountAnalyzer(std::shared_ptr<ReadCounter> counter)
-    : counter_(std::move(counter))
+static AlleleCount determineExpectedAlleleCount(ContigCopyNumber copyNumber, Sex sex)
+{
+    switch (copyNumber)
+    {
+    case ContigCopyNumber::kTwoInFemaleTwoInMale:
+        return AlleleCount::kTwo;
+    case ContigCopyNumber::kTwoInFemaleOneInMale:
+        return (sex == Sex::kFemale ? AlleleCount::kTwo : AlleleCount::kOne);
+    case ContigCopyNumber::kZeroInFemaleOneInMale:
+        return (sex == Sex::kFemale ? AlleleCount::kZero : AlleleCount::kOne);
+    }
+
+    return AlleleCount::kTwo; // To remove spurious control reaches end of non-void function warning
+}
+
+ReadCountAnalyzer::ReadCountAnalyzer(ContigCopyNumber contigCopyNumber, std::shared_ptr<ReadCounter> counter)
+    : contigCopyNumber_(contigCopyNumber)
+    , counter_(std::move(counter))
 {
 }
 
 vector<shared_ptr<Feature>> ReadCountAnalyzer::features() { return { counter_ }; }
 
-LocusStats ReadCountAnalyzer::estimate(Sex /*sampleSex*/) const
+LocusStats ReadCountAnalyzer::estimate(Sex sampleSex) const
 {
     const int readLength = counter_->getReadLength();
     const double depth = counter_->getDepth();
 
-    return { AlleleCount::kTwo, readLength, depth };
+    AlleleCount alleleCount = determineExpectedAlleleCount(contigCopyNumber_, sampleSex);
+
+    return { alleleCount, readLength, depth };
 }
 
 }

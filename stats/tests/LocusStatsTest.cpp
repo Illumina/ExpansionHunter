@@ -31,6 +31,7 @@ using boost::optional;
 using graphtools::decodeGraphAlignment;
 using graphtools::GraphAlignment;
 
+/*
 TEST(LocusStatsCalculator, NoDataGiven_StatsNotCalculated)
 {
     graphtools::Graph graph = graphtools::makeStrGraph("TAATG", "CCG", "CCTTATTA");
@@ -42,8 +43,9 @@ TEST(LocusStatsCalculator, NoDataGiven_StatsNotCalculated)
     GraphAlignment alignmentStartingOnRightFlank = decodeGraphAlignment(0, "2[4M]", &graph);
 
     ASSERT_EQ(optional<LocusStats>(), statsCalculator.estimate(Sex::kFemale));
-}
+} */
 
+/*
 TEST(LocusStatsCalculator, TypicalReadLengths_StatsCalculated)
 {
     graphtools::Graph graph = graphtools::makeStrGraph("TAATG", "CCG", "CCTTATTA");
@@ -65,4 +67,4 @@ TEST(LocusStatsCalculator, TypicalReadLengths_StatsCalculated)
 
     ASSERT_NE(boost::none, statsCalculator.estimate(Sex::kFemale));
     ASSERT_EQ(LocusStats(AlleleCount::kTwo, 3, 18), *statsCalculator.estimate(Sex::kFemale));
-}
+} */
