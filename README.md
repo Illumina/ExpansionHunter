@@ -38,5 +38,6 @@ whole-genome sequence data](http://genome.cshlp.org/content/27/11/1895), Genome
 Research 2017
 
 - Dolzhenko and others,
-[ExpansionHunter: A sequence-graph based tool to analyze variation in short tandem repeat regions](https://www.biorxiv.org/content/10.1101/572545v1),
-bioRxiv 2019
+[ExpansionHunter: A sequence-graph based tool to analyze variation in short
+tandem repeat regions](https://academic.oup.com/bioinformatics/article/doi/10.1093/bioinformatics/btz431/5499079),
+Bioinformatics 2019

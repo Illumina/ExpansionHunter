@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <iostream>
 #include <list>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #include <stdexcept>
@@ -33,7 +34,7 @@
 using graphtools::Graph;
 using graphtools::GraphAlignment;
 using graphtools::Path;
-using graphtools::KmerIndex;
+using graphtools::reverseGraph;
 using std::list;
 using std::string;
 using std::vector;
@@ -41,9 +42,8 @@ using std::vector;
 namespace ehunter
 {
 
-static int countNonoverlappingKmerMatches(const string query, const KmerIndex& kmerIndex)
+static int countNonoverlappingKmerMatches(const string& query, int kmerLength, const BloomFilter& bloomFilter)
 {
-    const std::size_t kmerLength = kmerIndex.kmerLength();
     int matchCount = 0;
     size_t position = 0;
     while (position + kmerLength <= query.length())
@@ -51,7 +51,7 @@ static int countNonoverlappingKmerMatches(const string query, const KmerIndex& k
         string kmer = query.substr(position, kmerLength);
         std::transform(kmer.begin(), kmer.end(), kmer.begin(), ::toupper);
 
-        if (kmerIndex.contains(kmer))
+        if (bloomFilter.maybeContains(kmer))
         {
             ++matchCount;
             position += kmerLength;
@@ -61,23 +61,32 @@ static int countNonoverlappingKmerMatches(const string query, const KmerIndex& k
             ++position;
         }
     }
+
     return matchCount;
 }
 
-OrientationPrediction OrientationPredictor::predict(const std::string& query) const
-{
-    const int numForwardMatches = countNonoverlappingKmerMatches(query, kmerIndex_);
-    const int numReverseComplementMatches
-        = countNonoverlappingKmerMatches(query, kmerIndexForReverseComplementedGraph_);
+OrientationPredictor::OrientationPredictor(const Graph* graph)
+    : kmerLength_(10)
+    , minKmerMatchesToPass_(3)
+    , bloomFilter_(build(*graph, kmerLength_))
+    , oppositeBloomFilter_(build(reverseGraph(*graph, true), kmerLength_))
 
-    const int maxMatches = std::max(numForwardMatches, numReverseComplementMatches);
+{
+}
+
+OrientationPrediction OrientationPredictor::predict(const string& query) const
+{
+    const int numMatches = countNonoverlappingKmerMatches(query, kmerLength_, bloomFilter_);
+    const int numOppositeMatches = countNonoverlappingKmerMatches(query, kmerLength_, oppositeBloomFilter_);
+
+    const int maxMatches = std::max(numMatches, numOppositeMatches);
 
     if (maxMatches < minKmerMatchesToPass_)
     {
         return OrientationPrediction::kDoesNotAlign;
     }
 
-    if (numForwardMatches >= numReverseComplementMatches)
+    if (numMatches >= numOppositeMatches)
     {
         return OrientationPrediction::kAlignsInOriginalOrientation;
     }
