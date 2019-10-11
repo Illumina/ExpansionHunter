@@ -8,8 +8,10 @@
 // non-native version will be less than optimal.
 
 #include "MurmurHash3.h"
+#if defined(__GNUC__) && (__GNUC__ >= 7)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros
