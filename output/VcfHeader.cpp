@@ -38,9 +38,9 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
 }
 
-void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
+void FieldDescriptionWriter::visit(StrFindings& strFindings)
 {
-    if (!repeatFindingsPtr->optionalGenotype())
+    if (!strFindings.optionalGenotype())
     {
         return;
     }
@@ -78,7 +78,7 @@ void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
-    const RepeatGenotype& genotype = repeatFindingsPtr->optionalGenotype().get();
+    const RepeatGenotype& genotype = strFindings.optionalGenotype().get();
 
     if (genotype.shortAlleleSizeInUnits() != referenceSize)
     {
@@ -95,9 +95,9 @@ void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
     }
 }
 
-void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
+void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
 {
-    if (!smallVariantFindingsPtr->optionalGenotype())
+    if (!findings.optionalGenotype())
     {
         return;
     }
@@ -158,7 +158,7 @@ void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sa
             const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
             FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(&descriptionWriter);
+            variantIdAndFindings.second->accept(descriptionWriter);
             descriptionWriter.dumpTo(fieldDescriptionCatalog);
         }
     }

@@ -28,7 +28,7 @@
 #include <string>
 #include <utility>
 
-#include "thirdparty/spdlog/spdlog.h"
+#include "spdlog/spdlog.h"
 
 using std::pair;
 using std::string;
@@ -71,27 +71,9 @@ namespace htshelpers
         return bases;
     }
 
-    LinearAlignmentStats decodeAlignmentStats(bam1_t* htsAlignPtr)
-    {
-        LinearAlignmentStats alignmentStats;
-        alignmentStats.chromId = htsAlignPtr->core.tid;
-        alignmentStats.pos = htsAlignPtr->core.pos;
-        alignmentStats.mapq = htsAlignPtr->core.qual;
-        alignmentStats.mateChromId = htsAlignPtr->core.mtid;
-        alignmentStats.matePos = htsAlignPtr->core.mpos;
-
-        uint32_t samFlag = htsAlignPtr->core.flag;
-        alignmentStats.isPaired = samFlag & BAM_FPAIRED;
-        alignmentStats.isMapped = !(samFlag & BAM_FUNMAP);
-        alignmentStats.isMateMapped = !(samFlag & BAM_FMUNMAP);
-
-        return alignmentStats;
-    }
-
     bool isPrimaryAlignment(bam1_t* htsAlignPtr)
     {
-        return !((htsAlignPtr->core.flag & BAM_FSECONDARY) ||
-                 (htsAlignPtr->core.flag & BAM_FSUPPLEMENTARY));
+        return !((htsAlignPtr->core.flag & BAM_FSECONDARY) || (htsAlignPtr->core.flag & BAM_FSUPPLEMENTARY));
     }
 
     static string lowercaseLowQualityBases(const string& bases, const string& quals, int lowBaseQualityCutoff = 20)
@@ -108,11 +90,15 @@ namespace htshelpers
         return query;
     }
 
-    Read decodeRead(bam1_t* htsAlignPtr)
+    MappedRead decodeRead(bam1_t* htsAlignPtr)
     {
+        // Decode sequences
         const uint32_t samFlag = htsAlignPtr->core.flag;
         const bool isFirstMate = samFlag & BAM_FREAD1;
         const bool isReversed = samFlag & BAM_FREVERSE;
+        const bool isPaired = samFlag & BAM_FPAIRED;
+        const bool isMapped = !(samFlag & BAM_FUNMAP);
+        const bool isMateMapped = !(samFlag & BAM_FMUNMAP);
 
         const string fragmentId = bam_get_qname(htsAlignPtr);
         MateNumber mateNumber = isFirstMate ? MateNumber::kFirstMate : MateNumber::kSecondMate;
@@ -122,7 +108,16 @@ namespace htshelpers
         string quals = decodeQuals(htsAlignPtr);
         string sequence = lowercaseLowQualityBases(bases, quals);
 
-        return Read(readId, sequence, isReversed);
+        // Decode linear alignment
+        int contigIndex = htsAlignPtr->core.tid;
+        int64_t pos = htsAlignPtr->core.pos;
+        int mapq = htsAlignPtr->core.qual;
+        int mateContigIndex = htsAlignPtr->core.mtid;
+        int64_t matePos = htsAlignPtr->core.mpos;
+
+        return MappedRead(
+            std::move(readId), std::move(sequence), isReversed, contigIndex, pos, mapq, mateContigIndex, matePos,
+            isPaired, isMapped, isMateMapped);
     }
 
     ReferenceContigInfo decodeContigInfo(bam_hdr_t* htsHeaderPtr)

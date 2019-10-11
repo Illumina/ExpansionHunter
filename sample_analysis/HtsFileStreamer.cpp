@@ -80,20 +80,9 @@ namespace htshelpers
         return false;
     }
 
-    int32_t HtsFileStreamer::currentReadContigId() const { return htsAlignmentPtr_->core.tid; }
-    int32_t HtsFileStreamer::currentReadPosition() const { return htsAlignmentPtr_->core.pos; }
-    int32_t HtsFileStreamer::currentMateContigId() const { return htsAlignmentPtr_->core.mtid; }
-    int32_t HtsFileStreamer::currentMatePosition() const { return htsAlignmentPtr_->core.mpos; }
-
     bool HtsFileStreamer::isStreamingAlignedReads() const
     {
-        return status_ != Status::kFinishedStreaming && currentReadContigId() != -1;
-    }
-
-    Read HtsFileStreamer::decodeRead(LinearAlignmentStats& alignmentStats) const
-    {
-        alignmentStats = decodeAlignmentStats(htsAlignmentPtr_);
-        return htshelpers::decodeRead(htsAlignmentPtr_);
+        return status_ != Status::kFinishedStreaming && htsAlignmentPtr_->core.tid != -1;
     }
 
     HtsFileStreamer::~HtsFileStreamer()
@@ -107,6 +96,8 @@ namespace htshelpers
         sam_close(htsFilePtr_);
         htsFilePtr_ = nullptr;
     }
+
+    HtsReadRecord HtsFileStreamer::getRead() { return HtsReadRecord(htsAlignmentPtr_); }
 
 }
 

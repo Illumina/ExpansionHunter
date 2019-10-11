@@ -1,4 +1,5 @@
 file(GLOB SOURCES "*.cpp")
 add_library(common ${SOURCES})
 target_link_libraries(common region_spec ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
+target_include_directories(common PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/spdlog/include)
 add_subdirectory(tests)

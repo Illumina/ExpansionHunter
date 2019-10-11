@@ -41,19 +41,19 @@ using std::vector;
 namespace ehunter
 {
 
-// Uses the standard Lander-Waterman model to estimate length of a region. The confidence interval is computed using a
+// Uses the standard Lander-Waterman model to estimate length of a workflow. The confidence interval is computed using a
 // generic parametric bootstrap procedure (note that a simpler implementation using Poisson mean CI is possible).
 void estimateRegionLength(
     int readCount, int readLength, double depth, int& regionLength, int& lowerBound, int& upperBound)
 {
     const double proportionOfReadsStartAtPosition = depth / readLength;
-    // The length of sub-region where reads can start and still be fully within the region
+    // The length of sub-workflow where reads can start and still be fully within the workflow
     const int extensionLength = static_cast<int>(round(readCount / proportionOfReadsStartAtPosition));
 
     const int kSeed = 42;
     std::mt19937 numberGenerator(kSeed);
 
-    // Model for the number of reads that fall within the region
+    // Model for the number of reads that fall within the workflow
     std::poisson_distribution<> poisson(readCount);
 
     vector<int> bootstrapSamples;

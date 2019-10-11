@@ -33,8 +33,8 @@
 
 #include <boost/optional.hpp>
 
+#include "spdlog/spdlog.h"
 #include "thirdparty/json/json.hpp"
-#include "thirdparty/spdlog/spdlog.h"
 
 #include "common/Common.hh"
 #include "common/Reference.hh"
@@ -113,94 +113,128 @@ static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
     }
 }
 
-static vector<string> generateIds(const std::string& locusId, const Json& variantRegionEncodings)
+static vector<string> generateIds(const string& locusId, const Json& variantLocationEncodings)
 {
-    if (variantRegionEncodings.size() == 1)
+    if (variantLocationEncodings.size() == 1)
     {
         return { locusId };
     }
 
     vector<string> variantIds;
-    for (const string& regionEncoding : variantRegionEncodings)
+    for (const auto& locationEncoding : variantLocationEncodings)
     {
-        variantIds.push_back(locusId + "_" + regionEncoding);
+        string variantId = locusId;
+        variantId += "_";
+        variantId += locationEncoding.get<string>();
+        variantIds.push_back(variantId);
     }
 
     return variantIds;
 }
 
+static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
+{
+    const int kMaxMergeDistance = 500;
+    vector<GenomicRegion> mergedReferenceRegions = merge(regions, kMaxMergeDistance);
+    if (mergedReferenceRegions.size() != 1)
+    {
+        std::stringstream out;
+        for (const GenomicRegion& region : regions)
+        {
+            out << region << " ";
+        }
+        throw std::runtime_error(
+            "Expected reference regions to be closer than " + to_string(kMaxMergeDistance)
+            + " from one another: " + out.str());
+    }
+
+    return mergedReferenceRegions.front();
+}
+
 static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
-    LocusDescriptionFromUser userDescription;
-
     assertFieldExists(locusJson, "LocusId");
-    userDescription.locusId = locusJson["LocusId"].get<string>();
-
-    assertFieldExists(locusJson, "ReferenceRegion");
-    makeArray(locusJson["ReferenceRegion"]);
-    for (const string& encoding : locusJson["ReferenceRegion"])
-    {
-        GenomicRegion region = decode(contigInfo, encoding);
-        userDescription.referenceRegions.push_back(region);
-    }
+    auto locusId = locusJson["LocusId"].get<string>();
 
     assertFieldExists(locusJson, "LocusStructure");
-    userDescription.locusStructure = locusJson["LocusStructure"].get<string>();
+    auto locusStructure = locusJson["LocusStructure"].get<string>();
 
-    assertFieldExists(locusJson, "VariantType");
-    makeArray(locusJson["VariantType"]);
-    for (const string& encoding : locusJson["VariantType"])
+    vector<GenomicRegion> variantLocations;
+    assertFieldExists(locusJson, "ReferenceRegion");
+    makeArray(locusJson["ReferenceRegion"]);
+    for (const auto& encoding : locusJson["ReferenceRegion"])
     {
-        userDescription.variantTypesFromUser.push_back(decodeVariantTypeFromUser(encoding));
+        GenomicRegion region = decode(contigInfo, encoding.get<string>());
+        variantLocations.push_back(region);
     }
 
-    if (checkIfFieldExists(locusJson, "TargetRegion"))
-    {
-        makeArray(locusJson["TargetRegion"]);
-        for (const string& locusEncoding : locusJson["TargetRegion"])
-        {
-            GenomicRegion region = decode(contigInfo, locusEncoding);
-            userDescription.targetRegions.push_back(region);
-        }
-    }
+    GenomicRegion locusLocation = mergeRegions(variantLocations);
 
+    vector<string> variantIds;
     if (checkIfFieldExists(locusJson, "VariantId"))
     {
         makeArray(locusJson["VariantId"]);
-        for (const string& variantId : locusJson["VariantId"])
+        for (const auto& variantId : locusJson["VariantId"])
         {
-            userDescription.variantIds.push_back(variantId);
+            variantIds.push_back(variantId.get<string>());
         }
     }
     else
     {
-        userDescription.variantIds = generateIds(userDescription.locusId, locusJson["ReferenceRegion"]);
+        variantIds = generateIds(locusId, locusJson["ReferenceRegion"]);
     }
 
-    if (checkIfFieldExists(locusJson, "OfftargetRegions"))
+    vector<VariantTypeFromUser> variantTypesFromUser;
+    assertFieldExists(locusJson, "VariantType");
+    makeArray(locusJson["VariantType"]);
+    for (const auto& encoding : locusJson["VariantType"])
     {
-        assertRecordIsArray(locusJson["OfftargetRegions"]);
-        for (const string& locusEncoding : locusJson["OfftargetRegions"])
+        variantTypesFromUser.push_back(decodeVariantTypeFromUser(encoding.get<string>()));
+    }
+
+    vector<GenomicRegion> targetRegions;
+    if (checkIfFieldExists(locusJson, "TargetRegion"))
+    {
+        makeArray(locusJson["TargetRegion"]);
+        for (const auto& encoding : locusJson["TargetRegion"])
         {
-            GenomicRegion region = decode(contigInfo, locusEncoding);
-            userDescription.offtargetRegions.push_back(region);
+            GenomicRegion region = decode(contigInfo, encoding.get<string>());
+            targetRegions.push_back(region);
         }
     }
 
-    if (checkIfFieldExists(locusJson, "ErrorRate"))
+    vector<GenomicRegion> offtargetRegions;
+    if (checkIfFieldExists(locusJson, "OfftargetRegions"))
     {
-        userDescription.errorRate = locusJson["ErrorRate"].get<double>();
-    }
-    if (checkIfFieldExists(locusJson, "LikelihoodRatioThreshold"))
-    {
-        userDescription.likelihoodRatioThreshold = locusJson["LikelihoodRatioThreshold"].get<double>();
-    }
-    if (checkIfFieldExists(locusJson, "MinimalLocusCoverage"))
-    {
-        userDescription.minLocusCoverage = locusJson["MinimalLocusCoverage"].get<double>();
+        assertRecordIsArray(locusJson["OfftargetRegions"]);
+        for (const auto& encoding : locusJson["OfftargetRegions"])
+        {
+            GenomicRegion region = decode(contigInfo, encoding.get<string>());
+            offtargetRegions.push_back(region);
+        }
     }
 
-    return userDescription;
+    boost::optional<double> errorRate;
+    if (checkIfFieldExists(locusJson, "ErrorRate"))
+    {
+        errorRate = locusJson["ErrorRate"].get<double>();
+    }
+
+    boost::optional<double> likelihoodRatioThreshold;
+    if (checkIfFieldExists(locusJson, "LikelihoodRatioThreshold"))
+    {
+        likelihoodRatioThreshold = locusJson["LikelihoodRatioThreshold"].get<double>();
+    }
+
+    boost::optional<double> minLocusCoverage;
+    if (checkIfFieldExists(locusJson, "MinimalLocusCoverage"))
+    {
+        minLocusCoverage = locusJson["MinimalLocusCoverage"].get<double>();
+    }
+
+    return LocusDescriptionFromUser(
+        locusId, locusStructure, variantIds, locusLocation, variantLocations, targetRegions, offtargetRegions,
+        variantTypesFromUser, errorRate, likelihoodRatioThreshold, minLocusCoverage);
 }
 
 RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
@@ -232,8 +266,7 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
             const string message = "Unable to load " + locusJson.dump() + ": " + except.what();
             if (context.heuristics().permissive())
             {
-                auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
-                console->warn(message);
+                spdlog::warn(message);
             }
             else
             {
