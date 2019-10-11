@@ -23,6 +23,10 @@ add_executable(CopyNumberGenotyperTest CopyNumberGenotyperTest.cpp)
 target_link_libraries(CopyNumberGenotyperTest genotyping gtest_main)
 add_test(NAME CopyNumberGenotyperTest COMMAND CopyNumberGenotyperTest)
 
+add_executable(CopyNumberCallerTest CopyNumberCallerTest.cpp)
+target_link_libraries(CopyNumberCallerTest genotyping gtest_main)
+add_test(NAME CopyNumberCallerTest COMMAND CopyNumberCallerTest)
+
 add_executable(AlleleCheckerTest AlleleCheckerTest.cpp)
 target_link_libraries(AlleleCheckerTest genotyping gtest_main)
 add_test(NAME AlleleCheckerTest COMMAND AlleleCheckerTest)
