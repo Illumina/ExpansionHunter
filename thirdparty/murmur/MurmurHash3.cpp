@@ -8,6 +8,8 @@
 // non-native version will be less than optimal.
 
 #include "MurmurHash3.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
 
 //-----------------------------------------------------------------------------
 // Platform-specific functions and macros
@@ -331,5 +333,6 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
   ((uint64_t*)out)[1] = h2;
 }
 
+#pragma GCC diagnostic pop
 //-----------------------------------------------------------------------------
 
