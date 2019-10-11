@@ -107,12 +107,37 @@ static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
     {
         return VariantTypeFromUser::kSMN;
     }
+    if (encoding == "CNV")
+    {
+        return VariantTypeFromUser::kCNV;
+    }
     else
     {
         throw std::logic_error("Encountered invalid variant type: " + encoding);
     }
 }
 
+static LocusTypeFromUser decodeLocusTypeFromUser(const string& encoding)
+{
+    if (encoding == "Graph")
+    {
+        return LocusTypeFromUser::kGraph;
+    }
+    if (encoding == "CNV")
+    {
+        return LocusTypeFromUser::kCNV;
+    }
+    if (encoding == "Paralog")
+    {
+        return LocusTypeFromUser::kParalog;
+    }
+    else
+    {
+        throw std::logic_error("Encountered invalid locus type: " + encoding);
+    }
+}
+
+/*
 static vector<string> generateIds(const string& locusId, const Json& variantLocationEncodings)
 {
     if (variantLocationEncodings.size() == 1)
@@ -131,7 +156,7 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
 
     return variantIds;
 }
-
+*/
 static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
 {
     const int kMaxMergeDistance = 500;
@@ -156,41 +181,43 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     assertFieldExists(locusJson, "LocusId");
     auto locusId = locusJson["LocusId"].get<string>();
 
+    assertFieldExists(locusJson, "LocusType");
+    LocusTypeFromUser locusType = decodeLocusTypeFromUser(locusJson["LocusType"].get<string>());
+
     assertFieldExists(locusJson, "LocusStructure");
     auto locusStructure = locusJson["LocusStructure"].get<string>();
 
     vector<GenomicRegion> variantLocations;
-    assertFieldExists(locusJson, "ReferenceRegion");
-    makeArray(locusJson["ReferenceRegion"]);
-    for (const auto& encoding : locusJson["ReferenceRegion"])
+
+    assertFieldExists(locusJson, "Variants");
+    makeArray(locusJson["Variants"]);
+    vector<VariantDescriptionFromUser> variantDescriptions;
+    for (const auto& variant : locusJson["Variants"])
     {
-        GenomicRegion region = decode(contigInfo, encoding.get<string>());
+        assertFieldExists(variant, "VariantType");
+        auto variantType = decodeVariantTypeFromUser(variant["VariantType"].get<string>());
+
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(contigInfo, variant["ReferenceRegion"].get<string>());
+
+        string variantId;
+        if (checkIfFieldExists(variant, "VariantId"))
+        {
+            variantId = variant["VariantId"];
+        }
+        else
+        {
+            variantId = locusId;
+            variantId += "_";
+            variantId += variant["ReferenceRegion"].get<string>();
+        }
+
+        VariantDescriptionFromUser variantDescription = VariantDescriptionFromUser(variantId, region, variantType);
+        variantDescriptions.push_back(variantDescription);
         variantLocations.push_back(region);
     }
 
     GenomicRegion locusLocation = mergeRegions(variantLocations);
-
-    vector<string> variantIds;
-    if (checkIfFieldExists(locusJson, "VariantId"))
-    {
-        makeArray(locusJson["VariantId"]);
-        for (const auto& variantId : locusJson["VariantId"])
-        {
-            variantIds.push_back(variantId.get<string>());
-        }
-    }
-    else
-    {
-        variantIds = generateIds(locusId, locusJson["ReferenceRegion"]);
-    }
-
-    vector<VariantTypeFromUser> variantTypesFromUser;
-    assertFieldExists(locusJson, "VariantType");
-    makeArray(locusJson["VariantType"]);
-    for (const auto& encoding : locusJson["VariantType"])
-    {
-        variantTypesFromUser.push_back(decodeVariantTypeFromUser(encoding.get<string>()));
-    }
 
     vector<GenomicRegion> targetRegions;
     if (checkIfFieldExists(locusJson, "TargetRegion"))
@@ -233,8 +260,8 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     }
 
     return LocusDescriptionFromUser(
-        locusId, locusStructure, variantIds, locusLocation, variantLocations, targetRegions, offtargetRegions,
-        variantTypesFromUser, errorRate, likelihoodRatioThreshold, minLocusCoverage);
+        locusId, locusType, locusStructure, locusLocation, variantDescriptions, targetRegions, offtargetRegions,
+        errorRate, likelihoodRatioThreshold, minLocusCoverage);
 }
 
 RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
@@ -277,5 +304,4 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
 
     return catalog;
 }
-
 }

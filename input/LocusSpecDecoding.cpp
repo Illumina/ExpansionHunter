@@ -239,8 +239,13 @@ LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& user
 
         WorkflowContext context;
 
+        vector<GenomicRegion> variantLocations;
+        for (const auto& variant : userDescription.variantDescriptionFromUsers)
+        {
+            variantLocations.push_back(variant.variantLocation);
+        }
         const int kExtensionLength = context.heuristics().regionExtensionLength();
-        auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, userDescription.variantLocations);
+        auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, variantLocations);
         auto completeLocusStructure
             = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
 
@@ -289,13 +294,14 @@ LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& user
         {
             if (doesFeatureDefineVariant(feature.type))
             {
-                const GenomicRegion& referenceRegion = userDescription.variantLocations.at(variantIndex);
+                VariantDescriptionFromUser variant = userDescription.variantDescriptionFromUsers.at(variantIndex);
+                const GenomicRegion& referenceRegion = variant.variantLocation;
 
-                VariantTypeFromUser variantDescription = userDescription.variantTypesFromUser.at(variantIndex);
-                const string& variantId = userDescription.variantIds[variantIndex];
+                VariantTypeFromUser variantTypeFromDescription = variant.variantType;
+                const string& variantId = variant.variantId;
                 VariantType variantType = determineVariantType(feature.type);
                 VariantSubtype variantSubtype
-                    = determineVariantSubtype(feature.type, variantDescription, referenceRegion);
+                    = determineVariantSubtype(feature.type, variantTypeFromDescription, referenceRegion);
 
                 optional<NodeId> optionalReferenceNode = determineReferenceNode(feature, reference, referenceRegion);
 
@@ -333,19 +339,11 @@ void assertValidity(const LocusDescriptionFromUser& userDescription)
             "Locus " + userDescription.locusId + " must encode at least one variant " + userDescription.locusStructure);
     }
 
-    if (numVariants != static_cast<int>(userDescription.variantLocations.size()))
+    if (numVariants != static_cast<int>(userDescription.variantDescriptionFromUsers.size()))
     {
         throw std::runtime_error(
-            "Locus " + userDescription.locusId + " must specify reference regions for " + to_string(numVariants)
-            + " variants");
-    }
-
-    if (numVariants != static_cast<int>(userDescription.variantTypesFromUser.size()))
-    {
-        throw std::runtime_error(
-            "Locus " + userDescription.locusId + " must specify variant types for " + to_string(numVariants)
+            "Locus " + userDescription.locusId + " must specify variant information for " + to_string(numVariants)
             + " variants");
     }
 }
-
 }

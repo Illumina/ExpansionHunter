@@ -39,25 +39,46 @@ enum class VariantTypeFromUser
     kRareRepeat,
     kCommonRepeat,
     kSmallVariant,
-    kSMN
+    kSMN,
+    kCNV
+};
+
+enum class LocusTypeFromUser
+{
+    kGraph,
+    kCNV,
+    kParalog
+};
+
+struct VariantDescriptionFromUser
+{
+    VariantDescriptionFromUser(std::string variantId, GenomicRegion variantLocation, VariantTypeFromUser variantType)
+        : variantId(std::move(variantId))
+        , variantLocation(std::move(variantLocation))
+        , variantType(std::move(variantType))
+
+    {
+    }
+
+    std::string variantId;
+    GenomicRegion variantLocation;
+    VariantTypeFromUser variantType;
 };
 
 struct LocusDescriptionFromUser
 {
     LocusDescriptionFromUser(
-        std::string locusId, std::string locusStructure, std::vector<std::string> variantIds,
-        GenomicRegion locusLocation, std::vector<GenomicRegion> variantLocations,
-        std::vector<GenomicRegion> targetRegions, std::vector<GenomicRegion> offtargetRegions,
-        std::vector<VariantTypeFromUser> variantTypesFromUser, boost::optional<double> errorRate,
+        std::string locusId, LocusTypeFromUser locusType, std::string locusStructure, GenomicRegion locusLocation,
+        std::vector<VariantDescriptionFromUser> variantDescriptionFromUsers, std::vector<GenomicRegion> targetRegions,
+        std::vector<GenomicRegion> offtargetRegions, boost::optional<double> errorRate,
         boost::optional<double> likelihoodRatioThreshold, boost::optional<double> minLocusCoverage)
         : locusId(std::move(locusId))
+        , locusType(std::move(locusType))
         , locusStructure(std::move(locusStructure))
-        , variantIds(std::move(variantIds))
         , locusLocation(std::move(locusLocation))
-        , variantLocations(std::move(variantLocations))
+        , variantDescriptionFromUsers(std::move(variantDescriptionFromUsers))
         , targetRegions(std::move(targetRegions))
         , offtargetRegions(std::move(offtargetRegions))
-        , variantTypesFromUser(std::move(variantTypesFromUser))
         , errorRate(errorRate)
         , likelihoodRatioThreshold(likelihoodRatioThreshold)
         , minLocusCoverage(minLocusCoverage)
@@ -66,13 +87,12 @@ struct LocusDescriptionFromUser
     }
 
     std::string locusId;
+    LocusTypeFromUser locusType;
     std::string locusStructure;
-    std::vector<std::string> variantIds;
     GenomicRegion locusLocation;
-    std::vector<GenomicRegion> variantLocations;
+    std::vector<VariantDescriptionFromUser> variantDescriptionFromUsers;
     std::vector<GenomicRegion> targetRegions;
     std::vector<GenomicRegion> offtargetRegions;
-    std::vector<VariantTypeFromUser> variantTypesFromUser;
     boost::optional<double> errorRate;
     boost::optional<double> likelihoodRatioThreshold;
     boost::optional<double> minLocusCoverage;
@@ -82,5 +102,4 @@ void assertValidity(const LocusDescriptionFromUser& userDescription);
 
 LocusSpecification
 decodeLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
-
 }
