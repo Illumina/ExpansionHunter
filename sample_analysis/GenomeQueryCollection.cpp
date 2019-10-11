@@ -20,38 +20,18 @@
 //
 
 #include "sample_analysis/GenomeQueryCollection.hh"
+#include "region_spec/LocusSpecification.hh"
 
-using std::unique_ptr;
+using std::shared_ptr;
 using std::vector;
 
 namespace ehunter
 {
 
-namespace
+GenomeQueryCollection::GenomeQueryCollection(const vector<shared_ptr<RegionModel>>& regions)
+    : analyzerFinder(regions)
+    , targetRegionMask(regions)
 {
-    void initializeGenomeMask(GenomeMask& genomeMask, vector<unique_ptr<LocusAnalyzer>>& locusAnalyzers)
-    {
-        for (auto& locusAnalyzer : locusAnalyzers)
-        {
-            const LocusSpecification& locusSpec = locusAnalyzer->locusSpec();
-
-            for (const auto& region : locusSpec.targetReadExtractionRegions())
-            {
-                genomeMask.addRegion(region.contigIndex(), region.start(), region.end());
-            }
-
-            for (const auto& region : locusSpec.offtargetReadExtractionRegions())
-            {
-                genomeMask.addRegion(region.contigIndex(), region.start(), region.end());
-            }
-        }
-    }
-}
-
-GenomeQueryCollection::GenomeQueryCollection(vector<unique_ptr<LocusAnalyzer>>& locusAnalyzers)
-    : analyzerFinder(locusAnalyzers)
-{
-    initializeGenomeMask(targetRegionMask, locusAnalyzers);
 }
 
 }

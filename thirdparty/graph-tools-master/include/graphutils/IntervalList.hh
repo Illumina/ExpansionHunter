@@ -205,7 +205,7 @@ public:
         // it->second.start <= it->second.end &&
         //            start <= it->second.end &&
         //            start <= end
-        // region to delete starts inside interval?
+        // workflow to delete starts inside interval?
         // (if interval starts exactly at start, we can remove it)
         if (it != intervals.end() && it->second.start < start)
         {

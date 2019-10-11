@@ -52,7 +52,7 @@ TEST(PredictingQueryOrientation, TypicalQueries_Classified)
     EXPECT_EQ(OrientationPrediction::kAlignsInOriginalOrientation, orientationPredictor.predict(read));
 
     EXPECT_EQ(
-        OrientationPrediction::kAlignsInReverseComplementOrientation,
+        OrientationPrediction::kAlignsInOppositeOrientation,
         orientationPredictor.predict(reverseComplement(read)));
 
     const string homopolymer(150, 'A');

@@ -45,17 +45,18 @@ enum class Sex
     kFemale
 };
 
-enum class ChromType
+enum class ContigCopyNumber
 {
-    kX,
-    kY,
-    kAutosome
+    kZeroInFemaleOneInMale,
+    kTwoInFemaleOneInMale,
+    kTwoInFemaleTwoInMale
 };
 
 Sex decodeSampleSex(const std::string& encoding);
 
 enum class AlleleCount
 {
+    kZero = 0,
     kOne = 1,
     kTwo = 2
 };

@@ -32,8 +32,8 @@
 #include <string>
 #include <vector>
 
+#include "spdlog/spdlog.h"
 #include "thirdparty/json/json.hpp"
-#include "thirdparty/spdlog/spdlog.h"
 
 #include "common/Common.hh"
 #include "common/Reference.hh"
@@ -53,10 +53,12 @@ namespace spd = spdlog;
 namespace ehunter
 {
 LocusSpecification::LocusSpecification(
-    RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
-    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
+    RegionId locusId, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
+    std::vector<GenomicRegion> targetReadExtractionRegions, graphtools::Graph regionGraph,
+    NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
     : locusId_(std::move(locusId))
-    , typeOfChromLocusLocatedOn_(typeOfChromLocusLocatedOn)
+    , contigCopyNumber_(contigCopyNumber)
+    , locusLocation_(std::move(locusLocation))
     , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
     , regionGraph_(std::move(regionGraph))
     , referenceRegions_(std::move(referenceRegions))
