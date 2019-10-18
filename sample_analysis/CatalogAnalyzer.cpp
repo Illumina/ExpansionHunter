@@ -35,9 +35,8 @@ namespace ehunter
 CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriterPtr bamletWriter)
 {
     WorkflowContext context;
-    auto kk = bamletWriter;
 
-    // Each catalog is only one locus?
+    // Each catalog is only one locus? (-XC)
     for (const auto& locusIdAndLocusSpec : locusCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
