@@ -46,6 +46,7 @@ namespace ehunter
 using boost::optional;
 using graphtools::AlignmentWriter;
 using htshelpers::HtsFileSeeker;
+using std::dynamic_pointer_cast;
 using std::ostream;
 using std::shared_ptr;
 using std::string;
@@ -169,14 +170,34 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
 {
     SampleFindings sampleFindings;
+
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
         const auto& locusId = locusIdAndRegionSpec.first;
         const auto& locusSpec = locusIdAndRegionSpec.second;
 
-        ReadPairs readPairs = collectCandidateReads(
-            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), inputPaths.htsFile(),
-            inputPaths.reference());
+        ReadPairs readPairs;
+
+        shared_ptr<CNVLocusSpecification> cnvLocusSpecPtr = dynamic_pointer_cast<CNVLocusSpecification>(locusSpec);
+        shared_ptr<GraphLocusSpecification> graphLocusSpecPtr
+            = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
+        if (graphLocusSpecPtr)
+        {
+            GraphLocusSpecification graphLocusSpec = *graphLocusSpecPtr;
+            readPairs = collectCandidateReads(
+                graphLocusSpec.targetReadExtractionRegions(), graphLocusSpec.offtargetReadExtractionRegions(),
+                inputPaths.htsFile(), inputPaths.reference());
+        }
+        else if (cnvLocusSpecPtr)
+        {
+            CNVLocusSpecification cnvLocusSpec = *cnvLocusSpecPtr;
+            vector<GenomicRegion> variantLocations;
+            for (auto variant : cnvLocusSpec.variantSpecs())
+            {
+                variantLocations.push_back(variant.referenceLocus());
+            }
+            readPairs = collectCandidateReads(variantLocations, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+        }
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, bamletWriter);
 
@@ -201,5 +222,4 @@ SampleFindings htsSeekingSampleAnalysis(
 
     return sampleFindings;
 }
-
 }

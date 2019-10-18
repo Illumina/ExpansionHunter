@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 
+#include "region_spec/GraphLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
@@ -57,7 +58,7 @@ using FieldDescriptionCatalog = std::map<FieldDescriptionIdentifier, FieldDescri
 class FieldDescriptionWriter : public VariantFindingsVisitor
 {
 public:
-    FieldDescriptionWriter(const LocusSpecification& locusSpec, const VariantSpecification& variantSpec)
+    FieldDescriptionWriter(const GraphLocusSpecification& locusSpec, const VariantSpecification& variantSpec)
         : locusSpec_(locusSpec)
         , variantSpec_(variantSpec)
     {
@@ -67,6 +68,7 @@ public:
 
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& findings) override;
+    void visit(CNVVariantFindings& findings) override;
 
     void tryAddingFieldDescription(
         FieldType fieldType, const std::string& id, const std::string& number, const std::string& contentType,
@@ -77,7 +79,7 @@ public:
 private:
     void addCommonFields();
 
-    const LocusSpecification& locusSpec_;
+    const GraphLocusSpecification& locusSpec_;
     const VariantSpecification& variantSpec_;
     FieldDescriptionCatalog fieldDescriptions_;
 };
@@ -86,5 +88,4 @@ void outputVcfHeader(const RegionCatalog& regionCatalog, const SampleFindings& s
 
 std::ostream& operator<<(std::ostream& out, FieldType fieldType);
 std::ostream& operator<<(std::ostream& out, const FieldDescription& fieldDescription);
-
 }

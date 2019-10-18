@@ -29,7 +29,8 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "region_spec/CNVLocusSpecification.hh"
+#include "region_spec/GraphLocusSpecification.hh"
 
 namespace ehunter
 {
@@ -43,6 +44,12 @@ enum class VariantTypeFromUser
     kCNV
 };
 
+enum class VariantSubtypeFromUser
+{
+    kTarget,
+    kBaseline
+};
+
 enum class LocusTypeFromUser
 {
     kGraph,
@@ -52,10 +59,27 @@ enum class LocusTypeFromUser
 
 struct VariantDescriptionFromUser
 {
-    VariantDescriptionFromUser(std::string variantId, GenomicRegion variantLocation, VariantTypeFromUser variantType)
+    VariantDescriptionFromUser(
+        std::string variantId, GenomicRegion variantLocation, VariantTypeFromUser variantType,
+        boost::optional<VariantSubtypeFromUser> variantSubtype, boost::optional<std::string> variantStructure,
+        boost::optional<bool> expectedNormalCN, boost::optional<double> regionGC,
+        boost::optional<int> mappingQualityThreshold, boost::optional<int> maxCopyNumber,
+        boost::optional<double> depthScaleFactor, boost::optional<double> standardDevidationOfCN2,
+        boost::optional<std::vector<double>> meanDepthValues,
+        boost::optional<std::vector<double>> priorCopyNumberFrequency)
         : variantId(std::move(variantId))
         , variantLocation(std::move(variantLocation))
         , variantType(std::move(variantType))
+        , variantSubtype(variantSubtype)
+        , variantStructure(variantStructure)
+        , expectedNormalCN(expectedNormalCN)
+        , regionGC(regionGC)
+        , mappingQualityThreshold(mappingQualityThreshold)
+        , maxCopyNumber(maxCopyNumber)
+        , depthScaleFactor(depthScaleFactor)
+        , standardDevidationOfCN2(standardDevidationOfCN2)
+        , meanDepthValues(meanDepthValues)
+        , priorCopyNumberFrequency(priorCopyNumberFrequency)
 
     {
     }
@@ -63,22 +87,33 @@ struct VariantDescriptionFromUser
     std::string variantId;
     GenomicRegion variantLocation;
     VariantTypeFromUser variantType;
+    boost::optional<VariantSubtypeFromUser> variantSubtype;
+    boost::optional<std::string> variantStructure;
+    boost::optional<bool> expectedNormalCN;
+    boost::optional<double> regionGC;
+    boost::optional<int> mappingQualityThreshold;
+    boost::optional<int> maxCopyNumber;
+    boost::optional<double> depthScaleFactor;
+    boost::optional<double> standardDevidationOfCN2;
+    boost::optional<std::vector<double>> meanDepthValues;
+    boost::optional<std::vector<double>> priorCopyNumberFrequency;
 };
 
 struct LocusDescriptionFromUser
 {
     LocusDescriptionFromUser(
-        std::string locusId, LocusTypeFromUser locusType, std::string locusStructure, GenomicRegion locusLocation,
+        std::string locusId, LocusTypeFromUser locusType, GenomicRegion locusLocation,
         std::vector<VariantDescriptionFromUser> variantDescriptionFromUsers, std::vector<GenomicRegion> targetRegions,
-        std::vector<GenomicRegion> offtargetRegions, boost::optional<double> errorRate,
-        boost::optional<double> likelihoodRatioThreshold, boost::optional<double> minLocusCoverage)
+        std::vector<GenomicRegion> offtargetRegions, boost::optional<std::string> locusStructure,
+        boost::optional<double> errorRate, boost::optional<double> likelihoodRatioThreshold,
+        boost::optional<double> minLocusCoverage)
         : locusId(std::move(locusId))
         , locusType(std::move(locusType))
-        , locusStructure(std::move(locusStructure))
         , locusLocation(std::move(locusLocation))
         , variantDescriptionFromUsers(std::move(variantDescriptionFromUsers))
         , targetRegions(std::move(targetRegions))
         , offtargetRegions(std::move(offtargetRegions))
+        , locusStructure(locusStructure)
         , errorRate(errorRate)
         , likelihoodRatioThreshold(likelihoodRatioThreshold)
         , minLocusCoverage(minLocusCoverage)
@@ -88,11 +123,11 @@ struct LocusDescriptionFromUser
 
     std::string locusId;
     LocusTypeFromUser locusType;
-    std::string locusStructure;
     GenomicRegion locusLocation;
     std::vector<VariantDescriptionFromUser> variantDescriptionFromUsers;
     std::vector<GenomicRegion> targetRegions;
     std::vector<GenomicRegion> offtargetRegions;
+    boost::optional<std::string> locusStructure;
     boost::optional<double> errorRate;
     boost::optional<double> likelihoodRatioThreshold;
     boost::optional<double> minLocusCoverage;
@@ -100,6 +135,9 @@ struct LocusDescriptionFromUser
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);
 
-LocusSpecification
-decodeLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
+GraphLocusSpecification
+decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
+
+CNVLocusSpecification
+decodeCNVLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 }

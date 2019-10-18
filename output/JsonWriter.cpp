@@ -38,6 +38,7 @@ using std::map;
 using std::string;
 using Json = nlohmann::json;
 using boost::optional;
+using std::dynamic_pointer_cast;
 using std::to_string;
 using std::vector;
 
@@ -67,7 +68,11 @@ void JsonWriter::write(std::ostream& out)
     for (const auto& locusIdAndFindings : sampleFindings_)
     {
         const string& locusId = locusIdAndFindings.first;
-        const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
+        auto locusSpecPtr = regionCatalog_.at(locusId);
+        shared_ptr<GraphLocusSpecification> graphLocusSpec
+            = dynamic_pointer_cast<GraphLocusSpecification>(locusSpecPtr);
+        shared_ptr<CNVLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CNVLocusSpecification>(locusSpecPtr);
+
         const LocusFindings& locusFindings = locusIdAndFindings.second;
 
         Json locusRecord;
@@ -84,11 +89,23 @@ void JsonWriter::write(std::ostream& out)
         for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
             const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
-            VariantJsonWriter variantWriter(contigInfo_, locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(variantWriter);
-            variantRecords[variantId] = variantWriter.record();
+            if (graphLocusSpec)
+            {
+                const VariantSpecification& variantSpec = (*locusSpecPtr).getVariantSpecById(variantId);
+                const GraphLocusSpecification& locusSpec = *graphLocusSpec;
+                GraphVariantJsonWriter variantWriter(contigInfo_, locusSpec, variantSpec);
+                variantIdAndFindings.second->accept(variantWriter);
+                variantRecords[variantId] = variantWriter.record();
+            }
+
+            else if (cnvLocusSpec)
+            {
+                const CNVLocusSpecification& locusSpec = *cnvLocusSpec;
+                CNVVariantJsonWriter variantWriter(contigInfo_, locusSpec);
+                variantIdAndFindings.second->accept(variantWriter);
+                variantRecords[variantId] = variantWriter.record();
+            }
         }
 
         if (!variantRecords.empty())
@@ -120,7 +137,7 @@ static string encodeGenotype(const RepeatGenotype& genotype)
     return encoding;
 }
 
-void VariantJsonWriter::visit(StrFindings& strFindings)
+void GraphVariantJsonWriter::visit(StrFindings& strFindings)
 {
     assert(variantSpec_.classification().type == VariantType::kRepeat);
 
@@ -145,7 +162,15 @@ void VariantJsonWriter::visit(StrFindings& strFindings)
     }
 }
 
-void VariantJsonWriter::visit(SmallVariantFindings& findings)
+void GraphVariantJsonWriter::visit(CNVVariantFindings& cnvFindings)
+{
+    if (!cnvFindings.copyNumberCall())
+    {
+        return;
+    }
+}
+
+void GraphVariantJsonWriter::visit(SmallVariantFindings& findings)
 {
     record_.clear();
     record_["VariantId"] = variantSpec_.id();
@@ -164,4 +189,35 @@ void VariantJsonWriter::visit(SmallVariantFindings& findings)
     }
 }
 
+void CNVVariantJsonWriter::visit(CNVVariantFindings& cnvFindings)
+{
+    record_.clear();
+    record_["VariantId"] = locusSpec_.locusId();
+    record_["VariantType"] = "CNV";
+    record_["ReferenceRegion"] = encode(contigInfo_, locusSpec_.locusLocation());
+    if (cnvFindings.copyNumberCall())
+    {
+        record_["Genotype"] = *cnvFindings.copyNumberCall();
+    }
+    else
+    {
+        record_["Genotype"] = ".";
+    }
+}
+
+void CNVVariantJsonWriter::visit(SmallVariantFindings& findings)
+{
+    if (!findings.optionalGenotype())
+    {
+        return;
+    }
+}
+
+void CNVVariantJsonWriter::visit(StrFindings& findings)
+{
+    if (!findings.optionalGenotype())
+    {
+        return;
+    }
+}
 }

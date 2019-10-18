@@ -24,6 +24,7 @@
 #include "workflow/RegionModel.hh"
 #include "workflow/WorkflowBuilder.hh"
 
+using std::dynamic_pointer_cast;
 using std::shared_ptr;
 using std::unordered_set;
 using std::vector;
@@ -34,11 +35,22 @@ namespace ehunter
 CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriterPtr bamletWriter)
 {
     WorkflowContext context;
+    auto kk = bamletWriter;
 
+    // Each catalog is only one locus?
     for (const auto& locusIdAndLocusSpec : locusCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
-        locusAnalyzers_.push_back(buildLocusWorkflow(locusSpec, context.heuristics(), bamletWriter));
+        shared_ptr<CNVLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CNVLocusSpecification>(locusSpec);
+        shared_ptr<GraphLocusSpecification> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
+        if (graphLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildGraphLocusWorkflow(*graphLocusSpec, context.heuristics(), bamletWriter));
+        }
+        else if (cnvLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildCNVLocusWorkflow(*cnvLocusSpec, context.heuristics()));
+        }
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);
@@ -76,5 +88,4 @@ void CatalogAnalyzer::collectResults(Sex sampleSex, SampleFindings& sampleFindin
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }
 }
-
 }

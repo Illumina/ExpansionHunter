@@ -40,63 +40,46 @@
 #include "common/Reference.hh"
 #include "region_spec/VariantSpecification.hh"
 
+using std::make_shared;
+using std::shared_ptr;
+
 namespace ehunter
 {
 
 using RegionId = std::string;
-using NodeToRegionAssociation = std::unordered_map<graphtools::NodeId, GenomicRegion>;
 
 class LocusSpecification
 {
 public:
     LocusSpecification(
-        RegionId locusId, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
-        std::vector<GenomicRegion> targetReadExtractionRegions, graphtools::Graph regionGraph,
-        NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
-
-    const RegionId& locusId() const { return locusId_; }
-    ContigCopyNumber contigCopyNumber() const { return contigCopyNumber_; }
-
-    const GenomicRegion& locusLocation() const { return locusLocation_; }
-    /*
-     * List of all regions in the reference this graph describes
-     * i.e. where we expect relevant reads to align
-     */
-    const std::vector<GenomicRegion>& targetReadExtractionRegions() const { return targetReadExtractionRegions_; }
-    /*
-     * List of regions where additional relevant reads might be found
-     * Require filtering or special considerations
-     */
-    const std::vector<GenomicRegion>& offtargetReadExtractionRegions() const { return offtargetReadExtractionRegions_; }
-    void setOfftargetReadExtractionRegions(const std::vector<GenomicRegion>& offtargetReadExtractionRegions)
+        RegionId locusId, LocusType locusType, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
+        GenotyperParameters genotyperParams)
+        : locusId_(std::move(locusId))
+        , locusType_(std::move(locusType))
+        , contigCopyNumber_(contigCopyNumber)
+        , locusLocation_(std::move(locusLocation))
+        , parameters_(std::move(genotyperParams))
     {
-        offtargetReadExtractionRegions_ = offtargetReadExtractionRegions;
     }
 
-    const graphtools::Graph& regionGraph() const { return regionGraph_; }
+    virtual ~LocusSpecification() = default;
+
+    const RegionId& locusId() const { return locusId_; }
+    const LocusType& locusType() const { return locusType_; }
+    ContigCopyNumber contigCopyNumber() const { return contigCopyNumber_; }
+    const GenomicRegion& locusLocation() const { return locusLocation_; }
     const GenotyperParameters& genotyperParameters() const { return parameters_; }
     const std::vector<VariantSpecification>& variantSpecs() const { return variantSpecs_; }
 
-    void addVariantSpecification(
-        std::string id, VariantClassification classification, GenomicRegion referenceLocus,
-        std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode);
-
     const VariantSpecification& getVariantSpecById(const std::string& variantSpecId) const;
 
-    const NodeToRegionAssociation& referenceProjectionOfNodes() const { return referenceRegions_; }
-
-private:
+protected:
     std::string locusId_;
+    LocusType locusType_;
     ContigCopyNumber contigCopyNumber_;
     GenomicRegion locusLocation_;
-    std::vector<GenomicRegion> targetReadExtractionRegions_;
-    std::vector<GenomicRegion> offtargetReadExtractionRegions_;
-    graphtools::Graph regionGraph_;
-    std::vector<VariantSpecification> variantSpecs_;
-    NodeToRegionAssociation referenceRegions_;
     GenotyperParameters parameters_;
+    std::vector<VariantSpecification> variantSpecs_;
 };
-
-using RegionCatalog = std::map<RegionId, LocusSpecification>;
-
+using RegionCatalog = std::map<RegionId, shared_ptr<LocusSpecification>>;
 }

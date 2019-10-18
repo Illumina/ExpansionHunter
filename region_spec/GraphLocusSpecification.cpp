@@ -21,7 +21,7 @@
 //
 //
 
-#include "region_spec/LocusSpecification.hh"
+#include "region_spec/GraphLocusSpecification.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -53,16 +53,12 @@ namespace spd = spdlog;
 namespace ehunter
 {
 
-const VariantSpecification& LocusSpecification::getVariantSpecById(const std::string& variantSpecId) const
+void GraphLocusSpecification::addVariantSpecification(
+    std::string id, VariantClassification classification, GenomicRegion referenceLocus, vector<NodeId> nodes,
+    optional<NodeId> refNode)
 {
-    for (const auto& variantSpec : variantSpecs_)
-    {
-        if (variantSpec.id() == variantSpecId)
-        {
-            return variantSpec;
-        }
-    }
-
-    throw std::logic_error("There is no variant " + variantSpecId + " in locus " + locusId_);
+    boost::optional<CnvGenotyperParameters> parameters;
+    variantSpecs_.emplace_back(
+        std::move(id), classification, std::move(referenceLocus), std::move(nodes), refNode, parameters);
 }
 }

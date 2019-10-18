@@ -34,6 +34,7 @@
 #include "stats/ReadSupportCalculator.hh"
 
 using std::deque;
+using std::dynamic_pointer_cast;
 using std::map;
 using std::ostream;
 using std::pair;
@@ -75,18 +76,31 @@ void VcfWriter::writeBody(ostream& out)
     for (const auto& pair : ids)
     {
         const string& locusId = pair.first;
-        const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
-        const LocusFindings& locusFindings = sampleFindings_.at(locusId);
+        auto locusSpecPtr = regionCatalog_.at(locusId);
+        shared_ptr<GraphLocusSpecification> graphLocusSpec
+            = dynamic_pointer_cast<GraphLocusSpecification>(locusSpecPtr);
+        shared_ptr<CNVLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CNVLocusSpecification>(locusSpecPtr);
 
+        const LocusFindings& locusFindings = sampleFindings_.at(locusId);
         const string& variantId = pair.second;
-        const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
         const auto& variantFindings = locusFindings.findingsForEachVariant.at(variantId);
+
+        auto locusSpec = *locusSpecPtr;
 
         assert(locusFindings.optionalStats);
         const double locusDepth = locusFindings.optionalStats->depth();
 
-        VariantVcfWriter variantWriter(reference_, locusSpec, locusDepth, variantSpec, out);
-        variantFindings->accept(variantWriter);
+        if (graphLocusSpec)
+        {
+            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+            GraphVariantVcfWriter variantWriter(reference_, *graphLocusSpec, locusDepth, variantSpec, out);
+            variantFindings->accept(variantWriter);
+        }
+        //else if (cnvLocusSpec)
+        //{
+        //    CNVVariantVcfWriter variantWriter(reference_, *cnvLocusSpec, locusDepth, variantSpec, out);
+        //    variantFindings->accept(variantWriter);
+        //}
     }
 }
 
@@ -98,16 +112,20 @@ const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
     for (const auto& locusIdAndFindings : sampleFindings_)
     {
         const string& locusId = locusIdAndFindings.first;
-        const LocusSpecification& locusSpec = regionCatalog_.at(locusId);
-        const LocusFindings& locusFindings = locusIdAndFindings.second;
-
-        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+        const LocusSpecification& locusSpec = *(regionCatalog_.at(locusId));
+        // TO DO: add CNVs
+        if (locusSpec.locusType() == LocusType::kGraph)
         {
-            const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
-            tuples.emplace_back(
-                variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
-                variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
+            const LocusFindings& locusFindings = locusIdAndFindings.second;
+
+            for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+            {
+                const string& variantId = variantIdAndFindings.first;
+                const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+                tuples.emplace_back(
+                    variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
+                    variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
+            }
         }
     }
 
@@ -216,7 +234,7 @@ computeAlleleFields(const VariantSpecification& variantSpec, const string& motif
     return alleleFields.encode();
 }
 
-void VariantVcfWriter::visit(StrFindings& strFindings)
+void GraphVariantVcfWriter::visit(StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
     {
@@ -248,7 +266,47 @@ void VariantVcfWriter::visit(StrFindings& strFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void VariantVcfWriter::visit(SmallVariantFindings& findings)
+void GraphVariantVcfWriter::visit(CNVVariantFindings& cnvFindings)
+{
+    if (!cnvFindings.copyNumberCall())
+    {
+        return;
+    }
+}
+void CNVVariantVcfWriter::visit(StrFindings& strFindings)
+{
+    if (!strFindings.optionalGenotype())
+    {
+        return;
+    }
+}
+
+void CNVVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
+{
+    if (!smallFindings.optionalGenotype())
+    {
+        return;
+    }
+}
+
+void CNVVariantVcfWriter::visit(CNVVariantFindings& cnvFindings)
+{
+    const auto& referenceLocus = locusSpec_.locusLocation();
+    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+    boost::optional<int> copyNumberCall = cnvFindings.copyNumberCall();
+    vector<string> vcfRecordElements;
+    if (copyNumberCall)
+    {
+        vcfRecordElements = { contigName, to_string(*copyNumberCall) };
+    }
+    else
+    {
+        vcfRecordElements = { contigName };
+    }
+    // out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
+}
+
+void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
 {
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
@@ -342,11 +400,10 @@ void VariantVcfWriter::visit(SmallVariantFindings& findings)
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
 
-    vector<string> line {
+    vector<string> line{
         contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
         sampleValue
     };
     out_ << boost::algorithm::join(line, "\t") << std::endl;
 }
-
 }

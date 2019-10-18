@@ -29,17 +29,19 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
+#include "region_spec/CNVLocusSpecification.hh"
+#include "region_spec/GraphLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
 
-class VariantVcfWriter : public VariantFindingsVisitor
+class GraphVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
-    VariantVcfWriter(
-        Reference& reference, const LocusSpecification& locusSpec, double locusDepth,
+    GraphVariantVcfWriter(
+        Reference& reference, const GraphLocusSpecification& locusSpec, double locusDepth,
         const VariantSpecification& variantSpec, std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
@@ -49,15 +51,40 @@ public:
     {
     }
 
-    ~VariantVcfWriter() = default;
+    ~GraphVariantVcfWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
+    void visit(CNVVariantFindings& cnvVariantFindingsPtr) override;
 
 private:
     Reference& reference_;
-    const LocusSpecification& locusSpec_;
+    const GraphLocusSpecification& locusSpec_;
     double locusDepth_;
     const VariantSpecification& variantSpec_;
+    std::ostream& out_;
+};
+
+class CNVVariantVcfWriter : public VariantFindingsVisitor
+{
+public:
+    CNVVariantVcfWriter(
+        Reference& reference, const CNVLocusSpecification& locusSpec, double locusDepth, std::ostream& out)
+        : reference_(reference)
+        , locusSpec_(locusSpec)
+        , locusDepth_(locusDepth)
+        , out_(out)
+    {
+    }
+
+    ~CNVVariantVcfWriter() = default;
+    void visit(StrFindings& strFindings) override;
+    void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
+    void visit(CNVVariantFindings& cnvVariantFindingsPtr) override;
+
+private:
+    Reference& reference_;
+    const CNVLocusSpecification& locusSpec_;
+    double locusDepth_;
     std::ostream& out_;
 };
 
@@ -84,5 +111,4 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
-
 }

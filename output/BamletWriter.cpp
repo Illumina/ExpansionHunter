@@ -36,6 +36,7 @@
 using graphtools::GraphAlignment;
 using graphtools::GraphReferenceMapping;
 using graphtools::ReferenceInterval;
+using std::dynamic_pointer_cast;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -43,7 +44,8 @@ using std::vector;
 namespace ehunter
 {
 
-static GraphReferenceMapping generateMapping(const ReferenceContigInfo& contigInfo, const LocusSpecification& locusSpec)
+static GraphReferenceMapping
+generateMapping(const ReferenceContigInfo& contigInfo, const GraphLocusSpecification& locusSpec)
 {
     GraphReferenceMapping mapping(&locusSpec.regionGraph());
 
@@ -73,8 +75,12 @@ BamletWriter::BamletWriter(
     {
         const auto& locusId = locusIdAndSpec.first;
         const auto& locusSpec = locusIdAndSpec.second;
-        graphReferenceMappings_.emplace(std::make_pair(locusId, generateMapping(contigInfo, locusSpec)));
-    }
+        shared_ptr<GraphLocusSpecification> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
+        if (graphLocusSpec)
+        {
+            graphReferenceMappings_.emplace(std::make_pair(locusId, generateMapping(contigInfo, *graphLocusSpec)));
+        }
+        }
 
     writeHeader();
 }
@@ -227,5 +233,4 @@ void BamletWriter::write(
 
     bam_destroy1(htsAlignmentPtr);
 }
-
 }

@@ -37,6 +37,7 @@
 
 #include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
+#include "region_spec/GraphLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 
 namespace ehunter
@@ -67,5 +68,4 @@ private:
 };
 
 using BamletWriterPtr = std::shared_ptr<BamletWriter>;
-
 }

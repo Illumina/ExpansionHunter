@@ -10,6 +10,7 @@ add_library(workflow STATIC
         LocusAnalyzer.cpp LocusAnalyzer.hh
         LocusFindings.cpp LocusFindings.hh
         GraphLocusAnalyzer.cpp GraphLocusAnalyzer.hh
+        CNVLocusAnalyzer.cpp CNVLocusAnalyzer.hh
         LinearModel.cpp LinearModel.hh
         Feature.cpp Feature.hh
         LinearFeature.cpp LinearFeature.hh
@@ -17,6 +18,7 @@ add_library(workflow STATIC
         GraphVariantAnalyzer.cpp GraphVariantAnalyzer.hh
         IrrPairDetector.cpp IrrPairDetector.hh
         GraphSmallVariantAnalyzer.cpp GraphSmallVariantAnalyzer.hh
+        CNVVariantAnalyzer.cpp CNVVariantAnalyzer.hh
         ReadCounter.cpp ReadCounter.hh
         GraphFeature.cpp GraphFeature.hh)
 

@@ -22,6 +22,8 @@
 #pragma once
 
 #include "common/Parameters.hh"
+#include "region_spec/GraphLocusSpecification.hh"
+#include "region_spec/CNVLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
@@ -30,11 +32,11 @@
 namespace ehunter
 {
 
-class VariantJsonWriter : public VariantFindingsVisitor
+class GraphVariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    VariantJsonWriter(
-        const ReferenceContigInfo& contigInfo, const LocusSpecification& locusSpec,
+    GraphVariantJsonWriter(
+        const ReferenceContigInfo& contigInfo, const GraphLocusSpecification& locusSpec,
         const VariantSpecification& variantSpec)
         : contigInfo_(contigInfo)
         , locusSpec_(locusSpec)
@@ -42,17 +44,42 @@ public:
     {
     }
 
-    ~VariantJsonWriter() = default;
+    ~GraphVariantJsonWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindings) override;
+    void visit(CNVVariantFindings& cnvVariantFindings) override;
     nlohmann::json record() const { return record_; }
 
 private:
     const ReferenceContigInfo& contigInfo_;
-    const LocusSpecification& locusSpec_;
+    const GraphLocusSpecification& locusSpec_;
     const VariantSpecification& variantSpec_;
     nlohmann::json record_;
 };
+
+
+class CNVVariantJsonWriter : public VariantFindingsVisitor
+{
+public:
+    CNVVariantJsonWriter(
+        const ReferenceContigInfo& contigInfo, const CNVLocusSpecification& locusSpec)
+        : contigInfo_(contigInfo)
+        , locusSpec_(locusSpec)
+    {
+    }
+
+    ~CNVVariantJsonWriter() = default;
+    void visit(StrFindings& strFindings) override;
+    void visit(SmallVariantFindings& smallVariantFindings) override;
+    void visit(CNVVariantFindings& cnvVariantFindings) override;
+    nlohmann::json record() const { return record_; }
+
+private:
+    const ReferenceContigInfo& contigInfo_;
+    const CNVLocusSpecification& locusSpec_;
+    nlohmann::json record_;
+};
+
 
 class JsonWriter
 {
@@ -71,5 +98,4 @@ private:
 };
 
 std::ostream& operator<<(std::ostream& out, JsonWriter& jsonWriter);
-
 }

@@ -33,6 +33,7 @@ namespace ehunter
 
 void VariantSpecification::assertConsistency() const
 {
+    const bool variantIsCNV = classification_.type == VariantType::kCNV;
     const bool variantIsRepeat = classification_.type == VariantType::kRepeat;
     const bool variantIsDeletionOrSwap = classification_.type == VariantType::kSmallVariant
         && (classification_.subtype == VariantSubtype::kDeletion || classification_.subtype == VariantSubtype::kSwap
@@ -42,6 +43,11 @@ void VariantSpecification::assertConsistency() const
 
     bool variantIsValid = false;
 
+    if (variantIsCNV)
+    {
+        variantIsValid = (parameters_) && (classification_.subtype == VariantSubtype::kBaseline
+            || classification_.subtype == VariantSubtype::kTarget);
+    }
     if (variantIsRepeat)
     {
         variantIsValid = classification_.subtype == VariantSubtype::kCommonRepeat
@@ -74,6 +80,9 @@ std::ostream& operator<<(std::ostream& out, VariantType type)
     case VariantType::kRepeat:
         out << "Repeat";
         break;
+    case VariantType::kCNV:
+        out << "CNV";
+        break;
     }
     return out;
 }
@@ -100,6 +109,12 @@ std::ostream& operator<<(std::ostream& out, VariantSubtype subtype)
     case VariantSubtype::kSMN:
         out << "SMN";
         break;
+    case VariantSubtype::kBaseline:
+        out << "Baseline";
+        break;
+    case VariantSubtype::kTarget:
+        out << "Target";
+        break;
     }
 
     return out;
@@ -119,5 +134,4 @@ std::ostream& operator<<(std::ostream& out, const VariantSpecification& variantS
 
     return out;
 }
-
 }

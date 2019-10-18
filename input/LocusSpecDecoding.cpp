@@ -164,6 +164,22 @@ static VariantType determineVariantType(GraphBlueprintFeatureType featureType)
     }
 }
 
+static VariantSubtype determineCnvVariantSubtype(VariantSubtypeFromUser variantSubtypeFromUser)
+{
+    if (variantSubtypeFromUser == VariantSubtypeFromUser::kTarget)
+    {
+        return VariantSubtype::kTarget;
+    }
+    if (variantSubtypeFromUser == VariantSubtypeFromUser::kBaseline)
+    {
+        return VariantSubtype::kBaseline;
+    }
+    else
+    {
+        throw std::logic_error("Illegal CNV variant subtype");
+    }
+}
+
 static VariantSubtype determineVariantSubtype(
     GraphBlueprintFeatureType featureType, VariantTypeFromUser userDescription, const GenomicRegion referenceRegion)
 {
@@ -231,13 +247,16 @@ static optional<NodeId> determineReferenceNode(
     return optionalReferenceNode;
 }
 
-LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
+GraphLocusSpecification
+decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
 {
     try
     {
         assertValidity(userDescription);
 
         WorkflowContext context;
+
+        LocusType locusType = (LocusType)userDescription.locusType;
 
         vector<GenomicRegion> variantLocations;
         for (const auto& variant : userDescription.variantDescriptionFromUsers)
@@ -246,8 +265,9 @@ LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& user
         }
         const int kExtensionLength = context.heuristics().regionExtensionLength();
         auto referenceRegionsWithFlanks = addFlankingRegions(kExtensionLength, variantLocations);
-        auto completeLocusStructure
-            = extendLocusStructure(reference, referenceRegionsWithFlanks, userDescription.locusStructure);
+        assert(userDescription.locusStructure);
+        auto locusStructure = userDescription.locusStructure;
+        auto completeLocusStructure = extendLocusStructure(reference, referenceRegionsWithFlanks, *locusStructure);
 
         GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
         graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);
@@ -284,9 +304,9 @@ LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& user
             parameters.minLocusCoverage = *userDescription.minLocusCoverage;
         }
 
-        LocusSpecification locusSpec(
-            userDescription.locusId, copyNumber, userDescription.locusLocation, targetReadExtractionRegions, locusGraph,
-            referenceRegionsOfGraphNodes, parameters);
+        GraphLocusSpecification locusSpec(
+            userDescription.locusId, locusType, copyNumber, userDescription.locusLocation, targetReadExtractionRegions,
+            locusGraph, referenceRegionsOfGraphNodes, parameters);
         locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
         int variantIndex = 0;
@@ -321,9 +341,75 @@ LocusSpecification decodeLocusSpecification(const LocusDescriptionFromUser& user
     }
 }
 
+CNVLocusSpecification
+decodeCNVLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
+{
+    try
+    {
+        const auto& contigName = reference.contigInfo().getContigName(userDescription.locusLocation.contigIndex());
+        auto copyNumber = determineCopyNumber(contigName);
+        LocusType locusType = (LocusType)userDescription.locusType;
+        CNVLocusSubtype locusSubtype = CNVLocusSubtype::kNonoverlapping;
+
+        GenotyperParameters parameters;
+        if (userDescription.errorRate)
+        {
+            parameters.errorRate = *userDescription.errorRate;
+        }
+        if (userDescription.likelihoodRatioThreshold)
+        {
+            parameters.likelihoodRatioThreshold = *userDescription.likelihoodRatioThreshold;
+        }
+        if (userDescription.minLocusCoverage)
+        {
+            parameters.minLocusCoverage = *userDescription.minLocusCoverage;
+        }
+
+        for (const auto& variant : userDescription.variantDescriptionFromUsers)
+        {
+            if (variant.variantSubtype == VariantSubtypeFromUser::kBaseline && !(*variant.expectedNormalCN))
+            {
+                locusSubtype = CNVLocusSubtype::kOverlapping;
+            }
+        }
+
+        CNVLocusSpecification locusSpec(
+            userDescription.locusId, locusType, locusSubtype, copyNumber, userDescription.locusLocation, parameters);
+
+        for (const auto& variant : userDescription.variantDescriptionFromUsers)
+        {
+            const GenomicRegion& referenceRegion = variant.variantLocation;
+            const string& variantId = variant.variantId;
+            VariantType variantType = VariantType::kCNV;
+            VariantSubtype variantSubtype = determineCnvVariantSubtype(*variant.variantSubtype);
+
+            VariantClassification classification(variantType, variantSubtype);
+
+            CnvGenotyperParameters variantParameters;
+            variantParameters.regionGC = *variant.regionGC;
+            variantParameters.mappingQualityThreshold = *variant.mappingQualityThreshold;
+            variantParameters.maxCopyNumber = *variant.maxCopyNumber;
+            variantParameters.depthScaleFactor = *variant.depthScaleFactor;
+            variantParameters.standardDeviationOfCN2 = *variant.standardDevidationOfCN2;
+            variantParameters.meanDepthValues = *variant.meanDepthValues;
+            variantParameters.priorCopyNumberFrequency = *variant.priorCopyNumberFrequency;
+            variantParameters.expectedNormal = *variant.expectedNormalCN;
+
+            locusSpec.addVariantSpecification(variantId, classification, referenceRegion, variantParameters);
+        }
+        return locusSpec;
+    }
+    catch (const std::exception& e)
+    {
+        throw std::runtime_error("Error loading locus " + userDescription.locusId + ": " + e.what());
+    }
+}
+
 void assertValidity(const LocusDescriptionFromUser& userDescription)
 {
-    const GraphBlueprint blueprint = decodeFeaturesFromRegex(userDescription.locusStructure);
+    assert(userDescription.locusStructure);
+    auto locusStructure = userDescription.locusStructure;
+    const GraphBlueprint blueprint = decodeFeaturesFromRegex(*locusStructure);
     int numVariants = 0;
     for (const GraphBlueprintFeature& feature : blueprint)
     {
@@ -336,7 +422,7 @@ void assertValidity(const LocusDescriptionFromUser& userDescription)
     if (numVariants == 0)
     {
         throw std::runtime_error(
-            "Locus " + userDescription.locusId + " must encode at least one variant " + userDescription.locusStructure);
+            "Locus " + userDescription.locusId + " must encode at least one variant " + *locusStructure);
     }
 
     if (numVariants != static_cast<int>(userDescription.variantDescriptionFromUsers.size()))

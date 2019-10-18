@@ -24,6 +24,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "workflow/CNVLocusAnalyzer.hh"
+#include "workflow/CNVVariantAnalyzer.hh"
 #include "workflow/GraphLocusAnalyzer.hh"
 #include "workflow/GraphModel.hh"
 #include "workflow/GraphSmallVariant.hh"
@@ -95,8 +97,8 @@ createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const Varia
     return smallVariantAnalyzer;
 }
 
-shared_ptr<LocusAnalyzer> buildLocusWorkflow(
-    const LocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter)
+shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
+    const GraphLocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter)
 {
     const auto& locusLocation = locusSpec.locusLocation();
 
@@ -130,6 +132,45 @@ shared_ptr<LocusAnalyzer> buildLocusWorkflow(
     return locus;
 }
 
+shared_ptr<LocusAnalyzer>
+buildCNVLocusWorkflow(const CNVLocusSpecification& locusSpec, const HeuristicParameters& heuristics)
+{
+    const auto& locusLocation = locusSpec.locusLocation();
+
+    const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
+    auto locus = make_shared<CNVLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
+    auto statsAnalyzer
+        = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
+    locus->setStats(statsAnalyzer);
+
+    for (const auto& variantSpec : locusSpec.variantSpecs())
+    {
+        if (variantSpec.classification().type == VariantType::kCNV)
+        {
+            double regionLength = variantSpec.referenceLocus().end() - variantSpec.referenceLocus().start();
+
+            assert(variantSpec.parameters());
+            CnvGenotyperParameters cnvParameters = *variantSpec.parameters();
+
+            vector<GenomicRegion> variantRegion{ variantSpec.referenceLocus() };
+            auto linearModel = make_shared<LinearModel>(variantRegion);
+            auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
+            linearModel->addFeature(readCounter.get());
+            locus->addAnalyzer(make_shared<CNVVariantAnalyzer>(
+                variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.contigCopyNumber(),
+                cnvParameters, readCounter));
+        }
+        else
+        {
+            std::stringstream encoding;
+            encoding << variantSpec.classification().type << "/" << variantSpec.classification().subtype;
+            throw runtime_error("Variant " + variantSpec.id() + " is of unknown type " + encoding.str());
+        }
+    }
+
+    return locus;
+}
+
 vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<LocusAnalyzer>>& loci)
 {
     unordered_set<shared_ptr<RegionModel>> models;
@@ -147,5 +188,4 @@ vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<Locu
 
     return vector<shared_ptr<RegionModel>>(models.begin(), models.end());
 }
-
 }

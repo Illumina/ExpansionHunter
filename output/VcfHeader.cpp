@@ -23,6 +23,7 @@
 
 #include <memory>
 
+using std::dynamic_pointer_cast;
 using std::ostream;
 using std::string;
 
@@ -95,6 +96,14 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
+void FieldDescriptionWriter::visit(CNVVariantFindings& cnvFindings)
+{
+    if (!cnvFindings.copyNumberCall())
+    {
+        return;
+    }
+}
+
 void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
 {
     if (!findings.optionalGenotype())
@@ -149,17 +158,23 @@ void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sa
     for (const auto& locusIdAndFindings : sampleFindings)
     {
         const string& locusId = locusIdAndFindings.first;
-        const LocusSpecification& locusSpec = locusCatalog.at(locusId);
-        const LocusFindings& locusFindings = locusIdAndFindings.second;
-
-        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+        shared_ptr<GraphLocusSpecification> graphLocusSpec
+            = dynamic_pointer_cast<GraphLocusSpecification>(locusCatalog.at(locusId));
+        // To do: description for CNV variants
+        if (graphLocusSpec)
         {
-            const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+            const GraphLocusSpecification& locusSpec = *graphLocusSpec;
+            const LocusFindings& locusFindings = locusIdAndFindings.second;
 
-            FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(descriptionWriter);
-            descriptionWriter.dumpTo(fieldDescriptionCatalog);
+            for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+            {
+                const string& variantId = variantIdAndFindings.first;
+                const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+
+                FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
+                variantIdAndFindings.second->accept(descriptionWriter);
+                descriptionWriter.dumpTo(fieldDescriptionCatalog);
+            }
         }
     }
 
@@ -210,5 +225,4 @@ std::ostream& operator<<(std::ostream& out, const FieldDescription& fieldDescrip
 
     return out;
 }
-
 }

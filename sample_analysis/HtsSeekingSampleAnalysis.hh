@@ -26,6 +26,8 @@
 
 #include "common/Parameters.hh"
 #include "output/BamletWriter.hh"
+#include "region_spec/CNVLocusSpecification.hh"
+#include "region_spec/GraphLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
@@ -34,5 +36,4 @@ namespace ehunter
 
 SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter);
-
 }

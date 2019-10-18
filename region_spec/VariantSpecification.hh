@@ -33,16 +33,30 @@
 #include "graphcore/Graph.hh"
 
 #include "common/Common.hh"
-#include "common/Parameters.hh"
 #include "common/GenomicRegion.hh"
+#include "common/Parameters.hh"
 
 namespace ehunter
 {
 
+enum class LocusType
+{
+    kGraph,
+    kCNV,
+    kParalog
+};
+
+enum class CNVLocusSubtype
+{
+    kOverlapping,
+    kNonoverlapping,
+};
+
 enum class VariantType
 {
     kRepeat,
-    kSmallVariant
+    kSmallVariant,
+    kCNV
 };
 
 enum class VariantSubtype
@@ -52,7 +66,9 @@ enum class VariantSubtype
     kInsertion,
     kDeletion,
     kSwap,
-    kSMN
+    kSMN,
+    kTarget,
+    kBaseline
 };
 
 struct VariantClassification
@@ -77,12 +93,14 @@ class VariantSpecification
 public:
     VariantSpecification(
         std::string id, VariantClassification classification, GenomicRegion referenceLocus,
-        std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode)
+        std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode,
+        boost::optional<CnvGenotyperParameters> parameters)
         : id_(std::move(id))
         , classification_(classification)
         , referenceLocus_(std::move(referenceLocus))
         , nodes_(std::move(nodes))
         , optionalRefNode_(optionalRefNode)
+        , parameters_(parameters)
     {
         assertConsistency();
     }
@@ -92,6 +110,7 @@ public:
     const GenomicRegion& referenceLocus() const { return referenceLocus_; }
     const std::vector<graphtools::NodeId>& nodes() const { return nodes_; }
     const boost::optional<graphtools::NodeId>& optionalRefNode() const { return optionalRefNode_; }
+    const boost::optional<CnvGenotyperParameters>& parameters() const { return parameters_; }
 
     bool operator==(const VariantSpecification& other) const
     {
@@ -106,11 +125,11 @@ private:
     GenomicRegion referenceLocus_;
     std::vector<graphtools::NodeId> nodes_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
+    boost::optional<CnvGenotyperParameters> parameters_;
 };
 
 std::ostream& operator<<(std::ostream& out, VariantType type);
 std::ostream& operator<<(std::ostream& out, VariantSubtype subtype);
 std::ostream& operator<<(std::ostream& out, VariantClassification classification);
 std::ostream& operator<<(std::ostream& out, const VariantSpecification& variantSpec);
-
 }

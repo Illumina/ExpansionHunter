@@ -35,5 +35,4 @@ namespace ehunter
 
 SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr alignmentWriter);
-
 }
