@@ -335,6 +335,8 @@ void MurmurHash3_x64_128 ( const void * key, const int len,
   ((uint64_t*)out)[1] = h2;
 }
 
+#if defined(__GNUC__) && (__GNUC__ >= 7)
 #pragma GCC diagnostic pop
+#endif
 //-----------------------------------------------------------------------------
 
