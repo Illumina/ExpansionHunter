@@ -21,6 +21,9 @@
 
 #include "workflow/GraphStrAnalyzer.hh"
 
+#include "spdlog/fmt/ostr.h"
+#include "spdlog/spdlog.h"
+
 #include "classification/AlignmentSummary.hh"
 #include "common/CountTable.hh"
 #include "genotyping/RepeatGenotyper.hh"
@@ -95,6 +98,8 @@ GraphStrAnalyzer::GraphStrAnalyzer(shared_ptr<GraphStr> strFeature, string varia
 std::unique_ptr<VariantFindings> GraphStrAnalyzer::analyze(const LocusStats& stats) const
 {
     assert(strFeature_);
+
+    spdlog::info("{} {}", variantId_, strFeature_->alignmentStats());
 
     CountTable spanningReads;
     CountTable flankingReads;
