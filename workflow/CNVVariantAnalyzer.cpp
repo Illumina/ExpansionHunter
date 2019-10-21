@@ -32,13 +32,14 @@ namespace ehunter
 {
 CNVVariantAnalyzer::CNVVariantAnalyzer(
     std::string variantId, double regionLength, VariantSubtype variantSubtype, ContigCopyNumber contigCopyNumber,
-    CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> counter)
+    CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> counter, DepthNormalizer genomeDepthNormalizer)
     : variantId_(variantId)
     , regionLength_(regionLength)
     , variantSubtype_(variantSubtype)
     , contigCopyNumber_(contigCopyNumber)
     , cnvParameters_(cnvParameters)
     , counter_(std::move(counter))
+    , genomeDepthNormalizer_(genomeDepthNormalizer)
 
 {
 }
@@ -49,12 +50,13 @@ CNVVariantFindings CNVVariantAnalyzer::analyze() const
 {
     const int numReads = counter_->numReads();
     double normalizedDepth = (double)numReads / (double)regionLength_;
+    double gcCorrectedDepth = genomeDepthNormalizer_.correctDepth(cnvParameters_.regionGC, normalizedDepth, true);
 
     CopyNumberGenotyper cnvGenotyper = CopyNumberGenotyper(
         cnvParameters_.maxCopyNumber, cnvParameters_.depthScaleFactor, cnvParameters_.standardDeviationOfCN2,
         cnvParameters_.meanDepthValues, cnvParameters_.priorCopyNumberFrequency);
 
-    boost::optional<int> copyNumberCall = cnvGenotyper.genotype(normalizedDepth);
+    boost::optional<int> copyNumberCall = cnvGenotyper.genotype(gcCorrectedDepth);
 
     return CNVVariantFindings(copyNumberCall);
 }

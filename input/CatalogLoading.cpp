@@ -409,4 +409,29 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
 
     return catalog;
 }
+
+std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPath, const Reference& reference)
+{
+    std::vector<RegionInfo> normRegionInfo;
+    std::ifstream inputStream(normRegionPath.c_str());
+
+    if (!inputStream.is_open())
+    {
+        throw std::runtime_error("Failed to open norm region file " + normRegionPath);
+    }
+
+    Json normJson;
+    inputStream >> normJson;
+    makeArray(normJson);
+
+    for (auto& regionJson : normJson)
+    {
+        assertFieldExists(regionJson, "GC");
+        auto regionGC = regionJson["GC"].get<float>();
+        assertFieldExists(regionJson, "ReferenceRegion");
+        GenomicRegion region = decode(reference.contigInfo(), regionJson["ReferenceRegion"].get<string>());
+        normRegionInfo.push_back(RegionInfo(regionGC, region));
+    }
+    return normRegionInfo;
+}
 }

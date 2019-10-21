@@ -118,6 +118,9 @@ int main(int argc, char** argv)
         spdlog::info("Loading variant catalog from disk {}", inputPaths.catalog());
         const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), reference);
 
+        spdlog::info("Loading normalization regions from disk {}", inputPaths.normRegion());
+        const std::vector<RegionInfo> normRegionInfo = loadNormRegionsFromDisk(inputPaths.normRegion(), reference);
+
         const OutputPaths& outputPaths = params.outputPaths();
 
         auto bamletWriter = std::make_shared<BamletWriter>(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
@@ -126,12 +129,14 @@ int main(int argc, char** argv)
         if (params.analysisMode() == AnalysisMode::kSeeking)
         {
             spdlog::info("Running sample analysis in seeking mode");
-            sampleFindings = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
+            sampleFindings
+                = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, normRegionInfo, bamletWriter);
         }
         else
         {
             spdlog::info("Running sample analysis in streaming mode");
-            sampleFindings = htsStreamingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
+            sampleFindings = htsStreamingSampleAnalysis(
+                inputPaths, sampleParams.sex(), regionCatalog, normRegionInfo, bamletWriter);
         }
 
         spdlog::info("Writing output to disk");

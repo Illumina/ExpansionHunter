@@ -133,7 +133,7 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
 }
 
 shared_ptr<LocusAnalyzer>
-buildCNVLocusWorkflow(const CNVLocusSpecification& locusSpec, const HeuristicParameters& heuristics)
+buildCNVLocusWorkflow(const CNVLocusSpecification& locusSpec, DepthNormalizer genomeDepthNormalizer, const HeuristicParameters& heuristics)
 {
     const auto& locusLocation = locusSpec.locusLocation();
 
@@ -158,7 +158,7 @@ buildCNVLocusWorkflow(const CNVLocusSpecification& locusSpec, const HeuristicPar
             linearModel->addFeature(readCounter.get());
             locus->addAnalyzer(make_shared<CNVVariantAnalyzer>(
                 variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.contigCopyNumber(),
-                cnvParameters, readCounter));
+                cnvParameters, readCounter, genomeDepthNormalizer));
         }
         else
         {

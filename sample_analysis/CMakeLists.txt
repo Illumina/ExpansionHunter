@@ -6,6 +6,7 @@ add_library(sample_analysis
         IndexBasedDepthEstimate.hh IndexBasedDepthEstimate.cpp
         ModelFinder.hh ModelFinder.cpp
         DepthNormalization.hh DepthNormalization.cpp
+        NormalizationRegionAnalyzer.hh NormalizationRegionAnalyzer.cpp
         GenomeQueryCollection.hh GenomeQueryCollection.cpp
         HtsStreamingSampleAnalysis.hh HtsStreamingSampleAnalysis.cpp
         MateExtractor.hh MateExtractor.cpp

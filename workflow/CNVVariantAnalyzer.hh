@@ -31,6 +31,7 @@
 #include "workflow/ReadCounter.hh"
 #include "workflow/VariantFindings.hh"
 #include "region_spec/VariantSpecification.hh"
+#include "sample_analysis/DepthNormalization.hh"
 
 namespace ehunter
 {
@@ -40,7 +41,7 @@ class CNVVariantAnalyzer : public FeatureAnalyzer
 public:
     CNVVariantAnalyzer(
         std::string variantId, double regionLength, VariantSubtype variantSubtype, ContigCopyNumber contigCopyNumber,
-        CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature);
+        CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature, DepthNormalizer genomeDepthNormalizer);
     ~CNVVariantAnalyzer() override = default;
 
     std::vector<std::shared_ptr<Feature>> features() override;
@@ -59,5 +60,7 @@ protected:
 private:
     CnvGenotyperParameters cnvParameters_;
     std::shared_ptr<ReadCounter> counter_;
+    DepthNormalizer genomeDepthNormalizer_;
+
 };
 }

@@ -39,6 +39,7 @@ public:
 
     std::vector<std::shared_ptr<Feature>> features() override;
     LocusStats estimate(Sex sampleSex) const;
+    int count() const;
 
 private:
     ContigCopyNumber contigCopyNumber_;

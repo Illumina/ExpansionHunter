@@ -32,11 +32,10 @@ using std::vector;
 namespace ehunter
 {
 
-CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriterPtr bamletWriter)
+CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter)
 {
     WorkflowContext context;
 
-    // Each catalog is only one locus? (-XC)
     for (const auto& locusIdAndLocusSpec : locusCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
@@ -48,7 +47,7 @@ CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriter
         }
         else if (cnvLocusSpec)
         {
-            locusAnalyzers_.push_back(buildCNVLocusWorkflow(*cnvLocusSpec, context.heuristics()));
+            locusAnalyzers_.push_back(buildCNVLocusWorkflow(*cnvLocusSpec, genomeDepthNormalizer, context.heuristics()));
         }
     }
 

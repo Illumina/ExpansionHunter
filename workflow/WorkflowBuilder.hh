@@ -29,6 +29,7 @@
 #include "region_spec/CNVLocusSpecification.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/RegionModel.hh"
+#include "sample_analysis/DepthNormalization.hh"
 
 namespace ehunter
 {
@@ -37,7 +38,7 @@ std::shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     const GraphLocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter);
 
 std::shared_ptr<LocusAnalyzer> buildCNVLocusWorkflow(
-    const CNVLocusSpecification& locusSpec, const HeuristicParameters& heuristics);
+    const CNVLocusSpecification& locusSpec, DepthNormalizer genomeDepthNormalizer, const HeuristicParameters& heuristics);
 
 std::vector<std::shared_ptr<RegionModel>> extractRegionModels(const std::vector<std::shared_ptr<LocusAnalyzer>>& loci);
 }

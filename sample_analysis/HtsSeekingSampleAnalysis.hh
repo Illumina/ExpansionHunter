@@ -30,10 +30,11 @@
 #include "region_spec/GraphLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
+#include "input/CatalogLoading.hh"
 
 namespace ehunter
 {
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter);
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter);
 }

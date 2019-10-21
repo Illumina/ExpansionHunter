@@ -31,7 +31,18 @@
 
 namespace ehunter
 {
+struct RegionInfo
+{
+    RegionInfo(double gc, GenomicRegion region)
+        : gc(gc)
+        , region(region)
+    {
+    }
+    double gc;
+    GenomicRegion region;
+};
+
+std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPath, const Reference& reference);
 
 RegionCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
-
 }

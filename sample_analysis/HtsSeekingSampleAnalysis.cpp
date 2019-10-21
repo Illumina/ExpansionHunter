@@ -33,6 +33,8 @@
 
 #include "spdlog/spdlog.h"
 
+#include "DepthNormalization.hh"
+#include "NormalizationRegionAnalyzer.hh"
 #include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
@@ -167,8 +169,40 @@ static ReadPairs collectCandidateReads(
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
+    const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
+    std::vector<RegionDepthInfo> normDepthInfo;
+    for (RegionInfo regionInfo : normRegionInfo)
+    {
+        GenomicRegion region = regionInfo.region;
+        ReadPairs readPairs = collectCandidateReads(
+            vector<GenomicRegion>{ region }, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+
+        NormalizationRegionAnalyzer normRegionAnalyzer(region);
+
+        for (const auto& fragmentIdAndReadPair : readPairs)
+        {
+            const auto& readPair = fragmentIdAndReadPair.second;
+            if (readPair.numMatesSet() == 2)
+            {
+                const MappedRead& read = *readPair.firstMate;
+                const MappedRead& mate = *readPair.secondMate;
+                normRegionAnalyzer.analyze(read, mate);
+            }
+            else
+            {
+                const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+                normRegionAnalyzer.analyze(read);
+            }
+        }
+        double readCount = normRegionAnalyzer.summarize();
+        //std::cout << regionInfo.gc << ", " << readCount << "\n";
+        normDepthInfo.push_back(RegionDepthInfo(regionInfo.gc, readCount));
+    }
+
+    DepthNormalizer genomeDepthNormalizer = DepthNormalizer(normDepthInfo);
+
     SampleFindings sampleFindings;
 
     for (const auto& locusIdAndRegionSpec : regionCatalog)
@@ -196,10 +230,11 @@ SampleFindings htsSeekingSampleAnalysis(
             {
                 variantLocations.push_back(variant.referenceLocus());
             }
-            readPairs = collectCandidateReads(variantLocations, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+            readPairs = collectCandidateReads(
+                variantLocations, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
         }
 
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, bamletWriter);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, genomeDepthNormalizer, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {

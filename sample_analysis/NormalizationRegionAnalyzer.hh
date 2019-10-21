@@ -3,7 +3,8 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+// Author: Xiao Chen <xchen2@illumina.com>,
+//         Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,38 +19,37 @@
 // limitations under the License.
 //
 //
-
 #pragma once
-
-#include <memory>
-#include <vector>
-
-#include "output/BamletWriter.hh"
+#include "DepthNormalization.hh"
+#include "common/Common.hh"
+#include "common/GenomicRegion.hh"
 #include "reads/Read.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "sample_analysis/ModelFinder.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/LocusFindings.hh"
 #include "workflow/RegionModel.hh"
-#include "DepthNormalization.hh"
+#include "workflow/ReadCountAnalyzer.hh"
+#include "workflow/ReadCounter.hh"
+#include <boost/optional.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace ehunter
 {
 
-class CatalogAnalyzer
+class NormalizationRegionAnalyzer
 {
 public:
-    CatalogAnalyzer(const RegionCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter);
+    NormalizationRegionAnalyzer(const GenomicRegion region);
     void analyze(const MappedRead& read, const MappedRead& mate);
     void analyze(const MappedRead& read);
-    void collectResults(Sex sampleSex, SampleFindings& sampleFindings);
-
-    const std::vector<std::shared_ptr<RegionModel>>& regionModels() const { return regionModels_; }
+    double summarize();
 
 private:
-    std::vector<std::shared_ptr<LocusAnalyzer>> locusAnalyzers_;
-    std::vector<std::shared_ptr<RegionModel>> regionModels_;
-    std::unique_ptr<ModelFinder> modelFinder_;
+    std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
+    std::shared_ptr<ReadCounter> readCounter_;
+    GenomicRegion region_;
 };
-
 }

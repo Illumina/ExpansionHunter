@@ -62,4 +62,9 @@ LocusStats ReadCountAnalyzer::estimate(Sex sampleSex) const
     return { alleleCount, readLength, depth };
 }
 
+int ReadCountAnalyzer::count() const
+{
+    const int numReads = counter_->numReads();
+    return numReads;
+}
 }
