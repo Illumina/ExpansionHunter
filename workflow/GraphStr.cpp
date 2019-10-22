@@ -34,7 +34,7 @@ GraphStr::GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId motifNo
     : model_(std::move(model))
     , motifNode_(motifNode)
     , alignmentClassifier_(model_->graph(), motifNode)
-    , statsCalculator_(motifNode)
+    , statsCalculator_({ motifNode })
 {
 }
 

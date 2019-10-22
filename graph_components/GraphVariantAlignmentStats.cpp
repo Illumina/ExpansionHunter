@@ -19,7 +19,11 @@
 //
 //
 
-#include "graph_components/StrAlignmentStats.hh"
+#include "graph_components/GraphVariantAlignmentStats.hh"
+
+#include <memory>
+
+#include <boost/algorithm/string/join.hpp>
 
 namespace ehunter
 {
@@ -28,13 +32,41 @@ using graphtools::Graph;
 using graphtools::GraphAlignment;
 using graphtools::NodeId;
 using std::list;
+using std::string;
+using std::vector;
 
-StrAlignmentStatsCalculator::StrAlignmentStatsCalculator(NodeId strNode)
-    : strNode_(strNode)
+static string encode(const vector<NodeId>& nodeIds)
 {
+    vector<string> encoding;
+    for (auto nodeId : nodeIds)
+    {
+        encoding.push_back(std::to_string(nodeId));
+    }
+
+    return boost::algorithm::join(encoding, ", ");
 }
 
-void StrAlignmentStatsCalculator::inspect(const list<GraphAlignment>& alignments)
+GraphVariantAlignmentStatsCalculator::GraphVariantAlignmentStatsCalculator(std::vector<graphtools::NodeId> variantNodes)
+    : variantNodes_(std::move(variantNodes))
+{
+    if (variantNodes_.empty())
+    {
+        throw std::logic_error("Cannot create a node bundle without nodes");
+    }
+
+    for (int index = 1; index != static_cast<int>(variantNodes_.size()); ++index)
+    {
+        if (variantNodes_[index] != variantNodes_[index - 1] + 1)
+        {
+            throw std::logic_error("Bundle " + encode(variantNodes_) + " must contain ordered and consecutive nodes");
+        }
+    }
+
+    firstVariantNode_ = variantNodes_.front();
+    lastVariantNode_ = variantNodes_.back();
+}
+
+void GraphVariantAlignmentStatsCalculator::inspect(const list<GraphAlignment>& alignments)
 {
     for (const auto& alignment : alignments)
     {
@@ -56,7 +88,8 @@ void StrAlignmentStatsCalculator::inspect(const list<GraphAlignment>& alignments
     }
 }
 
-StrAlignmentStatsCalculator::Flank StrAlignmentStatsCalculator::classify(const GraphAlignment& alignment) const
+GraphVariantAlignmentStatsCalculator::Flank
+GraphVariantAlignmentStatsCalculator::classify(const GraphAlignment& alignment) const
 {
     int numLeftFlankMatches = 0;
     int numStrMatches = 0;
@@ -68,15 +101,15 @@ StrAlignmentStatsCalculator::Flank StrAlignmentStatsCalculator::classify(const G
         const auto& alignmentToNode = alignment.alignments().at(nodeIndex);
         int numMatches = alignmentToNode.numMatched();
 
-        if (node < strNode_)
+        if (node < firstVariantNode_)
         {
             numLeftFlankMatches += numMatches;
         }
-        else if (strNode_ == node)
+        else if ((firstVariantNode_ <= node) && (node <= lastVariantNode_))
         {
             numStrMatches += numMatches;
         }
-        else if (strNode_ < node)
+        else if (lastVariantNode_ < node)
         {
             numRightFlankMatches += numMatches;
         }
@@ -106,19 +139,19 @@ StrAlignmentStatsCalculator::Flank StrAlignmentStatsCalculator::classify(const G
     }
 }
 
-StrAlignmentStats StrAlignmentStatsCalculator::getStats(int readLength) const
+GraphVariantAlignmentStats GraphVariantAlignmentStatsCalculator::getStats(int readLength) const
 {
     double leftBreakpointCoverage = computeBreakpointCoverage(numReadsOverlappingLeftBreakpoint_, readLength);
     double rightBreakpointCoverage = computeBreakpointCoverage(numReadsOverlappingRightBreakpoint_, readLength);
     return { leftBreakpointCoverage, rightBreakpointCoverage };
 }
 
-double StrAlignmentStatsCalculator::computeBreakpointCoverage(int numReads, int readLength) const
+double GraphVariantAlignmentStatsCalculator::computeBreakpointCoverage(int numReads, int readLength) const
 {
     return static_cast<double>(numReads * readLength) / (readLength - 2 * minMatch_);
 }
 
-std::ostream& operator<<(std::ostream& out, const StrAlignmentStats& stats)
+std::ostream& operator<<(std::ostream& out, const GraphVariantAlignmentStats& stats)
 {
     out << "StrAlignmentStats(" << stats.leftBreakpointCoverage() << ", " << stats.rightBreakpointCoverage() << ")";
     return out;

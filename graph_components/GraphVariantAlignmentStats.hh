@@ -31,10 +31,10 @@
 namespace ehunter
 {
 
-class StrAlignmentStats
+class GraphVariantAlignmentStats
 {
 public:
-    StrAlignmentStats(double leftBreakpointCoverage, double rightBreakpointCoverage)
+    GraphVariantAlignmentStats(double leftBreakpointCoverage, double rightBreakpointCoverage)
         : leftBreakpointCoverage_(leftBreakpointCoverage)
         , rightBreakpointCoverage_(rightBreakpointCoverage)
     {
@@ -48,13 +48,13 @@ private:
     double rightBreakpointCoverage_;
 };
 
-class StrAlignmentStatsCalculator
+class GraphVariantAlignmentStatsCalculator
 {
 public:
-    explicit StrAlignmentStatsCalculator(graphtools::NodeId strNode);
+    explicit GraphVariantAlignmentStatsCalculator(std::vector<graphtools::NodeId> variantNodes);
 
     void inspect(const std::list<graphtools::GraphAlignment>& alignments);
-    StrAlignmentStats getStats(int readLength) const;
+    GraphVariantAlignmentStats getStats(int readLength) const;
 
 private:
     enum class Flank
@@ -68,12 +68,15 @@ private:
     Flank classify(const graphtools::GraphAlignment& alignment) const;
     double computeBreakpointCoverage(int numReads, int readLength) const;
 
-    graphtools::NodeId strNode_;
+    std::vector<graphtools::NodeId> variantNodes_;
+    graphtools::NodeId firstVariantNode_;
+    graphtools::NodeId lastVariantNode_;
+
     int minMatch_ = 10;
     int numReadsOverlappingLeftBreakpoint_ = 0;
     int numReadsOverlappingRightBreakpoint_ = 0;
 };
 
-std::ostream& operator<<(std::ostream& out, const StrAlignmentStats& stats);
+std::ostream& operator<<(std::ostream& out, const GraphVariantAlignmentStats& stats);
 
 }
