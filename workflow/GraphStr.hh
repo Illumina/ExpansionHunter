@@ -50,7 +50,7 @@ public:
 
     const std::string& motif() const;
     const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
-    StrAlignmentStats alignmentStats() const { return statsCalculator_.getStats(); }
+    StrAlignmentStats alignmentStats(int readLength) const { return statsCalculator_.getStats(readLength); }
 
 private:
     std::shared_ptr<GraphModel> model_;

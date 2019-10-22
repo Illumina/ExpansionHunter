@@ -99,7 +99,7 @@ std::unique_ptr<VariantFindings> GraphStrAnalyzer::analyze(const LocusStats& sta
 {
     assert(strFeature_);
 
-    spdlog::info("{} {}", variantId_, strFeature_->alignmentStats());
+    spdlog::info("{} {} {}", variantId_, strFeature_->alignmentStats(stats.meanReadLength()), stats.depth());
 
     CountTable spanningReads;
     CountTable flankingReads;

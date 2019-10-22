@@ -56,7 +56,7 @@ void StrAlignmentStatsCalculator::inspect(const list<GraphAlignment>& alignments
     }
 }
 
-StrAlignmentStatsCalculator::Flank StrAlignmentStatsCalculator::classify(const GraphAlignment& alignment)
+StrAlignmentStatsCalculator::Flank StrAlignmentStatsCalculator::classify(const GraphAlignment& alignment) const
 {
     int numLeftFlankMatches = 0;
     int numStrMatches = 0;
@@ -106,15 +106,21 @@ StrAlignmentStatsCalculator::Flank StrAlignmentStatsCalculator::classify(const G
     }
 }
 
-StrAlignmentStats StrAlignmentStatsCalculator::getStats() const
+StrAlignmentStats StrAlignmentStatsCalculator::getStats(int readLength) const
 {
-    return { numReadsOverlappingLeftBreakpoint_, numReadsOverlappingRightBreakpoint_ };
+    double leftBreakpointCoverage = computeBreakpointCoverage(numReadsOverlappingLeftBreakpoint_, readLength);
+    double rightBreakpointCoverage = computeBreakpointCoverage(numReadsOverlappingRightBreakpoint_, readLength);
+    return { leftBreakpointCoverage, rightBreakpointCoverage };
+}
+
+double StrAlignmentStatsCalculator::computeBreakpointCoverage(int numReads, int readLength) const
+{
+    return static_cast<double>(numReads * readLength) / (readLength - 2 * minMatch_);
 }
 
 std::ostream& operator<<(std::ostream& out, const StrAlignmentStats& stats)
 {
-    out << "StrAlignmentStats(" << stats.numReadsOverlappingLeftBreakpoint() << ", "
-        << stats.numReadsOverlappingRightBreakpoint() << ")";
+    out << "StrAlignmentStats(" << stats.leftBreakpointCoverage() << ", " << stats.rightBreakpointCoverage() << ")";
     return out;
 }
 

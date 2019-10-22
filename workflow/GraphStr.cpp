@@ -41,18 +41,17 @@ GraphStr::GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId motifNo
 void GraphStr::summarize(
     const string& read, const Alignments& readAligns, const string& mate, const Alignments& mateAligns)
 {
-    statsCalculator_.inspect(readAligns);
-    statsCalculator_.inspect(mateAligns);
-
     ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read, readAligns);
     if (strRead.hasAlignments())
     {
+        statsCalculator_.inspect(readAligns);
         readSummaries_.push_back(std::move(strRead));
     }
 
     ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate, mateAligns);
     if (strMate.hasAlignments())
     {
+        statsCalculator_.inspect(mateAligns);
         readSummaries_.push_back(std::move(strMate));
     }
 }

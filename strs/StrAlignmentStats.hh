@@ -34,18 +34,18 @@ namespace ehunter
 class StrAlignmentStats
 {
 public:
-    StrAlignmentStats(int numReadsOverlappingLeftBreakpoint, int numReadsOverlappingRightBreakpoint)
-        : numReadsOverlappingLeftBreakpoint_(numReadsOverlappingLeftBreakpoint)
-        , numReadsOverlappingRightBreakpoint_(numReadsOverlappingRightBreakpoint)
+    StrAlignmentStats(double leftBreakpointCoverage, double rightBreakpointCoverage)
+        : leftBreakpointCoverage_(leftBreakpointCoverage)
+        , rightBreakpointCoverage_(rightBreakpointCoverage)
     {
     }
 
-    int numReadsOverlappingLeftBreakpoint() const { return numReadsOverlappingLeftBreakpoint_; }
-    int numReadsOverlappingRightBreakpoint() const { return numReadsOverlappingRightBreakpoint_; }
+    double leftBreakpointCoverage() const { return leftBreakpointCoverage_; }
+    double rightBreakpointCoverage() const { return rightBreakpointCoverage_; }
 
 private:
-    int numReadsOverlappingLeftBreakpoint_;
-    int numReadsOverlappingRightBreakpoint_;
+    double leftBreakpointCoverage_;
+    double rightBreakpointCoverage_;
 };
 
 class StrAlignmentStatsCalculator
@@ -54,7 +54,7 @@ public:
     explicit StrAlignmentStatsCalculator(graphtools::NodeId strNode);
 
     void inspect(const std::list<graphtools::GraphAlignment>& alignments);
-    StrAlignmentStats getStats() const;
+    StrAlignmentStats getStats(int readLength) const;
 
 private:
     enum class Flank
@@ -65,7 +65,8 @@ private:
         kNeither
     };
 
-    Flank classify(const graphtools::GraphAlignment& alignment);
+    Flank classify(const graphtools::GraphAlignment& alignment) const;
+    double computeBreakpointCoverage(int numReads, int readLength) const;
 
     graphtools::NodeId strNode_;
     int minMatch_ = 10;
