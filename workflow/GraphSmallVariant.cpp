@@ -21,6 +21,8 @@
 
 #include "workflow/GraphSmallVariant.hh"
 
+#include <memory>
+
 #include "spdlog/spdlog.h"
 
 #include "workflow/GraphModel.hh"
@@ -32,9 +34,10 @@ namespace ehunter
 {
 
 GraphSmallVariant::GraphSmallVariant(shared_ptr<GraphModel> model, std::vector<graphtools::NodeId> nodeIds)
-    : model_(model)
-    , nodeIds_(nodeIds)
-    , alignmentClassifier_(nodeIds)
+    : model_(std::move(model))
+    , nodeIds_(std::move(nodeIds))
+    , alignmentClassifier_(nodeIds_)
+    , statsCalculator_(nodeIds_)
 {
 }
 
@@ -54,6 +57,7 @@ void GraphSmallVariant::summarize(const string& read, const std::list<graphtools
         return;
     }
 
+    statsCalculator_.inspect(alignments);
     readSummaries_.push_back(smallVariantRead);
 
     const auto& smallVariantAlignment = smallVariantRead.alignments().front();

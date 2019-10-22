@@ -19,7 +19,7 @@
 //
 //
 
-#include "strs/ReadClassifier.hh"
+#include "graph_components/ReadClassifier.hh"
 
 using std::vector;
 
