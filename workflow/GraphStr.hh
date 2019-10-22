@@ -29,7 +29,7 @@
 
 #include "classification/AlignmentSummary.hh"
 #include "classification/StrAlignmentClassifier.hh"
-#include "strs/StrAlignmentStats.hh"
+#include "graph_components/StrAlignmentStats.hh"
 #include "workflow/GraphFeature.hh"
 
 namespace ehunter

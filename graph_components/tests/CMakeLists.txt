@@ -1,3 +1,3 @@
 add_executable(ReadClassifierTest ReadClassifierTest.cpp)
-target_link_libraries(ReadClassifierTest strs gtest_main)
+target_link_libraries(ReadClassifierTest graph_components gtest_main)
 add_test(NAME ReadClassifierTest COMMAND ReadClassifierTest)

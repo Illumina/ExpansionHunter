@@ -19,7 +19,7 @@
 //
 //
 
-#include "strs/StrAlignmentStats.hh"
+#include "graph_components/StrAlignmentStats.hh"
 
 namespace ehunter
 {
