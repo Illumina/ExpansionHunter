@@ -29,6 +29,7 @@
 
 #include "classification/AlignmentSummary.hh"
 #include "classification/StrAlignmentClassifier.hh"
+#include "graph_components/GraphVariantAlignmentStats.hh"
 #include "workflow/GraphFeature.hh"
 
 namespace ehunter
@@ -49,12 +50,14 @@ public:
 
     const std::string& motif() const;
     const std::vector<ReadSummaryForStr>& readSummaries() const { return readSummaries_; }
+    GraphVariantAlignmentStats alignmentStats(int readLength) const { return statsCalculator_.getStats(readLength); }
 
 private:
     std::shared_ptr<GraphModel> model_;
     graphtools::NodeId motifNode_;
 
     StrAlignmentClassifier alignmentClassifier_;
+    GraphVariantAlignmentStatsCalculator statsCalculator_;
     std::vector<ReadSummaryForStr> readSummaries_;
 };
 

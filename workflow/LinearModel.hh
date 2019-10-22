@@ -23,7 +23,7 @@
 
 #include <vector>
 
-#include "strs/ReadClassifier.hh"
+#include "graph_components/ReadClassifier.hh"
 #include "workflow/RegionModel.hh"
 
 namespace ehunter
