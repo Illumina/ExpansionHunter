@@ -42,11 +42,11 @@ namespace ehunter
 enum class LocusType
 {
     kGraph,
-    kCNV,
+    kCnv,
     kParalog
 };
 
-enum class CNVLocusSubtype
+enum class CnvLocusSubtype
 {
     kOverlapping,
     kNonoverlapping,

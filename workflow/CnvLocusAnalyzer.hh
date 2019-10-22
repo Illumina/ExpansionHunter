@@ -24,34 +24,33 @@
 #include <string>
 #include <vector>
 
-#include "workflow/LocusAnalyzer.hh"
 #include "region_spec/VariantSpecification.hh"
+#include "workflow/LocusAnalyzer.hh"
 
 namespace ehunter
 {
 
-class CNVVariantAnalyzer;
+class CnvVariantAnalyzer;
 class ReadCountAnalyzer;
 
-class CNVLocusAnalyzer : public LocusAnalyzer
+class CnvLocusAnalyzer : public LocusAnalyzer
 {
 public:
-    CNVLocusAnalyzer(double minLocusCoverage, std::string locusId, CNVLocusSubtype locusSubtype);
-    ~CNVLocusAnalyzer() override = default;
+    CnvLocusAnalyzer(double minLocusCoverage, std::string locusId, CnvLocusSubtype locusSubtype);
+    ~CnvLocusAnalyzer() override = default;
 
     const std::string& locusId() const override { return locusId_; }
-    const CNVLocusSubtype& locusSubtype() const { return locusSubtype_; }
+    const CnvLocusSubtype& locusSubtype() const { return locusSubtype_; }
     void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
-    void addAnalyzer(std::shared_ptr<CNVVariantAnalyzer> variantAnalyzer);
+    void addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
     LocusFindings analyze(Sex sampleSex) const override;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
 private:
     double minLocusCoverage_;
     std::string locusId_;
-    CNVLocusSubtype locusSubtype_;
+    CnvLocusSubtype locusSubtype_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
-    std::vector<std::shared_ptr<CNVVariantAnalyzer>> variantAnalyzers_;    
+    std::vector<std::shared_ptr<CnvVariantAnalyzer>> variantAnalyzers_;
 };
-
 }

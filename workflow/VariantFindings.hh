@@ -33,13 +33,13 @@ namespace ehunter
 
 class StrFindings;
 class SmallVariantFindings;
-class CNVVariantFindings;
+class CnvVariantFindings;
 
 struct VariantFindingsVisitor
 {
     virtual void visit(StrFindings& strFindings) = 0;
     virtual void visit(SmallVariantFindings& smallVariantFindings) = 0;
-    virtual void visit(CNVVariantFindings& cnvVariantFindings) = 0;
+    virtual void visit(CnvVariantFindings& cnvVariantFindings) = 0;
 };
 
 struct VariantFindings
@@ -115,15 +115,15 @@ private:
     boost::optional<SmallVariantGenotype> optionalGenotype_;
 };
 
-class CNVVariantFindings : public VariantFindings
+class CnvVariantFindings : public VariantFindings
 {
 public:
-    CNVVariantFindings(boost::optional<int> copyNumberCall)
+    CnvVariantFindings(boost::optional<int> copyNumberCall)
         : copyNumberCall_(copyNumberCall)
     {
     }
 
-    ~CNVVariantFindings() override = default;
+    ~CnvVariantFindings() override = default;
     void accept(VariantFindingsVisitor& visitorPtr) override { visitorPtr.visit(*this); }
 
     boost::optional<int> copyNumberCall() const { return copyNumberCall_; }

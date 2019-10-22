@@ -29,7 +29,7 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/CNVLocusSpecification.hh"
+#include "region_spec/CnvLocusSpecification.hh"
 #include "region_spec/GraphLocusSpecification.hh"
 
 namespace ehunter
@@ -138,6 +138,6 @@ void assertValidity(const LocusDescriptionFromUser& userDescription);
 GraphLocusSpecification
 decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 
-CNVLocusSpecification
-decodeCNVLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
+CnvLocusSpecification
+decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 }

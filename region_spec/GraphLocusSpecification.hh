@@ -91,5 +91,4 @@ private:
     graphtools::Graph regionGraph_;
     NodeToRegionAssociation referenceRegions_;
 };
-
 }

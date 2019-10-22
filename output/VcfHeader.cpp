@@ -96,7 +96,7 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
-void FieldDescriptionWriter::visit(CNVVariantFindings& cnvFindings)
+void FieldDescriptionWriter::visit(CnvVariantFindings& cnvFindings)
 {
     if (!cnvFindings.copyNumberCall())
     {

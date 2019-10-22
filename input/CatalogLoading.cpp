@@ -389,8 +389,8 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
             }
             if (userDescription.locusType == LocusTypeFromUser::kCNV)
             {
-                CNVLocusSpecification locusSpec = decodeCNVLocusSpecification(userDescription, reference);
-                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CNVLocusSpecification>(locusSpec)));
+                CnvLocusSpecification locusSpec = decodeCnvLocusSpecification(userDescription, reference);
+                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CnvLocusSpecification>(locusSpec)));
             }
         }
         catch (const std::exception& except)

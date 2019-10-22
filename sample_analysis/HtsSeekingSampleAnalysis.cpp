@@ -197,7 +197,6 @@ SampleFindings htsSeekingSampleAnalysis(
             }
         }
         double readCount = normRegionAnalyzer.summarize();
-        //std::cout << regionInfo.gc << ", " << readCount << "\n";
         normDepthInfo.push_back(RegionDepthInfo(regionInfo.gc, readCount));
     }
 
@@ -212,7 +211,7 @@ SampleFindings htsSeekingSampleAnalysis(
 
         ReadPairs readPairs;
 
-        shared_ptr<CNVLocusSpecification> cnvLocusSpecPtr = dynamic_pointer_cast<CNVLocusSpecification>(locusSpec);
+        shared_ptr<CnvLocusSpecification> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpecification>(locusSpec);
         shared_ptr<GraphLocusSpecification> graphLocusSpecPtr
             = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
         if (graphLocusSpecPtr)
@@ -224,7 +223,7 @@ SampleFindings htsSeekingSampleAnalysis(
         }
         else if (cnvLocusSpecPtr)
         {
-            CNVLocusSpecification cnvLocusSpec = *cnvLocusSpecPtr;
+            CnvLocusSpecification cnvLocusSpec = *cnvLocusSpecPtr;
             vector<GenomicRegion> variantLocations;
             for (auto variant : cnvLocusSpec.variantSpecs())
             {

@@ -33,7 +33,7 @@ namespace ehunter
 
 void VariantSpecification::assertConsistency() const
 {
-    const bool variantIsCNV = classification_.type == VariantType::kCNV;
+    const bool variantIsCnv = classification_.type == VariantType::kCNV;
     const bool variantIsRepeat = classification_.type == VariantType::kRepeat;
     const bool variantIsDeletionOrSwap = classification_.type == VariantType::kSmallVariant
         && (classification_.subtype == VariantSubtype::kDeletion || classification_.subtype == VariantSubtype::kSwap
@@ -43,10 +43,11 @@ void VariantSpecification::assertConsistency() const
 
     bool variantIsValid = false;
 
-    if (variantIsCNV)
+    if (variantIsCnv)
     {
-        variantIsValid = (parameters_) && (classification_.subtype == VariantSubtype::kBaseline
-            || classification_.subtype == VariantSubtype::kTarget);
+        variantIsValid = (parameters_)
+            && (classification_.subtype == VariantSubtype::kBaseline
+                || classification_.subtype == VariantSubtype::kTarget);
     }
     if (variantIsRepeat)
     {

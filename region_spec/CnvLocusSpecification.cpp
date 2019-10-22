@@ -21,7 +21,7 @@
 //
 //
 
-#include "region_spec/CNVLocusSpecification.hh"
+#include "region_spec/CnvLocusSpecification.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -52,7 +52,7 @@ namespace spd = spdlog;
 
 namespace ehunter
 {
-void CNVLocusSpecification::addVariantSpecification(
+void CnvLocusSpecification::addVariantSpecification(
     std::string id, VariantClassification classification, GenomicRegion referenceLocus,
     boost::optional<CnvGenotyperParameters> paramters)
 {

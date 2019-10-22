@@ -44,24 +44,24 @@
 namespace ehunter
 {
 
-class CNVLocusSpecification : public LocusSpecification
+class CnvLocusSpecification : public LocusSpecification
 {
 public:
-    CNVLocusSpecification(
-        RegionId locusId, LocusType locusType, CNVLocusSubtype locusSubtype, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
-        GenotyperParameters genotyperParams)
+    CnvLocusSpecification(
+        RegionId locusId, LocusType locusType, CnvLocusSubtype locusSubtype, ContigCopyNumber contigCopyNumber,
+        GenomicRegion locusLocation, GenotyperParameters genotyperParams)
         : LocusSpecification(locusId, locusType, contigCopyNumber, locusLocation, genotyperParams)
         , locusSubtype_(std::move(locusSubtype))
     {
     }
-    ~CNVLocusSpecification() override = default;
+    ~CnvLocusSpecification() override = default;
 
-    const CNVLocusSubtype& locusSubtype() const { return locusSubtype_; }
+    const CnvLocusSubtype& locusSubtype() const { return locusSubtype_; }
     void addVariantSpecification(
         std::string id, VariantClassification classification, GenomicRegion referenceLocus,
         boost::optional<CnvGenotyperParameters> paramters);
-    
+
 private:
-    CNVLocusSubtype locusSubtype_;
+    CnvLocusSubtype locusSubtype_;
 };
 }

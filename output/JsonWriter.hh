@@ -22,8 +22,8 @@
 #pragma once
 
 #include "common/Parameters.hh"
+#include "region_spec/CnvLocusSpecification.hh"
 #include "region_spec/GraphLocusSpecification.hh"
-#include "region_spec/CNVLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
@@ -47,7 +47,7 @@ public:
     ~GraphVariantJsonWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindings) override;
-    void visit(CNVVariantFindings& cnvVariantFindings) override;
+    void visit(CnvVariantFindings& cnvVariantFindings) override;
     nlohmann::json record() const { return record_; }
 
 private:
@@ -57,29 +57,26 @@ private:
     nlohmann::json record_;
 };
 
-
-class CNVVariantJsonWriter : public VariantFindingsVisitor
+class CnvVariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    CNVVariantJsonWriter(
-        const ReferenceContigInfo& contigInfo, const CNVLocusSpecification& locusSpec)
+    CnvVariantJsonWriter(const ReferenceContigInfo& contigInfo, const CnvLocusSpecification& locusSpec)
         : contigInfo_(contigInfo)
         , locusSpec_(locusSpec)
     {
     }
 
-    ~CNVVariantJsonWriter() = default;
+    ~CnvVariantJsonWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindings) override;
-    void visit(CNVVariantFindings& cnvVariantFindings) override;
+    void visit(CnvVariantFindings& cnvVariantFindings) override;
     nlohmann::json record() const { return record_; }
 
 private:
     const ReferenceContigInfo& contigInfo_;
-    const CNVLocusSpecification& locusSpec_;
+    const CnvLocusSpecification& locusSpec_;
     nlohmann::json record_;
 };
-
 
 class JsonWriter
 {

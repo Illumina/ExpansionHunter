@@ -68,7 +68,7 @@ public:
 
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& findings) override;
-    void visit(CNVVariantFindings& findings) override;
+    void visit(CnvVariantFindings& findings) override;
 
     void tryAddingFieldDescription(
         FieldType fieldType, const std::string& id, const std::string& number, const std::string& contentType,

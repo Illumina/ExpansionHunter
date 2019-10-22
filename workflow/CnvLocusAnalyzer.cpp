@@ -20,7 +20,7 @@
 //
 //
 
-#include "workflow/CNVLocusAnalyzer.hh"
+#include "workflow/CnvLocusAnalyzer.hh"
 
 #include <string>
 
@@ -29,7 +29,7 @@
 #include "GraphVariantAnalyzer.hh"
 #include "genotyping/CopyNumberCaller.hh"
 #include "region_spec/VariantSpecification.hh"
-#include "workflow/CNVVariantAnalyzer.hh"
+#include "workflow/CnvVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
 
@@ -42,24 +42,24 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-CNVLocusAnalyzer::CNVLocusAnalyzer(double minLocusCoverage, string locusId, CNVLocusSubtype locusSubtype)
+CnvLocusAnalyzer::CnvLocusAnalyzer(double minLocusCoverage, string locusId, CnvLocusSubtype locusSubtype)
     : minLocusCoverage_(minLocusCoverage)
     , locusId_(std::move(locusId))
     , locusSubtype_(std::move(locusSubtype))
 {
 }
 
-void CNVLocusAnalyzer::setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer)
+void CnvLocusAnalyzer::setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer)
 {
     readCountAnalyzer_ = std::move(statsAnalyzer);
 }
 
-void CNVLocusAnalyzer::addAnalyzer(std::shared_ptr<CNVVariantAnalyzer> variantAnalyzer)
+void CnvLocusAnalyzer::addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer)
 {
     variantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
-LocusFindings CNVLocusAnalyzer::analyze(Sex sampleSex) const
+LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
 {
     LocusFindings locusFindings;
 
@@ -70,7 +70,7 @@ LocusFindings CNVLocusAnalyzer::analyze(Sex sampleSex) const
 
     for (auto& analyzerPtr : variantAnalyzers_)
     {
-        CNVVariantFindings varFinding = analyzerPtr->analyze();
+        CnvVariantFindings varFinding = analyzerPtr->analyze();
         const VariantSubtype variantSubtype = analyzerPtr->variantSubtype();
         if (variantSubtype == VariantSubtype::kBaseline)
         {
@@ -84,23 +84,23 @@ LocusFindings CNVLocusAnalyzer::analyze(Sex sampleSex) const
 
     int expectedCopyNumber = static_cast<int>(locusFindings.optionalStats->alleleCount());
     boost::optional<int> cnvLocusCopyNumberCall;
-    if (locusSubtype_ == CNVLocusSubtype::kOverlapping)
+    if (locusSubtype_ == CnvLocusSubtype::kOverlapping)
     {
         cnvLocusCopyNumberCall
-        = callCopyNumberForOverlappingCNV(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
+            = callCopyNumberForOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    else if (locusSubtype_ == CNVLocusSubtype::kNonoverlapping)
+    else if (locusSubtype_ == CnvLocusSubtype::kNonoverlapping)
     {
         cnvLocusCopyNumberCall
-        = callCopyNumberForNonOverlappingCNV(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
+            = callCopyNumberForNonOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CNVVariantFindings(cnvLocusCopyNumberCall));
+    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(cnvLocusCopyNumberCall));
     locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
     return locusFindings;
 }
 
-vector<shared_ptr<FeatureAnalyzer>> CNVLocusAnalyzer::featureAnalyzers()
+vector<shared_ptr<FeatureAnalyzer>> CnvLocusAnalyzer::featureAnalyzers()
 {
     vector<shared_ptr<FeatureAnalyzer>> features;
     for (const auto& variant : variantAnalyzers_)

@@ -341,15 +341,15 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
     }
 }
 
-CNVLocusSpecification
-decodeCNVLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
+CnvLocusSpecification
+decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
 {
     try
     {
         const auto& contigName = reference.contigInfo().getContigName(userDescription.locusLocation.contigIndex());
         auto copyNumber = determineCopyNumber(contigName);
         LocusType locusType = (LocusType)userDescription.locusType;
-        CNVLocusSubtype locusSubtype = CNVLocusSubtype::kNonoverlapping;
+        CnvLocusSubtype locusSubtype = CnvLocusSubtype::kNonoverlapping;
 
         GenotyperParameters parameters;
         if (userDescription.errorRate)
@@ -369,11 +369,11 @@ decodeCNVLocusSpecification(const LocusDescriptionFromUser& userDescription, con
         {
             if (variant.variantSubtype == VariantSubtypeFromUser::kBaseline && !(*variant.expectedNormalCN))
             {
-                locusSubtype = CNVLocusSubtype::kOverlapping;
+                locusSubtype = CnvLocusSubtype::kOverlapping;
             }
         }
 
-        CNVLocusSpecification locusSpec(
+        CnvLocusSpecification locusSpec(
             userDescription.locusId, locusType, locusSubtype, copyNumber, userDescription.locusLocation, parameters);
 
         for (const auto& variant : userDescription.variantDescriptionFromUsers)

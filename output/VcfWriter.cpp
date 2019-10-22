@@ -79,7 +79,7 @@ void VcfWriter::writeBody(ostream& out)
         auto locusSpecPtr = regionCatalog_.at(locusId);
         shared_ptr<GraphLocusSpecification> graphLocusSpec
             = dynamic_pointer_cast<GraphLocusSpecification>(locusSpecPtr);
-        shared_ptr<CNVLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CNVLocusSpecification>(locusSpecPtr);
+        shared_ptr<CnvLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpecification>(locusSpecPtr);
 
         const LocusFindings& locusFindings = sampleFindings_.at(locusId);
         const string& variantId = pair.second;
@@ -96,9 +96,9 @@ void VcfWriter::writeBody(ostream& out)
             GraphVariantVcfWriter variantWriter(reference_, *graphLocusSpec, locusDepth, variantSpec, out);
             variantFindings->accept(variantWriter);
         }
-        //else if (cnvLocusSpec)
+        // else if (cnvLocusSpec)
         //{
-        //    CNVVariantVcfWriter variantWriter(reference_, *cnvLocusSpec, locusDepth, variantSpec, out);
+        //    CnvVariantVcfWriter variantWriter(reference_, *cnvLocusSpec, locusDepth, variantSpec, out);
         //    variantFindings->accept(variantWriter);
         //}
     }
@@ -266,14 +266,14 @@ void GraphVariantVcfWriter::visit(StrFindings& strFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void GraphVariantVcfWriter::visit(CNVVariantFindings& cnvFindings)
+void GraphVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
 {
     if (!cnvFindings.copyNumberCall())
     {
         return;
     }
 }
-void CNVVariantVcfWriter::visit(StrFindings& strFindings)
+void CnvVariantVcfWriter::visit(StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
     {
@@ -281,7 +281,7 @@ void CNVVariantVcfWriter::visit(StrFindings& strFindings)
     }
 }
 
-void CNVVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
+void CnvVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
 {
     if (!smallFindings.optionalGenotype())
     {
@@ -289,7 +289,7 @@ void CNVVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
     }
 }
 
-void CNVVariantVcfWriter::visit(CNVVariantFindings& cnvFindings)
+void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
 {
     const auto& referenceLocus = locusSpec_.locusLocation();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());

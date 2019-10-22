@@ -24,8 +24,8 @@
 #include <stdexcept>
 #include <string>
 
-#include "workflow/CNVLocusAnalyzer.hh"
-#include "workflow/CNVVariantAnalyzer.hh"
+#include "workflow/CnvLocusAnalyzer.hh"
+#include "workflow/CnvVariantAnalyzer.hh"
 #include "workflow/GraphLocusAnalyzer.hh"
 #include "workflow/GraphModel.hh"
 #include "workflow/GraphSmallVariant.hh"
@@ -132,13 +132,14 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     return locus;
 }
 
-shared_ptr<LocusAnalyzer>
-buildCNVLocusWorkflow(const CNVLocusSpecification& locusSpec, DepthNormalizer genomeDepthNormalizer, const HeuristicParameters& heuristics)
+shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(
+    const CnvLocusSpecification& locusSpec, DepthNormalizer genomeDepthNormalizer,
+    const HeuristicParameters& heuristics)
 {
     const auto& locusLocation = locusSpec.locusLocation();
 
     const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
-    auto locus = make_shared<CNVLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
+    auto locus = make_shared<CnvLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
     auto statsAnalyzer
         = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
     locus->setStats(statsAnalyzer);
@@ -156,7 +157,7 @@ buildCNVLocusWorkflow(const CNVLocusSpecification& locusSpec, DepthNormalizer ge
             auto linearModel = make_shared<LinearModel>(variantRegion);
             auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
             linearModel->addFeature(readCounter.get());
-            locus->addAnalyzer(make_shared<CNVVariantAnalyzer>(
+            locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
                 variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.contigCopyNumber(),
                 cnvParameters, readCounter, genomeDepthNormalizer));
         }

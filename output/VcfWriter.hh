@@ -29,7 +29,7 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/CNVLocusSpecification.hh"
+#include "region_spec/CnvLocusSpecification.hh"
 #include "region_spec/GraphLocusSpecification.hh"
 #include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
@@ -54,7 +54,7 @@ public:
     ~GraphVariantVcfWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
-    void visit(CNVVariantFindings& cnvVariantFindingsPtr) override;
+    void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
 
 private:
     Reference& reference_;
@@ -64,11 +64,11 @@ private:
     std::ostream& out_;
 };
 
-class CNVVariantVcfWriter : public VariantFindingsVisitor
+class CnvVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
-    CNVVariantVcfWriter(
-        Reference& reference, const CNVLocusSpecification& locusSpec, double locusDepth, std::ostream& out)
+    CnvVariantVcfWriter(
+        Reference& reference, const CnvLocusSpecification& locusSpec, double locusDepth, std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
         , locusDepth_(locusDepth)
@@ -76,14 +76,14 @@ public:
     {
     }
 
-    ~CNVVariantVcfWriter() = default;
+    ~CnvVariantVcfWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
-    void visit(CNVVariantFindings& cnvVariantFindingsPtr) override;
+    void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
 
 private:
     Reference& reference_;
-    const CNVLocusSpecification& locusSpec_;
+    const CnvLocusSpecification& locusSpec_;
     double locusDepth_;
     std::ostream& out_;
 };

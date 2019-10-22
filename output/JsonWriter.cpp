@@ -71,7 +71,7 @@ void JsonWriter::write(std::ostream& out)
         auto locusSpecPtr = regionCatalog_.at(locusId);
         shared_ptr<GraphLocusSpecification> graphLocusSpec
             = dynamic_pointer_cast<GraphLocusSpecification>(locusSpecPtr);
-        shared_ptr<CNVLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CNVLocusSpecification>(locusSpecPtr);
+        shared_ptr<CnvLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpecification>(locusSpecPtr);
 
         const LocusFindings& locusFindings = locusIdAndFindings.second;
 
@@ -101,8 +101,8 @@ void JsonWriter::write(std::ostream& out)
 
             else if (cnvLocusSpec)
             {
-                const CNVLocusSpecification& locusSpec = *cnvLocusSpec;
-                CNVVariantJsonWriter variantWriter(contigInfo_, locusSpec);
+                const CnvLocusSpecification& locusSpec = *cnvLocusSpec;
+                CnvVariantJsonWriter variantWriter(contigInfo_, locusSpec);
                 variantIdAndFindings.second->accept(variantWriter);
                 variantRecords[variantId] = variantWriter.record();
             }
@@ -162,7 +162,7 @@ void GraphVariantJsonWriter::visit(StrFindings& strFindings)
     }
 }
 
-void GraphVariantJsonWriter::visit(CNVVariantFindings& cnvFindings)
+void GraphVariantJsonWriter::visit(CnvVariantFindings& cnvFindings)
 {
     if (!cnvFindings.copyNumberCall())
     {
@@ -189,7 +189,7 @@ void GraphVariantJsonWriter::visit(SmallVariantFindings& findings)
     }
 }
 
-void CNVVariantJsonWriter::visit(CNVVariantFindings& cnvFindings)
+void CnvVariantJsonWriter::visit(CnvVariantFindings& cnvFindings)
 {
     record_.clear();
     record_["VariantId"] = locusSpec_.locusId();
@@ -205,7 +205,7 @@ void CNVVariantJsonWriter::visit(CNVVariantFindings& cnvFindings)
     }
 }
 
-void CNVVariantJsonWriter::visit(SmallVariantFindings& findings)
+void CnvVariantJsonWriter::visit(SmallVariantFindings& findings)
 {
     if (!findings.optionalGenotype())
     {
@@ -213,7 +213,7 @@ void CNVVariantJsonWriter::visit(SmallVariantFindings& findings)
     }
 }
 
-void CNVVariantJsonWriter::visit(StrFindings& findings)
+void CnvVariantJsonWriter::visit(StrFindings& findings)
 {
     if (!findings.optionalGenotype())
     {

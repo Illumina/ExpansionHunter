@@ -26,30 +26,31 @@
 
 #include "common/Common.hh"
 #include "common/Parameters.hh"
+#include "region_spec/VariantSpecification.hh"
+#include "sample_analysis/DepthNormalization.hh"
 #include "stats/LocusStats.hh"
 #include "workflow/FeatureAnalyzer.hh"
 #include "workflow/ReadCounter.hh"
 #include "workflow/VariantFindings.hh"
-#include "region_spec/VariantSpecification.hh"
-#include "sample_analysis/DepthNormalization.hh"
 
 namespace ehunter
 {
 
-class CNVVariantAnalyzer : public FeatureAnalyzer
+class CnvVariantAnalyzer : public FeatureAnalyzer
 {
 public:
-    CNVVariantAnalyzer(
+    CnvVariantAnalyzer(
         std::string variantId, double regionLength, VariantSubtype variantSubtype, ContigCopyNumber contigCopyNumber,
-        CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature, DepthNormalizer genomeDepthNormalizer);
-    ~CNVVariantAnalyzer() override = default;
+        CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature,
+        DepthNormalizer genomeDepthNormalizer);
+    ~CnvVariantAnalyzer() override = default;
 
     std::vector<std::shared_ptr<Feature>> features() override;
     // std::unique_ptr<VariantFindings> analyze() const;
-    CNVVariantFindings analyze() const;
+    CnvVariantFindings analyze() const;
     const std::string& variantId() const { return variantId_; }
     const VariantSubtype& variantSubtype() const { return variantSubtype_; }
-    const ContigCopyNumber& contigCopyNumber() const { return contigCopyNumber_;}
+    const ContigCopyNumber& contigCopyNumber() const { return contigCopyNumber_; }
 
 protected:
     std::string variantId_;
@@ -61,6 +62,5 @@ private:
     CnvGenotyperParameters cnvParameters_;
     std::shared_ptr<ReadCounter> counter_;
     DepthNormalizer genomeDepthNormalizer_;
-
 };
 }
