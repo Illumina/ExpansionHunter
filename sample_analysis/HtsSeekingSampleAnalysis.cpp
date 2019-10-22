@@ -179,7 +179,7 @@ SampleFindings htsSeekingSampleAnalysis(
         ReadPairs readPairs = collectCandidateReads(
             vector<GenomicRegion>{ region }, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
 
-        NormalizationRegionAnalyzer normRegionAnalyzer(region);
+        NormalizationRegionAnalyzer normRegionAnalyzer(std::vector<RegionInfo>{ regionInfo });
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -196,8 +196,10 @@ SampleFindings htsSeekingSampleAnalysis(
                 normRegionAnalyzer.analyze(read);
             }
         }
-        double readCount = normRegionAnalyzer.summarize();
-        normDepthInfo.push_back(RegionDepthInfo(regionInfo.gc, readCount));
+        for (RegionDepthInfo regionDepthInfo : normRegionAnalyzer.summarize())
+        {
+            normDepthInfo.push_back(regionDepthInfo);
+        }
     }
 
     DepthNormalizer genomeDepthNormalizer = DepthNormalizer(normDepthInfo);

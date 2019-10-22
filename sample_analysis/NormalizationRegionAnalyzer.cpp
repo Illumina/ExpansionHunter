@@ -21,11 +21,6 @@
 //
 
 #include "NormalizationRegionAnalyzer.hh"
-#include "DepthNormalization.hh"
-#include "input/CatalogLoading.hh"
-#include "workflow/LinearModel.hh"
-#include "workflow/ReadCountAnalyzer.hh"
-#include "workflow/RegionModel.hh"
 
 using boost::optional;
 using std::unordered_set;
@@ -36,34 +31,47 @@ using std::vector;
 namespace ehunter
 {
 
-NormalizationRegionAnalyzer::NormalizationRegionAnalyzer(GenomicRegion region)
-: region_(region)
+NormalizationRegionAnalyzer::NormalizationRegionAnalyzer(const std::vector<RegionInfo>& normRegionInfo)
+    : normRegionInfo_(normRegionInfo)
 {
-    std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion>{region_};
-    auto linearModel = make_shared<LinearModel>(countingRegion);
-    readCounter_ = make_shared<ReadCounter>(linearModel, countingRegion);
-    linearModel->addFeature(readCounter_.get());
-    readCountAnalyzer_ = make_shared<ReadCountAnalyzer>(ContigCopyNumber::kTwoInFemaleTwoInMale, readCounter_);
+    std::vector<GenomicRegion> normRegions;
+    for (RegionInfo regionInfo : normRegionInfo_)
+    {
+        normRegions.push_back(regionInfo.region);
+    }
+    linearModel_ = make_shared<LinearModel>(normRegions);
+    for (RegionInfo regionInfo : normRegionInfo_)
+    {
+        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion>{ regionInfo.region };
+        auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
+        linearModel_->addFeature(readCounter.get());
+        readCountAnalyzers_.push_back(
+            make_shared<ReadCountAnalyzer>(ContigCopyNumber::kTwoInFemaleTwoInMale, readCounter));
+    }
 }
 
 void NormalizationRegionAnalyzer::analyze(const MappedRead& read, const MappedRead& mate)
 {
-    auto model = readCounter_->model();
-    model->analyze(read, mate);
-    
+    linearModel_->analyze(read, mate);
 }
 
-void NormalizationRegionAnalyzer::analyze(const MappedRead& read)
+void NormalizationRegionAnalyzer::analyze(const MappedRead& read) { linearModel_->analyze(read); }
+
+std::vector<RegionDepthInfo> NormalizationRegionAnalyzer::summarize()
 {
-    auto model = readCounter_->model();
-    model->analyze(read);
-}
+    std::vector<RegionDepthInfo> normRegionDepthInfo;
+    auto regionInfo = normRegionInfo_.begin();
+    for (auto readCountAnalyzer : readCountAnalyzers_)
+    {
+        int readCount = readCountAnalyzer->count();
+        double gc = (*regionInfo).gc;
+        GenomicRegion region = (*regionInfo).region;
+        int regionLength = region.end() - region.start();
+        double normDepth = (double)readCount / (double)regionLength;
+        normRegionDepthInfo.push_back(RegionDepthInfo(gc, normDepth));
+        std::advance(regionInfo, 1);
+    }
 
-double NormalizationRegionAnalyzer::summarize()
-{
-    int readCount = readCountAnalyzer_->count();
-    int regionLength = region_.end() - region_.start();
-    return (double)readCount / (double)regionLength;
+    return normRegionDepthInfo;
 }
 }
-

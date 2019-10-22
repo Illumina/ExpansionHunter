@@ -23,14 +23,10 @@
 #include "DepthNormalization.hh"
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
+#include "input/CatalogLoading.hh"
 #include "reads/Read.hh"
-#include "region_spec/LocusSpecification.hh"
-#include "sample_analysis/ModelFinder.hh"
-#include "workflow/LocusAnalyzer.hh"
-#include "workflow/LocusFindings.hh"
-#include "workflow/RegionModel.hh"
+#include "workflow/LinearModel.hh"
 #include "workflow/ReadCountAnalyzer.hh"
-#include "workflow/ReadCounter.hh"
 #include <boost/optional.hpp>
 #include <memory>
 #include <string>
@@ -42,14 +38,14 @@ namespace ehunter
 class NormalizationRegionAnalyzer
 {
 public:
-    NormalizationRegionAnalyzer(const GenomicRegion region);
+    NormalizationRegionAnalyzer(const std::vector<RegionInfo>& normRegionInfo);
     void analyze(const MappedRead& read, const MappedRead& mate);
     void analyze(const MappedRead& read);
-    double summarize();
+    std::vector<RegionDepthInfo> summarize();
 
 private:
-    std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
-    std::shared_ptr<ReadCounter> readCounter_;
-    GenomicRegion region_;
+    std::shared_ptr<LinearModel> linearModel_;
+    std::vector<std::shared_ptr<ReadCountAnalyzer>> readCountAnalyzers_;
+    std::vector<RegionInfo> normRegionInfo_;
 };
 }
