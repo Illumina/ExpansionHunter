@@ -27,7 +27,7 @@
 
 #include "input/GraphBlueprint.hh"
 #include "input/RegionGraph.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 
 using graphtools::decodeGraphAlignment;
 using graphtools::Graph;

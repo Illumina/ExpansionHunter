@@ -22,4 +22,4 @@ add_library(workflow STATIC
         ReadCounter.cpp ReadCounter.hh
         GraphFeature.cpp GraphFeature.hh)
 
-target_link_libraries(workflow graph_components classification reads alignment filtering region_spec common)
+target_link_libraries(workflow graph_components classification reads alignment filtering locus_spec common)

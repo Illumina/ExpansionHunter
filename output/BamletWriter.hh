@@ -37,8 +37,8 @@
 
 #include "common/ReferenceContigInfo.hh"
 #include "reads/Read.hh"
-#include "region_spec/GraphLocusSpecification.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/GraphLocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 
 namespace ehunter
 {

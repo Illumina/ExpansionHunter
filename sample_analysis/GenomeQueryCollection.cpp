@@ -20,7 +20,7 @@
 //
 
 #include "sample_analysis/GenomeQueryCollection.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 
 using std::shared_ptr;
 using std::vector;

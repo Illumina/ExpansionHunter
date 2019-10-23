@@ -25,8 +25,8 @@
 
 #include "common/Parameters.hh"
 #include "output/BamletWriter.hh"
-#include "region_spec/CnvLocusSpecification.hh"
-#include "region_spec/GraphLocusSpecification.hh"
+#include "locus_spec/CnvLocusSpecification.hh"
+#include "locus_spec/GraphLocusSpecification.hh"
 #include "sample_analysis/DepthNormalization.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/RegionModel.hh"

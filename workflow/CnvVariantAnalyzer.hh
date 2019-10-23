@@ -26,7 +26,7 @@
 
 #include "common/Common.hh"
 #include "common/Parameters.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpecification.hh"
 #include "sample_analysis/DepthNormalization.hh"
 #include "stats/LocusStats.hh"
 #include "workflow/FeatureAnalyzer.hh"

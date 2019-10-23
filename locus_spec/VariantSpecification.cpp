@@ -21,7 +21,7 @@
 //
 //
 
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpecification.hh"
 
 #include <sstream>
 

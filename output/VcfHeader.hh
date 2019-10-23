@@ -25,8 +25,8 @@
 #include <map>
 #include <string>
 
-#include "region_spec/GraphLocusSpecification.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/GraphLocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter

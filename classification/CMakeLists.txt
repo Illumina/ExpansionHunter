@@ -4,5 +4,5 @@ add_library(classification
         SmallVariantAlignmentClassifier.hh SmallVariantAlignmentClassifier.cpp
         StrAlignmentClassifier.hh StrAlignmentClassifier.cpp
         )
-target_link_libraries(classification reads region_spec input alignment graphtools)
+target_link_libraries(classification reads locus_spec input alignment graphtools)
 add_subdirectory(tests)

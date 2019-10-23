@@ -21,7 +21,7 @@
 //
 //
 
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 
 #include <algorithm>
 #include <cassert>

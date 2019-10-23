@@ -28,7 +28,7 @@
 
 #include "GraphVariantAnalyzer.hh"
 #include "genotyping/CopyNumberCaller.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpecification.hh"
 #include "workflow/CnvVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
@@ -42,9 +42,9 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-CnvLocusAnalyzer::CnvLocusAnalyzer(double minLocusCoverage, string locusId, CnvLocusSubtype locusSubtype)
-    : minLocusCoverage_(minLocusCoverage)
-    , locusId_(std::move(locusId))
+CnvLocusAnalyzer::CnvLocusAnalyzer(double /*minLocusCoverage*/, string locusId, CnvLocusSubtype locusSubtype)
+    : // minLocusCoverage_(minLocusCoverage),
+    locusId_(std::move(locusId))
     , locusSubtype_(std::move(locusSubtype))
 {
 }

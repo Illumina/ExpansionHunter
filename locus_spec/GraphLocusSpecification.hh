@@ -39,7 +39,7 @@
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
 #include "common/Reference.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpecification.hh"
 
 namespace ehunter
 {

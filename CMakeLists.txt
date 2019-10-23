@@ -77,7 +77,7 @@ add_subdirectory(common)
 add_subdirectory(genotyping)
 add_subdirectory(reads)
 add_subdirectory(classification)
-add_subdirectory(region_spec)
+add_subdirectory(locus_spec)
 add_subdirectory(sample_analysis)
 add_subdirectory(input)
 add_subdirectory(output)
@@ -90,7 +90,7 @@ add_subdirectory(workflow)
 
 add_executable(ExpansionHunter src/Version.hh src/ExpansionHunter.cpp)
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
-target_link_libraries(ExpansionHunter graphtools common workflow genotyping region_spec sample_analysis input output
+target_link_libraries(ExpansionHunter graphtools common workflow genotyping locus_spec sample_analysis input output
         alignment filtering stats classification graph_components pthread ${Boost_LIBRARIES})
 install(TARGETS ExpansionHunter DESTINATION bin)
 

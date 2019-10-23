@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpecification.hh"
 #include "workflow/LocusAnalyzer.hh"
 
 namespace ehunter
@@ -47,7 +47,7 @@ public:
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
 private:
-    double minLocusCoverage_;
+    // double minLocusCoverage_;
     std::string locusId_;
     CnvLocusSubtype locusSubtype_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;

@@ -27,7 +27,7 @@
 #include <utility>
 
 #include "common/Common.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 #include "workflow/VariantFindings.hh"
 
 namespace ehunter

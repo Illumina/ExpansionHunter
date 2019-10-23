@@ -29,9 +29,9 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/CnvLocusSpecification.hh"
-#include "region_spec/GraphLocusSpecification.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusSpecification.hh"
+#include "locus_spec/GraphLocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -68,11 +68,11 @@ class CnvVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     CnvVariantVcfWriter(
-        Reference& reference, const CnvLocusSpecification& locusSpec, double locusDepth, std::ostream& out)
+        Reference& reference, const CnvLocusSpecification& locusSpec, double /*locusDepth*/, std::ostream& /*out*/)
         : reference_(reference)
         , locusSpec_(locusSpec)
-        , locusDepth_(locusDepth)
-        , out_(out)
+    //, locusDepth_(locusDepth)
+    //, out_(out)
     {
     }
 
@@ -84,8 +84,8 @@ public:
 private:
     Reference& reference_;
     const CnvLocusSpecification& locusSpec_;
-    double locusDepth_;
-    std::ostream& out_;
+    // double locusDepth_;
+    // std::ostream& out_;
 };
 
 // TODO: Document the code after multi-unit repeat format is finalized (GT-598)

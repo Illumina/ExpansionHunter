@@ -27,7 +27,7 @@
 #include "common/Common.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpecification.hh"
 
 namespace ehunter
 {

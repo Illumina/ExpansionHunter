@@ -29,8 +29,8 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/CnvLocusSpecification.hh"
-#include "region_spec/GraphLocusSpecification.hh"
+#include "locus_spec/CnvLocusSpecification.hh"
+#include "locus_spec/GraphLocusSpecification.hh"
 
 namespace ehunter
 {

@@ -30,7 +30,7 @@
 
 #include "common/Parameters.hh"
 #include "genotyping/AlleleChecker.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpecification.hh"
 #include "workflow/GraphVariantAnalyzer.hh"
 
 namespace ehunter
