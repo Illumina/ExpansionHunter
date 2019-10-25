@@ -36,6 +36,9 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
     tryAddingFieldDescription(FieldType::kFormat, "LC", "1", "Float", "Locus coverage");
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
+    tryAddingFieldDescription(
+        FieldType::kFilter, "LowDepth", "", "",
+        "The overall locus depth is below 10x or depth near one or both breakends is below 5x");
 }
 
 void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)

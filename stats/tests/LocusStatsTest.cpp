@@ -27,7 +27,6 @@
 #include "graphcore/GraphBuilders.hh"
 
 using namespace ehunter;
-using boost::optional;
 using graphtools::decodeGraphAlignment;
 using graphtools::GraphAlignment;
 
@@ -41,7 +40,7 @@ TEST(LocusStatsCalculator, NoDataGiven_StatsNotCalculated)
     GraphAlignment alignmentStartingInsideRepeat = decodeGraphAlignment(0, "1[3M]", &graph);
     GraphAlignment alignmentStartingOnRightFlank = decodeGraphAlignment(0, "2[4M]", &graph);
 
-    ASSERT_EQ(optional<LocusStats>(), statsCalculator.estimate());
+    ASSERT_EQ(LocusStats(0, 0.0), statsCalculator.estimate());
 }
 
 TEST(LocusStatsCalculator, TypicalReadLengths_StatsCalculated)
@@ -63,6 +62,5 @@ TEST(LocusStatsCalculator, TypicalReadLengths_StatsCalculated)
     statsCalculator.inspect(alignmentStartingOnRightFlank);
     statsCalculator.inspect(alignmentStartingOnRightFlank);
 
-    ASSERT_NE(boost::none, statsCalculator.estimate());
-    ASSERT_EQ(LocusStats(3, 18), *statsCalculator.estimate());
+    ASSERT_EQ(LocusStats(3, 18), statsCalculator.estimate());
 }

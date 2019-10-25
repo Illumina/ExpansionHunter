@@ -30,27 +30,26 @@ namespace ehunter
 
 namespace
 {
-double poissonLogPmf(double lambda, double count) {
-    return count * log(lambda) - lambda - boost::math::lgamma(count + 1);
+    double poissonLogPmf(double lambda, double count)
+    {
+        return count * log(lambda) - lambda - boost::math::lgamma(count + 1);
+    }
+
+    double logBeta(int a, int b)
+    {
+        return boost::math::lgamma(a) + boost::math::lgamma(b) - boost::math::lgamma(a + b);
+    }
+
+    double logBinomCoef(int n, int k) { return -boost::math::log1p(n) - logBeta(n - k + 1, k + 1); }
+
+    double binomLogPmf(int n, double p, int count)
+    {
+        return logBinomCoef(n, count) + count * log(p) + (n - count) * boost::math::log1p(-p);
+    }
+
 }
 
-double logBeta(int a, int b) {
-    return boost::math::lgamma(a) + boost::math::lgamma(b) - boost::math::lgamma(a+b);
-}
-
-double logBinomCoef(int n, int k) {
-    return -boost::math::log1p(n) - logBeta(n - k + 1, k+1);
-}
-
-double binomLogPmf(int n, double p, int count) {
-    return logBinomCoef(n, count) + count * log(p) + (n-count) * boost::math::log1p(-p);
-}
-
-}
-
-
-AlleleCheckSummary
-AlleleChecker::check(double haplotypeDepth, int targetAlleleCount, int otherAlleleCount) const
+AlleleCheckSummary AlleleChecker::check(double haplotypeDepth, int targetAlleleCount, int otherAlleleCount) const
 {
     if (haplotypeDepth <= 0)
     {
@@ -66,23 +65,19 @@ AlleleChecker::check(double haplotypeDepth, int targetAlleleCount, int otherAlle
     const double ll0 = (totalReadCount > 0) ? binomLogPmf(totalReadCount, errorRate_, targetAlleleCount) : 0;
     const double ll1 = poissonLogPmf(haplotypeDepth, targetAlleleCount);
 
-    AlleleCheckSummary result;
-    result.logLikelihoodRatio = (ll1 - ll0) / log(10);
-    if (result.logLikelihoodRatio < -log10(likelihoodRatioThreshold_))
+    AlleleStatus status = AlleleStatus::kUncertain;
+    double logLikelihoodRatio = (ll1 - ll0) / log(10);
+    if (logLikelihoodRatio < -log10(likelihoodRatioThreshold_))
     {
-        result.status = AlleleStatus::kAbsent;
+        status = AlleleStatus::kAbsent;
     }
-    else if (result.logLikelihoodRatio > log10(likelihoodRatioThreshold_))
+    else if (logLikelihoodRatio > log10(likelihoodRatioThreshold_))
     {
-        result.status = AlleleStatus::kPresent;
+        status = AlleleStatus::kPresent;
     }
-    else
-    {
-        result.status = AlleleStatus::kUncertain;
-    }
-    return result;
-}
 
+    return AlleleCheckSummary(status, logLikelihoodRatio);
+}
 
 std::ostream& operator<<(std::ostream& out, AlleleStatus status)
 {

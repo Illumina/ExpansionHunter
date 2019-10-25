@@ -37,6 +37,9 @@ void SmallVariantAnalyzer::processMates(
     const Read& /*read*/, const graphtools::GraphAlignment& readAlignment, const Read& /*mate*/,
     const graphtools::GraphAlignment& mateAlignment)
 {
+    alignmentStatsCalculator_.inspect(readAlignment);
+    alignmentStatsCalculator_.inspect(mateAlignment);
+
     alignmentClassifier_.classify(readAlignment);
     alignmentClassifier_.classify(mateAlignment);
 }
@@ -61,44 +64,68 @@ int SmallVariantAnalyzer::countReadsSupportingNode(graphtools::NodeId nodeId) co
 
 std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats& stats) const
 {
-    NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : ClassifierOfAlignmentsToVariant::kInvalidNodeId;
-    NodeId altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+    optional<SmallVariantGenotype> genotype = boost::none;
+    auto genotypeFilter = GenotypeFilter();
 
-    switch (variantSubtype_)
+    int refNodeSupport = 0;
+    int altNodeSupport = 0;
+
+    AlleleCheckSummary refAlleleStatus(AlleleStatus::kUncertain, 0);
+    AlleleCheckSummary altAlleleStatus(AlleleStatus::kUncertain, 0);
+
+    if (stats.meanReadLength() == 0 || stats.depth() < genotyperParams_.minLocusCoverage)
     {
-    case VariantSubtype::kInsertion:
-        altNode = nodeIds_.front();
-        break;
-    case VariantSubtype::kDeletion:
-        altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
-        break;
-    case VariantSubtype::kSwap:
-        altNode = (refNode == nodeIds_.front()) ? nodeIds_.back() : nodeIds_.front();
-        break;
-    case VariantSubtype::kSMN:
-        if (refNode != nodeIds_.front())
-            throw std::logic_error("Invalid SMN specification");
-        altNode = nodeIds_.back();
-        break;
-    default:
-        std::ostringstream encoding;
-        encoding << variantSubtype_;
-        throw std::logic_error("Invalid small variant subtype: " + encoding.str());
+        genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
+    }
+    else
+    {
+        NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+        NodeId altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+
+        switch (variantSubtype_)
+        {
+        case VariantSubtype::kInsertion:
+            altNode = nodeIds_.front();
+            break;
+        case VariantSubtype::kDeletion:
+            altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+            break;
+        case VariantSubtype::kSwap:
+            altNode = (refNode == nodeIds_.front()) ? nodeIds_.back() : nodeIds_.front();
+            break;
+        case VariantSubtype::kSMN:
+            if (refNode != nodeIds_.front())
+                throw std::logic_error("Invalid SMN specification");
+            altNode = nodeIds_.back();
+            break;
+        default:
+            std::ostringstream encoding;
+            encoding << variantSubtype_;
+            throw std::logic_error("Invalid small variant subtype: " + encoding.str());
+        }
+
+        refNodeSupport = countReadsSupportingNode(refNode);
+        altNodeSupport = countReadsSupportingNode(altNode);
+
+        const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
+
+        SmallVariantGenotyper smallVariantGenotyper(haplotypeDepth, expectedAlleleCount_);
+        genotype = smallVariantGenotyper.genotype(refNodeSupport, altNodeSupport);
+
+        refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);
+        altAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, altNodeSupport, refNodeSupport);
+
+        GraphVariantAlignmentStats alignmentStats = alignmentStatsCalculator_.getStats(stats.meanReadLength());
+        if (alignmentStats.rightBreakpointCoverage() < genotyperParams_.minBreakpointCoverage
+            || alignmentStats.leftBreakpointCoverage() < genotyperParams_.minBreakpointCoverage)
+        {
+            genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
+        }
     }
 
-    const int refNodeSupport = countReadsSupportingNode(refNode);
-    const int altNodeSupport = countReadsSupportingNode(altNode);
-
-    const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
-
-    SmallVariantGenotyper smallVariantGenotyper(haplotypeDepth, expectedAlleleCount_);
-    auto genotype = smallVariantGenotyper.genotype(refNodeSupport, altNodeSupport);
-
-    auto refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);
-    auto altAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, altNodeSupport, refNodeSupport);
-
-    return std::unique_ptr<VariantFindings>(
-        new SmallVariantFindings(refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
+    return std::unique_ptr<VariantFindings>(new SmallVariantFindings(
+        refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, expectedAlleleCount_, genotype,
+        genotypeFilter));
 }
 
 }

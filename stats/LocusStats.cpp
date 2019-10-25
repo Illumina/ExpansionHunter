@@ -27,8 +27,6 @@
 namespace ehunter
 {
 
-using boost::optional;
-
 bool LocusStats::operator==(const LocusStats& other) const { return meanReadLength_ == other.meanReadLength_; }
 
 std::ostream& operator<<(std::ostream& out, const LocusStats& stats)
@@ -56,13 +54,13 @@ void LocusStatsCalculator::inspect(const graphtools::GraphAlignment& alignment)
     }
 }
 
-optional<LocusStats> LocusStatsCalculator::estimate() const
+LocusStats LocusStatsCalculator::estimate() const
 {
     const int readCount = boost::accumulators::count(readLengthAccumulator_);
 
     if (readCount == 0)
     {
-        return optional<LocusStats>();
+        return LocusStats(0, 0.0);
     }
 
     const int meanReadLength = boost::accumulators::mean(readLengthAccumulator_);

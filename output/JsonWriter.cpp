@@ -73,11 +73,8 @@ void JsonWriter::write(std::ostream& out)
         locusRecord["LocusId"] = locusId;
         locusRecord["AlleleCount"] = static_cast<int>(locusSpec.expectedAlleleCount());
 
-        if (locusFindings.optionalStats)
-        {
-            locusRecord["Coverage"] = locusFindings.optionalStats->depth();
-            locusRecord["ReadLength"] = locusFindings.optionalStats->meanReadLength();
-        }
+        locusRecord["Coverage"] = locusFindings.stats.depth();
+        locusRecord["ReadLength"] = locusFindings.stats.meanReadLength();
 
         Json variantRecords;
         for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)

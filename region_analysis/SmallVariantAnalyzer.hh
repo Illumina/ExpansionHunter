@@ -26,6 +26,7 @@
 #include "thirdparty/spdlog/spdlog.h"
 
 #include "classification/ClassifierOfAlignmentsToVariant.hh"
+#include "filtering/GraphVariantAlignmentStats.hh"
 #include "genotyping/AlleleChecker.hh"
 #include "genotyping/SmallVariantGenotyper.hh"
 #include "region_analysis/VariantAnalyzer.hh"
@@ -40,11 +41,12 @@ public:
     SmallVariantAnalyzer(
         std::string variantId, VariantSubtype variantSubtype, AlleleCount expectedAlleleCount,
         const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds,
-        boost::optional<graphtools::NodeId> optionalRefNode, const GenotyperParameters& params)
-        : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, std::move(nodeIds))
+        boost::optional<graphtools::NodeId> optionalRefNode, GenotyperParameters params)
+        : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, std::move(nodeIds), params)
         , variantSubtype_(variantSubtype)
         , optionalRefNode_(optionalRefNode)
         , alignmentClassifier_(nodeIds_)
+        , alignmentStatsCalculator_(nodeIds_)
         , allelePresenceChecker_(params.errorRate, params.likelihoodRatioThreshold)
         , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
@@ -67,6 +69,7 @@ protected:
     boost::optional<graphtools::NodeId> optionalRefNode_;
 
     ClassifierOfAlignmentsToVariant alignmentClassifier_;
+    GraphVariantAlignmentStatsCalculator alignmentStatsCalculator_;
     AlleleChecker allelePresenceChecker_;
 
     std::shared_ptr<spdlog::logger> console_;

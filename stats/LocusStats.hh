@@ -27,7 +27,6 @@
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
-#include <boost/optional.hpp>
 
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
@@ -66,7 +65,7 @@ public:
 
     void inspect(const graphtools::GraphAlignment& alignment);
 
-    boost::optional<LocusStats> estimate() const;
+    LocusStats estimate() const;
 
 private:
     using AccumulatorStats

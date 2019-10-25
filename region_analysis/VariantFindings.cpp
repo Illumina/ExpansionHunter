@@ -26,6 +26,16 @@ using std::string;
 namespace ehunter
 {
 
+GenotypeFilter operator|(GenotypeFilter left, GenotypeFilter right)
+{
+    return static_cast<GenotypeFilter>(static_cast<unsigned>(left) | static_cast<unsigned>(right));
+}
+
+GenotypeFilter operator&(GenotypeFilter left, GenotypeFilter right)
+{
+    return static_cast<GenotypeFilter>(static_cast<unsigned>(left) & static_cast<unsigned>(right));
+}
+
 std::ostream& operator<<(std::ostream& out, const RepeatFindings& repeatFindings)
 {
     out << "Genotype: ";

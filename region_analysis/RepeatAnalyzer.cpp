@@ -88,6 +88,7 @@ void RepeatAnalyzer::processMates(
     {
         console_->trace(
             "{} is {} for variant {}", read.readId(), readAlignmentStats.canonicalAlignmentType(), variantId_);
+        alignmentStatsCalculator_.inspect(readAlignment);
         summarizeAlignmentsToReadCounts(readAlignmentStats);
     }
     else
@@ -101,6 +102,7 @@ void RepeatAnalyzer::processMates(
     {
         console_->trace(
             "{} is {} for variant {}", mate.readId(), mateAlignmentStats.canonicalAlignmentType(), variantId_);
+        alignmentStatsCalculator_.inspect(mateAlignment);
         summarizeAlignmentsToReadCounts(mateAlignmentStats);
     }
     else
@@ -164,28 +166,46 @@ static vector<int32_t> generateCandidateAlleleSizes(
 
 unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats) const
 {
+    optional<RepeatGenotype> repeatGenotype = boost::none;
+    auto genotypeFilter = GenotypeFilter();
+    CountTable spanningTable = countsOfSpanningReads_;
+    CountTable flankingTable = countsOfFlankingReads_;
+    CountTable inrepeatTable = countsOfInrepeatReads_;
 
-    const int32_t repeatUnitLength = repeatUnit_.length();
-    const double propCorrectMolecules = 0.97;
-    const int maxNumUnitsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(repeatUnitLength));
+    if (stats.meanReadLength() == 0 || stats.depth() < genotyperParams_.minLocusCoverage)
+    {
+        genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
+    }
+    else
+    {
+        const int32_t repeatUnitLength = repeatUnit_.length();
+        const double propCorrectMolecules = 0.97;
+        const int maxNumUnitsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(repeatUnitLength));
+        spanningTable = collapseTopElements(spanningTable, maxNumUnitsInRead);
+        flankingTable = collapseTopElements(flankingTable, maxNumUnitsInRead);
+        inrepeatTable = collapseTopElements(inrepeatTable, maxNumUnitsInRead);
 
-    auto truncatedSpanningTable = collapseTopElements(countsOfSpanningReads_, maxNumUnitsInRead);
-    auto truncatedFlankingTable = collapseTopElements(countsOfFlankingReads_, maxNumUnitsInRead);
-    auto truncatedInrepeatTable = collapseTopElements(countsOfInrepeatReads_, maxNumUnitsInRead);
+        const vector<int32_t> candidateAlleleSizes
+            = generateCandidateAlleleSizes(spanningTable, flankingTable, inrepeatTable);
 
-    const vector<int32_t> candidateAlleleSizes
-        = generateCandidateAlleleSizes(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable);
+        const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
 
-    const double haplotypeDepth = expectedAlleleCount_ == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
+        RepeatGenotyper repeatGenotyper(
+            haplotypeDepth, expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
+            spanningTable, flankingTable, inrepeatTable, countOfInrepeatReadPairs_);
 
-    RepeatGenotyper repeatGenotyper(
-        haplotypeDepth, expectedAlleleCount_, repeatUnitLength, maxNumUnitsInRead, propCorrectMolecules,
-        truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, countOfInrepeatReadPairs_);
+        repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
 
-    optional<RepeatGenotype> repeatGenotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
+        GraphVariantAlignmentStats alignmentStats = alignmentStatsCalculator_.getStats(stats.meanReadLength());
+        if (alignmentStats.rightBreakpointCoverage() < genotyperParams_.minBreakpointCoverage
+            || alignmentStats.leftBreakpointCoverage() < genotyperParams_.minBreakpointCoverage)
+        {
+            genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
+        }
+    }
 
-    unique_ptr<VariantFindings> variantFindingsPtr(
-        new RepeatFindings(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, repeatGenotype));
+    unique_ptr<VariantFindings> variantFindingsPtr(new RepeatFindings(
+        spanningTable, flankingTable, inrepeatTable, expectedAlleleCount_, repeatGenotype, genotypeFilter));
     return variantFindingsPtr;
 }
 
