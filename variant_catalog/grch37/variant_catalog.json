@@ -264,5 +264,23 @@
         "LocusId": "TCF4",
         "LocusStructure": "(CAG)*",
         "ReferenceRegion": "18:53253386-53253458"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "NIPA1",
+        "LocusStructure": "(CGC)*",
+        "ReferenceRegion": "15:23086366-23086390"
+    },
+    {
+        "LocusId": "GLS",
+        "LocusStructure": "(GGA)*",
+        "ReferenceRegion": "2:191745599-191745646 ",
+        "VariantType": "Repeat"
+    },
+    {
+        "LocusId": "RFC1",
+        "LocusStructure": "(AARRG)*",
+        "ReferenceRegion": "4:39350044-39350099",
+        "VariantType": "Repeat"
     }
 ]
