@@ -42,11 +42,11 @@ NormalizationRegionAnalyzer::NormalizationRegionAnalyzer(const std::vector<Regio
     linearModel_ = make_shared<LinearModel>(normRegions);
     for (RegionInfo regionInfo : normRegionInfo_)
     {
-        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion>{ regionInfo.region };
+        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion> { regionInfo.region };
         auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
         linearModel_->addFeature(readCounter.get());
         readCountAnalyzers_.push_back(
-            make_shared<ReadCountAnalyzer>(ContigCopyNumber::kTwoInFemaleTwoInMale, readCounter));
+            make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
     }
 }
 

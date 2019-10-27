@@ -35,6 +35,6 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr alignmentWriter);
 }

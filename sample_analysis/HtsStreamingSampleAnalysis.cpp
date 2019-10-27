@@ -48,12 +48,12 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
     // TO DO: create depth normalizer from normalization regions
     auto normRegion = normRegionInfo;
-    DepthNormalizer genomeDepthNormalizer = DepthNormalizer(std::vector<RegionDepthInfo>{});
+    DepthNormalizer genomeDepthNormalizer = DepthNormalizer(std::vector<RegionDepthInfo> {});
     CatalogAnalyzer catalogAnalyzer(regionCatalog, genomeDepthNormalizer, std::move(bamletWriter));
     GenomeMask genomeMask(catalogAnalyzer.regionModels());
 

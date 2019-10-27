@@ -33,7 +33,7 @@ namespace ehunter
 {
 
 CatalogAnalyzer::CatalogAnalyzer(
-    const RegionCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter)
+    const LocusCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter)
 {
     WorkflowContext context;
 

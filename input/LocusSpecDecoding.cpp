@@ -108,19 +108,19 @@ addReferenceRegionsForInterruptions(const GraphBlueprint& blueprint, const vecto
     return completedReferenceRegions;
 }
 
-static ContigCopyNumber determineCopyNumber(const string& contig)
+static CopyNumberBySex determineCopyNumber(const string& contig)
 {
     if (contig == "chrY" || contig == "Y")
     {
-        return ContigCopyNumber::kZeroInFemaleOneInMale;
+        return CopyNumberBySex::kZeroInFemaleOneInMale;
     }
 
     if (contig == "chrX" || contig == "X")
     {
-        return ContigCopyNumber::kTwoInFemaleOneInMale;
+        return CopyNumberBySex::kTwoInFemaleOneInMale;
     }
 
-    return ContigCopyNumber::kTwoInFemaleTwoInMale;
+    return CopyNumberBySex::kTwoInFemaleTwoInMale;
 }
 
 static NodeToRegionAssociation associateNodesWithReferenceRegions(
@@ -256,8 +256,6 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
 
         WorkflowContext context;
 
-        LocusType locusType = (LocusType)userDescription.locusType;
-
         vector<GenomicRegion> variantLocations;
         for (const auto& variant : userDescription.variantDescriptionFromUsers)
         {
@@ -305,8 +303,8 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
         }
 
         GraphLocusSpecification locusSpec(
-            userDescription.locusId, locusType, copyNumber, userDescription.locusLocation, targetReadExtractionRegions,
-            locusGraph, referenceRegionsOfGraphNodes, parameters);
+            userDescription.locusId, copyNumber, userDescription.locusLocation, targetReadExtractionRegions, locusGraph,
+            referenceRegionsOfGraphNodes, parameters);
         locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
         int variantIndex = 0;
@@ -348,7 +346,6 @@ decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, con
     {
         const auto& contigName = reference.contigInfo().getContigName(userDescription.locusLocation.contigIndex());
         auto copyNumber = determineCopyNumber(contigName);
-        LocusType locusType = (LocusType)userDescription.locusType;
         CnvLocusSubtype locusSubtype = CnvLocusSubtype::kNonoverlapping;
 
         GenotyperParameters parameters;
@@ -374,7 +371,7 @@ decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, con
         }
 
         CnvLocusSpecification locusSpec(
-            userDescription.locusId, locusType, locusSubtype, copyNumber, userDescription.locusLocation, parameters);
+            userDescription.locusId, locusSubtype, copyNumber, userDescription.locusLocation, parameters);
 
         for (const auto& variant : userDescription.variantDescriptionFromUsers)
         {

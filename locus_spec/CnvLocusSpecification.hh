@@ -48,9 +48,9 @@ class CnvLocusSpecification : public LocusSpecification
 {
 public:
     CnvLocusSpecification(
-        RegionId locusId, LocusType locusType, CnvLocusSubtype locusSubtype, ContigCopyNumber contigCopyNumber,
+        std::string locusId, CnvLocusSubtype locusSubtype, CopyNumberBySex contigCopyNumber,
         GenomicRegion locusLocation, GenotyperParameters genotyperParams)
-        : LocusSpecification(locusId, locusType, contigCopyNumber, locusLocation, genotyperParams)
+        : LocusSpecification(locusId, contigCopyNumber, locusLocation, genotyperParams)
         , locusSubtype_(std::move(locusSubtype))
     {
     }

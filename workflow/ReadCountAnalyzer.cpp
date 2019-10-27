@@ -29,22 +29,22 @@ using std::vector;
 namespace ehunter
 {
 
-static AlleleCount determineExpectedAlleleCount(ContigCopyNumber copyNumber, Sex sex)
+static AlleleCount determineExpectedAlleleCount(CopyNumberBySex copyNumber, Sex sex)
 {
     switch (copyNumber)
     {
-    case ContigCopyNumber::kTwoInFemaleTwoInMale:
+    case CopyNumberBySex::kTwoInFemaleTwoInMale:
         return AlleleCount::kTwo;
-    case ContigCopyNumber::kTwoInFemaleOneInMale:
+    case CopyNumberBySex::kTwoInFemaleOneInMale:
         return (sex == Sex::kFemale ? AlleleCount::kTwo : AlleleCount::kOne);
-    case ContigCopyNumber::kZeroInFemaleOneInMale:
+    case CopyNumberBySex::kZeroInFemaleOneInMale:
         return (sex == Sex::kFemale ? AlleleCount::kZero : AlleleCount::kOne);
     }
 
     return AlleleCount::kTwo; // To remove spurious control reaches end of non-void function warning
 }
 
-ReadCountAnalyzer::ReadCountAnalyzer(ContigCopyNumber contigCopyNumber, std::shared_ptr<ReadCounter> counter)
+ReadCountAnalyzer::ReadCountAnalyzer(CopyNumberBySex contigCopyNumber, std::shared_ptr<ReadCounter> counter)
     : contigCopyNumber_(contigCopyNumber)
     , counter_(std::move(counter))
 {

@@ -36,9 +36,9 @@
 #include "graphio/AlignmentWriter.hh"
 
 #include "common/ReferenceContigInfo.hh"
-#include "reads/Read.hh"
 #include "locus_spec/GraphLocusSpecification.hh"
 #include "locus_spec/LocusSpecification.hh"
+#include "reads/Read.hh"
 
 namespace ehunter
 {
@@ -47,7 +47,7 @@ class BamletWriter : public graphtools::AlignmentWriter
 {
 public:
     BamletWriter(
-        const std::string& bamletPath, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog);
+        const std::string& bamletPath, const ReferenceContigInfo& contigInfo, const LocusCatalog& regionCatalog);
     ~BamletWriter() override = default;
 
     void write(

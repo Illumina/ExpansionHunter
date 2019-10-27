@@ -169,7 +169,7 @@ static ReadPairs collectCandidateReads(
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
     std::vector<RegionDepthInfo> normDepthInfo;
@@ -177,9 +177,9 @@ SampleFindings htsSeekingSampleAnalysis(
     {
         GenomicRegion region = regionInfo.region;
         ReadPairs readPairs = collectCandidateReads(
-            vector<GenomicRegion>{ region }, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+            vector<GenomicRegion> { region }, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
 
-        NormalizationRegionAnalyzer normRegionAnalyzer(std::vector<RegionInfo>{ regionInfo });
+        NormalizationRegionAnalyzer normRegionAnalyzer(std::vector<RegionInfo> { regionInfo });
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -232,7 +232,7 @@ SampleFindings htsSeekingSampleAnalysis(
                 variantLocations.push_back(variant.referenceLocus());
             }
             readPairs = collectCandidateReads(
-                variantLocations, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+                variantLocations, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
         }
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, genomeDepthNormalizer, bamletWriter);

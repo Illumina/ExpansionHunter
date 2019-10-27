@@ -44,5 +44,5 @@ struct RegionInfo
 
 std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPath, const Reference& reference);
 
-RegionCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
+LocusCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
 }

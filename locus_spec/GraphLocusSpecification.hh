@@ -50,10 +50,10 @@ class GraphLocusSpecification : public LocusSpecification
 {
 public:
     GraphLocusSpecification(
-        RegionId locusId, LocusType locusType, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
+        std::string locusId, CopyNumberBySex contigCopyNumber, GenomicRegion locusLocation,
         std::vector<GenomicRegion> targetReadExtractionRegions, graphtools::Graph regionGraph,
         NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
-        : LocusSpecification(locusId, locusType, contigCopyNumber, locusLocation, genotyperParams)
+        : LocusSpecification(locusId, contigCopyNumber, locusLocation, genotyperParams)
         , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
         , regionGraph_(std::move(regionGraph))
         , referenceRegions_(std::move(referenceRegions))

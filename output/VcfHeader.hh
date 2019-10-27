@@ -84,7 +84,7 @@ private:
     FieldDescriptionCatalog fieldDescriptions_;
 };
 
-void outputVcfHeader(const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings, std::ostream& out);
+void outputVcfHeader(const LocusCatalog& regionCatalog, const SampleFindings& sampleFindings, std::ostream& out);
 
 std::ostream& operator<<(std::ostream& out, FieldType fieldType);
 std::ostream& operator<<(std::ostream& out, const FieldDescription& fieldDescription);

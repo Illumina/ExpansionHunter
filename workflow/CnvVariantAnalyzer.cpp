@@ -31,7 +31,7 @@ using std::vector;
 namespace ehunter
 {
 CnvVariantAnalyzer::CnvVariantAnalyzer(
-    std::string variantId, double regionLength, VariantSubtype variantSubtype, ContigCopyNumber contigCopyNumber,
+    std::string variantId, double regionLength, VariantSubtype variantSubtype, CopyNumberBySex contigCopyNumber,
     CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> counter, DepthNormalizer genomeDepthNormalizer)
     : variantId_(variantId)
     , regionLength_(regionLength)

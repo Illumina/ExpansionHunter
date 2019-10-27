@@ -46,17 +46,14 @@ using std::shared_ptr;
 namespace ehunter
 {
 
-using RegionId = std::string;
-
 class LocusSpecification
 {
 public:
     LocusSpecification(
-        RegionId locusId, LocusType locusType, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
+        std::string locusId, CopyNumberBySex copyNumberBySex, GenomicRegion locusLocation,
         GenotyperParameters genotyperParams)
         : locusId_(std::move(locusId))
-        , locusType_(std::move(locusType))
-        , contigCopyNumber_(contigCopyNumber)
+        , copyNumberBySex_(copyNumberBySex)
         , locusLocation_(std::move(locusLocation))
         , parameters_(std::move(genotyperParams))
     {
@@ -64,9 +61,8 @@ public:
 
     virtual ~LocusSpecification() = default;
 
-    const RegionId& locusId() const { return locusId_; }
-    const LocusType& locusType() const { return locusType_; }
-    ContigCopyNumber contigCopyNumber() const { return contigCopyNumber_; }
+    const std::string& locusId() const { return locusId_; }
+    CopyNumberBySex copyNumberBySex() const { return copyNumberBySex_; }
     const GenomicRegion& locusLocation() const { return locusLocation_; }
     const GenotyperParameters& genotyperParameters() const { return parameters_; }
     const std::vector<VariantSpecification>& variantSpecs() const { return variantSpecs_; }
@@ -75,15 +71,10 @@ public:
 
 protected:
     std::string locusId_;
-    LocusType locusType_;
-    ContigCopyNumber contigCopyNumber_;
+    CopyNumberBySex copyNumberBySex_;
     GenomicRegion locusLocation_;
     GenotyperParameters parameters_;
     std::vector<VariantSpecification> variantSpecs_;
 };
-using RegionCatalog = std::map<RegionId, shared_ptr<LocusSpecification>>;
+using LocusCatalog = std::map<std::string, shared_ptr<LocusSpecification>>;
 }
-
-
-
-

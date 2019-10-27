@@ -82,7 +82,7 @@ class JsonWriter
 {
 public:
     JsonWriter(
-        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
+        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const LocusCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     void write(std::ostream& out);
@@ -90,7 +90,7 @@ public:
 private:
     const SampleParameters& sampleParams_;
     const ReferenceContigInfo& contigInfo_;
-    const RegionCatalog& regionCatalog_;
+    const LocusCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 

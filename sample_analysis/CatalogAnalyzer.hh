@@ -40,7 +40,7 @@ class CatalogAnalyzer
 {
 public:
     CatalogAnalyzer(
-        const RegionCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter);
+        const LocusCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter);
     void analyze(const MappedRead& read, const MappedRead& mate);
     void analyze(const MappedRead& read);
     void collectResults(Sex sampleSex, SampleFindings& sampleFindings);

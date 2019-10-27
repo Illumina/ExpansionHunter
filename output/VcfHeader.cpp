@@ -149,7 +149,7 @@ FieldDescription::FieldDescription(
 {
 }
 
-void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sampleFindings, ostream& out)
+void outputVcfHeader(const LocusCatalog& locusCatalog, const SampleFindings& sampleFindings, ostream& out)
 {
     out << "##fileformat=VCFv4.1\n";
 

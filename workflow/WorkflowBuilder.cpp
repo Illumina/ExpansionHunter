@@ -49,7 +49,7 @@ namespace ehunter
 {
 
 static shared_ptr<ReadCountAnalyzer>
-createStatsAnalyzer(ContigCopyNumber copyNumber, const GenomicRegion& locusLocation, int flankLength)
+createStatsAnalyzer(CopyNumberBySex copyNumber, const GenomicRegion& locusLocation, int flankLength)
 {
     const int64_t leftFlankStart = locusLocation.start() - flankLength;
     const int64_t leftFlankEnd = locusLocation.start();
@@ -105,7 +105,7 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
     auto locus = make_shared<GraphLocusAnalyzer>(minLocusCoverage, locusSpec.locusId());
     auto statsAnalyzer
-        = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
+        = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusLocation, heuristics.regionExtensionLength());
     locus->setStats(statsAnalyzer);
 
     auto graphModel = make_shared<GraphModel>(
@@ -141,7 +141,7 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(
     const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
     auto locus = make_shared<CnvLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
     auto statsAnalyzer
-        = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
+        = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusLocation, heuristics.regionExtensionLength());
     locus->setStats(statsAnalyzer);
 
     for (const auto& variantSpec : locusSpec.variantSpecs())
@@ -153,12 +153,12 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(
             assert(variantSpec.parameters());
             CnvGenotyperParameters cnvParameters = *variantSpec.parameters();
 
-            vector<GenomicRegion> variantRegion{ variantSpec.referenceLocus() };
+            vector<GenomicRegion> variantRegion { variantSpec.referenceLocus() };
             auto linearModel = make_shared<LinearModel>(variantRegion);
             auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
             linearModel->addFeature(readCounter.get());
             locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
-                variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.contigCopyNumber(),
+                variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.copyNumberBySex(),
                 cnvParameters, readCounter, genomeDepthNormalizer));
         }
         else

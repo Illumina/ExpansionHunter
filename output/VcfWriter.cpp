@@ -60,8 +60,7 @@ std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter)
 }
 
 VcfWriter::VcfWriter(
-    std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
-    const SampleFindings& sampleFindings)
+    std::string sampleId, Reference& reference, const LocusCatalog& regionCatalog, const SampleFindings& sampleFindings)
     : sampleId_(std::move(sampleId))
     , reference_(reference)
     , regionCatalog_(regionCatalog)
@@ -104,7 +103,7 @@ void VcfWriter::writeBody(ostream& out)
     }
 }
 
-const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
+std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
 {
     using VariantTuple = std::tuple<int32_t, int64_t, int64_t, LocusIdAndVariantId>;
     std::vector<VariantTuple> tuples;
@@ -113,19 +112,16 @@ const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
     {
         const string& locusId = locusIdAndFindings.first;
         const LocusSpecification& locusSpec = *(regionCatalog_.at(locusId));
-        // TO DO: add CNVs
-        if (locusSpec.locusType() == LocusType::kGraph)
-        {
-            const LocusFindings& locusFindings = locusIdAndFindings.second;
 
-            for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
-            {
-                const string& variantId = variantIdAndFindings.first;
-                const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
-                tuples.emplace_back(
-                    variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
-                    variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
-            }
+        const LocusFindings& locusFindings = locusIdAndFindings.second;
+
+        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+        {
+            const string& variantId = variantIdAndFindings.first;
+            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+            tuples.emplace_back(
+                variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
+                variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
         }
     }
 
@@ -400,7 +396,7 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
 
-    vector<string> line{
+    vector<string> line {
         contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
         sampleValue
     };

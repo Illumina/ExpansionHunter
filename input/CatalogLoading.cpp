@@ -359,7 +359,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
         errorRate, likelihoodRatioThreshold, minLocusCoverage);
 }
 
-RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
+LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -374,7 +374,7 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
 
     WorkflowContext context;
 
-    RegionCatalog catalog;
+    LocusCatalog catalog;
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());

@@ -66,7 +66,7 @@ generateMapping(const ReferenceContigInfo& contigInfo, const GraphLocusSpecifica
 #define bam1_seq_seti(s, i, c) ((s)[(i) >> 1] = ((s)[(i) >> 1] & 0xf << (((i)&1) << 2)) | (c) << ((~(i)&1) << 2))
 
 BamletWriter::BamletWriter(
-    const string& bamletPath, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog)
+    const string& bamletPath, const ReferenceContigInfo& contigInfo, const LocusCatalog& regionCatalog)
     : filePtr_(hts_open(bamletPath.c_str(), "wb"), hts_close)
     , bamHeader_(bam_hdr_init(), bam_hdr_destroy)
     , contigInfo_(contigInfo)
@@ -80,7 +80,7 @@ BamletWriter::BamletWriter(
         {
             graphReferenceMappings_.emplace(std::make_pair(locusId, generateMapping(contigInfo, *graphLocusSpec)));
         }
-        }
+    }
 
     writeHeader();
 }

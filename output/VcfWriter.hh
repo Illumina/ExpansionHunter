@@ -93,7 +93,7 @@ class VcfWriter
 {
 public:
     VcfWriter(
-        std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
+        std::string sampleId, Reference& reference, const LocusCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     friend std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
@@ -102,11 +102,11 @@ private:
     void writeHeader(std::ostream& out);
     void writeBody(std::ostream& out);
     using LocusIdAndVariantId = std::pair<std::string, std::string>;
-    const std::vector<LocusIdAndVariantId> getSortedIdPairs();
+    std::vector<LocusIdAndVariantId> getSortedIdPairs();
 
     std::string sampleId_;
     Reference& reference_;
-    const RegionCatalog& regionCatalog_;
+    const LocusCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 
