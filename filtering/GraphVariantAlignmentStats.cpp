@@ -89,7 +89,7 @@ GraphVariantAlignmentStatsCalculator::Flank
 GraphVariantAlignmentStatsCalculator::classify(const GraphAlignment& alignment) const
 {
     int leftFlankSpan = 0;
-    int strSpan = 0;
+    int variantSpan = 0;
     int rightFlankSpan = 0;
 
     for (int nodeIndex = 0; nodeIndex != static_cast<int>(alignment.path().numNodes()); ++nodeIndex)
@@ -104,7 +104,7 @@ GraphVariantAlignmentStatsCalculator::classify(const GraphAlignment& alignment) 
         }
         else if ((firstVariantNode_ <= node) && (node <= lastVariantNode_))
         {
-            strSpan += nodeSpan;
+            variantSpan += nodeSpan;
         }
         else if (lastVariantNode_ < node)
         {
@@ -112,9 +112,9 @@ GraphVariantAlignmentStatsCalculator::classify(const GraphAlignment& alignment) 
         }
     }
 
-    const bool supportsLeftBreakpoint = (leftFlankSpan >= minMatch_) && (strSpan + rightFlankSpan >= minMatch_);
+    const bool supportsLeftBreakpoint = (leftFlankSpan >= minMatch_) && (variantSpan + rightFlankSpan >= minMatch_);
 
-    const bool supportsRightBreakpoint = (strSpan + leftFlankSpan >= minMatch_) && (rightFlankSpan >= minMatch_);
+    const bool supportsRightBreakpoint = (variantSpan + leftFlankSpan >= minMatch_) && (rightFlankSpan >= minMatch_);
 
     if (supportsLeftBreakpoint && supportsRightBreakpoint)
     {
