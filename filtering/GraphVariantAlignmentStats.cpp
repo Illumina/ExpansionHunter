@@ -88,35 +88,33 @@ void GraphVariantAlignmentStatsCalculator::inspect(const GraphAlignment& alignme
 GraphVariantAlignmentStatsCalculator::Flank
 GraphVariantAlignmentStatsCalculator::classify(const GraphAlignment& alignment) const
 {
-    int numLeftFlankMatches = 0;
-    int numStrMatches = 0;
-    int numRightFlankMatches = 0;
+    int leftFlankSpan = 0;
+    int strSpan = 0;
+    int rightFlankSpan = 0;
 
     for (int nodeIndex = 0; nodeIndex != static_cast<int>(alignment.path().numNodes()); ++nodeIndex)
     {
         const auto node = alignment.path().getNodeIdByIndex(nodeIndex);
         const auto& alignmentToNode = alignment.alignments().at(nodeIndex);
-        int numMatches = alignmentToNode.numMatched();
+        int nodeSpan = alignmentToNode.referenceLength();
 
         if (node < firstVariantNode_)
         {
-            numLeftFlankMatches += numMatches;
+            leftFlankSpan += nodeSpan;
         }
         else if ((firstVariantNode_ <= node) && (node <= lastVariantNode_))
         {
-            numStrMatches += numMatches;
+            strSpan += nodeSpan;
         }
         else if (lastVariantNode_ < node)
         {
-            numRightFlankMatches += numMatches;
+            rightFlankSpan += nodeSpan;
         }
     }
 
-    const bool supportsLeftBreakpoint
-        = (numLeftFlankMatches >= minMatch_) && (numStrMatches + numRightFlankMatches >= minMatch_);
+    const bool supportsLeftBreakpoint = (leftFlankSpan >= minMatch_) && (strSpan + rightFlankSpan >= minMatch_);
 
-    const bool supportsRightBreakpoint
-        = (numStrMatches + numLeftFlankMatches >= minMatch_) && (numRightFlankMatches >= minMatch_);
+    const bool supportsRightBreakpoint = (strSpan + leftFlankSpan >= minMatch_) && (rightFlankSpan >= minMatch_);
 
     if (supportsLeftBreakpoint && supportsRightBreakpoint)
     {
