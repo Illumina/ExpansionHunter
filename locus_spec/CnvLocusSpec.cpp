@@ -3,8 +3,8 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Mitch Bekritsky <mbekritsky@illumina.com>, Richard Shaw
+// Author: Xiao Chen <xchen2@illumina.com>,
+//         Egor Dolzhenko <edolzhenko@illumina.com>
 // Concept: Michael Eberle <meberle@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,7 +21,7 @@
 //
 //
 
-#include "locus_spec/GraphLocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -53,12 +53,26 @@ namespace spd = spdlog;
 namespace ehunter
 {
 
-void GraphLocusSpecification::addVariantSpecification(
-    std::string id, VariantClassification classification, GenomicRegion referenceLocus, vector<NodeId> nodes,
-    optional<NodeId> refNode)
+vector<GenomicRegion> CnvLocusSpec::regionsWithReads() const
 {
-    boost::optional<CnvGenotyperParameters> parameters;
-    variantSpecs_.emplace_back(
-        std::move(id), classification, std::move(referenceLocus), std::move(nodes), refNode, parameters);
+    vector<GenomicRegion> regions;
+    for (const auto& variantSpec : variantSpecs_)
+    {
+        regions.push_back(variantSpec.referenceLocus());
+    }
+
+    return regions;
 }
+
+void CnvLocusSpec::addVariantSpecification(
+    std::string id, VariantClassification classification, GenomicRegion referenceLocus,
+    boost::optional<CnvGenotyperParameters> paramters)
+{
+    std::vector<graphtools::NodeId> emptyNodes;
+    optional<NodeId> optionalReferenceNode;
+    variantSpecs_.emplace_back(
+        std::move(id), classification, std::move(referenceLocus), std::move(emptyNodes), optionalReferenceNode,
+        paramters);
+}
+
 }

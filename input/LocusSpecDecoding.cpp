@@ -247,7 +247,20 @@ static optional<NodeId> determineReferenceNode(
     return optionalReferenceNode;
 }
 
-GraphLocusSpecification
+static vector<GenomicRegion> computeStatsRegions(const GenomicRegion& locusLocation, int flankLength)
+{
+    const int64_t leftFlankStart = locusLocation.start() - flankLength;
+    const int64_t leftFlankEnd = locusLocation.start();
+    GenomicRegion leftFlank(locusLocation.contigIndex(), leftFlankStart, leftFlankEnd);
+
+    const int64_t rightFlankStart = locusLocation.end();
+    const int64_t rightFlankEnd = locusLocation.end() + flankLength;
+    GenomicRegion rightFlank(locusLocation.contigIndex(), rightFlankStart, rightFlankEnd);
+
+    return { leftFlank, rightFlank };
+}
+
+GraphLocusSpec
 decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
 {
     try
@@ -267,8 +280,9 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
         auto locusStructure = userDescription.locusStructure;
         auto completeLocusStructure = extendLocusStructure(reference, referenceRegionsWithFlanks, *locusStructure);
 
+        const auto& locusId = userDescription.locusId;
         GraphBlueprint blueprint = decodeFeaturesFromRegex(completeLocusStructure);
-        graphtools::Graph locusGraph = makeRegionGraph(blueprint, userDescription.locusId);
+        graphtools::Graph locusGraph = makeRegionGraph(blueprint, locusId);
         auto completeReferenceRegions = addReferenceRegionsForInterruptions(blueprint, referenceRegionsWithFlanks);
 
         vector<GenomicRegion> targetReadExtractionRegions;
@@ -302,10 +316,14 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
             parameters.minLocusCoverage = *userDescription.minLocusCoverage;
         }
 
-        GraphLocusSpecification locusSpec(
-            userDescription.locusId, copyNumber, userDescription.locusLocation, targetReadExtractionRegions, locusGraph,
-            referenceRegionsOfGraphNodes, parameters);
-        locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
+        GraphLocusReferenceRegions referenceRegions;
+        referenceRegions.offtargetRegionsWithReads = userDescription.offtargetRegions;
+        referenceRegions.regionsWithReads = targetReadExtractionRegions;
+        referenceRegions.statsRegions = computeStatsRegions(userDescription.locusLocation, kExtensionLength);
+
+        ReferenceGraph referenceGraph(locusGraph, referenceRegionsOfGraphNodes);
+
+        GraphLocusSpec locusSpec(locusId, copyNumber, referenceRegions, referenceGraph, parameters);
 
         int variantIndex = 0;
         for (const auto& feature : blueprint)
@@ -339,14 +357,13 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
     }
 }
 
-CnvLocusSpecification
-decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
+CnvLocusSpec decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
 {
     try
     {
         const auto& contigName = reference.contigInfo().getContigName(userDescription.locusLocation.contigIndex());
         auto copyNumber = determineCopyNumber(contigName);
-        CnvLocusSubtype locusSubtype = CnvLocusSubtype::kNonoverlapping;
+        CnvType cnvType = CnvType::kNonoverlapping;
 
         GenotyperParameters parameters;
         if (userDescription.errorRate)
@@ -366,12 +383,11 @@ decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, con
         {
             if (variant.variantSubtype == VariantSubtypeFromUser::kBaseline && !(*variant.expectedNormalCN))
             {
-                locusSubtype = CnvLocusSubtype::kOverlapping;
+                cnvType = CnvType::kOverlapping;
             }
         }
 
-        CnvLocusSpecification locusSpec(
-            userDescription.locusId, locusSubtype, copyNumber, userDescription.locusLocation, parameters);
+        CnvLocusSpec locusSpec(userDescription.locusId, cnvType, copyNumber, parameters);
 
         for (const auto& variant : userDescription.variantDescriptionFromUsers)
         {

@@ -25,8 +25,8 @@
 #include <map>
 #include <string>
 
-#include "locus_spec/GraphLocusSpecification.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -58,7 +58,7 @@ using FieldDescriptionCatalog = std::map<FieldDescriptionIdentifier, FieldDescri
 class FieldDescriptionWriter : public VariantFindingsVisitor
 {
 public:
-    FieldDescriptionWriter(const GraphLocusSpecification& locusSpec, const VariantSpecification& variantSpec)
+    FieldDescriptionWriter(const GraphLocusSpec& locusSpec, const VariantSpec& variantSpec)
         : locusSpec_(locusSpec)
         , variantSpec_(variantSpec)
     {
@@ -79,8 +79,8 @@ public:
 private:
     void addCommonFields();
 
-    const GraphLocusSpecification& locusSpec_;
-    const VariantSpecification& variantSpec_;
+    const GraphLocusSpec& locusSpec_;
+    const VariantSpec& variantSpec_;
     FieldDescriptionCatalog fieldDescriptions_;
 };
 

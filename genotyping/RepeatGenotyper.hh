@@ -34,7 +34,7 @@
 #include "common/CountTable.hh"
 #include "common/Parameters.hh"
 #include "genotyping/RepeatGenotype.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 
 namespace ehunter
 {

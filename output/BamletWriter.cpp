@@ -45,11 +45,11 @@ namespace ehunter
 {
 
 static GraphReferenceMapping
-generateMapping(const ReferenceContigInfo& contigInfo, const GraphLocusSpecification& locusSpec)
+generateMapping(const ReferenceContigInfo& contigInfo, const GraphLocusSpec& locusSpec)
 {
-    GraphReferenceMapping mapping(&locusSpec.regionGraph());
+    GraphReferenceMapping mapping(&locusSpec.graph());
 
-    for (const auto& nodeAndRegion : locusSpec.referenceProjectionOfNodes())
+    for (const auto& nodeAndRegion : locusSpec.nodeLocations())
     {
         auto nodeId = nodeAndRegion.first;
         const auto& region = nodeAndRegion.second;
@@ -75,7 +75,7 @@ BamletWriter::BamletWriter(
     {
         const auto& locusId = locusIdAndSpec.first;
         const auto& locusSpec = locusIdAndSpec.second;
-        shared_ptr<GraphLocusSpecification> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
+        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
         if (graphLocusSpec)
         {
             graphReferenceMappings_.emplace(std::make_pair(locusId, generateMapping(contigInfo, *graphLocusSpec)));

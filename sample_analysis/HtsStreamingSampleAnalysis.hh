@@ -27,7 +27,7 @@
 
 #include "common/Parameters.hh"
 #include "input/CatalogLoading.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "output/BamletWriter.hh"
 #include "workflow/LocusFindings.hh"
 

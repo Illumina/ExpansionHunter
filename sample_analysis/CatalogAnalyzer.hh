@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "DepthNormalization.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "output/BamletWriter.hh"
 #include "reads/Read.hh"
 #include "sample_analysis/ModelFinder.hh"

@@ -26,7 +26,7 @@
 #include "graphcore/Graph.hh"
 
 #include "input/GraphBlueprint.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 
 using graphtools::Graph;
 using std::string;

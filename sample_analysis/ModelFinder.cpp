@@ -24,7 +24,7 @@
 
 #include <memory>
 
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/RegionModel.hh"
 
 using boost::optional;

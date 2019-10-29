@@ -42,19 +42,30 @@ struct VariantFindingsVisitor
     virtual void visit(CnvVariantFindings& cnvVariantFindings) = 0;
 };
 
-struct VariantFindings
+class VariantFindings
 {
+public:
+    VariantFindings(std::string variantId)
+        : variantId_(std::move(variantId))
+    {
+    }
+
     virtual ~VariantFindings() = default;
     virtual void accept(VariantFindingsVisitor& visitor) = 0;
+    const std::string& variantId() const { return variantId_; }
+
+protected:
+    std::string variantId_;
 };
 
 class StrFindings : public VariantFindings
 {
 public:
     StrFindings(
-        CountTable countsOfSpanningReads, CountTable countsOfFlankingReads, CountTable countsOfInrepeatReads,
-        boost::optional<RepeatGenotype> optionalGenotype)
-        : countsOfSpanningReads_(std::move(countsOfSpanningReads))
+        std::string variantId, CountTable countsOfSpanningReads, CountTable countsOfFlankingReads,
+        CountTable countsOfInrepeatReads, boost::optional<RepeatGenotype> optionalGenotype)
+        : VariantFindings(std::move(variantId))
+        , countsOfSpanningReads_(std::move(countsOfSpanningReads))
         , countsOfFlankingReads_(std::move(countsOfFlankingReads))
         , countsOfInrepeatReads_(std::move(countsOfInrepeatReads))
         , optionalGenotype_(std::move(optionalGenotype))
@@ -87,9 +98,10 @@ class SmallVariantFindings : public VariantFindings
 {
 public:
     SmallVariantFindings(
-        int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus, AlleleCheckSummary altAlleleStatus,
-        boost::optional<SmallVariantGenotype> optionalGenotype)
-        : numRefReads_(numRefReads)
+        std::string variantId, int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus,
+        AlleleCheckSummary altAlleleStatus, boost::optional<SmallVariantGenotype> optionalGenotype)
+        : VariantFindings(std::move(variantId))
+        , numRefReads_(numRefReads)
         , numAltReads_(numAltReads)
         , refAlleleStatus_(refAlleleStatus)
         , altAlleleStatus_(altAlleleStatus)
@@ -118,8 +130,9 @@ private:
 class CnvVariantFindings : public VariantFindings
 {
 public:
-    CnvVariantFindings(boost::optional<int> copyNumberCall)
-        : copyNumberCall_(copyNumberCall)
+    CnvVariantFindings(std::string variantId, boost::optional<int> copyNumberCall)
+        : VariantFindings(std::move(variantId))
+        , copyNumberCall_(copyNumberCall)
     {
     }
 

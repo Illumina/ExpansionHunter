@@ -29,8 +29,8 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "locus_spec/CnvLocusSpecification.hh"
-#include "locus_spec/GraphLocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
 
 namespace ehunter
 {
@@ -135,9 +135,8 @@ struct LocusDescriptionFromUser
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);
 
-GraphLocusSpecification
+GraphLocusSpec
 decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 
-CnvLocusSpecification
-decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
+CnvLocusSpec decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 }

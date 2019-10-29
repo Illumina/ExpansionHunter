@@ -35,33 +35,39 @@
 #include "graphcore/Graph.hh"
 #include "thirdparty/json/json.hpp"
 
-#include "LocusSpecification.hh"
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
 #include "common/Reference.hh"
-#include "locus_spec/VariantSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
+#include "locus_spec/VariantSpec.hh"
 
 namespace ehunter
 {
 
-class CnvLocusSpecification : public LocusSpecification
+enum class CnvType
+{
+    kOverlapping,
+    kNonoverlapping
+};
+
+class CnvLocusSpec : public LocusSpec
 {
 public:
-    CnvLocusSpecification(
-        std::string locusId, CnvLocusSubtype locusSubtype, CopyNumberBySex contigCopyNumber,
-        GenomicRegion locusLocation, GenotyperParameters genotyperParams)
-        : LocusSpecification(locusId, contigCopyNumber, locusLocation, genotyperParams)
-        , locusSubtype_(std::move(locusSubtype))
+    CnvLocusSpec(
+        std::string locusId, CnvType cnvType, CopyNumberBySex contigCopyNumber, GenotyperParameters genotyperParams)
+        : LocusSpec(locusId, contigCopyNumber, genotyperParams)
+        , cnvType_(cnvType)
     {
     }
-    ~CnvLocusSpecification() override = default;
+    ~CnvLocusSpec() override = default;
 
-    const CnvLocusSubtype& locusSubtype() const { return locusSubtype_; }
+    std::vector<GenomicRegion> regionsWithReads() const;
+    const CnvType& locusSubtype() const { return cnvType_; }
     void addVariantSpecification(
         std::string id, VariantClassification classification, GenomicRegion referenceLocus,
         boost::optional<CnvGenotyperParameters> paramters);
 
 private:
-    CnvLocusSubtype locusSubtype_;
+    CnvType cnvType_;
 };
 }

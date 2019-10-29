@@ -213,19 +213,19 @@ SampleFindings htsSeekingSampleAnalysis(
 
         ReadPairs readPairs;
 
-        shared_ptr<CnvLocusSpecification> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpecification>(locusSpec);
-        shared_ptr<GraphLocusSpecification> graphLocusSpecPtr
-            = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
+        shared_ptr<CnvLocusSpec> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpec>(locusSpec);
+        shared_ptr<GraphLocusSpec> graphLocusSpecPtr
+            = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
         if (graphLocusSpecPtr)
         {
-            GraphLocusSpecification graphLocusSpec = *graphLocusSpecPtr;
+            GraphLocusSpec graphLocusSpec = *graphLocusSpecPtr;
             readPairs = collectCandidateReads(
-                graphLocusSpec.targetReadExtractionRegions(), graphLocusSpec.offtargetReadExtractionRegions(),
-                inputPaths.htsFile(), inputPaths.reference());
+                graphLocusSpec.regionsWithReads(), graphLocusSpec.offtargetRegionsWithReads(), inputPaths.htsFile(),
+                inputPaths.reference());
         }
         else if (cnvLocusSpecPtr)
         {
-            CnvLocusSpecification cnvLocusSpec = *cnvLocusSpecPtr;
+            CnvLocusSpec cnvLocusSpec = *cnvLocusSpecPtr;
             vector<GenomicRegion> variantLocations;
             for (auto variant : cnvLocusSpec.variantSpecs())
             {

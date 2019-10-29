@@ -82,8 +82,8 @@ unique_ptr<VariantFindings> GraphSmallVariantAnalyzer::analyze(const LocusStats&
     auto refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);
     auto altAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, altNodeSupport, refNodeSupport);
 
-    return std::unique_ptr<VariantFindings>(
-        new SmallVariantFindings(refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
+    return std::unique_ptr<VariantFindings>(new SmallVariantFindings(
+        variantId_, refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
 }
 
 vector<shared_ptr<Feature>> GraphSmallVariantAnalyzer::features() { return { smallVariantFeature_ }; }

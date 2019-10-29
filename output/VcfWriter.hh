@@ -29,9 +29,9 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "locus_spec/CnvLocusSpecification.hh"
-#include "locus_spec/GraphLocusSpecification.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -41,8 +41,8 @@ class GraphVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     GraphVariantVcfWriter(
-        Reference& reference, const GraphLocusSpecification& locusSpec, double locusDepth,
-        const VariantSpecification& variantSpec, std::ostream& out)
+        Reference& reference, const GraphLocusSpec& locusSpec, double locusDepth,
+        const VariantSpec& variantSpec, std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
         , locusDepth_(locusDepth)
@@ -58,9 +58,9 @@ public:
 
 private:
     Reference& reference_;
-    const GraphLocusSpecification& locusSpec_;
+    const GraphLocusSpec& locusSpec_;
     double locusDepth_;
-    const VariantSpecification& variantSpec_;
+    const VariantSpec& variantSpec_;
     std::ostream& out_;
 };
 
@@ -68,7 +68,7 @@ class CnvVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     CnvVariantVcfWriter(
-        Reference& reference, const CnvLocusSpecification& locusSpec, double /*locusDepth*/, std::ostream& /*out*/)
+        Reference& reference, const CnvLocusSpec& locusSpec, double /*locusDepth*/, std::ostream& /*out*/)
         : reference_(reference)
         , locusSpec_(locusSpec)
     //, locusDepth_(locusDepth)
@@ -83,7 +83,7 @@ public:
 
 private:
     Reference& reference_;
-    const CnvLocusSpecification& locusSpec_;
+    const CnvLocusSpec& locusSpec_;
     // double locusDepth_;
     // std::ostream& out_;
 };

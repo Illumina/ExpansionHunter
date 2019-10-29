@@ -39,12 +39,6 @@
 namespace ehunter
 {
 
-enum class CnvLocusSubtype
-{
-    kOverlapping,
-    kNonoverlapping,
-};
-
 enum class VariantType
 {
     kRepeat,
@@ -81,10 +75,10 @@ struct VariantClassification
     VariantSubtype subtype;
 };
 
-class VariantSpecification
+class VariantSpec
 {
 public:
-    VariantSpecification(
+    VariantSpec(
         std::string id, VariantClassification classification, GenomicRegion referenceLocus,
         std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode,
         boost::optional<CnvGenotyperParameters> parameters)
@@ -105,7 +99,7 @@ public:
     const boost::optional<graphtools::NodeId>& optionalRefNode() const { return optionalRefNode_; }
     const boost::optional<CnvGenotyperParameters>& parameters() const { return parameters_; }
 
-    bool operator==(const VariantSpecification& other) const
+    bool operator==(const VariantSpec& other) const
     {
         return id_ == other.id_ && classification_ == other.classification() && nodes_ == other.nodes_;
     }
@@ -124,5 +118,5 @@ private:
 std::ostream& operator<<(std::ostream& out, VariantType type);
 std::ostream& operator<<(std::ostream& out, VariantSubtype subtype);
 std::ostream& operator<<(std::ostream& out, VariantClassification classification);
-std::ostream& operator<<(std::ostream& out, const VariantSpecification& variantSpec);
+std::ostream& operator<<(std::ostream& out, const VariantSpec& variantSpec);
 }

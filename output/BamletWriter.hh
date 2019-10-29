@@ -36,8 +36,8 @@
 #include "graphio/AlignmentWriter.hh"
 
 #include "common/ReferenceContigInfo.hh"
-#include "locus_spec/GraphLocusSpecification.hh"
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "reads/Read.hh"
 
 namespace ehunter

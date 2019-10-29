@@ -58,6 +58,6 @@ CnvVariantFindings CnvVariantAnalyzer::analyze() const
 
     boost::optional<int> copyNumberCall = cnvGenotyper.genotype(gcCorrectedDepth);
 
-    return CnvVariantFindings(copyNumberCall);
+    return CnvVariantFindings(variantId_, copyNumberCall);
 }
 }

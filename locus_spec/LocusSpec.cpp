@@ -21,7 +21,7 @@
 //
 //
 
-#include "locus_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -53,7 +53,7 @@ namespace spd = spdlog;
 namespace ehunter
 {
 
-const VariantSpecification& LocusSpecification::getVariantSpecById(const std::string& variantSpecId) const
+const VariantSpec& LocusSpec::getVariantSpecById(const std::string& variantSpecId) const
 {
     for (const auto& variantSpec : variantSpecs_)
     {

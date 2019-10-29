@@ -382,13 +382,13 @@ LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference
         {
             if (userDescription.locusType == LocusTypeFromUser::kGraph)
             {
-                GraphLocusSpecification locusSpec = decodeGraphLocusSpecification(userDescription, reference);
-                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<GraphLocusSpecification>(locusSpec)));
+                GraphLocusSpec locusSpec = decodeGraphLocusSpecification(userDescription, reference);
+                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<GraphLocusSpec>(locusSpec)));
             }
             if (userDescription.locusType == LocusTypeFromUser::kCNV)
             {
-                CnvLocusSpecification locusSpec = decodeCnvLocusSpecification(userDescription, reference);
-                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CnvLocusSpecification>(locusSpec)));
+                CnvLocusSpec locusSpec = decodeCnvLocusSpecification(userDescription, reference);
+                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CnvLocusSpec>(locusSpec)));
             }
         }
         catch (const std::exception& except)
