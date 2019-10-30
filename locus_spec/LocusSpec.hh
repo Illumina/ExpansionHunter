@@ -38,7 +38,7 @@
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
 #include "common/Reference.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpec.hh"
 
 using std::make_shared;
 using std::shared_ptr;
@@ -46,44 +46,30 @@ using std::shared_ptr;
 namespace ehunter
 {
 
-using RegionId = std::string;
-
-class LocusSpecification
+class LocusSpec
 {
 public:
-    LocusSpecification(
-        RegionId locusId, LocusType locusType, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
-        GenotyperParameters genotyperParams)
+    LocusSpec(std::string locusId, CopyNumberBySex copyNumberBySex, GenotyperParameters genotyperParams)
         : locusId_(std::move(locusId))
-        , locusType_(std::move(locusType))
-        , contigCopyNumber_(contigCopyNumber)
-        , locusLocation_(std::move(locusLocation))
+        , copyNumberBySex_(copyNumberBySex)
         , parameters_(std::move(genotyperParams))
     {
     }
 
-    virtual ~LocusSpecification() = default;
+    virtual ~LocusSpec() = default;
 
-    const RegionId& locusId() const { return locusId_; }
-    const LocusType& locusType() const { return locusType_; }
-    ContigCopyNumber contigCopyNumber() const { return contigCopyNumber_; }
-    const GenomicRegion& locusLocation() const { return locusLocation_; }
+    const std::string& locusId() const { return locusId_; }
+    CopyNumberBySex copyNumberBySex() const { return copyNumberBySex_; }
     const GenotyperParameters& genotyperParameters() const { return parameters_; }
-    const std::vector<VariantSpecification>& variantSpecs() const { return variantSpecs_; }
+    const std::vector<VariantSpec>& variantSpecs() const { return variantSpecs_; }
 
-    const VariantSpecification& getVariantSpecById(const std::string& variantSpecId) const;
+    const VariantSpec& getVariantSpecById(const std::string& variantSpecId) const;
 
 protected:
     std::string locusId_;
-    LocusType locusType_;
-    ContigCopyNumber contigCopyNumber_;
-    GenomicRegion locusLocation_;
+    CopyNumberBySex copyNumberBySex_;
     GenotyperParameters parameters_;
-    std::vector<VariantSpecification> variantSpecs_;
+    std::vector<VariantSpec> variantSpecs_;
 };
-using RegionCatalog = std::map<RegionId, shared_ptr<LocusSpecification>>;
+using LocusCatalog = std::map<std::string, shared_ptr<LocusSpec>>;
 }
-
-
-
-

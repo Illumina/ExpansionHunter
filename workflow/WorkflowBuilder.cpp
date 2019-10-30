@@ -49,25 +49,16 @@ namespace ehunter
 {
 
 static shared_ptr<ReadCountAnalyzer>
-createStatsAnalyzer(ContigCopyNumber copyNumber, const GenomicRegion& locusLocation, int flankLength)
+createStatsAnalyzer(CopyNumberBySex copyNumber, const vector<GenomicRegion>& statsRegions)
 {
-    const int64_t leftFlankStart = locusLocation.start() - flankLength;
-    const int64_t leftFlankEnd = locusLocation.start();
-    GenomicRegion leftFlank(locusLocation.contigIndex(), leftFlankStart, leftFlankEnd);
-
-    const int64_t rightFlankStart = locusLocation.end();
-    const int64_t rightFlankEnd = locusLocation.end() + flankLength;
-    GenomicRegion rightFlank(locusLocation.contigIndex(), rightFlankStart, rightFlankEnd);
-
-    vector<GenomicRegion> baselineRegions = { leftFlank, rightFlank };
-    auto linearModel = make_shared<LinearModel>(baselineRegions);
-    auto readCounter = make_shared<ReadCounter>(linearModel, baselineRegions);
+    auto linearModel = make_shared<LinearModel>(statsRegions);
+    auto readCounter = make_shared<ReadCounter>(linearModel, statsRegions);
     linearModel->addFeature(readCounter.get());
     return make_shared<ReadCountAnalyzer>(copyNumber, readCounter);
 }
 
 static shared_ptr<GraphStrAnalyzer>
-createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpecification& variantSpec)
+createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpec& variantSpec)
 {
     const int motifNode = variantSpec.nodes().front();
     auto str = make_shared<GraphStr>(graphModel, motifNode);
@@ -86,7 +77,7 @@ createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpecifi
 }
 
 static shared_ptr<GraphSmallVariantAnalyzer>
-createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpecification& variantSpec)
+createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpec& variantSpec)
 {
     auto smallVariant = make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
     graphModel->addGraphFeature(smallVariant.get());
@@ -98,19 +89,16 @@ createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const Varia
 }
 
 shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
-    const GraphLocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter)
+    const GraphLocusSpec& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter)
 {
-    const auto& locusLocation = locusSpec.locusLocation();
-
     const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
     auto locus = make_shared<GraphLocusAnalyzer>(minLocusCoverage, locusSpec.locusId());
-    auto statsAnalyzer
-        = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
+    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.statsRegions());
     locus->setStats(statsAnalyzer);
 
     auto graphModel = make_shared<GraphModel>(
-        locusSpec.locusId(), locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(),
-        locusSpec.regionGraph(), heuristics, bamletWriter);
+        locusSpec.locusId(), locusSpec.regionsWithReads(), locusSpec.offtargetRegionsWithReads(), locusSpec.graph(),
+        heuristics, bamletWriter);
     for (const auto& variantSpec : locusSpec.variantSpecs())
     {
         if (variantSpec.classification().type == VariantType::kRepeat)
@@ -132,16 +120,12 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     return locus;
 }
 
-shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(
-    const CnvLocusSpecification& locusSpec, DepthNormalizer genomeDepthNormalizer,
-    const HeuristicParameters& heuristics)
+shared_ptr<LocusAnalyzer>
+buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepthNormalizer)
 {
-    const auto& locusLocation = locusSpec.locusLocation();
-
     const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
     auto locus = make_shared<CnvLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
-    auto statsAnalyzer
-        = createStatsAnalyzer(locusSpec.contigCopyNumber(), locusLocation, heuristics.regionExtensionLength());
+    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
     locus->setStats(statsAnalyzer);
 
     for (const auto& variantSpec : locusSpec.variantSpecs())
@@ -153,12 +137,12 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(
             assert(variantSpec.parameters());
             CnvGenotyperParameters cnvParameters = *variantSpec.parameters();
 
-            vector<GenomicRegion> variantRegion{ variantSpec.referenceLocus() };
+            vector<GenomicRegion> variantRegion { variantSpec.referenceLocus() };
             auto linearModel = make_shared<LinearModel>(variantRegion);
             auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
             linearModel->addFeature(readCounter.get());
             locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
-                variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.contigCopyNumber(),
+                variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.copyNumberBySex(),
                 cnvParameters, readCounter, genomeDepthNormalizer));
         }
         else

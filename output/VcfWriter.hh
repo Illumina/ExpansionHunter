@@ -29,9 +29,9 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/CnvLocusSpecification.hh"
-#include "region_spec/GraphLocusSpecification.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -41,8 +41,8 @@ class GraphVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     GraphVariantVcfWriter(
-        Reference& reference, const GraphLocusSpecification& locusSpec, double locusDepth,
-        const VariantSpecification& variantSpec, std::ostream& out)
+        Reference& reference, const GraphLocusSpec& locusSpec, double locusDepth,
+        const VariantSpec& variantSpec, std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
         , locusDepth_(locusDepth)
@@ -58,9 +58,9 @@ public:
 
 private:
     Reference& reference_;
-    const GraphLocusSpecification& locusSpec_;
+    const GraphLocusSpec& locusSpec_;
     double locusDepth_;
-    const VariantSpecification& variantSpec_;
+    const VariantSpec& variantSpec_;
     std::ostream& out_;
 };
 
@@ -68,11 +68,11 @@ class CnvVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     CnvVariantVcfWriter(
-        Reference& reference, const CnvLocusSpecification& locusSpec, double locusDepth, std::ostream& out)
+        Reference& reference, const CnvLocusSpec& locusSpec, double /*locusDepth*/, std::ostream& /*out*/)
         : reference_(reference)
         , locusSpec_(locusSpec)
-        , locusDepth_(locusDepth)
-        , out_(out)
+    //, locusDepth_(locusDepth)
+    //, out_(out)
     {
     }
 
@@ -83,9 +83,9 @@ public:
 
 private:
     Reference& reference_;
-    const CnvLocusSpecification& locusSpec_;
-    double locusDepth_;
-    std::ostream& out_;
+    const CnvLocusSpec& locusSpec_;
+    // double locusDepth_;
+    // std::ostream& out_;
 };
 
 // TODO: Document the code after multi-unit repeat format is finalized (GT-598)
@@ -93,7 +93,7 @@ class VcfWriter
 {
 public:
     VcfWriter(
-        std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
+        std::string sampleId, Reference& reference, const LocusCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     friend std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
@@ -102,11 +102,11 @@ private:
     void writeHeader(std::ostream& out);
     void writeBody(std::ostream& out);
     using LocusIdAndVariantId = std::pair<std::string, std::string>;
-    const std::vector<LocusIdAndVariantId> getSortedIdPairs();
+    std::vector<LocusIdAndVariantId> getSortedIdPairs();
 
     std::string sampleId_;
     Reference& reference_;
-    const RegionCatalog& regionCatalog_;
+    const LocusCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 

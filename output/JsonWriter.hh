@@ -22,9 +22,9 @@
 #pragma once
 
 #include "common/Parameters.hh"
-#include "region_spec/CnvLocusSpecification.hh"
-#include "region_spec/GraphLocusSpecification.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 #include "thirdparty/json/json.hpp"
@@ -36,8 +36,8 @@ class GraphVariantJsonWriter : public VariantFindingsVisitor
 {
 public:
     GraphVariantJsonWriter(
-        const ReferenceContigInfo& contigInfo, const GraphLocusSpecification& locusSpec,
-        const VariantSpecification& variantSpec)
+        const ReferenceContigInfo& contigInfo, const GraphLocusSpec& locusSpec,
+        const VariantSpec& variantSpec)
         : contigInfo_(contigInfo)
         , locusSpec_(locusSpec)
         , variantSpec_(variantSpec)
@@ -52,17 +52,17 @@ public:
 
 private:
     const ReferenceContigInfo& contigInfo_;
-    const GraphLocusSpecification& locusSpec_;
-    const VariantSpecification& variantSpec_;
+    const GraphLocusSpec& locusSpec_;
+    const VariantSpec& variantSpec_;
     nlohmann::json record_;
 };
 
 class CnvVariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    CnvVariantJsonWriter(const ReferenceContigInfo& contigInfo, const CnvLocusSpecification& locusSpec)
-        : contigInfo_(contigInfo)
-        , locusSpec_(locusSpec)
+    CnvVariantJsonWriter(const ReferenceContigInfo& /*contigInfo*/, const CnvLocusSpec& locusSpec)
+        : // contigInfo_(contigInfo),
+        locusSpec_(locusSpec)
     {
     }
 
@@ -73,8 +73,8 @@ public:
     nlohmann::json record() const { return record_; }
 
 private:
-    const ReferenceContigInfo& contigInfo_;
-    const CnvLocusSpecification& locusSpec_;
+    // const ReferenceContigInfo& contigInfo_;
+    const CnvLocusSpec& locusSpec_;
     nlohmann::json record_;
 };
 
@@ -82,7 +82,7 @@ class JsonWriter
 {
 public:
     JsonWriter(
-        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
+        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const LocusCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     void write(std::ostream& out);
@@ -90,7 +90,7 @@ public:
 private:
     const SampleParameters& sampleParams_;
     const ReferenceContigInfo& contigInfo_;
-    const RegionCatalog& regionCatalog_;
+    const LocusCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 

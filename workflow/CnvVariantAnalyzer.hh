@@ -26,7 +26,7 @@
 
 #include "common/Common.hh"
 #include "common/Parameters.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpec.hh"
 #include "sample_analysis/DepthNormalization.hh"
 #include "stats/LocusStats.hh"
 #include "workflow/FeatureAnalyzer.hh"
@@ -40,7 +40,7 @@ class CnvVariantAnalyzer : public FeatureAnalyzer
 {
 public:
     CnvVariantAnalyzer(
-        std::string variantId, double regionLength, VariantSubtype variantSubtype, ContigCopyNumber contigCopyNumber,
+        std::string variantId, double regionLength, VariantSubtype variantSubtype, CopyNumberBySex contigCopyNumber,
         CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature,
         DepthNormalizer genomeDepthNormalizer);
     ~CnvVariantAnalyzer() override = default;
@@ -50,13 +50,13 @@ public:
     CnvVariantFindings analyze() const;
     const std::string& variantId() const { return variantId_; }
     const VariantSubtype& variantSubtype() const { return variantSubtype_; }
-    const ContigCopyNumber& contigCopyNumber() const { return contigCopyNumber_; }
+    const CopyNumberBySex& contigCopyNumber() const { return contigCopyNumber_; }
 
 protected:
     std::string variantId_;
     double regionLength_;
     VariantSubtype variantSubtype_;
-    ContigCopyNumber contigCopyNumber_;
+    CopyNumberBySex contigCopyNumber_;
 
 private:
     CnvGenotyperParameters cnvParameters_;

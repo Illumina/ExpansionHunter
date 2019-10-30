@@ -24,14 +24,14 @@
 #include <memory>
 #include <vector>
 
+#include "DepthNormalization.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "output/BamletWriter.hh"
 #include "reads/Read.hh"
-#include "region_spec/LocusSpecification.hh"
 #include "sample_analysis/ModelFinder.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/LocusFindings.hh"
 #include "workflow/RegionModel.hh"
-#include "DepthNormalization.hh"
 
 namespace ehunter
 {
@@ -39,7 +39,8 @@ namespace ehunter
 class CatalogAnalyzer
 {
 public:
-    CatalogAnalyzer(const RegionCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter);
+    CatalogAnalyzer(
+        const LocusCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter);
     void analyze(const MappedRead& read, const MappedRead& mate);
     void analyze(const MappedRead& read);
     void collectResults(Sex sampleSex, SampleFindings& sampleFindings);

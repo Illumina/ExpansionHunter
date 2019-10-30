@@ -34,7 +34,7 @@
 #include "graphutils/SequenceOperations.hh"
 
 #include "input/RegionGraph.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 
 using graphtools::reverseComplement;
 using std::string;
@@ -52,8 +52,7 @@ TEST(PredictingQueryOrientation, TypicalQueries_Classified)
     EXPECT_EQ(OrientationPrediction::kAlignsInOriginalOrientation, orientationPredictor.predict(read));
 
     EXPECT_EQ(
-        OrientationPrediction::kAlignsInOppositeOrientation,
-        orientationPredictor.predict(reverseComplement(read)));
+        OrientationPrediction::kAlignsInOppositeOrientation, orientationPredictor.predict(reverseComplement(read)));
 
     const string homopolymer(150, 'A');
     EXPECT_EQ(OrientationPrediction::kDoesNotAlign, orientationPredictor.predict(homopolymer));

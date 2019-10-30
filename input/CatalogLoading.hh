@@ -27,7 +27,7 @@
 #include "common/Common.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 
 namespace ehunter
 {
@@ -44,5 +44,5 @@ struct RegionInfo
 
 std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPath, const Reference& reference);
 
-RegionCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
+LocusCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
 }

@@ -26,14 +26,15 @@
 #include <vector>
 
 #include "common/Parameters.hh"
-#include "output/BamletWriter.hh"
-#include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
 #include "input/CatalogLoading.hh"
+#include "locus_spec/LocusSpec.hh"
+#include "output/BamletWriter.hh"
+#include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr alignmentWriter);
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
+    const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr alignmentWriter);
 }

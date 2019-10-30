@@ -60,8 +60,7 @@ std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter)
 }
 
 VcfWriter::VcfWriter(
-    std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
-    const SampleFindings& sampleFindings)
+    std::string sampleId, Reference& reference, const LocusCatalog& regionCatalog, const SampleFindings& sampleFindings)
     : sampleId_(std::move(sampleId))
     , reference_(reference)
     , regionCatalog_(regionCatalog)
@@ -77,9 +76,9 @@ void VcfWriter::writeBody(ostream& out)
     {
         const string& locusId = pair.first;
         auto locusSpecPtr = regionCatalog_.at(locusId);
-        shared_ptr<GraphLocusSpecification> graphLocusSpec
-            = dynamic_pointer_cast<GraphLocusSpecification>(locusSpecPtr);
-        shared_ptr<CnvLocusSpecification> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpecification>(locusSpecPtr);
+        shared_ptr<GraphLocusSpec> graphLocusSpec
+            = dynamic_pointer_cast<GraphLocusSpec>(locusSpecPtr);
+        shared_ptr<CnvLocusSpec> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpec>(locusSpecPtr);
 
         const LocusFindings& locusFindings = sampleFindings_.at(locusId);
         const string& variantId = pair.second;
@@ -92,7 +91,7 @@ void VcfWriter::writeBody(ostream& out)
 
         if (graphLocusSpec)
         {
-            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+            const VariantSpec& variantSpec = locusSpec.getVariantSpecById(variantId);
             GraphVariantVcfWriter variantWriter(reference_, *graphLocusSpec, locusDepth, variantSpec, out);
             variantFindings->accept(variantWriter);
         }
@@ -104,7 +103,7 @@ void VcfWriter::writeBody(ostream& out)
     }
 }
 
-const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
+std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
 {
     using VariantTuple = std::tuple<int32_t, int64_t, int64_t, LocusIdAndVariantId>;
     std::vector<VariantTuple> tuples;
@@ -112,20 +111,17 @@ const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
     for (const auto& locusIdAndFindings : sampleFindings_)
     {
         const string& locusId = locusIdAndFindings.first;
-        const LocusSpecification& locusSpec = *(regionCatalog_.at(locusId));
-        // TO DO: add CNVs
-        if (locusSpec.locusType() == LocusType::kGraph)
-        {
-            const LocusFindings& locusFindings = locusIdAndFindings.second;
+        const LocusSpec& locusSpec = *(regionCatalog_.at(locusId));
 
-            for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
-            {
-                const string& variantId = variantIdAndFindings.first;
-                const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
-                tuples.emplace_back(
-                    variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
-                    variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
-            }
+        const LocusFindings& locusFindings = locusIdAndFindings.second;
+
+        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+        {
+            const string& variantId = variantIdAndFindings.first;
+            const VariantSpec& variantSpec = locusSpec.getVariantSpecById(variantId);
+            tuples.emplace_back(
+                variantSpec.referenceLocus().contigIndex(), variantSpec.referenceLocus().start(),
+                variantSpec.referenceLocus().end(), LocusIdAndVariantId(locusId, variantId));
         }
     }
 
@@ -164,7 +160,7 @@ static string computeAltSymbol(const RepeatGenotype& genotype, int referenceSize
     return boost::algorithm::join(alleleEncodings, ",");
 }
 
-static string computeInfoFields(const VariantSpecification& variantSpec, const string& repeatUnit)
+static string computeInfoFields(const VariantSpec& variantSpec, const string& repeatUnit)
 {
     const auto& referenceLocus = variantSpec.referenceLocus();
     const int referenceSizeInBp = referenceLocus.length();
@@ -196,7 +192,7 @@ static ReadType determineSupportType(const CountTable& spanningCounts, const Cou
 }
 
 static string
-computeAlleleFields(const VariantSpecification& variantSpec, const string& motif, const StrFindings& strFindings)
+computeAlleleFields(const VariantSpec& variantSpec, const string& motif, const StrFindings& strFindings)
 {
     const auto referenceLocus = variantSpec.referenceLocus();
     const int referenceSizeInBp = referenceLocus.length();
@@ -245,7 +241,7 @@ void GraphVariantVcfWriter::visit(StrFindings& strFindings)
 
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto repeatNodeId = variantSpec_.nodes().front();
-    const string& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
+    const string& repeatUnit = locusSpec_.graph().nodeSeq(repeatNodeId);
 
     const int referenceSizeInUnits = referenceLocus.length() / repeatUnit.length();
 
@@ -291,7 +287,8 @@ void CnvVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
 
 void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
 {
-    const auto& referenceLocus = locusSpec_.locusLocation();
+    const auto& variantSpec = locusSpec_.getVariantSpecById(cnvFindings.variantId());
+    const auto& referenceLocus = variantSpec.referenceLocus();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     boost::optional<int> copyNumberCall = cnvFindings.copyNumberCall();
     vector<string> vcfRecordElements;
@@ -325,8 +322,8 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
         const auto refNodeId = variantSpec_.nodes()[refNodeIndex];
         const auto altNodeId = variantSpec_.nodes()[altNodeIndex];
 
-        refSequence = locusSpec_.regionGraph().nodeSeq(refNodeId);
-        altSequence = locusSpec_.regionGraph().nodeSeq(altNodeId);
+        refSequence = locusSpec_.graph().nodeSeq(refNodeId);
+        altSequence = locusSpec_.graph().nodeSeq(altNodeId);
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start() + 1;
     }
@@ -336,7 +333,7 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
             = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
         const int refNodeId = variantSpec_.nodes().front();
-        refSequence = refFlankingBase + locusSpec_.regionGraph().nodeSeq(refNodeId);
+        refSequence = refFlankingBase + locusSpec_.graph().nodeSeq(refNodeId);
         altSequence = refFlankingBase;
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start();
@@ -348,7 +345,7 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
 
         const int altNodeId = variantSpec_.nodes().front();
         refSequence = refFlankingBase;
-        altSequence = refFlankingBase + locusSpec_.regionGraph().nodeSeq(altNodeId);
+        altSequence = refFlankingBase + locusSpec_.graph().nodeSeq(altNodeId);
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start();
     }
@@ -400,7 +397,7 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
 
-    vector<string> line{
+    vector<string> line {
         contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
         sampleValue
     };

@@ -21,45 +21,53 @@
 //
 //
 
-#include "region_spec/CnvLocusSpecification.hh"
+#pragma once
 
-#include <algorithm>
-#include <cassert>
 #include <fstream>
+#include <iostream>
 #include <map>
-#include <set>
-#include <sstream>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "spdlog/spdlog.h"
+#include <boost/optional.hpp>
+
+#include "graphcore/Graph.hh"
 #include "thirdparty/json/json.hpp"
 
 #include "common/Common.hh"
+#include "common/GenomicRegion.hh"
 #include "common/Reference.hh"
-
-using boost::optional;
-using graphtools::NodeId;
-using std::map;
-using std::ostream;
-using std::string;
-using std::to_string;
-using std::vector;
-
-using Json = nlohmann::json;
-
-namespace spd = spdlog;
+#include "locus_spec/LocusSpec.hh"
+#include "locus_spec/VariantSpec.hh"
 
 namespace ehunter
 {
-void CnvLocusSpecification::addVariantSpecification(
-    std::string id, VariantClassification classification, GenomicRegion referenceLocus,
-    boost::optional<CnvGenotyperParameters> paramters)
+
+enum class CnvType
 {
-    std::vector<graphtools::NodeId> emptyNodes;
-    optional<NodeId> optionalReferenceNode;
-    variantSpecs_.emplace_back(
-        std::move(id), classification, std::move(referenceLocus), std::move(emptyNodes), optionalReferenceNode,
-        paramters);
-}
+    kOverlapping,
+    kNonoverlapping
+};
+
+class CnvLocusSpec : public LocusSpec
+{
+public:
+    CnvLocusSpec(
+        std::string locusId, CnvType cnvType, CopyNumberBySex contigCopyNumber, GenotyperParameters genotyperParams)
+        : LocusSpec(locusId, contigCopyNumber, genotyperParams)
+        , cnvType_(cnvType)
+    {
+    }
+    ~CnvLocusSpec() override = default;
+
+    std::vector<GenomicRegion> regionsWithReads() const;
+    const CnvType& locusSubtype() const { return cnvType_; }
+    void addVariantSpecification(
+        std::string id, VariantClassification classification, GenomicRegion referenceLocus,
+        boost::optional<CnvGenotyperParameters> paramters);
+
+private:
+    CnvType cnvType_;
+};
 }

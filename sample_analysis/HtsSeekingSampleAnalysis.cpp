@@ -169,7 +169,7 @@ static ReadPairs collectCandidateReads(
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog,
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
     std::vector<RegionDepthInfo> normDepthInfo;
@@ -177,9 +177,9 @@ SampleFindings htsSeekingSampleAnalysis(
     {
         GenomicRegion region = regionInfo.region;
         ReadPairs readPairs = collectCandidateReads(
-            vector<GenomicRegion>{ region }, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+            vector<GenomicRegion> { region }, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
 
-        NormalizationRegionAnalyzer normRegionAnalyzer(std::vector<RegionInfo>{ regionInfo });
+        NormalizationRegionAnalyzer normRegionAnalyzer(std::vector<RegionInfo> { regionInfo });
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -213,26 +213,26 @@ SampleFindings htsSeekingSampleAnalysis(
 
         ReadPairs readPairs;
 
-        shared_ptr<CnvLocusSpecification> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpecification>(locusSpec);
-        shared_ptr<GraphLocusSpecification> graphLocusSpecPtr
-            = dynamic_pointer_cast<GraphLocusSpecification>(locusSpec);
+        shared_ptr<CnvLocusSpec> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpec>(locusSpec);
+        shared_ptr<GraphLocusSpec> graphLocusSpecPtr
+            = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
         if (graphLocusSpecPtr)
         {
-            GraphLocusSpecification graphLocusSpec = *graphLocusSpecPtr;
+            GraphLocusSpec graphLocusSpec = *graphLocusSpecPtr;
             readPairs = collectCandidateReads(
-                graphLocusSpec.targetReadExtractionRegions(), graphLocusSpec.offtargetReadExtractionRegions(),
-                inputPaths.htsFile(), inputPaths.reference());
+                graphLocusSpec.regionsWithReads(), graphLocusSpec.offtargetRegionsWithReads(), inputPaths.htsFile(),
+                inputPaths.reference());
         }
         else if (cnvLocusSpecPtr)
         {
-            CnvLocusSpecification cnvLocusSpec = *cnvLocusSpecPtr;
+            CnvLocusSpec cnvLocusSpec = *cnvLocusSpecPtr;
             vector<GenomicRegion> variantLocations;
             for (auto variant : cnvLocusSpec.variantSpecs())
             {
                 variantLocations.push_back(variant.referenceLocus());
             }
             readPairs = collectCandidateReads(
-                variantLocations, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+                variantLocations, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
         }
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, genomeDepthNormalizer, bamletWriter);

@@ -21,7 +21,7 @@
 //
 //
 
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpec.hh"
 
 #include <sstream>
 
@@ -31,7 +31,7 @@ using std::to_string;
 namespace ehunter
 {
 
-void VariantSpecification::assertConsistency() const
+void VariantSpec::assertConsistency() const
 {
     const bool variantIsCnv = classification_.type == VariantType::kCNV;
     const bool variantIsRepeat = classification_.type == VariantType::kRepeat;
@@ -127,7 +127,7 @@ std::ostream& operator<<(std::ostream& out, VariantClassification classification
     return out;
 }
 
-std::ostream& operator<<(std::ostream& out, const VariantSpecification& variantSpec)
+std::ostream& operator<<(std::ostream& out, const VariantSpec& variantSpec)
 {
     const string refNodeEncoding = variantSpec.optionalRefNode() ? to_string(*variantSpec.optionalRefNode()) : "None";
     out << "ID=" << variantSpec.id() << ";classification=" << variantSpec.classification()

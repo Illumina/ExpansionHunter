@@ -28,7 +28,7 @@
 
 #include "GraphVariantAnalyzer.hh"
 #include "genotyping/CopyNumberCaller.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/VariantSpec.hh"
 #include "workflow/CnvVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
@@ -42,10 +42,10 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-CnvLocusAnalyzer::CnvLocusAnalyzer(double minLocusCoverage, string locusId, CnvLocusSubtype locusSubtype)
-    : minLocusCoverage_(minLocusCoverage)
-    , locusId_(std::move(locusId))
-    , locusSubtype_(std::move(locusSubtype))
+CnvLocusAnalyzer::CnvLocusAnalyzer(double /*minLocusCoverage*/, string locusId, CnvType cnvType)
+    : // minLocusCoverage_(minLocusCoverage),
+    locusId_(std::move(locusId))
+    , cnvType_(std::move(cnvType))
 {
 }
 
@@ -84,17 +84,17 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
 
     int expectedCopyNumber = static_cast<int>(locusFindings.optionalStats->alleleCount());
     boost::optional<int> cnvLocusCopyNumberCall;
-    if (locusSubtype_ == CnvLocusSubtype::kOverlapping)
+    if (cnvType_ == CnvType::kOverlapping)
     {
         cnvLocusCopyNumberCall
             = callCopyNumberForOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    else if (locusSubtype_ == CnvLocusSubtype::kNonoverlapping)
+    else if (cnvType_ == CnvType::kNonoverlapping)
     {
         cnvLocusCopyNumberCall
             = callCopyNumberForNonOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(cnvLocusCopyNumberCall));
+    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(locusId_, cnvLocusCopyNumberCall));
     locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
     return locusFindings;

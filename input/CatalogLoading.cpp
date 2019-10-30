@@ -359,7 +359,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
         errorRate, likelihoodRatioThreshold, minLocusCoverage);
 }
 
-RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
+LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -374,7 +374,7 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
 
     WorkflowContext context;
 
-    RegionCatalog catalog;
+    LocusCatalog catalog;
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
@@ -382,13 +382,13 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
         {
             if (userDescription.locusType == LocusTypeFromUser::kGraph)
             {
-                GraphLocusSpecification locusSpec = decodeGraphLocusSpecification(userDescription, reference);
-                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<GraphLocusSpecification>(locusSpec)));
+                GraphLocusSpec locusSpec = decodeGraphLocusSpecification(userDescription, reference);
+                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<GraphLocusSpec>(locusSpec)));
             }
             if (userDescription.locusType == LocusTypeFromUser::kCNV)
             {
-                CnvLocusSpecification locusSpec = decodeCnvLocusSpecification(userDescription, reference);
-                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CnvLocusSpecification>(locusSpec)));
+                CnvLocusSpec locusSpec = decodeCnvLocusSpecification(userDescription, reference);
+                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CnvLocusSpec>(locusSpec)));
             }
         }
         catch (const std::exception& except)

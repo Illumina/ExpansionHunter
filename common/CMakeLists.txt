@@ -8,6 +8,6 @@ add_library(common
         ReferenceContigInfo.hh ReferenceContigInfo.cpp
         WorkflowContext.hh WorkflowContext.cpp
         )
-target_link_libraries(common region_spec ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
+target_link_libraries(common graphtools ${htslib_static} ${zlib_static} ${Boost_LIBRARIES})
 target_include_directories(common PUBLIC ${CMAKE_SOURCE_DIR}/thirdparty/spdlog/include)
 add_subdirectory(tests)
