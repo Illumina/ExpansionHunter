@@ -138,5 +138,6 @@ void assertValidity(const LocusDescriptionFromUser& userDescription);
 GraphLocusSpec
 decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
 
-CnvLocusSpec decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
+// CnvLocusSpec decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference&
+// reference);
 }

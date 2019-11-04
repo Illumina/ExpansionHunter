@@ -292,6 +292,7 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
     }
 }
 
+/*
 CnvLocusSpec decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference)
 {
     try
@@ -351,7 +352,7 @@ CnvLocusSpec decodeCnvLocusSpecification(const LocusDescriptionFromUser& userDes
     {
         throw std::runtime_error("Error loading locus " + userDescription.locusId + ": " + e.what());
     }
-}
+} */
 
 void assertValidity(const LocusDescriptionFromUser& userDescription)
 {

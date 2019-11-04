@@ -64,29 +64,31 @@ private:
     std::ostream& out_;
 };
 
+/*
 class CnvVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     CnvVariantVcfWriter(
-        Reference& reference, const CnvLocusSpec& locusSpec, double /*locusDepth*/, std::ostream& /*out*/)
+        Reference& reference, const CnvLocusSpec& locusSpec, double locusDepth, std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
-    //, locusDepth_(locusDepth)
-    //, out_(out)
-    {
-    }
+//, locusDepth_(locusDepth)
+//, out_(out)
+{
+}
 
-    ~CnvVariantVcfWriter() = default;
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
-    void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
+~CnvVariantVcfWriter() = default;
+void visit(StrFindings& strFindings) override;
+void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
+void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
 
 private:
-    Reference& reference_;
-    const CnvLocusSpec& locusSpec_;
-    // double locusDepth_;
-    // std::ostream& out_;
+Reference& reference_;
+const CnvLocusSpec& locusSpec_;
+// double locusDepth_;
+// std::ostream& out_;
 };
+*/
 
 // TODO: Document the code after multi-unit repeat format is finalized (GT-598)
 class VcfWriter

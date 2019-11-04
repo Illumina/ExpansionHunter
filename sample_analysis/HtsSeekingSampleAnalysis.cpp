@@ -214,26 +214,26 @@ SampleFindings htsSeekingSampleAnalysis(
         ReadPairs readPairs;
 
         shared_ptr<CnvLocusSpec> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpec>(locusSpec);
-        shared_ptr<GraphLocusSpec> graphLocusSpecPtr
-            = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
+        shared_ptr<GraphLocusSpec> graphLocusSpecPtr = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
         if (graphLocusSpecPtr)
         {
             GraphLocusSpec graphLocusSpec = *graphLocusSpecPtr;
             readPairs = collectCandidateReads(
-                graphLocusSpec.regionsWithReads(), graphLocusSpec.offtargetRegionsWithReads(), inputPaths.htsFile(),
+                graphLocusSpec.analysisRegions().regionsWithReads,
+                graphLocusSpec.analysisRegions().offtargetRegionsWithReads, inputPaths.htsFile(),
                 inputPaths.reference());
         }
-        else if (cnvLocusSpecPtr)
+        /*else if (cnvLocusSpecPtr)
         {
             CnvLocusSpec cnvLocusSpec = *cnvLocusSpecPtr;
             vector<GenomicRegion> variantLocations;
-            for (auto variant : cnvLocusSpec.variantSpecs())
+            for (auto variant : cnvLocusSpec.variants())
             {
                 variantLocations.push_back(variant.referenceLocus());
             }
             readPairs = collectCandidateReads(
                 variantLocations, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
-        }
+        } */
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, genomeDepthNormalizer, bamletWriter);
 

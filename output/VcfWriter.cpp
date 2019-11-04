@@ -270,6 +270,8 @@ void GraphVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
         return;
     }
 }
+
+/*
 void CnvVariantVcfWriter::visit(StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
@@ -284,7 +286,7 @@ void CnvVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
     {
         return;
     }
-}
+} */
 
 /*
 void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
