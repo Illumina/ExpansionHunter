@@ -3,9 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>,
-//         Mitch Bekritsky <mbekritsky@illumina.com>, Richard Shaw
-// Concept: Michael Eberle <meberle@illumina.com>
+// Author: Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,35 +19,9 @@
 //
 //
 
-#include "locus_spec/LocusSpec.hh"
-
-#include <algorithm>
-#include <cassert>
-#include <fstream>
-#include <map>
-#include <set>
-#include <sstream>
-#include <string>
-#include <vector>
-
-#include "spdlog/spdlog.h"
-#include "thirdparty/json/json.hpp"
-
-#include "common/Common.hh"
-#include "common/Reference.hh"
-
-using boost::optional;
-using graphtools::NodeId;
-using std::map;
-using std::ostream;
-using std::string;
-using std::to_string;
-using std::vector;
-
-using Json = nlohmann::json;
-
-namespace spd = spdlog;
+#include "locus_spec/GraphLocusEncoding.hh"
 
 namespace ehunter
 {
+
 }

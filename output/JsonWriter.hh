@@ -36,8 +36,7 @@ class GraphVariantJsonWriter : public VariantFindingsVisitor
 {
 public:
     GraphVariantJsonWriter(
-        const ReferenceContigInfo& contigInfo, const GraphLocusSpec& locusSpec,
-        const VariantSpec& variantSpec)
+        const ReferenceContigInfo& contigInfo, const GraphLocusSpec& locusSpec, const GraphVariantSpec& variantSpec)
         : contigInfo_(contigInfo)
         , locusSpec_(locusSpec)
         , variantSpec_(variantSpec)
@@ -53,7 +52,7 @@ public:
 private:
     const ReferenceContigInfo& contigInfo_;
     const GraphLocusSpec& locusSpec_;
-    const VariantSpec& variantSpec_;
+    const GraphVariantSpec& variantSpec_;
     nlohmann::json record_;
 };
 

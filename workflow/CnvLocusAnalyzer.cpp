@@ -28,7 +28,6 @@
 
 #include "GraphVariantAnalyzer.hh"
 #include "genotyping/CopyNumberCaller.hh"
-#include "locus_spec/VariantSpec.hh"
 #include "workflow/CnvVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
@@ -42,10 +41,10 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-CnvLocusAnalyzer::CnvLocusAnalyzer(double /*minLocusCoverage*/, string locusId, CnvType cnvType)
+CnvLocusAnalyzer::CnvLocusAnalyzer(double /*minLocusCoverage*/, string locusId, CnvLocusType locusType)
     : // minLocusCoverage_(minLocusCoverage),
     locusId_(std::move(locusId))
-    , cnvType_(std::move(cnvType))
+    , locusType_(locusType)
 {
 }
 
@@ -71,12 +70,12 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
     for (auto& analyzerPtr : variantAnalyzers_)
     {
         CnvVariantFindings varFinding = analyzerPtr->analyze();
-        const VariantSubtype variantSubtype = analyzerPtr->variantSubtype();
-        if (variantSubtype == VariantSubtype::kBaseline)
+        auto variantType = analyzerPtr->variantType();
+        if (variantType == CnvVariantType::kBaseline)
         {
             baselineCopyNumbers.push_back(varFinding.copyNumberCall());
         }
-        else if (variantSubtype == VariantSubtype::kTarget)
+        else if (variantType == CnvVariantType::kTarget)
         {
             targetCopyNumber = varFinding.copyNumberCall();
         }
@@ -84,12 +83,12 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
 
     int expectedCopyNumber = static_cast<int>(locusFindings.optionalStats->alleleCount());
     boost::optional<int> cnvLocusCopyNumberCall;
-    if (cnvType_ == CnvType::kOverlapping)
+    if (locusType_ == CnvLocusType::kOverlapping)
     {
         cnvLocusCopyNumberCall
             = callCopyNumberForOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    else if (cnvType_ == CnvType::kNonoverlapping)
+    else if (locusType_ == CnvLocusType::kNonoverlapping)
     {
         cnvLocusCopyNumberCall
             = callCopyNumberForNonOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);

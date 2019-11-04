@@ -28,7 +28,12 @@
 #include <utility>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include "graphcore/Graph.hh"
+
+#include "common/GenomicRegion.hh"
+#include "locus_spec/GraphLocusEncoding.hh"
 
 namespace ehunter
 {
@@ -43,6 +48,8 @@ enum class GraphBlueprintFeatureType
     kSwap,
     kInterruption
 };
+
+std::ostream& operator<<(std::ostream& out, GraphBlueprintFeatureType tokenType);
 
 bool doesFeatureDefineVariant(GraphBlueprintFeatureType featureType);
 bool isSkippable(GraphBlueprintFeatureType featureType);
@@ -70,7 +77,7 @@ struct GraphBlueprintFeature
 {
     GraphBlueprintFeature(
         GraphBlueprintFeatureType type, std::vector<std::string> sequences, std::vector<graphtools::NodeId> nodeIds)
-        : type(std::move(type))
+        : type(type)
         , sequences(std::move(sequences))
         , nodeIds(std::move(nodeIds))
     {
@@ -78,12 +85,11 @@ struct GraphBlueprintFeature
     GraphBlueprintFeatureType type;
     std::vector<std::string> sequences;
     std::vector<graphtools::NodeId> nodeIds;
+    boost::optional<GenomicRegion> location;
 };
 
 using GraphBlueprint = std::vector<GraphBlueprintFeature>;
-
 GraphBlueprint decodeFeaturesFromRegex(const std::string& regex);
-
-std::ostream& operator<<(std::ostream& out, GraphBlueprintFeatureType tokenType);
+GraphBlueprint decode(const GraphLocusEncoding& encoding, int flankLength);
 
 }

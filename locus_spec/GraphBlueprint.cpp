@@ -19,7 +19,7 @@
 //
 //
 
-#include "input/GraphBlueprint.hh"
+#include "locus_spec/GraphBlueprint.hh"
 
 #include <algorithm>
 #include <sstream>
@@ -65,12 +65,7 @@ public:
             return true;
         }
 
-        if (nextSymbol == '(')
-        {
-            return true;
-        }
-
-        return false;
+        return nextSymbol == '(';
     }
 
 private:

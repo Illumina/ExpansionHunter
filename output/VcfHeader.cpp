@@ -76,7 +76,7 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
 
     const auto repeatNodeId = variantSpec_.nodes().front();
     const string& repeatUnit = locusSpec_.graph().nodeSeq(repeatNodeId);
-    const auto& referenceLocus = variantSpec_.referenceLocus();
+    const auto& referenceLocus = variantSpec_.location();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
     const RepeatGenotype& genotype = strFindings.optionalGenotype().get();
@@ -113,7 +113,7 @@ void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
     addCommonFields();
     tryAddingFieldDescription(
         FieldType::kFormat, "AD", ".", "Integer", "Allelic depths for the ref and alt alleles in the order listed");
-    if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
+    if (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kSMN)
     {
         tryAddingFieldDescription(
             FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the reference allele");
@@ -158,8 +158,7 @@ void outputVcfHeader(const LocusCatalog& locusCatalog, const SampleFindings& sam
     for (const auto& locusIdAndFindings : sampleFindings)
     {
         const string& locusId = locusIdAndFindings.first;
-        shared_ptr<GraphLocusSpec> graphLocusSpec
-            = dynamic_pointer_cast<GraphLocusSpec>(locusCatalog.at(locusId));
+        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusCatalog.at(locusId));
         // To do: description for CNV variants
         if (graphLocusSpec)
         {
@@ -169,7 +168,7 @@ void outputVcfHeader(const LocusCatalog& locusCatalog, const SampleFindings& sam
             for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
             {
                 const string& variantId = variantIdAndFindings.first;
-                const VariantSpec& variantSpec = locusSpec.getVariantSpecById(variantId);
+                const GraphVariantSpec& variantSpec = locusSpec.getVariantById(variantId);
 
                 FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
                 variantIdAndFindings.second->accept(descriptionWriter);

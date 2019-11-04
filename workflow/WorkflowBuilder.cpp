@@ -58,14 +58,14 @@ createStatsAnalyzer(CopyNumberBySex copyNumber, const vector<GenomicRegion>& sta
 }
 
 static shared_ptr<GraphStrAnalyzer>
-createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpec& variantSpec)
+createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const GraphVariantSpec& variantSpec)
 {
     const int motifNode = variantSpec.nodes().front();
     auto str = make_shared<GraphStr>(graphModel, motifNode);
     graphModel->addGraphFeature(str.get());
     auto strAnalyzer = make_shared<GraphStrAnalyzer>(str, variantSpec.id());
 
-    if (variantSpec.classification().subtype == VariantSubtype::kRareRepeat)
+    if (variantSpec.classification().subtype == GraphVariantClassification::Subtype::kRareRepeat)
     {
         const string& motif = graphModel->graph().nodeSeq(motifNode);
         auto irrPairDetector = make_shared<IrrPairDetector>(graphModel, motif);
@@ -77,7 +77,7 @@ createStrAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpec& v
 }
 
 static shared_ptr<GraphSmallVariantAnalyzer>
-createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const VariantSpec& variantSpec)
+createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const GraphVariantSpec& variantSpec)
 {
     auto smallVariant = make_shared<GraphSmallVariant>(graphModel, variantSpec.nodes());
     graphModel->addGraphFeature(smallVariant.get());
@@ -91,21 +91,21 @@ createSmallVariantAnalyzer(const shared_ptr<GraphModel>& graphModel, const Varia
 shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     const GraphLocusSpec& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter)
 {
-    const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
+    const double minLocusCoverage = locusSpec.genotyperParams().minLocusCoverage;
     auto locus = make_shared<GraphLocusAnalyzer>(minLocusCoverage, locusSpec.locusId());
-    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.statsRegions());
+    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.analysisRegions().statsRegions);
     locus->setStats(statsAnalyzer);
 
     auto graphModel = make_shared<GraphModel>(
-        locusSpec.locusId(), locusSpec.regionsWithReads(), locusSpec.offtargetRegionsWithReads(), locusSpec.graph(),
-        heuristics, bamletWriter);
-    for (const auto& variantSpec : locusSpec.variantSpecs())
+        locusSpec.locusId(), locusSpec.analysisRegions().regionsWithReads,
+        locusSpec.analysisRegions().offtargetRegionsWithReads, locusSpec.graph(), heuristics, bamletWriter);
+    for (const auto& variantSpec : locusSpec.variants())
     {
-        if (variantSpec.classification().type == VariantType::kRepeat)
+        if (variantSpec.classification().type == GraphVariantClassification::Type::kRepeat)
         {
             locus->addAnalyzer(createStrAnalyzer(graphModel, variantSpec));
         }
-        else if (variantSpec.classification().type == VariantType::kSmallVariant)
+        else if (variantSpec.classification().type == GraphVariantClassification::Type::kSmallVariant)
         {
             locus->addAnalyzer(createSmallVariantAnalyzer(graphModel, variantSpec));
         }
@@ -120,15 +120,15 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     return locus;
 }
 
-shared_ptr<LocusAnalyzer>
-buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepthNormalizer)
+/*
+shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepthNormalizer)
 {
-    const double minLocusCoverage = locusSpec.genotyperParameters().minLocusCoverage;
+    const double minLocusCoverage = locusSpec.genotyperParams().minLocusCoverage;
     auto locus = make_shared<CnvLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
     auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
     locus->setStats(statsAnalyzer);
 
-    for (const auto& variantSpec : locusSpec.variantSpecs())
+    for (const auto& variantSpec : locusSpec.variants())
     {
         if (variantSpec.classification().type == VariantType::kCNV)
         {
@@ -154,7 +154,7 @@ buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepth
     }
 
     return locus;
-}
+} */
 
 vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<LocusAnalyzer>>& loci)
 {

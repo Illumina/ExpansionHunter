@@ -82,71 +82,6 @@ static string extendLocusStructure(
     return leftFlank + flanklessLocusStructure + rightFlank;
 }
 
-static vector<GenomicRegion>
-addReferenceRegionsForInterruptions(const GraphBlueprint& blueprint, const vector<GenomicRegion>& referenceRegions)
-{
-    int regionIndex = 0;
-    vector<GenomicRegion> completedReferenceRegions;
-
-    for (const auto& feature : blueprint)
-    {
-        if (feature.type == GraphBlueprintFeatureType::kInterruption)
-        {
-            assert(regionIndex != 0 && regionIndex < static_cast<int>(referenceRegions.size()));
-            const auto& leftRegion = referenceRegions[regionIndex];
-            const auto& rightRegion = referenceRegions[regionIndex + 1];
-            completedReferenceRegions.emplace_back(leftRegion.contigIndex(), leftRegion.end(), rightRegion.start());
-        }
-        else
-        {
-            completedReferenceRegions.push_back(referenceRegions[regionIndex]);
-            ++regionIndex;
-        }
-    }
-
-    assert(blueprint.size() == completedReferenceRegions.size());
-    return completedReferenceRegions;
-}
-
-static CopyNumberBySex determineCopyNumber(const string& contig)
-{
-    if (contig == "chrY" || contig == "Y")
-    {
-        return CopyNumberBySex::kZeroInFemaleOneInMale;
-    }
-
-    if (contig == "chrX" || contig == "X")
-    {
-        return CopyNumberBySex::kTwoInFemaleOneInMale;
-    }
-
-    return CopyNumberBySex::kTwoInFemaleTwoInMale;
-}
-
-static NodeToRegionAssociation associateNodesWithReferenceRegions(
-    const GraphBlueprint& blueprint, const Graph& graph, const vector<GenomicRegion>& referenceRegions)
-{
-    assert(blueprint.size() == referenceRegions.size());
-
-    NodeToRegionAssociation referenceRegionsOfGraphNodes;
-
-    for (int featureIndex = 0; featureIndex != static_cast<int>(blueprint.size()); ++featureIndex)
-    {
-        const auto& feature = blueprint[featureIndex];
-        const auto& referenceRegion = referenceRegions[featureIndex];
-
-        for (const auto& nodeId : feature.nodeIds)
-        {
-            const int nodeLength = graph.nodeSeq(nodeId).length();
-            GenomicRegion referenceRegionForNode(
-                referenceRegion.contigIndex(), referenceRegion.start(), referenceRegion.start() + nodeLength);
-            referenceRegionsOfGraphNodes.emplace(std::make_pair(nodeId, std::move(referenceRegionForNode)));
-        }
-    }
-
-    return referenceRegionsOfGraphNodes;
-}
-
 static VariantType determineVariantType(GraphBlueprintFeatureType featureType)
 {
     switch (featureType)
@@ -299,7 +234,7 @@ decodeGraphLocusSpecification(const LocusDescriptionFromUser& userDescription, c
         const auto& contigName = reference.contigInfo().getContigName(userDescription.locusLocation.contigIndex());
         auto copyNumber = determineCopyNumber(contigName);
 
-        NodeToRegionAssociation referenceRegionsOfGraphNodes
+        NodeLocations referenceRegionsOfGraphNodes
             = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
 
         GenotyperParameters parameters;
