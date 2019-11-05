@@ -24,6 +24,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/optional.hpp>
+
 #include "common/GenomicRegion.hh"
 #include "locus_spec/GraphLocusSpec.hh"
 
@@ -40,18 +42,21 @@ struct GraphVariantEncoding
 
 struct GraphLocusEncoding
 {
-    std::string locusId;
-    std::string locusStructure;
-    std::string variantType;
+    std::string id;
+    std::string structure;
+    // std::string variantType;
     int flankLength;
-    AnalysisRegions analysisRegions;
-    double errorRate = 0;
-    double likelihoodRatioThreshold = 0;
-    double minLocusCoverage = 0;
+    // Regions in the reference where we expect relevant reads to align
+    std::vector<GenomicRegion> regionsWithReads;
+    // Regions where additional relevant reads might be found that require filtering or special considerations
+    std::vector<GenomicRegion> offtargetRegionsWithReads;
+    boost::optional<double> errorRate;
+    boost::optional<double> likelihoodRatioThreshold;
+    boost::optional<double> minLocusCoverage;
 
     std::vector<GraphVariantEncoding> variants;
 };
 
-GraphLocusSpec decode(const Reference& reference, const GraphLocusEncoding& locusEncoding);
+GraphLocusSpec decode(const Reference& reference, const GraphLocusEncoding& encoding);
 
 }

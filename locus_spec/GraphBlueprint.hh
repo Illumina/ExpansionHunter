@@ -85,7 +85,7 @@ struct GraphBlueprintFeature
     GraphBlueprintFeatureType type;
     std::vector<std::string> sequences;
     std::vector<graphtools::NodeId> nodeIds;
-    boost::optional<GenomicRegion> location;
+    // boost::optional<GenomicRegion> location;
 };
 
 using GraphBlueprint = std::vector<GraphBlueprintFeature>;

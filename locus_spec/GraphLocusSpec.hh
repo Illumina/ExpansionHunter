@@ -46,9 +46,7 @@ namespace ehunter
 
 struct AnalysisRegions
 {
-    // Regions in the reference where we expect relevant reads to align
     std::vector<GenomicRegion> regionsWithReads;
-    // Regions where additional relevant reads might be found that require filtering or special considerations
     std::vector<GenomicRegion> offtargetRegionsWithReads;
     std::vector<GenomicRegion> statsRegions;
 };

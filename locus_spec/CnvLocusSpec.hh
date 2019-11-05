@@ -62,7 +62,7 @@ public:
     CnvVariantSpec(std::string id, GenomicRegion location, CnvGenotyperParameters genotyperParams)
         : id_(std::move(id))
         , location_(std::move(location))
-        , genotyperParams_(genotyperParams)
+        , genotyperParams_(std::move(genotyperParams))
     {
         assertConsistency();
     }

@@ -175,24 +175,6 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
     return variantIds;
 }
 */
-static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions, int kMaxMergeDistance)
-{
-    // const int kMaxMergeDistance = 500;
-    vector<GenomicRegion> mergedReferenceRegions = merge(regions, kMaxMergeDistance);
-    if (mergedReferenceRegions.size() != 1)
-    {
-        std::stringstream out;
-        for (const GenomicRegion& region : regions)
-        {
-            out << region << " ";
-        }
-        throw std::runtime_error(
-            "Expected reference regions to be closer than " + to_string(kMaxMergeDistance)
-            + " from one another: " + out.str());
-    }
-
-    return mergedReferenceRegions.front();
-}
 
 static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
