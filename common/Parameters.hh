@@ -163,19 +163,6 @@ struct GenotyperParameters
     double minLocusCoverage = 10;
 };
 
-// Per-variant parameters for CNV variant genotyping
-struct CnvGenotyperParameters
-{
-    double regionGC;
-    int maxCopyNumber;
-    int mappingQualityThreshold;
-    double depthScaleFactor;
-    double standardDeviationOfCN2;
-    std::vector<double> meanDepthValues;
-    std::vector<double> priorCopyNumberFrequency;
-    bool expectedNormal;
-};
-
 class ProgramParameters
 {
 public:

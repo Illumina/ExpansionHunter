@@ -56,6 +56,19 @@ enum class CnvVariantType
     kBaseline
 };
 
+// Per-variant parameters for CNV variant genotyping
+struct CnvGenotyperParameters
+{
+    double regionGC;
+    int maxCopyNumber;
+    int mappingQualityThreshold;
+    double depthScaleFactor;
+    double standardDeviationOfCN2;
+    std::vector<double> meanDepthValues;
+    std::vector<double> priorCopyNumberFrequency;
+    bool expectedNormal;
+};
+
 class CnvVariantSpec
 {
 public:
@@ -84,11 +97,9 @@ class CnvLocusSpec : public LocusSpec
 {
 public:
     CnvLocusSpec(
-        std::string locusId, CnvLocusType locusType, CopyNumberBySex contigCopyNumber,
-        CnvGenotyperParameters genotyperParams)
+        std::string locusId, CnvLocusType locusType, CopyNumberBySex contigCopyNumber)
         : LocusSpec(locusId, contigCopyNumber)
         , locusType_(locusType)
-        , genotyperParams_(genotyperParams)
     {
     }
 
@@ -101,6 +112,5 @@ public:
 private:
     CnvLocusType locusType_;
     std::vector<CnvVariantSpec> variants_;
-    CnvGenotyperParameters genotyperParams_;
 };
 }
