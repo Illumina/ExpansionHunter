@@ -69,11 +69,23 @@ struct CnvGenotyperParameters
     bool expectedNormal;
 };
 
+struct CnvOutputVariant
+{
+    CnvOutputVariant(std::string id, GenomicRegion location)
+        : id(id)
+        , location(location)
+    {
+    }
+    std::string id;
+    GenomicRegion location;
+};
+
 class CnvVariantSpec
 {
 public:
-    CnvVariantSpec(std::string id, GenomicRegion location, CnvGenotyperParameters genotyperParams)
+    CnvVariantSpec(std::string id, CnvVariantType variantType, GenomicRegion location, CnvGenotyperParameters genotyperParams)
         : id_(std::move(id))
+        , variantType_(std::move(variantType))
         , location_(std::move(location))
         , genotyperParams_(std::move(genotyperParams))
     {
@@ -82,13 +94,15 @@ public:
 
     const std::string& id() const { return id_; }
     const GenomicRegion& location() const { return location_; }
+    const CnvVariantType& variantType() const { return variantType_; }
 
-    bool operator==(const CnvVariantSpec& other) const { return id_ == other.id_ && location_ == other.location_; }
+    bool operator==(const CnvVariantSpec& other) const { return id_ == other.id_ && variantType_ == other.variantType_ && location_ == other.location_; }
 
     void assertConsistency() const;
 
 private:
     std::string id_;
+    CnvVariantType variantType_;
     GenomicRegion location_;
     CnvGenotyperParameters genotyperParams_;
 };
@@ -107,10 +121,12 @@ public:
 
     std::vector<GenomicRegion> regionsWithReads() const;
     const CnvLocusType& locusTupe() const { return locusType_; }
-    void addVariant(std::string id, GenomicRegion referenceLocus, CnvGenotyperParameters parameters);
+    void addVariant(std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters);
+    void addOutputVariant(std::string id, GenomicRegion location);
 
 private:
     CnvLocusType locusType_;
     std::vector<CnvVariantSpec> variants_;
+    std::vector<CnvOutputVariant> outputVariants_;
 };
 }

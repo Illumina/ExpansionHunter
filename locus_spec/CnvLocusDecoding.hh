@@ -53,7 +53,6 @@ struct CnvVariantDecoding
 struct CnvOutputVariantDecoding
 {
     std::string id;
-    std::string type;
     GenomicRegion location;
 };
 

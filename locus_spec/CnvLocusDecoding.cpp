@@ -22,6 +22,7 @@
 //
 
 #include "locus_spec/CnvLocusDecoding.hh"
+#include "locus_spec/CnvLocusSpec.hh"
 
 #include <stdexcept>
 
@@ -53,7 +54,7 @@ static CnvLocusType getCnvLocusType(const CnvLocusDecoding& encoding)
     CnvLocusType cnvLocusType = CnvLocusType::kNonoverlapping;
     for (const auto& variant : encoding.variants)
     {
-        if (variant.variantType == "kBaseline" && !(*variant.expectedNormalCN))
+        if (variant.variantType == "kBaseline" && !(variant.expectedNormalCN))
         {
             cnvLocusType = CnvLocusType::kOverlapping;
         }
@@ -61,19 +62,58 @@ static CnvLocusType getCnvLocusType(const CnvLocusDecoding& encoding)
     return cnvLocusType;
 }
 
+static GenomicRegion getLocusLocation(const CnvLocusDecoding& locusEncoding)
+{
+    vector<GenomicRegion> variantLocations;
+    for (const auto& variant : locusEncoding.variants)
+    {
+        variantLocations.push_back(variant.location);
+    }
+    return *variantLocations.begin();
+}
+
+static CnvVariantType getCnvVariantType(const CnvVariantDecoding variant)
+{
+    if (variant.type == "Baseline")
+    {
+        return CnvVariantType::kBaseline;
+    }
+    else if (variant.type == "Target")
+    {
+        return CnvVariantType::kTarget;
+    }
+    else
+    {
+        throw std::logic_error("Encountered invalid variant type: " + variant.type);
+    }
+}
+
 CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding)
 {
-    auto copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
-    auto cnvLocusType = getCnvLocusType(encoding);
+    GenomicRegion locusLocation = getLocusLocation(encoding);
+    CopyNumberBySex copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
+    CnvLocusType cnvLocusType = getCnvLocusType(encoding);
 
     CnvLocusSpec locusSpec(encoding.id, cnvLocusType, copyNumberBySex);
     for (const auto& variant : encoding.variants)
     {
-        auto parameters = CnvGenotyperParameters(
-            variant.regionGC, variant.maxCopyNumber, variant.mappingQualityThreshold, variant.depthScaleFactor,
-            variant.standardDevidationOfCN2, variant.meanDepthValues, variant.priorCopyNumberFrequency,
-            variant.expectedNormalCN);
-        locusSpec.addVariant(variant.id, variant.location, parameters);
+        CnvGenotyperParameters variantParameters;
+        variantParameters.regionGC = variant.regionGC;
+        variantParameters.mappingQualityThreshold = variant.mappingQualityThreshold;
+        variantParameters.maxCopyNumber = variant.maxCopyNumber;
+        variantParameters.depthScaleFactor = variant.depthScaleFactor;
+        variantParameters.standardDeviationOfCN2 = variant.standardDevidationOfCN2;
+        variantParameters.meanDepthValues = variant.meanDepthValues;
+        variantParameters.priorCopyNumberFrequency = variant.priorCopyNumberFrequency;
+        variantParameters.expectedNormal = variant.expectedNormalCN;
+
+        CnvVariantType variantType = getCnvVariantType(variant);
+        locusSpec.addVariant(variant.id, variantType, variant.location, variantParameters);
+    }
+
+    for (const auto& variant : encoding.outputVariants)
+    {
+        locusSpec.addOutputVariant(variant.id, variant.location);
     }
 
     return locusSpec;
