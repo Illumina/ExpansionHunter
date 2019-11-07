@@ -34,12 +34,13 @@ namespace ehunter
 
 struct GraphVariantEncoding
 {
-    GraphVariantEncoding(std::string type, GenomicRegion location)
-        : type(std::move(type))
+    GraphVariantEncoding(std::string id, std::string type, GenomicRegion location)
+        : id(std::move(id))
+        , type(std::move(type))
         , location(location)
     {
     }
-    boost::optional<std::string> id;
+    std::string id;
     std::string type;
     GenomicRegion location;
 };
@@ -61,6 +62,6 @@ struct GraphLocusEncoding
     std::vector<GraphVariantEncoding> variants;
 };
 
-GraphLocusSpec decode(const Reference& reference, const GraphLocusEncoding& encoding);
+GraphLocusSpec decode(const Reference& reference, const GraphLocusEncoding& locusEncoding);
 
 }

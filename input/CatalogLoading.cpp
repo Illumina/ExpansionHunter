@@ -39,7 +39,6 @@
 #include "common/Common.hh"
 #include "common/Reference.hh"
 #include "common/WorkflowContext.hh"
-#include "input/LocusSpecDecoding.hh"
 
 using boost::optional;
 using graphtools::NodeId;
@@ -158,7 +157,6 @@ static LocusTypeFromUser getLocusType(const Json& record)
     }
 }
 
-/*
 static vector<string> generateIds(const string& locusId, const Json& variantLocationEncodings)
 {
     if (variantLocationEncodings.size() == 1)
@@ -176,7 +174,7 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
     }
 
     return variantIds;
-} */
+}
 
 /*
 static CnvLocusEncoding loadCnvUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
@@ -499,15 +497,6 @@ static GraphLocusEncoding loadLegacyGraphLocusEncoding(const Json& json, const R
         variantLocations.push_back(region);
     }
 
-    vector<string> variantIds;
-    if (checkIfFieldExists(json, "VariantId"))
-    {
-        for (const auto& variantId : makeArray(json["VariantId"]))
-        {
-            variantIds.push_back(variantId.get<string>());
-        }
-    }
-
     vector<string> variantTypes;
     assertFieldExists(json, "VariantType");
     for (const auto& encoding : makeArray(json["VariantType"]))
@@ -520,18 +509,27 @@ static GraphLocusEncoding loadLegacyGraphLocusEncoding(const Json& json, const R
         throw std::runtime_error("Types and locations must be provided for each variant in locus " + locus.id);
     }
 
-    if (!variantIds.empty() && variantIds.size() != variantTypes.size())
+    vector<string> variantIds;
+    if (checkIfFieldExists(json, "VariantId"))
+    {
+        for (const auto& variantId : makeArray(json["VariantId"]))
+        {
+            variantIds.push_back(variantId.get<string>());
+        }
+    }
+    else
+    {
+        variantIds = generateIds(locus.id, variantLocationJson);
+    }
+
+    if (variantIds.size() != variantTypes.size())
     {
         throw std::runtime_error("An id must be provided for each variant in locus " + locus.id);
     }
 
     for (int index = 0; index != static_cast<int>(variantTypes.size()); ++index)
     {
-        GraphVariantEncoding variant(variantTypes[index], variantLocations[index]);
-        if (!variantIds.empty())
-        {
-            variant.id = variantIds[index];
-        }
+        GraphVariantEncoding variant(variantIds[index], variantTypes[index], variantLocations[index]);
         locus.variants.push_back(variant);
     }
 

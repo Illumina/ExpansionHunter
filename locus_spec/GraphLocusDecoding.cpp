@@ -23,10 +23,16 @@
 
 #include <stdexcept>
 
+#include <boost/optional.hpp>
+
+#include "graphcore/Graph.hh"
+
 #include "locus_spec/GraphBlueprint.hh"
 #include "locus_spec/RegionGraph.hh"
 
+using boost::optional;
 using graphtools::Graph;
+using graphtools::NodeId;
 using std::runtime_error;
 using std::string;
 using std::to_string;
@@ -178,11 +184,17 @@ getNodeLocations(const GraphBlueprint& blueprint, const Graph& graph, const vect
     return nodeLocations;
 }
 
-static ReferenceGraph
-getGraph(const Reference& reference, const GraphLocusEncoding& locus, const GenomicRegion& location)
+static GraphBlueprint
+getBlueprint(const Reference& reference, const GraphLocusEncoding& locusEncoding, const GenomicRegion& location)
 {
-    auto locusStructureWithFlanks = addFlanks(reference, locus.structure, location, locus.flankLength);
+    auto locusStructureWithFlanks = addFlanks(reference, locusEncoding.structure, location, locusEncoding.flankLength);
     GraphBlueprint blueprint = decodeFeaturesFromRegex(locusStructureWithFlanks);
+    return blueprint;
+}
+
+static ReferenceGraph
+getGraph(const GraphBlueprint& blueprint, const GraphLocusEncoding& locus, const GenomicRegion& location)
+{
     graphtools::Graph graph = makeRegionGraph(blueprint, locus.id);
     auto featureLocations = getFeatureLocations(blueprint, locus, location);
     NodeLocations nodeLocations = getNodeLocations(blueprint, graph, featureLocations);
@@ -209,15 +221,158 @@ static GenotyperParameters getGenotyperParams(const GraphLocusEncoding& encoding
     return params;
 }
 
-GraphLocusSpec decode(const Reference& reference, const GraphLocusEncoding& encoding)
+/*
+static VariantType determineVariantType(GraphBlueprintFeatureType featureType)
 {
-    auto locusLocation = getLocusLocation(encoding);
-    auto copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
-    auto analysisRegions = getAnalysisRegions(encoding, locusLocation);
-    auto graph = getGraph(reference, encoding, locusLocation);
-    auto genotyperParams = getGenotyperParams(encoding);
+    switch (featureType)
+    {
+    case GraphBlueprintFeatureType::kInsertionOrDeletion:
+    case GraphBlueprintFeatureType::kSwap:
+        return VariantType::kSmallVariant;
+    case GraphBlueprintFeatureType::kSkippableRepeat:
+    case GraphBlueprintFeatureType::kUnskippableRepeat:
+        return VariantType::kRepeat;
+    default:
+        std::ostringstream encoding;
+        encoding << featureType;
+        throw std::logic_error("Feature of type " + encoding.str() + " does not define a variant");
+    }
+} */
 
-    GraphLocusSpec locusSpec(encoding.id, copyNumberBySex, analysisRegions, graph, genotyperParams);
+static GraphVariantClassification classifyVariant(
+    GraphBlueprintFeatureType featureType, const string& variantTypeFromUser, const GenomicRegion referenceRegion)
+{
+    if (featureType == GraphBlueprintFeatureType::kInsertionOrDeletion)
+    {
+        if (referenceRegion.length() == 0)
+        {
+            return { GraphVariantClassification::Type::kSmallVariant, GraphVariantClassification::Subtype::kInsertion };
+        }
+        else
+        {
+            return { GraphVariantClassification::Type::kSmallVariant, GraphVariantClassification::Subtype::kDeletion };
+        }
+    }
+    else if (featureType == GraphBlueprintFeatureType::kSwap)
+    {
+        if (variantTypeFromUser == "SMN")
+        {
+            return { GraphVariantClassification::Type::kSmallVariant, GraphVariantClassification::Subtype::kSMN };
+        }
+        else
+        {
+            return { GraphVariantClassification::Type::kSmallVariant, GraphVariantClassification::Subtype::kSwap };
+        }
+    }
+    else if (variantTypeFromUser == "CommonRepeat")
+    {
+        return { GraphVariantClassification::Type::kRepeat, GraphVariantClassification::Subtype::kCommonRepeat };
+    }
+    else if (variantTypeFromUser == "RareRepeat")
+    {
+        return { GraphVariantClassification::Type::kRepeat, GraphVariantClassification::Subtype::kRareRepeat };
+    }
+    else
+    {
+        std::ostringstream message;
+        message << featureType;
+        throw std::logic_error("Feature " + message.str() + " does not correspond to variant");
+    }
+}
+
+static optional<NodeId> determineReferenceNode(
+    const GraphBlueprintFeature& feature, const Reference& reference, const GenomicRegion& referenceRegion)
+{
+
+    if (feature.type == GraphBlueprintFeatureType::kSkippableRepeat
+        || feature.type == GraphBlueprintFeatureType::kUnskippableRepeat)
+    {
+        return feature.nodeIds.front();
+    }
+
+    const auto& contigName = reference.contigInfo().getContigName(referenceRegion.contigIndex());
+    const string refSequence = reference.getSequence(contigName, referenceRegion.start(), referenceRegion.end());
+
+    optional<NodeId> optionalReferenceNode;
+    for (int index = 0; index != static_cast<int>(feature.nodeIds.size()); ++index)
+    {
+        if (refSequence == feature.sequences[index])
+        {
+            optionalReferenceNode = feature.nodeIds[index];
+            break;
+        }
+    }
+
+    return optionalReferenceNode;
+}
+
+void addVariants(
+    const Reference& reference, GraphLocusSpec& locusSpec, const GraphLocusEncoding& locusEncoding,
+    const GraphBlueprint& blueprint)
+{
+    int variantIndex = 0;
+    for (const auto& feature : blueprint)
+    {
+        if (doesFeatureDefineVariant(feature.type))
+        {
+            auto variantEncoding = locusEncoding.variants.at(variantIndex);
+            optional<NodeId> referenceNode = determineReferenceNode(feature, reference, variantEncoding.location);
+
+            // VariantClassification classification(variantType, variantSubtype);
+
+            auto classification = classifyVariant(feature.type, variantEncoding.type, variantEncoding.location);
+
+            locusSpec.addVariant(
+                variantEncoding.id, classification, variantEncoding.location, feature.nodeIds, referenceNode);
+
+            ++variantIndex;
+        }
+    }
+}
+
+/*
+
+// TODO: Adapt for new code
+void assertValidity(const LocusDescriptionFromUser& userDescription)
+{
+    assert(userDescription.locusStructure);
+    auto locusStructure = userDescription.locusStructure;
+    const GraphBlueprint blueprint = decodeFeaturesFromRegex(*locusStructure);
+    int numVariants = 0;
+    for (const GraphBlueprintFeature& feature : blueprint)
+    {
+        if (doesFeatureDefineVariant(feature.type))
+        {
+            ++numVariants;
+        }
+    }
+
+    if (numVariants == 0)
+    {
+        throw std::runtime_error(
+            "Locus " + userDescription.locusId + " must encode at least one variant " + *locusStructure);
+    }
+
+    if (numVariants != static_cast<int>(userDescription.variantDescriptionFromUsers.size()))
+    {
+        throw std::runtime_error(
+            "Locus " + userDescription.locusId + " must specify variant information for " + to_string(numVariants)
+            + " variants");
+    }
+} */
+
+GraphLocusSpec decode(const Reference& reference, const GraphLocusEncoding& locusEncoding)
+{
+    auto locusLocation = getLocusLocation(locusEncoding);
+    auto copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
+    auto analysisRegions = getAnalysisRegions(locusEncoding, locusLocation);
+    auto blueprint = getBlueprint(reference, locusEncoding, locusLocation);
+    auto graph = getGraph(blueprint, locusEncoding, locusLocation);
+    auto genotyperParams = getGenotyperParams(locusEncoding);
+
+    GraphLocusSpec locusSpec(locusEncoding.id, copyNumberBySex, analysisRegions, graph, genotyperParams);
+    addVariants(reference, locusSpec, locusEncoding, blueprint);
+
     return locusSpec;
 }
 
