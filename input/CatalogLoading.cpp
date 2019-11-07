@@ -73,6 +73,7 @@ static void assertFieldExists(const Json& record, const string& fieldName)
     }
 }
 
+/*
 static void assertRecordIsArray(const Json& record)
 {
     if (!record.is_array())
@@ -81,7 +82,7 @@ static void assertRecordIsArray(const Json& record)
         out << record;
         throw std::logic_error("Expected array but got this instead " + out.str());
     }
-}
+}*/
 
 static void makeArray(Json& record)
 {
@@ -91,6 +92,7 @@ static void makeArray(Json& record)
     }
 }
 
+/*
 static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
 {
     if (encoding == "RareRepeat")
@@ -117,8 +119,9 @@ static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
     {
         throw std::logic_error("Encountered invalid variant type: " + encoding);
     }
-}
+} */
 
+/*
 static VariantSubtypeFromUser decodeVariantSubtypeFromUser(const string& encoding)
 {
     if (encoding == "Target")
@@ -133,7 +136,7 @@ static VariantSubtypeFromUser decodeVariantSubtypeFromUser(const string& encodin
     {
         throw std::logic_error("Encountered invalid variant type: " + encoding);
     }
-}
+} */
 
 static LocusTypeFromUser decodeLocusTypeFromUser(const string& encoding)
 {
@@ -152,6 +155,19 @@ static LocusTypeFromUser decodeLocusTypeFromUser(const string& encoding)
     else
     {
         throw std::logic_error("Encountered invalid locus type: " + encoding);
+    }
+}
+
+static LocusTypeFromUser getLocusType(const Json& record)
+{
+    if (checkIfFieldExists(record, "LocusType"))
+    {
+        const auto encoding = record["LocusType"].get<string>();
+        return decodeLocusTypeFromUser(encoding);
+    }
+    else
+    {
+        return LocusTypeFromUser::kGraph;
     }
 }
 
@@ -176,6 +192,7 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
 }
 */
 
+/*
 static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
     CnvLocusDecoding cnvLocusDecoding;
@@ -184,8 +201,8 @@ static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceC
     auto locusId = locusJson["LocusId"].get<string>();
     cnvLocusDecoding.id = locusId;
 
-    std::vector<CnvVariantDecoding> cnvAnalysisVariants;
-    std::vector<CnvOutputVariantDecoding> cnvOutputVariants;
+    std::vector<CnvVariantEncoding> cnvAnalysisVariants;
+    std::vector<CnvOutputVariantEncoding> cnvOutputVariants;
 
     assertFieldExists(locusJson, "OutputVariants");
     makeArray(locusJson["OutputVariants"]);
@@ -197,7 +214,9 @@ static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceC
         assertFieldExists(variant, "ReferenceRegion");
         GenomicRegion region = decode(contigInfo, variant["ReferenceRegion"].get<string>());
 
-        CnvOutputVariantDecoding cnvOutputVariantDecoding = CnvOutputVariantDecoding(variantId, region);
+        CnvOutputVariantEncoding cnvOutputVariantDecoding;
+        cnvOutputVariantDecoding.id = variantId;
+        cnvOutputVariantDecoding.location = region;
         cnvOutputVariants.emplace_back(cnvOutputVariantDecoding);
     }
 
@@ -256,16 +275,26 @@ static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceC
         }
         auto priorCopyNumberFrequency = priors;
 
-        CnvVariantDecoding variantDecoding = CnvVariantDecoding(
-            variantId, region, variantType, expectedNormalCN, regionGC, mappingQualityThreshold, maxCopyNumber,
-            depthScaleFactor, standardDevidationOfCN2, meanDepths, priorCopyNumberFrequency);
-        cnvAnalysisVariants.emplace_back(variantDecoding);
+        CnvVariantEncoding variantEncoding;
+        variantEncoding.id = variantId;
+        variantEncoding.location = region;
+        variantEncoding.variantType = variantType;
+        variantEncoding.expectedNormalCN = expectedNormalCN;
+        variantEncoding.regionGC = regionGC;
+        variantEncoding.mappingQualityThreshold = mappingQualityThreshold;
+        variantEncoding.maxCopyNumber = maxCopyNumber;
+        variantEncoding.depthScaleFactor = depthScaleFactor;
+        variantEncoding.standardDevidationOfCN2 = standardDevidationOfCN2;
+        variantEncoding.meanDepthValues = meanDepths;
+        variantEncoding.priorCopyNumberFrequency = priorCopyNumberFrequency;
+        cnvAnalysisVariants.emplace_back(variantEncoding);
     }
     cnvLocusDecoding.outputVariants = cnvOutputVariants;
     cnvLocusDecoding.variants = cnvAnalysisVariants;
     return cnvLocusDecoding;
-}
+} */
 
+/*
 static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
     assertFieldExists(locusJson, "LocusId");
@@ -429,6 +458,48 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     return LocusDescriptionFromUser(
         locusId, locusType, locusLocation, variantDescriptions, targetRegions, offtargetRegions, locusStructure,
         errorRate, likelihoodRatioThreshold, minLocusCoverage);
+} */
+
+static GraphLocusEncoding loadGraphDescription(const Json& json)
+{
+    GraphLocusEncoding locus;
+
+    assertFieldExists(json, "LocusId");
+    locus.id = json["LocusId"].get<string>();
+
+    assertFieldExists(json, "LocusStructure");
+    locus.structure = json["LocusStructure"].get<string>();
+
+    // TODO: initialize flankLength, errorRate, likelihoodRatioThreshold, minLocusCoverage and remaining fields
+    // std::vector<GenomicRegion> regionsWithReads;
+    // std::vector<GenomicRegion> offtargetRegionsWithReads;
+    return locus;
+}
+
+std::unique_ptr<GraphLocusSpec> loadGraphSpec(const Json& userDescription, const Reference& reference)
+{
+    auto encoding = loadGraphDescription(userDescription);
+    std::unique_ptr<GraphLocusSpec> spec(new GraphLocusSpec(decode(reference, encoding)));
+    return spec;
+}
+
+std::unique_ptr<CnvLocusSpec> loadCnvSpec(const Json& /*userDescription*/, const Reference& /*reference*/)
+{
+    return std::unique_ptr<CnvLocusSpec>();
+}
+
+std::unique_ptr<LocusSpec> loadLocusSpec(const Json& userDescription, const Reference& reference)
+{
+    LocusTypeFromUser locusType = getLocusType(userDescription);
+    switch (locusType)
+    {
+    case LocusTypeFromUser::kGraph:
+        return loadGraphSpec(userDescription, reference);
+    case LocusTypeFromUser::kCNV:
+        return loadCnvSpec(userDescription, reference);
+    case LocusTypeFromUser::kParalog:
+        return loadCnvSpec(userDescription, reference); // TODO: Consider creating loadParalogSpec
+    }
 }
 
 LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
@@ -449,26 +520,10 @@ LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference
     LocusCatalog catalog;
     for (auto& locusJson : catalogJson)
     {
-        // assertFieldExists(locusJson, "LocusType");
-        // auto locusType = locusJson["LocusType"].get<string>();
-        // if (locusType == "CNV")
-        //{
-        //    auto cnvUserDescription = loadCnvUserDescription(locusJson, reference.contigInfo());
-        //    CnvLocusSpec cnvLocusSpec = decodeCnvLocus(reference, cnvUserDescription);
-        //}
-        LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
         try
         {
-            if (userDescription.locusType == LocusTypeFromUser::kGraph)
-            {
-                GraphLocusSpec locusSpec = decodeGraphLocusSpecification(userDescription, reference);
-                catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<GraphLocusSpec>(locusSpec)));
-            }
-            // if (userDescription.locusType == LocusTypeFromUser::kCNV)
-            //{
-            //    CnvLocusSpec locusSpec = decodeCnvLocusSpecification(userDescription, reference);
-            //    catalog.emplace(std::make_pair(locusSpec.locusId(), make_shared<CnvLocusSpec>(locusSpec)));
-            //}
+            std::unique_ptr<LocusSpec> locusSpec = loadLocusSpec(locusJson, reference);
+            catalog.emplace(std::make_pair(locusSpec->locusId(), std::move(locusSpec)));
         }
         catch (const std::exception& except)
         {

@@ -19,7 +19,7 @@
 //
 //
 
-#include "input/GraphBlueprint.hh"
+#include "locus_spec/GraphBlueprint.hh"
 
 #include "gtest/gtest.h"
 

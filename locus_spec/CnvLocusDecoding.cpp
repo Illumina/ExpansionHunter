@@ -67,12 +67,12 @@ static GenomicRegion getLocusLocation(const CnvLocusDecoding& locusEncoding)
     vector<GenomicRegion> variantLocations;
     for (const auto& variant : locusEncoding.variants)
     {
-        variantLocations.push_back(variant.location);
+        variantLocations.push_back(*variant.location);
     }
     return *variantLocations.begin();
 }
 
-static CnvVariantType getCnvVariantType(const CnvVariantDecoding variant)
+static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
 {
     if (variant.variantType == "Baseline")
     {
@@ -108,15 +108,14 @@ CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding
         variantParameters.expectedNormal = variant.expectedNormalCN;
 
         CnvVariantType variantType = getCnvVariantType(variant);
-        locusSpec.addVariant(variant.id, variantType, variant.location, variantParameters);
+        locusSpec.addVariant(variant.id, variantType, *variant.location, variantParameters);
     }
 
     for (const auto& variant : encoding.outputVariants)
     {
-        locusSpec.addOutputVariant(variant.id, variant.location);
+        locusSpec.addOutputVariant(variant.id, *variant.location);
     }
 
     return locusSpec;
 }
 }
-
