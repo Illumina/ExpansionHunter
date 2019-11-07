@@ -33,7 +33,7 @@
 #include "graphcore/Graph.hh"
 
 #include "common/GenomicRegion.hh"
-#include "locus_spec/GraphLocusEncoding.hh"
+#include "locus_spec/GraphLocusDecoding.hh"
 
 namespace ehunter
 {

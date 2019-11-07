@@ -196,7 +196,7 @@ static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceC
 
         assertFieldExists(variant, "ReferenceRegion");
         GenomicRegion region = decode(contigInfo, variant["ReferenceRegion"].get<string>());
-        
+
         CnvOutputVariantDecoding cnvOutputVariantDecoding = CnvOutputVariantDecoding(variantId, region);
         cnvOutputVariants.emplace_back(cnvOutputVariantDecoding);
     }
@@ -255,8 +255,10 @@ static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceC
             priors.push_back(encoding.get<double>());
         }
         auto priorCopyNumberFrequency = priors;
-        
-        CnvVariantDecoding variantDecoding = CnvVariantDecoding(variantId, region, variantType, expectedNormalCN, regionGC, mappingQualityThreshold, maxCopyNumber, depthScaleFactor, standardDevidationOfCN2, meanDepths, priorCopyNumberFrequency);
+
+        CnvVariantDecoding variantDecoding = CnvVariantDecoding(
+            variantId, region, variantType, expectedNormalCN, regionGC, mappingQualityThreshold, maxCopyNumber,
+            depthScaleFactor, standardDevidationOfCN2, meanDepths, priorCopyNumberFrequency);
         cnvAnalysisVariants.emplace_back(variantDecoding);
     }
     cnvLocusDecoding.outputVariants = cnvOutputVariants;
@@ -447,9 +449,9 @@ LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference
     LocusCatalog catalog;
     for (auto& locusJson : catalogJson)
     {
-        //assertFieldExists(locusJson, "LocusType");
-        //auto locusType = locusJson["LocusType"].get<string>();
-        //if (locusType == "CNV")
+        // assertFieldExists(locusJson, "LocusType");
+        // auto locusType = locusJson["LocusType"].get<string>();
+        // if (locusType == "CNV")
         //{
         //    auto cnvUserDescription = loadCnvUserDescription(locusJson, reference.contigInfo());
         //    CnvLocusSpec cnvLocusSpec = decodeCnvLocus(reference, cnvUserDescription);
