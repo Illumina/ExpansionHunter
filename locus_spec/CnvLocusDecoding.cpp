@@ -74,17 +74,17 @@ static GenomicRegion getLocusLocation(const CnvLocusDecoding& locusEncoding)
 
 static CnvVariantType getCnvVariantType(const CnvVariantDecoding variant)
 {
-    if (variant.type == "Baseline")
+    if (variant.variantType == "Baseline")
     {
         return CnvVariantType::kBaseline;
     }
-    else if (variant.type == "Target")
+    else if (variant.variantType == "Target")
     {
         return CnvVariantType::kTarget;
     }
     else
     {
-        throw std::logic_error("Encountered invalid variant type: " + variant.type);
+        throw std::logic_error("Encountered invalid variant type: " + variant.variantType);
     }
 }
 

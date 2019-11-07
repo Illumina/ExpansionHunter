@@ -176,6 +176,94 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
 }
 */
 
+static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
+{
+    CnvLocusDecoding cnvLocusDecoding;
+
+    assertFieldExists(locusJson, "LocusId");
+    auto locusId = locusJson["LocusId"].get<string>();
+    cnvLocusDecoding.id = locusId;
+
+    std::vector<CnvVariantDecoding> cnvAnalysisVariants;
+    std::vector<CnvOutputVariantDecoding> cnvOutputVariants;
+
+    assertFieldExists(locusJson, "OutputVariants");
+    makeArray(locusJson["OutputVariants"]);
+    for (const auto& variant : locusJson["OutputVariants"])
+    {
+        assertFieldExists(variant, "VariantId");
+        auto variantId = variant["VariantId"].get<string>();
+
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(contigInfo, variant["ReferenceRegion"].get<string>());
+        
+        CnvOutputVariantDecoding cnvOutputVariantDecoding = CnvOutputVariantDecoding(variantId, region);
+        cnvOutputVariants.emplace_back(cnvOutputVariantDecoding);
+    }
+
+    assertFieldExists(locusJson, "AnalysisVariants");
+    makeArray(locusJson["AnalysisVariants"]);
+    for (const auto& variant : locusJson["AnalysisVariants"])
+    {
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(contigInfo, variant["ReferenceRegion"].get<string>());
+
+        assertFieldExists(variant, "VariantId");
+        string variantId = variant["VariantId"].get<string>();
+
+        assertFieldExists(variant, "VariantSubtype");
+        auto variantType = variant["VariantSubtype"].get<string>();
+
+        bool expectedNormalCN;
+        if (variantType == "Baseline")
+        {
+            assertFieldExists(variant, "ExpectedNormal");
+            expectedNormalCN = variant["ExpectedNormal"].get<bool>();
+        }
+        else
+        {
+            expectedNormalCN = false;
+        }
+
+        assertFieldExists(variant, "GC");
+        auto regionGC = variant["GC"].get<double>();
+
+        assertFieldExists(variant, "MappingQualityThreshold");
+        auto mappingQualityThreshold = variant["MappingQualityThreshold"].get<int>();
+
+        assertFieldExists(variant, "MaxCopyNumber");
+        auto maxCopyNumber = variant["MaxCopyNumber"].get<int>();
+
+        assertFieldExists(variant, "DepthScaleFactor");
+        auto depthScaleFactor = variant["DepthScaleFactor"].get<double>();
+
+        assertFieldExists(variant, "StandardDeviationOfCN2");
+        auto standardDevidationOfCN2 = variant["StandardDeviationOfCN2"].get<double>();
+
+        assertFieldExists(variant, "MeanDepthValues");
+        std::vector<double> meanDepths;
+        for (const auto& encoding : variant["MeanDepthValues"])
+        {
+            meanDepths.push_back(encoding.get<double>());
+        }
+        auto meanDepthValues = meanDepths;
+
+        assertFieldExists(variant, "PriorCopyNumberFreq");
+        std::vector<double> priors;
+        for (const auto& encoding : variant["PriorCopyNumberFreq"])
+        {
+            priors.push_back(encoding.get<double>());
+        }
+        auto priorCopyNumberFrequency = priors;
+        
+        CnvVariantDecoding variantDecoding = CnvVariantDecoding(variantId, region, variantType, expectedNormalCN, regionGC, mappingQualityThreshold, maxCopyNumber, depthScaleFactor, standardDevidationOfCN2, meanDepths, priorCopyNumberFrequency);
+        cnvAnalysisVariants.emplace_back(variantDecoding);
+    }
+    cnvLocusDecoding.outputVariants = cnvOutputVariants;
+    cnvLocusDecoding.variants = cnvAnalysisVariants;
+    return cnvLocusDecoding;
+}
+
 static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
     assertFieldExists(locusJson, "LocusId");
@@ -359,6 +447,13 @@ LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference
     LocusCatalog catalog;
     for (auto& locusJson : catalogJson)
     {
+        //assertFieldExists(locusJson, "LocusType");
+        //auto locusType = locusJson["LocusType"].get<string>();
+        //if (locusType == "CNV")
+        //{
+        //    auto cnvUserDescription = loadCnvUserDescription(locusJson, reference.contigInfo());
+        //    CnvLocusSpec cnvLocusSpec = decodeCnvLocus(reference, cnvUserDescription);
+        //}
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
         try
         {

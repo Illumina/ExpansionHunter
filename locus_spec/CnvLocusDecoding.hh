@@ -36,8 +36,22 @@ namespace ehunter
 
 struct CnvVariantDecoding
 {
+    CnvVariantDecoding(std::string id, GenomicRegion location, std::string variantType, bool expectedNormalCN, double regionGC, int mappingQualityThreshold, int maxCopyNumber, double depthScaleFactor, double standardDevidationOfCN2, std::vector<double> meanDepthValues, std::vector<double> priorCopyNumberFrequency)
+        : id(id)
+        , location(location)
+        , variantType(variantType)
+        , expectedNormalCN(expectedNormalCN)
+        , regionGC(regionGC)
+        , mappingQualityThreshold(mappingQualityThreshold)
+        , maxCopyNumber(maxCopyNumber)
+        , depthScaleFactor(depthScaleFactor)
+        , standardDevidationOfCN2(standardDevidationOfCN2)
+        , meanDepthValues(meanDepthValues)
+        , priorCopyNumberFrequency(priorCopyNumberFrequency)
+    {
+    }
+
     std::string id;
-    std::string type;
     GenomicRegion location;
     std::string variantType;
     bool expectedNormalCN;
@@ -52,6 +66,11 @@ struct CnvVariantDecoding
 
 struct CnvOutputVariantDecoding
 {
+    CnvOutputVariantDecoding(std::string id, GenomicRegion location)
+        : id(id)
+        , location(location)
+    {
+    }
     std::string id;
     GenomicRegion location;
 };
@@ -63,5 +82,5 @@ struct CnvLocusDecoding
     std::vector<CnvOutputVariantDecoding> outputVariants;
 };
 
-CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding);
+CnvLocusSpec decodeCnvLocus(const Reference& reference, const CnvLocusDecoding& encoding);
 }
