@@ -84,15 +84,18 @@ static void assertRecordIsArray(const Json& record)
     }
 }*/
 
-static void makeArray(Json& record)
+static Json makeArray(const Json& record)
 {
     if (record.type() != Json::value_t::array)
     {
-        record = Json::array({ record });
+        return Json::array({ record });
+    }
+    else
+    {
+        return record;
     }
 }
 
-/*
 static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
 {
     if (encoding == "RareRepeat")
@@ -119,7 +122,7 @@ static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
     {
         throw std::logic_error("Encountered invalid variant type: " + encoding);
     }
-} */
+}
 
 /*
 static VariantSubtypeFromUser decodeVariantSubtypeFromUser(const string& encoding)
@@ -171,7 +174,6 @@ static LocusTypeFromUser getLocusType(const Json& record)
     }
 }
 
-/*
 static vector<string> generateIds(const string& locusId, const Json& variantLocationEncodings)
 {
     if (variantLocationEncodings.size() == 1)
@@ -190,12 +192,11 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
 
     return variantIds;
 }
-*/
 
 /*
-static CnvLocusDecoding loadCnvUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
+static CnvLocusEncoding loadCnvUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
-    CnvLocusDecoding cnvLocusDecoding;
+    CnvLocusEncoding cnvLocusDecoding;
 
     assertFieldExists(locusJson, "LocusId");
     auto locusId = locusJson["LocusId"].get<string>();
@@ -460,7 +461,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
         errorRate, likelihoodRatioThreshold, minLocusCoverage);
 } */
 
-static GraphLocusEncoding loadGraphDescription(const Json& json)
+static GraphLocusEncoding loadLegacyGraphLocusEncoding(const Json& json, const Reference& reference)
 {
     GraphLocusEncoding locus;
 
@@ -470,6 +471,41 @@ static GraphLocusEncoding loadGraphDescription(const Json& json)
     assertFieldExists(json, "LocusStructure");
     locus.structure = json["LocusStructure"].get<string>();
 
+    vector<GenomicRegion> variantLocations;
+    assertFieldExists(json, "ReferenceRegion");
+    auto variantLocationJson = makeArray(json["ReferenceRegion"]);
+    for (const auto& encoding : variantLocationJson)
+    {
+        GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
+        variantLocations.push_back(region);
+    }
+
+    vector<string> variantIds;
+    if (checkIfFieldExists(json, "VariantId"))
+    {
+        makeArray(json["VariantId"]);
+        for (const auto& variantId : json["VariantId"])
+        {
+            variantIds.push_back(variantId.get<string>());
+        }
+    }
+    else
+    {
+        variantIds = generateIds(locus.id, variantLocationJson);
+    }
+
+    vector<VariantTypeFromUser> variantTypes;
+    assertFieldExists(json, "VariantType");
+    for (const auto& encoding : makeArray(json["VariantType"]))
+    {
+        variantTypes.push_back(decodeVariantTypeFromUser(encoding.get<string>()));
+    }
+
+    if (variantIds.size() != variantLocations.size())
+    {
+        throw std::runtime_error("A region must be provided for each variant in " + locus.id);
+    }
+
     // TODO: initialize flankLength, errorRate, likelihoodRatioThreshold, minLocusCoverage and remaining fields
     // std::vector<GenomicRegion> regionsWithReads;
     // std::vector<GenomicRegion> offtargetRegionsWithReads;
@@ -478,7 +514,7 @@ static GraphLocusEncoding loadGraphDescription(const Json& json)
 
 std::unique_ptr<GraphLocusSpec> loadGraphSpec(const Json& userDescription, const Reference& reference)
 {
-    auto encoding = loadGraphDescription(userDescription);
+    auto encoding = loadLegacyGraphLocusEncoding(userDescription, reference);
     std::unique_ptr<GraphLocusSpec> spec(new GraphLocusSpec(decode(reference, encoding)));
     return spec;
 }
@@ -562,7 +598,7 @@ std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPat
         auto regionGC = regionJson["GC"].get<float>();
         assertFieldExists(regionJson, "ReferenceRegion");
         GenomicRegion region = decode(reference.contigInfo(), regionJson["ReferenceRegion"].get<string>());
-        normRegionInfo.push_back(RegionInfo(regionGC, region));
+        normRegionInfo.emplace_back(regionGC, region);
     }
     return normRegionInfo;
 }

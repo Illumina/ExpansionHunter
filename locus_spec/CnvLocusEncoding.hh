@@ -55,12 +55,12 @@ struct CnvOutputVariantEncoding
     boost::optional<GenomicRegion> location;
 };
 
-struct CnvLocusDecoding
+struct CnvLocusEncoding
 {
     std::string id;
     std::vector<CnvVariantEncoding> variants;
     std::vector<CnvOutputVariantEncoding> outputVariants;
 };
 
-CnvLocusSpec decodeCnvLocus(const Reference& reference, const CnvLocusDecoding& encoding);
+CnvLocusSpec decodeCnvLocus(const Reference& reference, const CnvLocusEncoding& encoding);
 }

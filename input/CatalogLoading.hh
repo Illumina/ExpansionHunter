@@ -27,7 +27,7 @@
 #include "common/Common.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "locus_spec/CnvLocusDecoding.hh"
+#include "locus_spec/CnvLocusEncoding.hh"
 #include "locus_spec/GraphLocusDecoding.hh"
 #include "locus_spec/LocusSpec.hh"
 

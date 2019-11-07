@@ -5,5 +5,5 @@ add_library(locus_spec
         GraphBlueprint.hh GraphBlueprint.cpp
         RegionGraph.hh RegionGraph.cpp
         GraphLocusDecoding.hh GraphLocusDecoding.cpp
-        CnvLocusDecoding.hh CnvLocusDecoding.cpp)
+        CnvLocusEncoding.hh CnvLocusEncoding.cpp)
 target_link_libraries(locus_spec common graphtools)
