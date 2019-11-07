@@ -125,7 +125,7 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, D
 {
     const double minLocusCoverage = locusSpec.genotyperParams().minLocusCoverage;
     auto locus = make_shared<CnvLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
-    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
+    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.targetRegions());
     locus->setStats(statsAnalyzer);
 
     for (const auto& variantSpec : locusSpec.variants())

@@ -34,9 +34,13 @@ namespace ehunter
 
 struct GraphVariantEncoding
 {
-    std::string id;
+    GraphVariantEncoding(std::string type, GenomicRegion location)
+        : type(std::move(type))
+        , location(location)
+    {
+    }
+    boost::optional<std::string> id;
     std::string type;
-    GraphVariantClassification subtype;
     GenomicRegion location;
 };
 
@@ -47,9 +51,9 @@ struct GraphLocusEncoding
     // std::string variantType;
     int flankLength;
     // Regions in the reference where we expect relevant reads to align
-    std::vector<GenomicRegion> regionsWithReads;
+    std::vector<GenomicRegion> targetRegions;
     // Regions where additional relevant reads might be found that require filtering or special considerations
-    std::vector<GenomicRegion> offtargetRegionsWithReads;
+    std::vector<GenomicRegion> offtargetRegions;
     boost::optional<double> errorRate;
     boost::optional<double> likelihoodRatioThreshold;
     boost::optional<double> minLocusCoverage;

@@ -89,8 +89,8 @@ static vector<GenomicRegion> computeFlanks(const vector<GenomicRegion>& regions,
 static AnalysisRegions getAnalysisRegions(const GraphLocusEncoding& encoding, const GenomicRegion& locusLocation)
 {
     AnalysisRegions regions;
-    regions.regionsWithReads = encoding.regionsWithReads;
-    regions.offtargetRegionsWithReads = encoding.offtargetRegionsWithReads;
+    regions.regionsWithReads = encoding.targetRegions;
+    regions.offtargetRegionsWithReads = encoding.offtargetRegions;
 
     // TODO: Handle case when user explicitly defines stats regions
     // TODO: Decide if flank length is always appropriate for stats regions
