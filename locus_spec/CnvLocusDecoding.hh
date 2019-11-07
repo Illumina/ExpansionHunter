@@ -34,7 +34,7 @@
 namespace ehunter
 {
 
-struct CnvVariantEncoding
+struct CnvVariantDecoding
 {
     std::string id;
     boost::optional<GenomicRegion> location;
@@ -49,18 +49,18 @@ struct CnvVariantEncoding
     std::vector<double> priorCopyNumberFrequency;
 };
 
-struct CnvOutputVariantEncoding
+struct CnvOutputVariantDecoding
 {
     std::string id;
     boost::optional<GenomicRegion> location;
 };
 
-struct CnvLocusEncoding
+struct CnvLocusDecoding
 {
     std::string id;
-    std::vector<CnvVariantEncoding> variants;
-    std::vector<CnvOutputVariantEncoding> outputVariants;
+    std::vector<CnvVariantDecoding> variants;
+    std::vector<CnvOutputVariantDecoding> outputVariants;
 };
 
-CnvLocusSpec decodeCnvLocus(const Reference& reference, const CnvLocusEncoding& encoding);
+CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding);
 }

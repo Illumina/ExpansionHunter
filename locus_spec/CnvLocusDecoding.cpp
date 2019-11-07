@@ -21,7 +21,7 @@
 //
 //
 
-#include "locus_spec/CnvLocusEncoding.hh"
+#include "locus_spec/CnvLocusDecoding.hh"
 #include "locus_spec/CnvLocusSpec.hh"
 
 #include <stdexcept>
@@ -49,7 +49,7 @@ static CopyNumberBySex getCopyNumber(const string& contig)
     return CopyNumberBySex::kTwoInFemaleTwoInMale;
 }
 
-static CnvLocusType getCnvLocusType(const CnvLocusEncoding& encoding)
+static CnvLocusType getCnvLocusType(const CnvLocusDecoding& encoding)
 {
     CnvLocusType cnvLocusType = CnvLocusType::kNonoverlapping;
     for (const auto& variant : encoding.variants)
@@ -62,7 +62,7 @@ static CnvLocusType getCnvLocusType(const CnvLocusEncoding& encoding)
     return cnvLocusType;
 }
 
-static GenomicRegion getLocusLocation(const CnvLocusEncoding& locusEncoding)
+static GenomicRegion getLocusLocation(const CnvLocusDecoding& locusEncoding)
 {
     vector<GenomicRegion> variantLocations;
     for (const auto& variant : locusEncoding.variants)
@@ -72,7 +72,7 @@ static GenomicRegion getLocusLocation(const CnvLocusEncoding& locusEncoding)
     return *variantLocations.begin();
 }
 
-static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
+static CnvVariantType getCnvVariantType(const CnvVariantDecoding variant)
 {
     if (variant.variantType == "Baseline")
     {
@@ -88,7 +88,7 @@ static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
     }
 }
 
-CnvLocusSpec decode(const Reference& reference, const CnvLocusEncoding& encoding)
+CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding)
 {
     GenomicRegion locusLocation = getLocusLocation(encoding);
     CopyNumberBySex copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));

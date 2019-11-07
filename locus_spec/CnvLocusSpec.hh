@@ -96,7 +96,10 @@ public:
     const GenomicRegion& location() const { return location_; }
     const CnvVariantType& variantType() const { return variantType_; }
 
-    bool operator==(const CnvVariantSpec& other) const { return id_ == other.id_ && variantType_ == other.variantType_ && location_ == other.location_; }
+    bool operator==(const CnvVariantSpec& other) const 
+    { 
+        return id_ == other.id_ && variantType_ == other.variantType_ && location_ == other.location_; 
+    }
 
     void assertConsistency() const;
 

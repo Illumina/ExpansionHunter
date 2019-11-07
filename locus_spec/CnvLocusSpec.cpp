@@ -74,4 +74,13 @@ void CnvLocusSpec::addOutputVariant(std::string id, GenomicRegion location)
     outputVariants_.emplace_back(std::move(id), std::move(location));
 }
 
+void CnvVariantSpec::assertConsistency() const
+{
+    bool variantIsValid = variantType_ == CnvVariantType::kBaseline || variantType_ == CnvVariantType::kTarget;
+
+    if (!variantIsValid)
+    {
+        throw std::logic_error("Definition of variant " + id_ + " is inconsistent");
+    }
+}
 }
