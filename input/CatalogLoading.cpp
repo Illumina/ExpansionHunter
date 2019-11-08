@@ -224,7 +224,7 @@ static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Refere
         auto depthScaleFactor = variant["DepthScaleFactor"].get<double>();
 
         assertFieldExists(variant, "StandardDeviationOfCN2");
-        auto standardDevidationOfCN2 = variant["StandardDeviationOfCN2"].get<double>();
+        auto standardDeviationOfCN2 = variant["StandardDeviationOfCN2"].get<double>();
 
         assertFieldExists(variant, "MeanDepthValues");
         std::vector<double> meanDepths;
@@ -251,7 +251,7 @@ static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Refere
         variantDecoding.mappingQualityThreshold = mappingQualityThreshold;
         variantDecoding.maxCopyNumber = maxCopyNumber;
         variantDecoding.depthScaleFactor = depthScaleFactor;
-        variantDecoding.standardDevidationOfCN2 = standardDevidationOfCN2;
+        variantDecoding.standardDeviationOfCN2 = standardDeviationOfCN2;
         variantDecoding.meanDepthValues = meanDepths;
         variantDecoding.priorCopyNumberFrequency = priorCopyNumberFrequency;
         cnvAnalysisVariants.emplace_back(variantDecoding);
