@@ -50,7 +50,7 @@ struct GraphLocusDecoding
     std::string id;
     std::string structure;
     // std::string variantType;
-    int flankLength;
+    int flankLength = 1000; // where is this loaded from? --XC
     // Regions in the reference where we expect relevant reads to align
     std::vector<GenomicRegion> targetRegions;
     // Regions where additional relevant reads might be found that require filtering or special considerations
@@ -63,5 +63,4 @@ struct GraphLocusDecoding
 };
 
 GraphLocusSpec decode(const Reference& reference, const GraphLocusDecoding& locusEncoding);
-
 }
