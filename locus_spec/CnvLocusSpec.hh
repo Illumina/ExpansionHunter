@@ -71,13 +71,8 @@ struct CnvGenotyperParameters
 
 struct CnvOutputVariant
 {
-    CnvOutputVariant(std::string id, GenomicRegion location)
-        : id(id)
-        , location(location)
-    {
-    }
     std::string id;
-    GenomicRegion location;
+    boost::optional<GenomicRegion> location;
 };
 
 class CnvVariantSpec
@@ -95,6 +90,7 @@ public:
     const std::string& id() const { return id_; }
     const GenomicRegion& location() const { return location_; }
     const CnvVariantType& variantType() const { return variantType_; }
+    const CnvGenotyperParameters& genotyperParams() const { return genotyperParams_; }
 
     bool operator==(const CnvVariantSpec& other) const 
     { 
@@ -114,22 +110,24 @@ class CnvLocusSpec : public LocusSpec
 {
 public:
     CnvLocusSpec(
-        std::string locusId, CnvLocusType locusType, CopyNumberBySex contigCopyNumber)
+        std::string locusId, CnvLocusType locusType, CopyNumberBySex contigCopyNumber, CnvOutputVariant outputVariant)
         : LocusSpec(locusId, contigCopyNumber)
         , locusType_(locusType)
+        , outputVariant_(outputVariant)
     {
     }
 
     ~CnvLocusSpec() override = default;
 
     std::vector<GenomicRegion> regionsWithReads() const;
-    const CnvLocusType& locusTupe() const { return locusType_; }
+    const CnvLocusType& locusType() const { return locusType_; }
+    const std::vector<CnvVariantSpec>& variants() const { return variants_; }
+    const CnvOutputVariant& outputVariant() const { return outputVariant_; }
     void addVariant(std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters);
-    void addOutputVariant(std::string id, GenomicRegion location);
 
 private:
     CnvLocusType locusType_;
     std::vector<CnvVariantSpec> variants_;
-    std::vector<CnvOutputVariant> outputVariants_;
+    CnvOutputVariant outputVariant_;
 };
 }

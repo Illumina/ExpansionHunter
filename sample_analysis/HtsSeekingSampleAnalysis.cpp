@@ -223,17 +223,12 @@ SampleFindings htsSeekingSampleAnalysis(
                 graphLocusSpec.analysisRegions().offtargetRegionsWithReads, inputPaths.htsFile(),
                 inputPaths.reference());
         }
-        /*else if (cnvLocusSpecPtr)
+        else if (cnvLocusSpecPtr)
         {
             CnvLocusSpec cnvLocusSpec = *cnvLocusSpecPtr;
-            vector<GenomicRegion> variantLocations;
-            for (auto variant : cnvLocusSpec.variants())
-            {
-                variantLocations.push_back(variant.referenceLocus());
-            }
             readPairs = collectCandidateReads(
-                variantLocations, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
-        } */
+                cnvLocusSpec.regionsWithReads(), vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
+        } 
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, genomeDepthNormalizer, bamletWriter);
 

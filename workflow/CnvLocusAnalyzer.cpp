@@ -41,10 +41,10 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-CnvLocusAnalyzer::CnvLocusAnalyzer(double /*minLocusCoverage*/, string locusId, CnvLocusType locusType)
-    : // minLocusCoverage_(minLocusCoverage),
-    locusId_(std::move(locusId))
+CnvLocusAnalyzer::CnvLocusAnalyzer(string locusId, CnvLocusType locusType, CnvOutputVariant outputVariant)
+    : locusId_(std::move(locusId))
     , locusType_(locusType)
+    , outputVariant_(outputVariant)
 {
 }
 
@@ -93,7 +93,9 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
         cnvLocusCopyNumberCall
             = callCopyNumberForNonOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(locusId_, cnvLocusCopyNumberCall));
+
+    auto outputVariantId = outputVariant_.id;
+    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(outputVariantId, cnvLocusCopyNumberCall));
     locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
     return locusFindings;

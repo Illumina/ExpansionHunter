@@ -94,11 +94,11 @@ void VcfWriter::writeBody(ostream& out)
             GraphVariantVcfWriter variantWriter(reference_, *graphLocusSpec, locusDepth, variantSpec, out);
             variantFindings->accept(variantWriter);
         }
-        // else if (cnvLocusSpec)
-        //{
-        //    CnvVariantVcfWriter variantWriter(reference_, *cnvLocusSpec, locusDepth, variantSpec, out);
-        //    variantFindings->accept(variantWriter);
-        //}
+        else if (cnvLocusSpec)
+        {
+            CnvVariantVcfWriter variantWriter(reference_, *cnvLocusSpec, locusDepth, out);
+            variantFindings->accept(variantWriter);
+        }
     }
 }
 
@@ -271,7 +271,6 @@ void GraphVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
     }
 }
 
-/*
 void CnvVariantVcfWriter::visit(StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
@@ -286,14 +285,15 @@ void CnvVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
     {
         return;
     }
-} */
+} 
 
-/*
+
 void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
 {
-    const auto& variantSpec = locusSpec_.getVariantById(cnvFindings.variantId());
-    const auto& referenceLocus = variantSpec.referenceLocus();
-    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+    //const auto& variantSpec = locusSpec_.getVariantById(cnvFindings.variantId());
+    //const auto& referenceLocus = variantSpec.referenceLocus();
+    //const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+    const auto& contigName = "test";
     boost::optional<int> copyNumberCall = cnvFindings.copyNumberCall();
     vector<string> vcfRecordElements;
     if (copyNumberCall)
@@ -305,7 +305,7 @@ void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
         vcfRecordElements = { contigName };
     }
     // out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
-} */
+} 
 
 void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
 {

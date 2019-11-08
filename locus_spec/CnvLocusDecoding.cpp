@@ -94,7 +94,14 @@ CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding
     CopyNumberBySex copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
     CnvLocusType cnvLocusType = getCnvLocusType(encoding);
 
-    CnvLocusSpec locusSpec(encoding.id, cnvLocusType, copyNumberBySex);
+    CnvOutputVariant outputVariant;
+    for (const auto& variant : encoding.outputVariants)
+    {
+        outputVariant.id = variant.id;
+        outputVariant.location = variant.location;
+    }
+
+    CnvLocusSpec locusSpec(encoding.id, cnvLocusType, copyNumberBySex, outputVariant);
     for (const auto& variant : encoding.variants)
     {
         CnvGenotyperParameters variantParameters;
@@ -102,18 +109,13 @@ CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding
         variantParameters.mappingQualityThreshold = variant.mappingQualityThreshold;
         variantParameters.maxCopyNumber = variant.maxCopyNumber;
         variantParameters.depthScaleFactor = variant.depthScaleFactor;
-        variantParameters.standardDeviationOfCN2 = variant.standardDevidationOfCN2;
+        variantParameters.standardDeviationOfCN2 = variant.standardDeviationOfCN2;
         variantParameters.meanDepthValues = variant.meanDepthValues;
         variantParameters.priorCopyNumberFrequency = variant.priorCopyNumberFrequency;
         variantParameters.expectedNormal = variant.expectedNormalCN;
 
         CnvVariantType variantType = getCnvVariantType(variant);
         locusSpec.addVariant(variant.id, variantType, *variant.location, variantParameters);
-    }
-
-    for (const auto& variant : encoding.outputVariants)
-    {
-        locusSpec.addOutputVariant(variant.id, *variant.location);
     }
 
     return locusSpec;

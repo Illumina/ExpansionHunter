@@ -44,7 +44,7 @@ struct CnvVariantDecoding
     int mappingQualityThreshold;
     int maxCopyNumber;
     double depthScaleFactor;
-    double standardDevidationOfCN2;
+    double standardDeviationOfCN2;
     std::vector<double> meanDepthValues;
     std::vector<double> priorCopyNumberFrequency;
 };

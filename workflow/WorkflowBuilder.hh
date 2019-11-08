@@ -37,8 +37,7 @@ namespace ehunter
 std::shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     const GraphLocusSpec& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter);
 
-// std::shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer
-// genomeDepthNormalizer);
+std::shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepthNormalizer);
 
 std::vector<std::shared_ptr<RegionModel>> extractRegionModels(const std::vector<std::shared_ptr<LocusAnalyzer>>& loci);
 }
