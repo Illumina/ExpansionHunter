@@ -264,7 +264,7 @@ static GraphVariantClassification classifyVariant(
             return { GraphVariantClassification::Type::kSmallVariant, GraphVariantClassification::Subtype::kSwap };
         }
     }
-    else if (variantTypeFromUser == "CommonRepeat")
+    else if (variantTypeFromUser == "Repeat")
     {
         return { GraphVariantClassification::Type::kRepeat, GraphVariantClassification::Subtype::kCommonRepeat };
     }
@@ -375,5 +375,4 @@ GraphLocusSpec decode(const Reference& reference, const GraphLocusDecoding& locu
 
     return locusSpec;
 }
-
 }
