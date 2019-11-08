@@ -67,7 +67,8 @@ enum class LocusTypeFromUser
 {
     kGraph,
     kCNV,
-    kParalog
+    kParalog,
+    kUnspecified
 };
 
 static bool checkIfFieldExists(const Json& record, const string& fieldName)
@@ -136,7 +137,7 @@ static LocusTypeFromUser getLocusType(const Json& record)
     }
     else
     {
-        return LocusTypeFromUser::kGraph;
+        return LocusTypeFromUser::kUnspecified;
     }
 }
 
@@ -159,6 +160,76 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
     return variantIds;
 }
 
+static GraphLocusDecoding loadGraphLocusDecoding(const Json& json, const Reference& reference)
+{
+    GraphLocusDecoding locus;
+
+    assertFieldExists(json, "LocusId");
+    locus.id = json["LocusId"].get<string>();
+
+    assertFieldExists(json, "LocusStructure");
+    locus.structure = json["LocusStructure"].get<string>();
+
+    if (checkIfFieldExists(json, "TargetRegion"))
+    {
+        for (const auto& encoding : makeArray(json["TargetRegion"]))
+        {
+            auto region = decode(reference.contigInfo(), encoding.get<string>());
+            locus.targetRegions.push_back(region);
+        }
+    }
+
+    if (checkIfFieldExists(json, "OfftargetRegions"))
+    {
+        assertRecordIsArray(json["OfftargetRegions"]);
+        for (const auto& encoding : json["OfftargetRegions"])
+        {
+            GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
+            locus.offtargetRegions.push_back(region);
+        }
+    }
+
+    if (checkIfFieldExists(json, "ErrorRate"))
+    {
+        locus.errorRate = json["ErrorRate"].get<double>();
+    }
+
+    if (checkIfFieldExists(json, "LikelihoodRatioThreshold"))
+    {
+        locus.likelihoodRatioThreshold = json["LikelihoodRatioThreshold"].get<double>();
+    }
+
+    if (checkIfFieldExists(json, "MinimalLocusCoverage"))
+    {
+        locus.minLocusCoverage = json["MinimalLocusCoverage"].get<double>();
+    }
+
+    assertFieldExists(json, "Variants");
+    makeArray(json["Variants"]);
+    for (const auto& variant : json["Variants"])
+    {
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(reference.contigInfo(), variant["ReferenceRegion"].get<string>());
+
+        assertFieldExists(variant, "VariantType");
+        auto variantType = variant["VariantType"].get<string>();
+
+        std::string variantId;
+        if (checkIfFieldExists(variant, "VariantId"))
+        {
+            variantId = variant["VariantId"].get<string>();
+        }
+        else
+        {
+            variantId = locus.id;
+            variantId += "_";
+            variantId += variant["ReferenceRegion"].get<string>();
+        }
+
+        locus.variants.emplace_back(GraphVariantDecoding(variantId, variantType, region));
+    }
+    return locus;
+}
 
 static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Reference& reference)
 {
@@ -259,173 +330,7 @@ static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Refere
     cnvLocusDecoding.outputVariants = cnvOutputVariants;
     cnvLocusDecoding.variants = cnvAnalysisVariants;
     return cnvLocusDecoding;
-} 
-
-/*
-static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
-{
-    assertFieldExists(locusJson, "LocusId");
-    auto locusId = locusJson["LocusId"].get<string>();
-
-    assertFieldExists(locusJson, "LocusType");
-    LocusTypeFromUser locusType = decodeLocusTypeFromUser(locusJson["LocusType"].get<string>());
-
-    boost::optional<std::string> locusStructure;
-    if (locusType == LocusTypeFromUser::kGraph)
-    {
-        assertFieldExists(locusJson, "LocusStructure");
-        locusStructure = locusJson["LocusStructure"].get<string>();
-    }
-
-    vector<GenomicRegion> variantLocations;
-
-    assertFieldExists(locusJson, "Variants");
-    makeArray(locusJson["Variants"]);
-    vector<VariantDescriptionFromUser> variantDescriptions;
-    for (const auto& variant : locusJson["Variants"])
-    {
-        assertFieldExists(variant, "VariantType");
-        auto variantType = classifyGraphVariant(variant["VariantType"].get<string>());
-
-        assertFieldExists(variant, "ReferenceRegion");
-        GenomicRegion region = decode(contigInfo, variant["ReferenceRegion"].get<string>());
-
-        string variantId;
-        if (checkIfFieldExists(variant, "VariantId"))
-        {
-            variantId = variant["VariantId"].get<string>();
-        }
-        else
-        {
-            variantId = locusId;
-            variantId += "_";
-            variantId += variant["ReferenceRegion"].get<string>();
-        }
-
-        boost::optional<VariantSubtypeFromUser> variantSubtype;
-        boost::optional<std::string> variantStructure;
-        boost::optional<bool> expectedNormalCN;
-        boost::optional<double> regionGC;
-        boost::optional<int> mappingQualityThreshold;
-        boost::optional<int> maxCopyNumber;
-        boost::optional<double> depthScaleFactor;
-        boost::optional<double> standardDevidationOfCN2;
-        boost::optional<std::vector<double>> meanDepthValues;
-        boost::optional<std::vector<double>> priorCopyNumberFrequency;
-
-        if (checkIfFieldExists(variant, "VariantStructure"))
-        {
-            variantStructure = variant["VariantStructure"].get<string>();
-        }
-
-        if (variantType == VariantTypeFromUser::kCNV)
-        {
-            assertFieldExists(variant, "VariantSubtype");
-            variantSubtype = decodeVariantSubtypeFromUser(variant["VariantSubtype"].get<string>());
-
-            if (variantSubtype == VariantSubtypeFromUser::kBaseline)
-            {
-                assertFieldExists(variant, "ExpectedNormal");
-                expectedNormalCN = variant["ExpectedNormal"].get<bool>();
-            }
-            else
-            {
-                expectedNormalCN = false;
-            }
-
-            assertFieldExists(variant, "GC");
-            regionGC = variant["GC"].get<double>();
-
-            assertFieldExists(variant, "MappingQualityThreshold");
-            mappingQualityThreshold = variant["MappingQualityThreshold"].get<int>();
-
-            assertFieldExists(variant, "MaxCopyNumber");
-            maxCopyNumber = variant["MaxCopyNumber"].get<int>();
-
-            assertFieldExists(variant, "DepthScaleFactor");
-            depthScaleFactor = variant["DepthScaleFactor"].get<double>();
-
-            assertFieldExists(variant, "StandardDeviationOfCN2");
-            standardDevidationOfCN2 = variant["StandardDeviationOfCN2"].get<double>();
-
-            assertFieldExists(variant, "MeanDepthValues");
-            std::vector<double> meanDepths;
-            for (const auto& encoding : variant["MeanDepthValues"])
-            {
-                meanDepths.push_back(encoding.get<double>());
-            }
-            meanDepthValues = meanDepths;
-
-            assertFieldExists(variant, "PriorCopyNumberFreq");
-            std::vector<double> priors;
-            for (const auto& encoding : variant["PriorCopyNumberFreq"])
-            {
-                priors.push_back(encoding.get<double>());
-            }
-            priorCopyNumberFrequency = priors;
-        }
-        VariantDescriptionFromUser variantDescription = VariantDescriptionFromUser(
-            variantId, region, variantType, variantSubtype, variantStructure, expectedNormalCN, regionGC,
-            mappingQualityThreshold, maxCopyNumber, depthScaleFactor, standardDevidationOfCN2, meanDepthValues,
-            priorCopyNumberFrequency);
-        variantDescriptions.push_back(variantDescription);
-        variantLocations.push_back(region);
-    }
-    GenomicRegion locusLocation = mergeRegions(variantLocations, 50000);
-    if (locusType == LocusTypeFromUser::kGraph)
-    {
-        locusLocation = mergeRegions(variantLocations, 500);
-    }
-    else if (locusType == LocusTypeFromUser::kCNV)
-    {
-        assertFieldExists(locusJson, "ReferenceRegion");
-        locusLocation = decode(contigInfo, locusJson["ReferenceRegion"].get<string>());
-    }
-
-    vector<GenomicRegion> targetRegions;
-    if (checkIfFieldExists(locusJson, "TargetRegion"))
-    {
-        makeArray(locusJson["TargetRegion"]);
-        for (const auto& encoding : locusJson["TargetRegion"])
-        {
-            GenomicRegion region = decode(contigInfo, encoding.get<string>());
-            targetRegions.push_back(region);
-        }
-    }
-
-    vector<GenomicRegion> offtargetRegions;
-    if (checkIfFieldExists(locusJson, "OfftargetRegions"))
-    {
-        assertRecordIsArray(locusJson["OfftargetRegions"]);
-        for (const auto& encoding : locusJson["OfftargetRegions"])
-        {
-            GenomicRegion region = decode(contigInfo, encoding.get<string>());
-            offtargetRegions.push_back(region);
-        }
-    }
-
-    boost::optional<double> errorRate;
-    if (checkIfFieldExists(locusJson, "ErrorRate"))
-    {
-        errorRate = locusJson["ErrorRate"].get<double>();
-    }
-
-    boost::optional<double> likelihoodRatioThreshold;
-    if (checkIfFieldExists(locusJson, "LikelihoodRatioThreshold"))
-    {
-        likelihoodRatioThreshold = locusJson["LikelihoodRatioThreshold"].get<double>();
-    }
-
-    boost::optional<double> minLocusCoverage;
-    if (checkIfFieldExists(locusJson, "MinimalLocusCoverage"))
-    {
-        minLocusCoverage = locusJson["MinimalLocusCoverage"].get<double>();
-    }
-
-    return LocusDescriptionFromUser(
-        locusId, locusType, locusLocation, variantDescriptions, targetRegions, offtargetRegions, locusStructure,
-        errorRate, likelihoodRatioThreshold, minLocusCoverage);
-} */
+}
 
 static GraphLocusDecoding loadLegacyGraphLocusDecoding(const Json& json, const Reference& reference)
 {
@@ -519,9 +424,16 @@ static GraphLocusDecoding loadLegacyGraphLocusDecoding(const Json& json, const R
     return locus;
 }
 
-std::unique_ptr<GraphLocusSpec> loadGraphSpec(const Json& userDescription, const Reference& reference)
+std::unique_ptr<GraphLocusSpec> loadGraphSpecLegacy(const Json& userDescription, const Reference& reference)
 {
     auto encoding = loadLegacyGraphLocusDecoding(userDescription, reference);
+    std::unique_ptr<GraphLocusSpec> spec(new GraphLocusSpec(decode(reference, encoding)));
+    return spec;
+}
+
+std::unique_ptr<GraphLocusSpec> loadGraphSpec(const Json& userDescription, const Reference& reference)
+{
+    auto encoding = loadGraphLocusDecoding(userDescription, reference);
     std::unique_ptr<GraphLocusSpec> spec(new GraphLocusSpec(decode(reference, encoding)));
     return spec;
 }
@@ -538,6 +450,8 @@ std::unique_ptr<LocusSpec> loadLocusSpec(const Json& userDescription, const Refe
     LocusTypeFromUser locusType = getLocusType(userDescription);
     switch (locusType)
     {
+    case LocusTypeFromUser::kUnspecified:
+        return loadGraphSpecLegacy(userDescription, reference);
     case LocusTypeFromUser::kGraph:
         return loadGraphSpec(userDescription, reference);
     case LocusTypeFromUser::kCNV:
@@ -545,7 +459,7 @@ std::unique_ptr<LocusSpec> loadLocusSpec(const Json& userDescription, const Refe
     case LocusTypeFromUser::kParalog:
         return loadCnvSpec(userDescription, reference); // TODO: Consider creating loadParalogSpec
     default:
-        return loadGraphSpec(userDescription, reference);
+        return loadGraphSpecLegacy(userDescription, reference);
     }
 }
 
