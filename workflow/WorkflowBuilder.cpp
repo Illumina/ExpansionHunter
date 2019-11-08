@@ -120,7 +120,7 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     return locus;
 }
 
-shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepthNormalizer)
+shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec)
 {
     auto locus = make_shared<CnvLocusAnalyzer>(locusSpec.locusId(), locusSpec.locusType(), locusSpec.outputVariant());
     auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
@@ -139,7 +139,7 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, D
         linearModel->addFeature(readCounter.get());
         locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
             variantSpec.id(), regionLength, variantSpec.variantType(), locusSpec.copyNumberBySex(),
-            cnvParameters, readCounter, genomeDepthNormalizer));
+            cnvParameters, readCounter));
         
     }
 

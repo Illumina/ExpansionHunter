@@ -30,9 +30,9 @@
 #include "output/BamletWriter.hh"
 #include "reads/Read.hh"
 #include "sample_analysis/ModelFinder.hh"
+#include "workflow/LinearModel.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/LocusFindings.hh"
-#include "workflow/LinearModel.hh"
 #include "workflow/ReadCountAnalyzer.hh"
 #include "workflow/RegionModel.hh"
 
@@ -46,9 +46,10 @@ public:
         const LocusCatalog& locusCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter);
     void analyze(const MappedRead& read, const MappedRead& mate);
     void analyze(const MappedRead& read);
-    void collectResults(Sex sampleSex, SampleFindings& sampleFindings);
-    std::vector<RegionDepthInfo> CatalogAnalyzer::summarize();
-    
+    void collectResults(
+        Sex sampleSex, SampleFindings& sampleFindings, boost::optional<DepthNormalizer> genomeDepthNormalizer);
+    DepthNormalizer getGenomeDepthNormalizer();
+
     const std::vector<std::shared_ptr<RegionModel>>& regionModels() const { return regionModels_; }
 
 private:
@@ -59,5 +60,4 @@ private:
     std::shared_ptr<LinearModel> linearModel_;
     std::vector<std::shared_ptr<ReadCountAnalyzer>> readCountAnalyzers_;
 };
-
 }

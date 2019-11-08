@@ -36,21 +36,6 @@ CatalogAnalyzer::CatalogAnalyzer(
     const LocusCatalog& locusCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
     : normRegionInfo_(normRegionInfo)
 {
-    std::vector<GenomicRegion> normRegions;
-    for (RegionInfo regionInfo : normRegionInfo_)
-    {
-        normRegions.push_back(regionInfo.region);
-    }
-    linearModel_ = make_shared<LinearModel>(normRegions);
-    for (RegionInfo regionInfo : normRegionInfo_)
-    {
-        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion> { regionInfo.region };
-        auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
-        linearModel_->addFeature(readCounter.get());
-        readCountAnalyzers_.push_back(
-            make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
-    }
-
     WorkflowContext context;
 
     for (const auto& locusIdAndLocusSpec : locusCatalog)
@@ -64,13 +49,22 @@ CatalogAnalyzer::CatalogAnalyzer(
         }
         else if (cnvLocusSpec)
         {
-            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, genomeDepthNormalizer));
+            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec));
         }
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);
-    auto kk = std::unique_ptr<RegionModel>(linearModel_);
-    regionModels.emplace_back();
+
+    for (RegionInfo regionInfo : normRegionInfo_)
+    {
+        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion>{ regionInfo.region };
+        linearModel_ = make_shared<LinearModel>(countingRegion);
+        auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
+        linearModel_->addFeature(readCounter.get());
+        regionModels_.push_back(linearModel_);
+        readCountAnalyzers_.push_back(
+            make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
+    }
 
     modelFinder_.reset(new ModelFinder(regionModels_));
 }
@@ -97,7 +91,7 @@ void CatalogAnalyzer::analyze(const MappedRead& read)
     }
 }
 
-std::vector<RegionDepthInfo> CatalogAnalyzer::summarize()
+DepthNormalizer CatalogAnalyzer::getGenomeDepthNormalizer()
 {
     std::vector<RegionDepthInfo> normRegionDepthInfo;
     auto regionInfo = normRegionInfo_.begin();
@@ -112,14 +106,19 @@ std::vector<RegionDepthInfo> CatalogAnalyzer::summarize()
         std::advance(regionInfo, 1);
     }
 
-    return normRegionDepthInfo;
+    return DepthNormalizer(normRegionDepthInfo);
 }
 
-void CatalogAnalyzer::collectResults(Sex sampleSex, SampleFindings& sampleFindings)
+void CatalogAnalyzer::collectResults(
+    Sex sampleSex, SampleFindings& sampleFindings, boost::optional<DepthNormalizer> genomeDepthNormalizer)
 {
+    if (genomeDepthNormalizer == boost::none)
+    {
+        genomeDepthNormalizer = getGenomeDepthNormalizer();
+    }
     for (auto& locusAnalyzer : locusAnalyzers_)
     {
-        auto locusFindings = locusAnalyzer->analyze(sampleSex);
+        auto locusFindings = locusAnalyzer->analyze(sampleSex, genomeDepthNormalizer);
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }
 }

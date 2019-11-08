@@ -44,7 +44,7 @@ public:
     CnvOutputVariant outputVariant() const { return outputVariant_; }
     void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
     void addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
-    LocusFindings analyze(Sex sampleSex) const override;
+    LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const override;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
 private:

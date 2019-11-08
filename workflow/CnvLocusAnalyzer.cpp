@@ -58,7 +58,7 @@ void CnvLocusAnalyzer::addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAn
     variantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
-LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
+LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
 {
     LocusFindings locusFindings;
 
@@ -69,7 +69,8 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
 
     for (auto& analyzerPtr : variantAnalyzers_)
     {
-        CnvVariantFindings varFinding = analyzerPtr->analyze();
+        auto depthNormalizer = *genomeDepthNormalizer;
+        CnvVariantFindings varFinding = analyzerPtr->analyze(depthNormalizer);
         auto variantType = analyzerPtr->variantType();
         if (variantType == CnvVariantType::kBaseline)
         {
@@ -95,7 +96,8 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
     }
 
     auto outputVariantId = outputVariant_.id;
-    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(outputVariantId, cnvLocusCopyNumberCall));
+    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(
+        new CnvVariantFindings(outputVariantId, cnvLocusCopyNumberCall));
     locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
     return locusFindings;
