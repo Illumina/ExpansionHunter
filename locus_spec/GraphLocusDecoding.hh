@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -32,9 +33,9 @@
 namespace ehunter
 {
 
-struct GraphVariantDecoding
+struct GraphVariantEncoding
 {
-    GraphVariantDecoding(std::string id, std::string type, GenomicRegion location)
+    GraphVariantEncoding(std::string id, std::string type, GenomicRegion location)
         : id(std::move(id))
         , type(std::move(type))
         , location(location)
@@ -45,7 +46,7 @@ struct GraphVariantDecoding
     GenomicRegion location;
 };
 
-struct GraphLocusDecoding
+struct GraphLocusEncoding
 {
     std::string id;
     std::string structure;
@@ -59,8 +60,8 @@ struct GraphLocusDecoding
     boost::optional<double> likelihoodRatioThreshold;
     boost::optional<double> minLocusCoverage;
 
-    std::vector<GraphVariantDecoding> variants;
+    std::vector<GraphVariantEncoding> variants;
 };
 
-GraphLocusSpec decode(const Reference& reference, const GraphLocusDecoding& locusEncoding);
+std::unique_ptr<GraphLocusSpec> decode(const Reference& reference, const GraphLocusEncoding& locusEncoding);
 }

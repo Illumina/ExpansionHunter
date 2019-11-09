@@ -160,9 +160,9 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
     return variantIds;
 }
 
-static GraphLocusDecoding loadGraphLocusDecoding(const Json& json, const Reference& reference)
+static GraphLocusEncoding loadGraphLocusEncoding(const Json& json, const Reference& reference)
 {
-    GraphLocusDecoding locus;
+    GraphLocusEncoding locus;
 
     assertFieldExists(json, "LocusId");
     locus.id = json["LocusId"].get<string>();
@@ -226,21 +226,21 @@ static GraphLocusDecoding loadGraphLocusDecoding(const Json& json, const Referen
             variantId += variant["ReferenceRegion"].get<string>();
         }
 
-        locus.variants.emplace_back(GraphVariantDecoding(variantId, variantType, region));
+        locus.variants.emplace_back(GraphVariantEncoding(variantId, variantType, region));
     }
     return locus;
 }
 
-static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Reference& reference)
+static CnvLocusEncoding loadCnvLocusEncoding(const Json& locusJson, const Reference& reference)
 {
-    CnvLocusDecoding cnvLocusDecoding;
+    CnvLocusEncoding cnvLocusDecoding;
 
     assertFieldExists(locusJson, "LocusId");
     auto locusId = locusJson["LocusId"].get<string>();
     cnvLocusDecoding.id = locusId;
 
-    std::vector<CnvVariantDecoding> cnvAnalysisVariants;
-    std::vector<CnvOutputVariantDecoding> cnvOutputVariants;
+    std::vector<CnvVariantEncoding> cnvAnalysisVariants;
+    std::vector<CnvOutputVariantEncoding> cnvOutputVariants;
 
     assertFieldExists(locusJson, "OutputVariants");
     makeArray(locusJson["OutputVariants"]);
@@ -252,7 +252,7 @@ static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Refere
         assertFieldExists(variant, "ReferenceRegion");
         GenomicRegion region = decode(reference.contigInfo(), variant["ReferenceRegion"].get<string>());
 
-        CnvOutputVariantDecoding cnvOutputVariantDecoding;
+        CnvOutputVariantEncoding cnvOutputVariantDecoding;
         cnvOutputVariantDecoding.id = variantId;
         cnvOutputVariantDecoding.location = region;
         cnvOutputVariants.emplace_back(cnvOutputVariantDecoding);
@@ -313,7 +313,7 @@ static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Refere
         }
         auto priorCopyNumberFrequency = priors;
 
-        CnvVariantDecoding variantDecoding;
+        CnvVariantEncoding variantDecoding;
         variantDecoding.id = variantId;
         variantDecoding.location = region;
         variantDecoding.variantType = variantType;
@@ -332,53 +332,53 @@ static CnvLocusDecoding loadCnvLocusDecoding(const Json& locusJson, const Refere
     return cnvLocusDecoding;
 }
 
-static GraphLocusDecoding loadLegacyGraphLocusDecoding(const Json& json, const Reference& reference)
+static GraphLocusEncoding loadLegacyGraphLocusDecoding(const Json& record, const Reference& reference)
 {
-    GraphLocusDecoding locus;
+    GraphLocusEncoding locus;
 
-    assertFieldExists(json, "LocusId");
-    locus.id = json["LocusId"].get<string>();
+    assertFieldExists(record, "LocusId");
+    locus.id = record["LocusId"].get<string>();
 
-    assertFieldExists(json, "LocusStructure");
-    locus.structure = json["LocusStructure"].get<string>();
+    assertFieldExists(record, "LocusStructure");
+    locus.structure = record["LocusStructure"].get<string>();
 
-    if (checkIfFieldExists(json, "TargetRegion"))
+    if (checkIfFieldExists(record, "TargetRegion"))
     {
-        for (const auto& encoding : makeArray(json["TargetRegion"]))
+        for (const auto& encoding : makeArray(record["TargetRegion"]))
         {
             auto region = decode(reference.contigInfo(), encoding.get<string>());
             locus.targetRegions.push_back(region);
         }
     }
 
-    if (checkIfFieldExists(json, "OfftargetRegions"))
+    if (checkIfFieldExists(record, "OfftargetRegions"))
     {
-        assertRecordIsArray(json["OfftargetRegions"]);
-        for (const auto& encoding : json["OfftargetRegions"])
+        assertRecordIsArray(record["OfftargetRegions"]);
+        for (const auto& encoding : record["OfftargetRegions"])
         {
             GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
             locus.offtargetRegions.push_back(region);
         }
     }
 
-    if (checkIfFieldExists(json, "ErrorRate"))
+    if (checkIfFieldExists(record, "ErrorRate"))
     {
-        locus.errorRate = json["ErrorRate"].get<double>();
+        locus.errorRate = record["ErrorRate"].get<double>();
     }
 
-    if (checkIfFieldExists(json, "LikelihoodRatioThreshold"))
+    if (checkIfFieldExists(record, "LikelihoodRatioThreshold"))
     {
-        locus.likelihoodRatioThreshold = json["LikelihoodRatioThreshold"].get<double>();
+        locus.likelihoodRatioThreshold = record["LikelihoodRatioThreshold"].get<double>();
     }
 
-    if (checkIfFieldExists(json, "MinimalLocusCoverage"))
+    if (checkIfFieldExists(record, "MinimalLocusCoverage"))
     {
-        locus.minLocusCoverage = json["MinimalLocusCoverage"].get<double>();
+        locus.minLocusCoverage = record["MinimalLocusCoverage"].get<double>();
     }
 
     vector<GenomicRegion> variantLocations;
-    assertFieldExists(json, "ReferenceRegion");
-    auto variantLocationJson = makeArray(json["ReferenceRegion"]);
+    assertFieldExists(record, "ReferenceRegion");
+    auto variantLocationJson = makeArray(record["ReferenceRegion"]);
     for (const auto& encoding : variantLocationJson)
     {
         GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
@@ -386,8 +386,8 @@ static GraphLocusDecoding loadLegacyGraphLocusDecoding(const Json& json, const R
     }
 
     vector<string> variantTypes;
-    assertFieldExists(json, "VariantType");
-    for (const auto& encoding : makeArray(json["VariantType"]))
+    assertFieldExists(record, "VariantType");
+    for (const auto& encoding : makeArray(record["VariantType"]))
     {
         variantTypes.push_back(encoding.get<string>());
     }
@@ -398,9 +398,9 @@ static GraphLocusDecoding loadLegacyGraphLocusDecoding(const Json& json, const R
     }
 
     vector<string> variantIds;
-    if (checkIfFieldExists(json, "VariantId"))
+    if (checkIfFieldExists(record, "VariantId"))
     {
-        for (const auto& variantId : makeArray(json["VariantId"]))
+        for (const auto& variantId : makeArray(record["VariantId"]))
         {
             variantIds.push_back(variantId.get<string>());
         }
@@ -417,49 +417,26 @@ static GraphLocusDecoding loadLegacyGraphLocusDecoding(const Json& json, const R
 
     for (int index = 0; index != static_cast<int>(variantTypes.size()); ++index)
     {
-        GraphVariantDecoding variant(variantIds[index], variantTypes[index], variantLocations[index]);
+        GraphVariantEncoding variant(variantIds[index], variantTypes[index], variantLocations[index]);
         locus.variants.push_back(variant);
     }
 
     return locus;
 }
 
-std::unique_ptr<GraphLocusSpec> loadGraphSpecLegacy(const Json& userDescription, const Reference& reference)
+std::unique_ptr<LocusSpec> loadLocusSpec(const Json& record, const Reference& reference)
 {
-    auto encoding = loadLegacyGraphLocusDecoding(userDescription, reference);
-    std::unique_ptr<GraphLocusSpec> spec(new GraphLocusSpec(decode(reference, encoding)));
-    return spec;
-}
-
-std::unique_ptr<GraphLocusSpec> loadGraphSpec(const Json& userDescription, const Reference& reference)
-{
-    auto encoding = loadGraphLocusDecoding(userDescription, reference);
-    std::unique_ptr<GraphLocusSpec> spec(new GraphLocusSpec(decode(reference, encoding)));
-    return spec;
-}
-
-std::unique_ptr<CnvLocusSpec> loadCnvSpec(const Json& userDescription, const Reference& reference)
-{
-    auto encoding = loadCnvLocusDecoding(userDescription, reference);
-    std::unique_ptr<CnvLocusSpec> spec(new CnvLocusSpec(decode(reference, encoding)));
-    return spec;
-}
-
-std::unique_ptr<LocusSpec> loadLocusSpec(const Json& userDescription, const Reference& reference)
-{
-    LocusTypeFromUser locusType = getLocusType(userDescription);
+    LocusTypeFromUser locusType = getLocusType(record);
     switch (locusType)
     {
-    case LocusTypeFromUser::kUnspecified:
-        return loadGraphSpecLegacy(userDescription, reference);
     case LocusTypeFromUser::kGraph:
-        return loadGraphSpec(userDescription, reference);
+        return decode(reference, loadGraphLocusEncoding(record, reference));
     case LocusTypeFromUser::kCNV:
-        return loadCnvSpec(userDescription, reference);
+        return decode(reference, loadCnvLocusEncoding(record, reference));
     case LocusTypeFromUser::kParalog:
-        return loadCnvSpec(userDescription, reference); // TODO: Consider creating loadParalogSpec
-    default:
-        return loadGraphSpecLegacy(userDescription, reference);
+        return decode(reference, loadCnvLocusEncoding(record, reference));
+    default: // If locus type is not specified, assume that its legacy graph
+        return decode(reference, loadLegacyGraphLocusDecoding(record, reference));
     }
 }
 
@@ -479,7 +456,7 @@ LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference
     WorkflowContext context;
 
     LocusCatalog catalog;
-    for (auto& locusJson : catalogJson)
+    for (const auto& locusJson : catalogJson)
     {
         try
         {

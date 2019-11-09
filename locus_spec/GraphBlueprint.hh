@@ -90,6 +90,6 @@ struct GraphBlueprintFeature
 
 using GraphBlueprint = std::vector<GraphBlueprintFeature>;
 GraphBlueprint decodeFeaturesFromRegex(const std::string& regex);
-GraphBlueprint decode(const GraphLocusDecoding& encoding, int flankLength);
+GraphBlueprint decode(const GraphLocusEncoding& encoding, int flankLength);
 
 }

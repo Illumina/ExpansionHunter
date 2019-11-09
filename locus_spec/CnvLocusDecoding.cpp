@@ -29,6 +29,7 @@
 using std::runtime_error;
 using std::string;
 using std::to_string;
+using std::unique_ptr;
 using std::vector;
 
 namespace ehunter
@@ -49,7 +50,7 @@ static CopyNumberBySex getCopyNumber(const string& contig)
     return CopyNumberBySex::kTwoInFemaleTwoInMale;
 }
 
-static CnvLocusType getCnvLocusType(const CnvLocusDecoding& encoding)
+static CnvLocusType getCnvLocusType(const CnvLocusEncoding& encoding)
 {
     CnvLocusType cnvLocusType = CnvLocusType::kNonoverlapping;
     for (const auto& variant : encoding.variants)
@@ -62,7 +63,7 @@ static CnvLocusType getCnvLocusType(const CnvLocusDecoding& encoding)
     return cnvLocusType;
 }
 
-static GenomicRegion getLocusLocation(const CnvLocusDecoding& locusEncoding)
+static GenomicRegion getLocusLocation(const CnvLocusEncoding& locusEncoding)
 {
     vector<GenomicRegion> variantLocations;
     for (const auto& variant : locusEncoding.variants)
@@ -72,7 +73,7 @@ static GenomicRegion getLocusLocation(const CnvLocusDecoding& locusEncoding)
     return *variantLocations.begin();
 }
 
-static CnvVariantType getCnvVariantType(const CnvVariantDecoding variant)
+static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
 {
     if (variant.variantType == "Baseline")
     {
@@ -88,7 +89,7 @@ static CnvVariantType getCnvVariantType(const CnvVariantDecoding variant)
     }
 }
 
-CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding)
+std::unique_ptr<CnvLocusSpec> decode(const Reference& reference, const CnvLocusEncoding& encoding)
 {
     GenomicRegion locusLocation = getLocusLocation(encoding);
     CopyNumberBySex copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
@@ -101,7 +102,7 @@ CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding
         outputVariant.location = variant.location;
     }
 
-    CnvLocusSpec locusSpec(encoding.id, cnvLocusType, copyNumberBySex, outputVariant);
+    unique_ptr<CnvLocusSpec> locusSpec(new CnvLocusSpec(encoding.id, cnvLocusType, copyNumberBySex, outputVariant));
     for (const auto& variant : encoding.variants)
     {
         CnvGenotyperParameters variantParameters;
@@ -115,7 +116,7 @@ CnvLocusSpec decode(const Reference& reference, const CnvLocusDecoding& encoding
         variantParameters.expectedNormal = variant.expectedNormalCN;
 
         CnvVariantType variantType = getCnvVariantType(variant);
-        locusSpec.addVariant(variant.id, variantType, *variant.location, variantParameters);
+        locusSpec->addVariant(variant.id, variantType, *variant.location, variantParameters);
     }
 
     return locusSpec;

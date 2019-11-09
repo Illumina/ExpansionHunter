@@ -36,12 +36,13 @@ using graphtools::NodeId;
 using std::runtime_error;
 using std::string;
 using std::to_string;
+using std::unique_ptr;
 using std::vector;
 
 namespace ehunter
 {
 
-static GenomicRegion getLocusLocation(const GraphLocusDecoding& locusEncoding)
+static GenomicRegion getLocusLocation(const GraphLocusEncoding& locusEncoding)
 {
     vector<GenomicRegion> variantLocations;
     for (const auto& variant : locusEncoding.variants)
@@ -92,7 +93,7 @@ static vector<GenomicRegion> computeFlanks(const vector<GenomicRegion>& regions,
     return flanks;
 }
 
-static AnalysisRegions getAnalysisRegions(const GraphLocusDecoding& encoding, const GenomicRegion& locusLocation)
+static AnalysisRegions getAnalysisRegions(const GraphLocusEncoding& encoding, const GenomicRegion& locusLocation)
 {
     AnalysisRegions regions;
     for (auto region : encoding.targetRegions)
@@ -135,7 +136,7 @@ addFlanks(const Reference& reference, const string& structure, const GenomicRegi
 }
 
 static vector<GenomicRegion>
-getFeatureLocations(const GraphBlueprint& blueprint, const GraphLocusDecoding& locus, const GenomicRegion& location)
+getFeatureLocations(const GraphBlueprint& blueprint, const GraphLocusEncoding& locus, const GenomicRegion& location)
 {
     vector<GenomicRegion> locationsOfFlanksAndVariants;
     auto flanks = computeFlanks({ location }, locus.flankLength);
@@ -193,7 +194,7 @@ getNodeLocations(const GraphBlueprint& blueprint, const Graph& graph, const vect
 }
 
 static GraphBlueprint
-getBlueprint(const Reference& reference, const GraphLocusDecoding& locusEncoding, const GenomicRegion& location)
+getBlueprint(const Reference& reference, const GraphLocusEncoding& locusEncoding, const GenomicRegion& location)
 {
     auto locusStructureWithFlanks = addFlanks(reference, locusEncoding.structure, location, locusEncoding.flankLength);
     GraphBlueprint blueprint = decodeFeaturesFromRegex(locusStructureWithFlanks);
@@ -201,7 +202,7 @@ getBlueprint(const Reference& reference, const GraphLocusDecoding& locusEncoding
 }
 
 static ReferenceGraph
-getGraph(const GraphBlueprint& blueprint, const GraphLocusDecoding& locus, const GenomicRegion& location)
+getGraph(const GraphBlueprint& blueprint, const GraphLocusEncoding& locus, const GenomicRegion& location)
 {
     graphtools::Graph graph = makeRegionGraph(blueprint, locus.id);
     auto featureLocations = getFeatureLocations(blueprint, locus, location);
@@ -210,7 +211,7 @@ getGraph(const GraphBlueprint& blueprint, const GraphLocusDecoding& locus, const
     return { graph, nodeLocations };
 }
 
-static GenotyperParameters getGenotyperParams(const GraphLocusDecoding& encoding)
+static GenotyperParameters getGenotyperParams(const GraphLocusEncoding& encoding)
 {
     GenotyperParameters params;
     if (encoding.errorRate)
@@ -315,7 +316,7 @@ static optional<NodeId> determineReferenceNode(
 }
 
 void addVariants(
-    const Reference& reference, GraphLocusSpec& locusSpec, const GraphLocusDecoding& locusEncoding,
+    const Reference& reference, GraphLocusSpec& locusSpec, const GraphLocusEncoding& locusEncoding,
     const GraphBlueprint& blueprint)
 {
     int variantIndex = 0;
@@ -369,7 +370,7 @@ void assertValidity(const LocusDescriptionFromUser& userDescription)
     }
 } */
 
-GraphLocusSpec decode(const Reference& reference, const GraphLocusDecoding& locusEncoding)
+unique_ptr<GraphLocusSpec> decode(const Reference& reference, const GraphLocusEncoding& locusEncoding)
 {
     auto locusLocation = getLocusLocation(locusEncoding);
     auto copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
@@ -378,8 +379,9 @@ GraphLocusSpec decode(const Reference& reference, const GraphLocusDecoding& locu
     auto graph = getGraph(blueprint, locusEncoding, locusLocation);
     auto genotyperParams = getGenotyperParams(locusEncoding);
 
-    GraphLocusSpec locusSpec(locusEncoding.id, copyNumberBySex, analysisRegions, graph, genotyperParams);
-    addVariants(reference, locusSpec, locusEncoding, blueprint);
+    unique_ptr<GraphLocusSpec> locusSpec(
+        new GraphLocusSpec(locusEncoding.id, copyNumberBySex, analysisRegions, graph, genotyperParams));
+    addVariants(reference, *locusSpec, locusEncoding, blueprint);
 
     return locusSpec;
 }
