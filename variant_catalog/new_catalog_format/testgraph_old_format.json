@@ -1,0 +1,18 @@
+[
+    {
+	"LocusId": "ATXN7",
+        "LocusStructure": "(GCA)*(GCC)+",
+        "ReferenceRegion": [
+            "3:63898360-63898390",
+            "3:63898390-63898402"
+        ],
+        "VariantType": [
+            "Repeat",
+            "Repeat"
+        ],
+        "VariantId": [
+            "ATXN7",
+            "ATXN7_GCC"
+        ]
+    }
+]
