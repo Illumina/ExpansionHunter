@@ -70,10 +70,8 @@ static bool checkIfMatesWereMappedNearby(const MappedRead& read)
     return (read.contigIndex() == read.mateContigIndex()) && (std::abs(read.pos() - read.matePos()) < kMaxDistance);
 }
 
-static void recoverMates(const string& htsFilePath, const string& htsReferencePath, ReadPairs& readPairs)
+static void recoverMates(htshelpers::MateExtractor& mateExtractor, ReadPairs& readPairs)
 {
-    htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
-
     for (auto& fragmentIdAndReadPair : readPairs)
     {
         ReadPair& readPair = fragmentIdAndReadPair.second;
@@ -124,10 +122,9 @@ static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
 
 static ReadPairs collectCandidateReads(
     const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-    const string& htsFilePath, const string& htsReferencePath)
+    HtsFileSeeker& htsFileSeeker, htshelpers::MateExtractor& mateExtractor)
 {
     vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
-    HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
     ReadPairs readPairs;
 
     for (const auto& regionWithReads : regionsWithReads)
@@ -158,7 +155,7 @@ static ReadPairs collectCandidateReads(
     }
 
     const int numReadsBeforeRecovery = readPairs.NumReads();
-    recoverMates(htsFilePath, htsReferencePath, readPairs);
+    recoverMates(mateExtractor, readPairs);
     const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
     spdlog::debug("Recovered {} reads", numReadsAfterRecovery);
 
@@ -169,14 +166,15 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
 {
     SampleFindings sampleFindings;
+    HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
+    htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
         const auto& locusId = locusIdAndRegionSpec.first;
         const auto& locusSpec = locusIdAndRegionSpec.second;
 
         ReadPairs readPairs = collectCandidateReads(
-            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), inputPaths.htsFile(),
-            inputPaths.reference());
+            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), htsFileSeeker, mateExtractor);
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, bamletWriter);
 
