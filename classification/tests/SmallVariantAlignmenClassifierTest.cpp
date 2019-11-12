@@ -29,8 +29,8 @@
 #include "graphcore/Graph.hh"
 
 #include "common/CountTable.hh"
-#include "input/GraphBlueprint.hh"
-#include "input/RegionGraph.hh"
+#include "locus_spec/GraphBlueprint.hh"
+#include "locus_spec/RegionGraph.hh"
 
 using boost::optional;
 using graphtools::Graph;

@@ -58,7 +58,7 @@ using FieldDescriptionCatalog = std::map<FieldDescriptionIdentifier, FieldDescri
 class FieldDescriptionWriter : public VariantFindingsVisitor
 {
 public:
-    FieldDescriptionWriter(const GraphLocusSpec& locusSpec, const VariantSpec& variantSpec)
+    FieldDescriptionWriter(const GraphLocusSpec& locusSpec, const GraphVariantSpec& variantSpec)
         : locusSpec_(locusSpec)
         , variantSpec_(variantSpec)
     {
@@ -80,7 +80,7 @@ private:
     void addCommonFields();
 
     const GraphLocusSpec& locusSpec_;
-    const VariantSpec& variantSpec_;
+    const GraphVariantSpec& variantSpec_;
     FieldDescriptionCatalog fieldDescriptions_;
 };
 

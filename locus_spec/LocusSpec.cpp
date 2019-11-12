@@ -52,17 +52,4 @@ namespace spd = spdlog;
 
 namespace ehunter
 {
-
-const VariantSpec& LocusSpec::getVariantSpecById(const std::string& variantSpecId) const
-{
-    for (const auto& variantSpec : variantSpecs_)
-    {
-        if (variantSpec.id() == variantSpecId)
-        {
-            return variantSpec;
-        }
-    }
-
-    throw std::logic_error("There is no variant " + variantSpecId + " in locus " + locusId_);
-}
 }

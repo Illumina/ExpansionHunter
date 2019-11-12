@@ -19,13 +19,13 @@
 //
 //
 
-#include "input/RegionGraph.hh"
+#include "locus_spec/RegionGraph.hh"
 
 #include "gtest/gtest.h"
 
 #include "graphcore/Graph.hh"
 
-#include "input/GraphBlueprint.hh"
+#include "locus_spec/GraphBlueprint.hh"
 #include "locus_spec/LocusSpec.hh"
 
 using graphtools::Graph;

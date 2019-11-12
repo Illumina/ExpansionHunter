@@ -33,8 +33,8 @@
 #include "graphcore/Path.hh"
 #include "graphutils/SequenceOperations.hh"
 
-#include "input/RegionGraph.hh"
 #include "locus_spec/LocusSpec.hh"
+#include "locus_spec/RegionGraph.hh"
 
 using graphtools::reverseComplement;
 using std::string;

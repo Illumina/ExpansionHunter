@@ -33,7 +33,7 @@ namespace ehunter
 {
 
 CatalogAnalyzer::CatalogAnalyzer(
-    const LocusCatalog& locusCatalog, DepthNormalizer genomeDepthNormalizer, BamletWriterPtr bamletWriter)
+    const LocusCatalog& locusCatalog, DepthNormalizer /*genomeDepthNormalizer*/, BamletWriterPtr bamletWriter)
 {
     WorkflowContext context;
 
@@ -46,10 +46,10 @@ CatalogAnalyzer::CatalogAnalyzer(
         {
             locusAnalyzers_.push_back(buildGraphLocusWorkflow(*graphLocusSpec, context.heuristics(), bamletWriter));
         }
-        else if (cnvLocusSpec)
-        {
-            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, genomeDepthNormalizer));
-        }
+        // else if (cnvLocusSpec)
+        //{
+        //    locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, genomeDepthNormalizer));
+        //}
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);

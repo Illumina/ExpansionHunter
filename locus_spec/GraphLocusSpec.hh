@@ -35,68 +35,140 @@
 #include "graphcore/Graph.hh"
 #include "thirdparty/json/json.hpp"
 
-#include "LocusSpec.hh"
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
+#include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "locus_spec/VariantSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 
 namespace ehunter
 {
 
-struct GraphLocusReferenceRegions
+struct AnalysisRegions
 {
-    // Regions in the reference where we expect relevant reads to align
     std::vector<GenomicRegion> regionsWithReads;
-    // Regions where additional relevant reads might be found that require filtering or special considerations
     std::vector<GenomicRegion> offtargetRegionsWithReads;
     std::vector<GenomicRegion> statsRegions;
 };
 
-using NodeToRegionAssociation = std::unordered_map<graphtools::NodeId, GenomicRegion>;
+struct GraphVariantClassification
+{
+    enum class Type
+    {
+        kRepeat,
+        kSmallVariant
+    };
+
+    enum class Subtype
+    {
+        kCommonRepeat,
+        kRareRepeat,
+        kInsertion,
+        kDeletion,
+        kSwap,
+        kSMN
+    };
+
+    GraphVariantClassification(Type type, Subtype subtype)
+        : type(type)
+        , subtype(subtype)
+    {
+    }
+
+    bool operator==(const GraphVariantClassification& other) const
+    {
+        return (other.type == type && other.subtype == subtype);
+    }
+
+    Type type;
+    Subtype subtype;
+};
+
+using NodeLocations = std::unordered_map<graphtools::NodeId, GenomicRegion>;
 
 struct ReferenceGraph
 {
-    ReferenceGraph(graphtools::Graph graph, NodeToRegionAssociation nodeLocations)
+    ReferenceGraph(graphtools::Graph graph, NodeLocations nodeLocations)
         : graph(std::move(graph))
         , nodeLocations(std::move(nodeLocations))
     {
     }
 
     graphtools::Graph graph;
-    NodeToRegionAssociation nodeLocations;
+    NodeLocations nodeLocations;
+};
+
+class GraphVariantSpec
+{
+public:
+    GraphVariantSpec(
+        std::string id, GraphVariantClassification classification, GenomicRegion location,
+        std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode)
+        : id_(std::move(id))
+        , classification_(classification)
+        , location_(std::move(location))
+        , nodes_(std::move(nodes))
+        , optionalRefNode_(optionalRefNode)
+    {
+        assertConsistency();
+    }
+
+    const std::string& id() const { return id_; }
+    GraphVariantClassification classification() const { return classification_; }
+    const GenomicRegion& location() const { return location_; }
+    const std::vector<graphtools::NodeId>& nodes() const { return nodes_; }
+    const boost::optional<graphtools::NodeId>& optionalRefNode() const { return optionalRefNode_; }
+
+    bool operator==(const GraphVariantSpec& other) const
+    {
+        return id_ == other.id_ && classification_ == other.classification() && nodes_ == other.nodes_;
+    }
+
+    void assertConsistency() const;
+
+private:
+    std::string id_;
+    GraphVariantClassification classification_;
+    GenomicRegion location_;
+    std::vector<graphtools::NodeId> nodes_;
+    boost::optional<graphtools::NodeId> optionalRefNode_;
 };
 
 class GraphLocusSpec : public LocusSpec
 {
 public:
     GraphLocusSpec(
-        std::string locusId, CopyNumberBySex contigCopyNumber, GraphLocusReferenceRegions referenceRegions,
+        std::string locusId, CopyNumberBySex contigCopyNumber, AnalysisRegions analysisRegions,
         ReferenceGraph referenceGraph, GenotyperParameters genotyperParams)
-        : LocusSpec(locusId, contigCopyNumber, genotyperParams)
+        : LocusSpec(std::move(locusId), contigCopyNumber)
         , referenceGraph_(std::move(referenceGraph))
-        , referenceRegions_(std::move(referenceRegions))
+        , analysisRegions_(std::move(analysisRegions))
+        , genotyperParams_(genotyperParams)
     {
     }
     ~GraphLocusSpec() override = default;
 
-    const std::vector<GenomicRegion>& regionsWithReads() const { return referenceRegions_.regionsWithReads; }
-    const std::vector<GenomicRegion>& offtargetRegionsWithReads() const
-    {
-        return referenceRegions_.offtargetRegionsWithReads;
-    }
-    const std::vector<GenomicRegion>& statsRegions() const { return referenceRegions_.statsRegions; }
-
+    const AnalysisRegions& analysisRegions() const { return analysisRegions_; }
     const graphtools::Graph& graph() const { return referenceGraph_.graph; }
-    const NodeToRegionAssociation& nodeLocations() const { return referenceGraph_.nodeLocations; }
+    const NodeLocations& nodeLocations() const { return referenceGraph_.nodeLocations; }
+    const GenotyperParameters& genotyperParams() const { return genotyperParams_; }
 
-    const std::vector<VariantSpec>& variantSpecs() const { return variantSpecs_; }
-    void addVariantSpecification(
-        std::string id, VariantClassification classification, GenomicRegion referenceLocus,
+    const std::vector<GraphVariantSpec>& variants() const { return variants_; }
+    const GraphVariantSpec& getVariantById(const std::string& id) const;
+    void addVariant(
+        std::string id, GraphVariantClassification classification, GenomicRegion referenceLocus,
         std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode);
 
 private:
     ReferenceGraph referenceGraph_;
-    GraphLocusReferenceRegions referenceRegions_;
+    std::vector<GraphVariantSpec> variants_;
+    AnalysisRegions analysisRegions_;
+    GenotyperParameters genotyperParams_;
 };
+
+std::ostream& operator<<(std::ostream& out, GraphVariantClassification::Type type);
+std::ostream& operator<<(std::ostream& out, GraphVariantClassification::Subtype subtype);
+std::ostream& operator<<(std::ostream& out, GraphVariantClassification classification);
+std::ostream& operator<<(std::ostream& out, const GraphVariantSpec& spec);
+
 }

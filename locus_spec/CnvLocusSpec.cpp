@@ -56,23 +56,28 @@ namespace ehunter
 vector<GenomicRegion> CnvLocusSpec::regionsWithReads() const
 {
     vector<GenomicRegion> regions;
-    for (const auto& variantSpec : variantSpecs_)
+    for (const auto& variant : variants_)
     {
-        regions.push_back(variantSpec.referenceLocus());
+        regions.push_back(variant.location());
     }
 
     return regions;
 }
 
-void CnvLocusSpec::addVariantSpecification(
-    std::string id, VariantClassification classification, GenomicRegion referenceLocus,
-    boost::optional<CnvGenotyperParameters> paramters)
+void CnvLocusSpec::addVariant(
+    std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters) 
 {
-    std::vector<graphtools::NodeId> emptyNodes;
-    optional<NodeId> optionalReferenceNode;
-    variantSpecs_.emplace_back(
-        std::move(id), classification, std::move(referenceLocus), std::move(emptyNodes), optionalReferenceNode,
-        paramters);
+    variants_.emplace_back(std::move(id), std::move(type), std::move(referenceLocus), std::move(parameters));
 }
 
+
+void CnvVariantSpec::assertConsistency() const
+{
+    bool variantIsValid = (variantType_ == CnvVariantType::kBaseline || variantType_ == CnvVariantType::kTarget);
+
+    if (!variantIsValid)
+    {
+        throw std::logic_error("Definition of variant " + id_ + " is inconsistent");
+    }
+}
 }

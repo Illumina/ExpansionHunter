@@ -30,9 +30,9 @@
 #include "graphalign/GraphAlignmentOperations.hh"
 #include "graphcore/Graph.hh"
 
-#include "input/GraphBlueprint.hh"
-#include "input/RegionGraph.hh"
+#include "locus_spec/GraphBlueprint.hh"
 #include "locus_spec/LocusSpec.hh"
+#include "locus_spec/RegionGraph.hh"
 
 using graphtools::decodeGraphAlignment;
 using graphtools::GappedGraphAligner;

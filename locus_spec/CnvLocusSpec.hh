@@ -37,37 +37,97 @@
 
 #include "common/Common.hh"
 #include "common/GenomicRegion.hh"
+#include "common/Parameters.hh"
 #include "common/Reference.hh"
 #include "locus_spec/LocusSpec.hh"
-#include "locus_spec/VariantSpec.hh"
 
 namespace ehunter
 {
 
-enum class CnvType
+enum class CnvLocusType
 {
     kOverlapping,
     kNonoverlapping
+};
+
+enum class CnvVariantType
+{
+    kTarget,
+    kBaseline
+};
+
+// Per-variant parameters for CNV variant genotyping
+struct CnvGenotyperParameters
+{
+    double regionGC;
+    int maxCopyNumber;
+    int mappingQualityThreshold;
+    double depthScaleFactor;
+    double standardDeviationOfCN2;
+    std::vector<double> meanDepthValues;
+    std::vector<double> priorCopyNumberFrequency;
+    bool expectedNormal;
+};
+
+struct CnvOutputVariant
+{
+    std::string id;
+    boost::optional<GenomicRegion> location;
+};
+
+class CnvVariantSpec
+{
+public:
+    CnvVariantSpec(std::string id, CnvVariantType variantType, GenomicRegion location, CnvGenotyperParameters genotyperParams)
+        : id_(std::move(id))
+        , variantType_(std::move(variantType))
+        , location_(std::move(location))
+        , genotyperParams_(std::move(genotyperParams))
+    {
+        assertConsistency();
+    }
+
+    const std::string& id() const { return id_; }
+    const GenomicRegion& location() const { return location_; }
+    const CnvVariantType& variantType() const { return variantType_; }
+    const CnvGenotyperParameters& genotyperParams() const { return genotyperParams_; }
+
+    bool operator==(const CnvVariantSpec& other) const 
+    { 
+        return id_ == other.id_ && variantType_ == other.variantType_ && location_ == other.location_; 
+    }
+
+    void assertConsistency() const;
+
+private:
+    std::string id_;
+    CnvVariantType variantType_;
+    GenomicRegion location_;
+    CnvGenotyperParameters genotyperParams_;
 };
 
 class CnvLocusSpec : public LocusSpec
 {
 public:
     CnvLocusSpec(
-        std::string locusId, CnvType cnvType, CopyNumberBySex contigCopyNumber, GenotyperParameters genotyperParams)
-        : LocusSpec(locusId, contigCopyNumber, genotyperParams)
-        , cnvType_(cnvType)
+        std::string locusId, CnvLocusType locusType, CopyNumberBySex contigCopyNumber, CnvOutputVariant outputVariant)
+        : LocusSpec(locusId, contigCopyNumber)
+        , locusType_(locusType)
+        , outputVariant_(outputVariant)
     {
     }
+
     ~CnvLocusSpec() override = default;
 
     std::vector<GenomicRegion> regionsWithReads() const;
-    const CnvType& locusSubtype() const { return cnvType_; }
-    void addVariantSpecification(
-        std::string id, VariantClassification classification, GenomicRegion referenceLocus,
-        boost::optional<CnvGenotyperParameters> paramters);
+    const CnvLocusType& locusType() const { return locusType_; }
+    const std::vector<CnvVariantSpec>& variants() const { return variants_; }
+    const CnvOutputVariant& outputVariant() const { return outputVariant_; }
+    void addVariant(std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters);
 
 private:
-    CnvType cnvType_;
+    CnvLocusType locusType_;
+    std::vector<CnvVariantSpec> variants_;
+    CnvOutputVariant outputVariant_;
 };
 }

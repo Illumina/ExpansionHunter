@@ -25,7 +25,6 @@
 #include <vector>
 
 #include "locus_spec/CnvLocusSpec.hh"
-#include "locus_spec/VariantSpec.hh"
 #include "workflow/LocusAnalyzer.hh"
 
 namespace ehunter
@@ -37,11 +36,11 @@ class ReadCountAnalyzer;
 class CnvLocusAnalyzer : public LocusAnalyzer
 {
 public:
-    CnvLocusAnalyzer(double minLocusCoverage, std::string locusId, CnvType cnvType);
+    CnvLocusAnalyzer(double minLocusCoverage, std::string locusId, CnvLocusType locusType);
     ~CnvLocusAnalyzer() override = default;
 
     const std::string& locusId() const override { return locusId_; }
-    const CnvType& cnvType() const { return cnvType_; }
+    CnvLocusType locusType() const { return locusType_; }
     void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
     void addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
     LocusFindings analyze(Sex sampleSex) const override;
@@ -50,7 +49,7 @@ public:
 private:
     // double minLocusCoverage_;
     std::string locusId_;
-    CnvType cnvType_;
+    CnvLocusType locusType_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
     std::vector<std::shared_ptr<CnvVariantAnalyzer>> variantAnalyzers_;
 };
