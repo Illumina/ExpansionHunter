@@ -34,7 +34,6 @@
 #include "spdlog/spdlog.h"
 
 #include "DepthNormalization.hh"
-#include "NormalizationRegionAnalyzer.hh"
 #include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
@@ -172,14 +171,13 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
+    CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
     std::vector<RegionDepthInfo> normDepthInfo;
     for (RegionInfo regionInfo : normRegionInfo)
     {
         GenomicRegion region = regionInfo.region;
         ReadPairs readPairs = collectCandidateReads(
-            vector<GenomicRegion> { region }, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
-
-        NormalizationRegionAnalyzer normRegionAnalyzer(std::vector<RegionInfo> { regionInfo });
+            vector<GenomicRegion>{ region }, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -196,13 +194,9 @@ SampleFindings htsSeekingSampleAnalysis(
                 normRegionAnalyzer.analyze(read);
             }
         }
-        for (RegionDepthInfo regionDepthInfo : normRegionAnalyzer.summarize())
-        {
-            normDepthInfo.push_back(regionDepthInfo);
-        }
     }
 
-    DepthNormalizer genomeDepthNormalizer = DepthNormalizer(normDepthInfo);
+    DepthNormalizer genomeDepthNormalizer = normRegionAnalyzer.getGenomeDepthNormalizer();
 
     SampleFindings sampleFindings;
 
@@ -223,19 +217,14 @@ SampleFindings htsSeekingSampleAnalysis(
                 graphLocusSpec.analysisRegions().offtargetRegionsWithReads, inputPaths.htsFile(),
                 inputPaths.reference());
         }
-        /*else if (cnvLocusSpecPtr)
+        else if (cnvLocusSpecPtr)
         {
             CnvLocusSpec cnvLocusSpec = *cnvLocusSpecPtr;
-            vector<GenomicRegion> variantLocations;
-            for (auto variant : cnvLocusSpec.variants())
-            {
-                variantLocations.push_back(variant.referenceLocus());
-            }
             readPairs = collectCandidateReads(
-                variantLocations, vector<GenomicRegion> {}, inputPaths.htsFile(), inputPaths.reference());
-        } */
+                cnvLocusSpec.regionsWithReads(), vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+        }
 
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, genomeDepthNormalizer, bamletWriter);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo>{}, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -253,7 +242,7 @@ SampleFindings htsSeekingSampleAnalysis(
             }
         }
 
-        catalogAnalyzer.collectResults(sampleSex, sampleFindings);
+        catalogAnalyzer.collectResults(sampleSex, sampleFindings, genomeDepthNormalizer);
     }
 
     return sampleFindings;

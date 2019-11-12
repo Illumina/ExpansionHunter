@@ -120,41 +120,30 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     return locus;
 }
 
-/*
-shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, DepthNormalizer genomeDepthNormalizer)
+shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec)
 {
-    const double minLocusCoverage = locusSpec.genotyperParams().minLocusCoverage;
-    auto locus = make_shared<CnvLocusAnalyzer>(minLocusCoverage, locusSpec.locusId(), locusSpec.locusSubtype());
-    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.targetRegions());
+    auto locus = make_shared<CnvLocusAnalyzer>(locusSpec.locusId(), locusSpec.locusType(), locusSpec.outputVariant());
+    auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
     locus->setStats(statsAnalyzer);
 
     for (const auto& variantSpec : locusSpec.variants())
     {
-        if (variantSpec.classification().type == VariantType::kCNV)
-        {
-            double regionLength = variantSpec.referenceLocus().end() - variantSpec.referenceLocus().start();
 
-            assert(variantSpec.parameters());
-            CnvGenotyperParameters cnvParameters = *variantSpec.parameters();
+        double regionLength = variantSpec.location().end() - variantSpec.location().start();
 
-            vector<GenomicRegion> variantRegion { variantSpec.referenceLocus() };
-            auto linearModel = make_shared<LinearModel>(variantRegion);
-            auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
-            linearModel->addFeature(readCounter.get());
-            locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
-                variantSpec.id(), regionLength, variantSpec.classification().subtype, locusSpec.copyNumberBySex(),
-                cnvParameters, readCounter, genomeDepthNormalizer));
-        }
-        else
-        {
-            std::stringstream encoding;
-            encoding << variantSpec.classification().type << "/" << variantSpec.classification().subtype;
-            throw runtime_error("Variant " + variantSpec.id() + " is of unknown type " + encoding.str());
-        }
+        CnvGenotyperParameters cnvParameters = variantSpec.genotyperParams();
+
+        vector<GenomicRegion> variantRegion{ variantSpec.location() };
+        auto linearModel = make_shared<LinearModel>(variantRegion);
+        auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
+        linearModel->addFeature(readCounter.get());
+        locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
+            variantSpec.id(), regionLength, variantSpec.variantType(), locusSpec.copyNumberBySex(), cnvParameters,
+            readCounter));
     }
 
     return locus;
-} */
+}
 
 vector<shared_ptr<RegionModel>> extractRegionModels(const vector<shared_ptr<LocusAnalyzer>>& loci)
 {

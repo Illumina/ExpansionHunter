@@ -24,6 +24,7 @@
 #include <boost/optional.hpp>
 
 #include "common/CountTable.hh"
+#include "common/GenomicRegion.hh"
 #include "genotyping/AlleleChecker.hh"
 #include "genotyping/RepeatGenotype.hh"
 #include "genotyping/SmallVariantGenotype.hh"

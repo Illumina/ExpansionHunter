@@ -59,9 +59,9 @@ private:
 class CnvVariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    CnvVariantJsonWriter(const ReferenceContigInfo& /*contigInfo*/, const CnvLocusSpec& locusSpec)
-        : // contigInfo_(contigInfo),
-        locusSpec_(locusSpec)
+    CnvVariantJsonWriter(const ReferenceContigInfo& contigInfo, const CnvLocusSpec& locusSpec)
+        : contigInfo_(contigInfo)
+        , locusSpec_(locusSpec)
     {
     }
 
@@ -72,7 +72,7 @@ public:
     nlohmann::json record() const { return record_; }
 
 private:
-    // const ReferenceContigInfo& contigInfo_;
+    const ReferenceContigInfo& contigInfo_;
     const CnvLocusSpec& locusSpec_;
     nlohmann::json record_;
 };

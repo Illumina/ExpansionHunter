@@ -32,25 +32,23 @@ namespace ehunter
 {
 CnvVariantAnalyzer::CnvVariantAnalyzer(
     std::string variantId, double regionLength, CnvVariantType variantType, CopyNumberBySex contigCopyNumber,
-    CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> counter, DepthNormalizer genomeDepthNormalizer)
+    CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> counter)
     : variantId_(variantId)
     , regionLength_(regionLength)
     , variantType_(variantType)
     , contigCopyNumber_(contigCopyNumber)
     , cnvParameters_(cnvParameters)
     , counter_(std::move(counter))
-    , genomeDepthNormalizer_(genomeDepthNormalizer)
-
 {
 }
 
 vector<shared_ptr<Feature>> CnvVariantAnalyzer::features() { return { counter_ }; }
 
-CnvVariantFindings CnvVariantAnalyzer::analyze() const
+CnvVariantFindings CnvVariantAnalyzer::analyze(DepthNormalizer genomeDepthNormalizer) const
 {
     const int numReads = counter_->numReads();
     double normalizedDepth = (double)numReads / (double)regionLength_;
-    double gcCorrectedDepth = genomeDepthNormalizer_.correctDepth(cnvParameters_.regionGC, normalizedDepth, true);
+    double gcCorrectedDepth = genomeDepthNormalizer.correctDepth(cnvParameters_.regionGC, normalizedDepth, true);
 
     CopyNumberGenotyper cnvGenotyper = CopyNumberGenotyper(
         cnvParameters_.maxCopyNumber, cnvParameters_.depthScaleFactor, cnvParameters_.standardDeviationOfCN2,

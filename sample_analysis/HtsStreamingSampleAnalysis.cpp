@@ -26,7 +26,6 @@
 #include <unordered_set>
 
 #include "DepthNormalization.hh"
-#include "NormalizationRegionAnalyzer.hh"
 #include "common/HtsHelpers.hh"
 #include "common/WorkflowContext.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
@@ -51,10 +50,7 @@ SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
-    // TO DO: create depth normalizer from normalization regions
-    auto normRegion = normRegionInfo;
-    DepthNormalizer genomeDepthNormalizer = DepthNormalizer(std::vector<RegionDepthInfo> {});
-    CatalogAnalyzer catalogAnalyzer(regionCatalog, genomeDepthNormalizer, std::move(bamletWriter));
+    CatalogAnalyzer catalogAnalyzer(regionCatalog, normRegionInfo, std::move(bamletWriter));
     GenomeMask genomeMask(catalogAnalyzer.regionModels());
 
     using ReadCatalog = std::unordered_map<std::string, MappedRead>;
@@ -91,7 +87,7 @@ SampleFindings htsStreamingSampleAnalysis(
     }
 
     SampleFindings sampleFindings;
-    catalogAnalyzer.collectResults(sampleSex, sampleFindings);
+    catalogAnalyzer.collectResults(sampleSex, sampleFindings, boost::none);
 
     return sampleFindings;
 }

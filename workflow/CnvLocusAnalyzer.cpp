@@ -41,10 +41,10 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-CnvLocusAnalyzer::CnvLocusAnalyzer(double /*minLocusCoverage*/, string locusId, CnvLocusType locusType)
-    : // minLocusCoverage_(minLocusCoverage),
-    locusId_(std::move(locusId))
+CnvLocusAnalyzer::CnvLocusAnalyzer(string locusId, CnvLocusType locusType, CnvOutputVariant outputVariant)
+    : locusId_(std::move(locusId))
     , locusType_(locusType)
+    , outputVariant_(outputVariant)
 {
 }
 
@@ -58,7 +58,7 @@ void CnvLocusAnalyzer::addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAn
     variantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
-LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
+LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
 {
     LocusFindings locusFindings;
 
@@ -69,7 +69,8 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
 
     for (auto& analyzerPtr : variantAnalyzers_)
     {
-        CnvVariantFindings varFinding = analyzerPtr->analyze();
+        auto depthNormalizer = *genomeDepthNormalizer;
+        CnvVariantFindings varFinding = analyzerPtr->analyze(depthNormalizer);
         auto variantType = analyzerPtr->variantType();
         if (variantType == CnvVariantType::kBaseline)
         {
@@ -93,7 +94,10 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex) const
         cnvLocusCopyNumberCall
             = callCopyNumberForNonOverlappingCnv(targetCopyNumber, baselineCopyNumbers, expectedCopyNumber);
     }
-    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(new CnvVariantFindings(locusId_, cnvLocusCopyNumberCall));
+
+    auto outputVariantId = outputVariant_.id;
+    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(
+        new CnvVariantFindings(outputVariantId, cnvLocusCopyNumberCall));
     locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
     return locusFindings;

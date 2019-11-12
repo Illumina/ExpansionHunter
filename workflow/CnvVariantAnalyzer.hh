@@ -41,12 +41,11 @@ class CnvVariantAnalyzer : public FeatureAnalyzer
 public:
     CnvVariantAnalyzer(
         std::string variantId, double regionLength, CnvVariantType variantType, CopyNumberBySex contigCopyNumber,
-        CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature,
-        DepthNormalizer genomeDepthNormalizer);
+        CnvGenotyperParameters cnvParameters, std::shared_ptr<ReadCounter> feature);
     ~CnvVariantAnalyzer() override = default;
 
     std::vector<std::shared_ptr<Feature>> features() override;
-    CnvVariantFindings analyze() const;
+    CnvVariantFindings analyze(DepthNormalizer genomeDepthNormalizer) const;
     const std::string& variantId() const { return variantId_; }
     CnvVariantType variantType() const { return variantType_; }
     CopyNumberBySex contigCopyNumber() const { return contigCopyNumber_; }
@@ -60,6 +59,5 @@ protected:
 private:
     CnvGenotyperParameters cnvParameters_;
     std::shared_ptr<ReadCounter> counter_;
-    DepthNormalizer genomeDepthNormalizer_;
 };
 }

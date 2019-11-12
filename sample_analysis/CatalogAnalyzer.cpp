@@ -33,7 +33,8 @@ namespace ehunter
 {
 
 CatalogAnalyzer::CatalogAnalyzer(
-    const LocusCatalog& locusCatalog, DepthNormalizer /*genomeDepthNormalizer*/, BamletWriterPtr bamletWriter)
+    const LocusCatalog& locusCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
+    : normRegionInfo_(normRegionInfo)
 {
     WorkflowContext context;
 
@@ -46,13 +47,24 @@ CatalogAnalyzer::CatalogAnalyzer(
         {
             locusAnalyzers_.push_back(buildGraphLocusWorkflow(*graphLocusSpec, context.heuristics(), bamletWriter));
         }
-        // else if (cnvLocusSpec)
-        //{
-        //    locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, genomeDepthNormalizer));
-        //}
+        else if (cnvLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec));
+        }
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);
+
+    for (RegionInfo regionInfo : normRegionInfo_)
+    {
+        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion>{ regionInfo.region };
+        auto linearModel_ = make_shared<LinearModel>(countingRegion);
+        auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
+        linearModel_->addFeature(readCounter.get());
+        regionModels_.push_back(linearModel_);
+        normalizationRegionAnalyzers_.push_back(
+            make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
+    }
 
     modelFinder_.reset(new ModelFinder(regionModels_));
 }
@@ -79,11 +91,34 @@ void CatalogAnalyzer::analyze(const MappedRead& read)
     }
 }
 
-void CatalogAnalyzer::collectResults(Sex sampleSex, SampleFindings& sampleFindings)
+DepthNormalizer CatalogAnalyzer::getGenomeDepthNormalizer()
 {
+    std::vector<RegionDepthInfo> normRegionDepthInfo;
+    auto regionInfo = normRegionInfo_.begin();
+    for (auto normalizationRegionAnalyzer : normalizationRegionAnalyzers_)
+    {
+        int readCount = normalizationRegionAnalyzer->count();
+        double gc = (*regionInfo).gc;
+        GenomicRegion region = (*regionInfo).region;
+        int regionLength = region.end() - region.start();
+        double normDepth = (double)readCount / (double)regionLength;
+        normRegionDepthInfo.push_back(RegionDepthInfo(gc, normDepth));
+        std::advance(regionInfo, 1);
+    }
+
+    return DepthNormalizer(normRegionDepthInfo);
+}
+
+void CatalogAnalyzer::collectResults(
+    Sex sampleSex, SampleFindings& sampleFindings, boost::optional<DepthNormalizer> genomeDepthNormalizer)
+{
+    if (genomeDepthNormalizer == boost::none)
+    {
+        genomeDepthNormalizer = getGenomeDepthNormalizer();
+    }
     for (auto& locusAnalyzer : locusAnalyzers_)
     {
-        auto locusFindings = locusAnalyzer->analyze(sampleSex);
+        auto locusFindings = locusAnalyzer->analyze(sampleSex, genomeDepthNormalizer);
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }
 }

@@ -97,13 +97,13 @@ void JsonWriter::write(std::ostream& out)
                 variantIdAndFindings.second->accept(variantWriter);
                 variantRecords[variantId] = variantWriter.record();
             }
-            // else if (cnvLocusSpec)
-            //{
-            //    const CnvLocusSpec& locusSpec = *cnvLocusSpec;
-            //    CnvVariantJsonWriter variantWriter(contigInfo_, locusSpec);
-            //    variantIdAndFindings.second->accept(variantWriter);
-            //    variantRecords[variantId] = variantWriter.record();
-            //}
+            else if (cnvLocusSpec)
+            {
+                const CnvLocusSpec& locusSpec = *cnvLocusSpec;
+                CnvVariantJsonWriter variantWriter(contigInfo_, locusSpec);
+                variantIdAndFindings.second->accept(variantWriter);
+                variantRecords[variantId] = variantWriter.record();
+            }
         }
 
         if (!variantRecords.empty())
@@ -190,9 +190,9 @@ void GraphVariantJsonWriter::visit(SmallVariantFindings& findings)
 void CnvVariantJsonWriter::visit(CnvVariantFindings& cnvFindings)
 {
     record_.clear();
-    record_["VariantId"] = locusSpec_.locusId();
+    record_["VariantId"] = locusSpec_.outputVariant().id;
     record_["VariantType"] = "CNV";
-    // record_["ReferenceRegion"] = encode(contigInfo_, locusSpec_.locusLocation());
+    record_["ReferenceRegion"] = encode(contigInfo_, *(locusSpec_.outputVariant().location));
     if (cnvFindings.copyNumberCall())
     {
         record_["Genotype"] = *cnvFindings.copyNumberCall();
