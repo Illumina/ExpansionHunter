@@ -65,11 +65,10 @@ vector<GenomicRegion> CnvLocusSpec::regionsWithReads() const
 }
 
 void CnvLocusSpec::addVariant(
-    std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters) 
+    std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters)
 {
-    variants_.emplace_back(std::move(id), std::move(type), std::move(referenceLocus), std::move(parameters));
+    variants_.emplace_back(std::move(id), type, std::move(referenceLocus), std::move(parameters));
 }
-
 
 void CnvVariantSpec::assertConsistency() const
 {

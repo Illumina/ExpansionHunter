@@ -46,7 +46,7 @@ namespace ehunter
 
 struct AnalysisRegions
 {
-    std::vector<GenomicRegion> regionsWithReads;
+    std::vector<GenomicRegion> targetRegionsWithReads;
     std::vector<GenomicRegion> offtargetRegionsWithReads;
     std::vector<GenomicRegion> statsRegions;
 };
@@ -148,6 +148,7 @@ public:
     }
     ~GraphLocusSpec() override = default;
 
+    std::vector<GenomicRegion> regionsWithReads() const override;
     const AnalysisRegions& analysisRegions() const { return analysisRegions_; }
     const graphtools::Graph& graph() const { return referenceGraph_.graph; }
     const NodeLocations& nodeLocations() const { return referenceGraph_.nodeLocations; }

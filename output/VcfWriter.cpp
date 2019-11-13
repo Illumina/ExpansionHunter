@@ -83,8 +83,6 @@ void VcfWriter::writeBody(ostream& out)
         const string& variantId = pair.second;
         const auto& variantFindings = locusFindings.findingsForEachVariant.at(variantId);
 
-        auto locusSpec = *locusSpecPtr;
-
         assert(locusFindings.optionalStats);
         const double locusDepth = locusFindings.optionalStats->depth();
 
@@ -285,15 +283,13 @@ void CnvVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
     {
         return;
     }
-} 
-
-
+}
 
 void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
 {
-    //const auto& variantSpec = locusSpec_.getVariantById(cnvFindings.variantId());
-    //const auto& referenceLocus = variantSpec.referenceLocus();
-    //const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+    // const auto& variantSpec = locusSpec_.getVariantById(cnvFindings.variantId());
+    // const auto& referenceLocus = variantSpec.referenceLocus();
+    // const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     const auto& contigName = "test";
     boost::optional<int> copyNumberCall = cnvFindings.copyNumberCall();
     vector<string> vcfRecordElements;
@@ -306,7 +302,7 @@ void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
         vcfRecordElements = { contigName };
     }
     // out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
-} 
+}
 
 void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
 {

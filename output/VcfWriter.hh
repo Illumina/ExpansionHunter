@@ -67,11 +67,12 @@ private:
 class CnvVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
-    CnvVariantVcfWriter(Reference& reference, const CnvLocusSpec& locusSpec, double locusDepth, std::ostream& out)
-        : reference_(reference)
-        , locusSpec_(locusSpec)
-        , locusDepth_(locusDepth)
-        , out_(out)
+    CnvVariantVcfWriter(
+        Reference& /*reference*/, const CnvLocusSpec& /*locusSpec*/, double /*locusDepth*/, std::ostream& /*out*/)
+    //:  reference_(reference)
+    //, locusSpec_(locusSpec),
+    // locusDepth_(locusDepth)
+    //, out_(out)
     {
     }
 
@@ -81,10 +82,10 @@ public:
     void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
 
 private:
-    Reference& reference_;
-    const CnvLocusSpec& locusSpec_;
-    double locusDepth_;
-    std::ostream& out_;
+    // Reference& reference_;
+    // const CnvLocusSpec& locusSpec_;
+    // double locusDepth_;
+    // std::ostream& out_;
 };
 
 // TODO: Document the code after multi-unit repeat format is finalized (GT-598)
