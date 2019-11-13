@@ -57,7 +57,7 @@ CatalogAnalyzer::CatalogAnalyzer(
 
     for (RegionInfo regionInfo : normRegionInfo_)
     {
-        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion>{ regionInfo.region };
+        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion> { regionInfo.region };
         auto linearModel_ = make_shared<LinearModel>(countingRegion);
         auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
         linearModel_->addFeature(readCounter.get());
@@ -112,7 +112,7 @@ DepthNormalizer CatalogAnalyzer::getGenomeDepthNormalizer()
 void CatalogAnalyzer::collectResults(
     Sex sampleSex, SampleFindings& sampleFindings, boost::optional<DepthNormalizer> genomeDepthNormalizer)
 {
-    if (genomeDepthNormalizer == boost::none)
+    if (!genomeDepthNormalizer)
     {
         genomeDepthNormalizer = getGenomeDepthNormalizer();
     }
