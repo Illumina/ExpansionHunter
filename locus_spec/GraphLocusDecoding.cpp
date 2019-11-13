@@ -98,11 +98,11 @@ static AnalysisRegions getAnalysisRegions(const GraphLocusEncoding& encoding, co
     AnalysisRegions regions;
     for (auto region : encoding.targetRegions)
     {
-        regions.regionsWithReads.push_back(region.extend(encoding.flankLength));
+        regions.targetRegionsWithReads.push_back(region.extend(encoding.flankLength));
     }
     for (auto variant : encoding.variants)
     {
-        regions.regionsWithReads.push_back(variant.location.extend(encoding.flankLength));
+        regions.targetRegionsWithReads.push_back(variant.location.extend(encoding.flankLength));
     }
 
     regions.offtargetRegionsWithReads = encoding.offtargetRegions;

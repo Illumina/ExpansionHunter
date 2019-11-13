@@ -58,14 +58,6 @@ using std::vector;
 
 using ReadCatalog = unordered_map<ReadId, MappedRead, boost::hash<ReadId>>;
 
-static vector<GenomicRegion>
-combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
-{
-    vector<GenomicRegion> combinedRegions(targetRegions);
-    combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
-    return combinedRegions;
-}
-
 static bool checkIfMatesWereMappedNearby(const MappedRead& read)
 {
     const int kMaxDistance = 1000;
@@ -106,7 +98,7 @@ static void recoverMates(const string& htsFilePath, const string& htsReferencePa
     }
 }
 
-static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
+static int getReadCountCap(const vector<GenomicRegion>& regionsWithReads)
 {
     int readCountCap;
     // hardcoded for now
@@ -124,11 +116,9 @@ static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
     return readCountCap;
 }
 
-static ReadPairs collectCandidateReads(
-    const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-    const string& htsFilePath, const string& htsReferencePath)
+static ReadPairs
+collectReads(const vector<GenomicRegion>& regionsWithReads, const string& htsFilePath, const string& htsReferencePath)
 {
-    vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
     HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
     ReadPairs readPairs;
 
@@ -169,15 +159,13 @@ static ReadPairs collectCandidateReads(
 
 SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
-    const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
+    const vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
     CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
     std::vector<RegionDepthInfo> normDepthInfo;
     for (RegionInfo regionInfo : normRegionInfo)
     {
-        GenomicRegion region = regionInfo.region;
-        ReadPairs readPairs = collectCandidateReads(
-            vector<GenomicRegion>{ region }, vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
+        ReadPairs readPairs = collectReads({ regionInfo.region }, inputPaths.htsFile(), inputPaths.reference());
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -206,25 +194,9 @@ SampleFindings htsSeekingSampleAnalysis(
         const auto& locusSpec = locusIdAndRegionSpec.second;
 
         ReadPairs readPairs;
+        readPairs = collectReads(locusSpec->regionsWithReads(), inputPaths.htsFile(), inputPaths.reference());
 
-        shared_ptr<CnvLocusSpec> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpec>(locusSpec);
-        shared_ptr<GraphLocusSpec> graphLocusSpecPtr = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
-        if (graphLocusSpecPtr)
-        {
-            GraphLocusSpec graphLocusSpec = *graphLocusSpecPtr;
-            readPairs = collectCandidateReads(
-                graphLocusSpec.analysisRegions().regionsWithReads,
-                graphLocusSpec.analysisRegions().offtargetRegionsWithReads, inputPaths.htsFile(),
-                inputPaths.reference());
-        }
-        else if (cnvLocusSpecPtr)
-        {
-            CnvLocusSpec cnvLocusSpec = *cnvLocusSpecPtr;
-            readPairs = collectCandidateReads(
-                cnvLocusSpec.regionsWithReads(), vector<GenomicRegion>{}, inputPaths.htsFile(), inputPaths.reference());
-        }
-
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo>{}, bamletWriter);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo> {}, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {

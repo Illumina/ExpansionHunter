@@ -73,6 +73,19 @@ const GraphVariantSpec& GraphLocusSpec::getVariantById(const string& id) const
     throw std::logic_error("There is no variant " + id + " in locus " + locusId_);
 }
 
+static vector<GenomicRegion>
+combine(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
+{
+    vector<GenomicRegion> combinedRegions(targetRegions);
+    combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
+    return combinedRegions;
+}
+
+vector<GenomicRegion> GraphLocusSpec::regionsWithReads() const
+{
+    return combine(analysisRegions_.targetRegionsWithReads, analysisRegions_.offtargetRegionsWithReads);
+}
+
 void GraphVariantSpec::assertConsistency() const
 {
     const bool variantIsRepeat = classification_.type == GraphVariantClassification::Type::kRepeat;

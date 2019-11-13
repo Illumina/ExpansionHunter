@@ -97,7 +97,7 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     locus->setStats(statsAnalyzer);
 
     auto graphModel = make_shared<GraphModel>(
-        locusSpec.locusId(), locusSpec.analysisRegions().regionsWithReads,
+        locusSpec.locusId(), locusSpec.analysisRegions().targetRegionsWithReads,
         locusSpec.analysisRegions().offtargetRegionsWithReads, locusSpec.graph(), heuristics, bamletWriter);
     for (const auto& variantSpec : locusSpec.variants())
     {
