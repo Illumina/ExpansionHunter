@@ -165,7 +165,7 @@ SampleFindings htsSeekingSampleAnalysis(
     std::vector<RegionDepthInfo> normDepthInfo;
     for (RegionInfo regionInfo : normRegionInfo)
     {
-        ReadPairs readPairs = collectReads({ regionInfo.region }, HtsFileSeeker);
+        ReadPairs readPairs = collectReads({ regionInfo.region }, HtsFileSeeker, mateExtractor);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
