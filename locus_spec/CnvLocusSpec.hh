@@ -126,6 +126,7 @@ public:
     const CnvOutputVariant& outputVariant() const { return outputVariant_; }
     void
     addVariant(std::string id, CnvVariantType type, GenomicRegion referenceLocus, CnvGenotyperParameters parameters);
+    const GenomicRegion& getVariantLocationById(const std::string& id) const override;
 
 private:
     CnvLocusType locusType_;

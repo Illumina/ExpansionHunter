@@ -73,6 +73,19 @@ const GraphVariantSpec& GraphLocusSpec::getVariantById(const string& id) const
     throw std::logic_error("There is no variant " + id + " in locus " + locusId_);
 }
 
+const GenomicRegion& GraphLocusSpec::getVariantLocationById(const string& id) const
+{
+    for (const auto& variant : variants_)
+    {
+        if (variant.id() == id)
+        {
+            return variant.location();
+        }
+    }
+
+    throw std::logic_error("There is no variant " + id + " in locus " + locusId_);
+}
+
 static vector<GenomicRegion>
 combine(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
 {
@@ -175,5 +188,4 @@ std::ostream& operator<<(std::ostream& out, const GraphVariantSpec& spec)
 
     return out;
 }
-
 }

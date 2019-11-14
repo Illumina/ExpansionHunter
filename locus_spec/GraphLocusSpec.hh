@@ -156,6 +156,7 @@ public:
 
     const std::vector<GraphVariantSpec>& variants() const { return variants_; }
     const GraphVariantSpec& getVariantById(const std::string& id) const;
+    const GenomicRegion& getVariantLocationById(const std::string& id) const override;
     void addVariant(
         std::string id, GraphVariantClassification classification, GenomicRegion referenceLocus,
         std::vector<graphtools::NodeId> nodes, boost::optional<graphtools::NodeId> optionalRefNode);
@@ -171,5 +172,4 @@ std::ostream& operator<<(std::ostream& out, GraphVariantClassification::Type typ
 std::ostream& operator<<(std::ostream& out, GraphVariantClassification::Subtype subtype);
 std::ostream& operator<<(std::ostream& out, GraphVariantClassification classification);
 std::ostream& operator<<(std::ostream& out, const GraphVariantSpec& spec);
-
 }

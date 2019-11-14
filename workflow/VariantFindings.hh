@@ -130,18 +130,21 @@ private:
 class CnvVariantFindings : public VariantFindings
 {
 public:
-    CnvVariantFindings(std::string variantId, boost::optional<int> copyNumberCall)
+    CnvVariantFindings(std::string variantId, boost::optional<int> absoluteCopyNumber, boost::optional<int> copyNumberChange)
         : VariantFindings(std::move(variantId))
-        , copyNumberCall_(copyNumberCall)
+        , absoluteCopyNumber_(absoluteCopyNumber)
+        , copyNumberChange_(copyNumberChange)
     {
     }
 
     ~CnvVariantFindings() override = default;
     void accept(VariantFindingsVisitor& visitorPtr) override { visitorPtr.visit(*this); }
 
-    boost::optional<int> copyNumberCall() const { return copyNumberCall_; }
+    boost::optional<int> absoluteCopyNumber() const { return absoluteCopyNumber_; }
+    boost::optional<int> copyNumberChange() const { return copyNumberChange_; }
 
 private:
-    boost::optional<int> copyNumberCall_;
+    boost::optional<int> absoluteCopyNumber_;
+    boost::optional<int> copyNumberChange_;
 };
 }

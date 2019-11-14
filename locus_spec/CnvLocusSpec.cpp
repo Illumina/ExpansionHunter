@@ -79,4 +79,14 @@ void CnvVariantSpec::assertConsistency() const
         throw std::logic_error("Definition of variant " + id_ + " is inconsistent");
     }
 }
+
+const GenomicRegion& CnvLocusSpec::getVariantLocationById(const string& id) const
+{
+    if (outputVariant_.id == id)
+    {
+        return *(outputVariant_.location);
+    }
+
+    throw std::logic_error("There is no variant " + id + " in locus " + locusId_);
+}
 }

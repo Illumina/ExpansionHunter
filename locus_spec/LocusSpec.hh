@@ -59,6 +59,7 @@ public:
     const std::string& locusId() const { return locusId_; }
     CopyNumberBySex copyNumberBySex() const { return copyNumberBySex_; }
     virtual std::vector<GenomicRegion> regionsWithReads() const = 0;
+    virtual const GenomicRegion& getVariantLocationById(const std::string& id) const = 0;
 
 protected:
     std::string locusId_;

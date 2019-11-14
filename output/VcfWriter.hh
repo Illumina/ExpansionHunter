@@ -41,12 +41,10 @@ class GraphVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
     GraphVariantVcfWriter(
-        Reference& reference, const GraphLocusSpec& locusSpec, double locusDepth, const GraphVariantSpec& variantSpec,
-        std::ostream& out)
+        Reference& reference, std::shared_ptr<LocusSpec> locusSpecPtr, double locusDepth, std::ostream& out)
         : reference_(reference)
-        , locusSpec_(locusSpec)
+        , locusSpecPtr_(std::move(locusSpecPtr))
         , locusDepth_(locusDepth)
-        , variantSpec_(variantSpec)
         , out_(out)
     {
     }
@@ -58,9 +56,8 @@ public:
 
 private:
     Reference& reference_;
-    const GraphLocusSpec& locusSpec_;
+    std::shared_ptr<LocusSpec> locusSpecPtr_;
     double locusDepth_;
-    const GraphVariantSpec& variantSpec_;
     std::ostream& out_;
 };
 

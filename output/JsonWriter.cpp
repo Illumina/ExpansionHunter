@@ -38,7 +38,6 @@ using std::map;
 using std::string;
 using Json = nlohmann::json;
 using boost::optional;
-using std::dynamic_pointer_cast;
 using std::to_string;
 using std::vector;
 
@@ -156,13 +155,21 @@ void VariantJsonWriter::visit(const CnvVariantFindings& cnvFindings)
     record_["VariantId"] = variantSpec.id;
     record_["VariantType"] = "CNV";
     record_["ReferenceRegion"] = encode(contigInfo_, *variantSpec.location);
-    if (cnvFindings.copyNumberCall())
+    if (cnvFindings.absoluteCopyNumber())
     {
-        record_["Genotype"] = *cnvFindings.copyNumberCall();
+        record_["Absolute CN"] = *cnvFindings.absoluteCopyNumber();
     }
     else
     {
-        record_["Genotype"] = ".";
+        record_["Absolute CN"] = ".";
+    }
+    if (cnvFindings.copyNumberChange())
+    {
+        record_["CN change"] = *cnvFindings.copyNumberChange();
+    }
+    else
+    {
+        record_["CN change"] = ".";
     }
 }
 
@@ -187,5 +194,4 @@ void VariantJsonWriter::visit(const SmallVariantFindings& findings)
         record_["Genotype"] = streamToString(*findings.optionalGenotype());
     }
 }
-
 }
