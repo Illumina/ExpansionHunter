@@ -68,11 +68,8 @@ void JsonWriter::write(std::ostream& out)
     for (const auto& locusIdAndFindings : sampleFindings_)
     {
         const string& locusId = locusIdAndFindings.first;
-        auto locusSpecPtr = regionCatalog_.at(locusId);
-        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpecPtr);
-        shared_ptr<CnvLocusSpec> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpec>(locusSpecPtr);
-
         const LocusFindings& locusFindings = locusIdAndFindings.second;
+        auto locusSpecPtr = regionCatalog_.at(locusId);
 
         Json locusRecord;
         locusRecord["LocusId"] = locusId;
@@ -89,21 +86,9 @@ void JsonWriter::write(std::ostream& out)
         {
             const string& variantId = variantIdAndFindings.first;
 
-            if (graphLocusSpec)
-            {
-                const GraphVariantSpec& variantSpec = graphLocusSpec->getVariantById(variantId);
-                const GraphLocusSpec& locusSpec = *graphLocusSpec;
-                GraphVariantJsonWriter variantWriter(contigInfo_, locusSpec, variantSpec);
-                variantIdAndFindings.second->accept(variantWriter);
-                variantRecords[variantId] = variantWriter.record();
-            }
-            else if (cnvLocusSpec)
-            {
-                const CnvLocusSpec& locusSpec = *cnvLocusSpec;
-                CnvVariantJsonWriter variantWriter(contigInfo_, locusSpec);
-                variantIdAndFindings.second->accept(variantWriter);
-                variantRecords[variantId] = variantWriter.record();
-            }
+            VariantJsonWriter variantWriter(contigInfo_, locusSpecPtr);
+            variantIdAndFindings.second->accept(variantWriter);
+            variantRecords[variantId] = variantWriter.record();
         }
 
         if (!variantRecords.empty())
@@ -135,18 +120,21 @@ static string encodeGenotype(const RepeatGenotype& genotype)
     return encoding;
 }
 
-void GraphVariantJsonWriter::visit(StrFindings& strFindings)
+void VariantJsonWriter::visit(const StrFindings& strFindings)
 {
-    assert(variantSpec_.classification().type == GraphVariantClassification::Type::kRepeat);
+    auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
+    const auto& variantSpec = graphLocusSpecPtr->getVariantById(strFindings.variantId());
+
+    assert(variantSpec.classification().type == GraphVariantClassification::Type::kRepeat);
 
     record_.clear();
-    record_["VariantId"] = variantSpec_.id();
-    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec_.location());
-    record_["VariantType"] = streamToString(variantSpec_.classification().type);
-    record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
+    record_["VariantId"] = variantSpec.id();
+    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec.location());
+    record_["VariantType"] = streamToString(variantSpec.classification().type);
+    record_["VariantSubtype"] = streamToString(variantSpec.classification().subtype);
 
-    const auto repeatNodeId = variantSpec_.nodes().front();
-    const auto& repeatUnit = locusSpec_.graph().nodeSeq(repeatNodeId);
+    const auto repeatNodeId = variantSpec.nodes().front();
+    const auto& repeatUnit = graphLocusSpecPtr->graph().nodeSeq(repeatNodeId);
     record_["RepeatUnit"] = repeatUnit;
 
     record_["CountsOfSpanningReads"] = streamToString(strFindings.countsOfSpanningReads());
@@ -160,21 +148,34 @@ void GraphVariantJsonWriter::visit(StrFindings& strFindings)
     }
 }
 
-void GraphVariantJsonWriter::visit(CnvVariantFindings& cnvFindings)
+void VariantJsonWriter::visit(const CnvVariantFindings& cnvFindings)
 {
-    if (!cnvFindings.copyNumberCall())
+    auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
+    const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
+    record_.clear();
+    record_["VariantId"] = variantSpec.id;
+    record_["VariantType"] = "CNV";
+    record_["ReferenceRegion"] = encode(contigInfo_, *variantSpec.location);
+    if (cnvFindings.copyNumberCall())
     {
-        return;
+        record_["Genotype"] = *cnvFindings.copyNumberCall();
+    }
+    else
+    {
+        record_["Genotype"] = ".";
     }
 }
 
-void GraphVariantJsonWriter::visit(SmallVariantFindings& findings)
+void VariantJsonWriter::visit(const SmallVariantFindings& findings)
 {
+    auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
+    const auto& variantSpec = graphLocusSpecPtr->getVariantById(findings.variantId());
+
     record_.clear();
-    record_["VariantId"] = variantSpec_.id();
-    record_["VariantType"] = streamToString(variantSpec_.classification().type);
-    record_["VariantSubtype"] = streamToString(variantSpec_.classification().subtype);
-    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec_.location());
+    record_["VariantId"] = variantSpec.id();
+    record_["VariantType"] = streamToString(variantSpec.classification().type);
+    record_["VariantSubtype"] = streamToString(variantSpec.classification().subtype);
+    record_["ReferenceRegion"] = encode(contigInfo_, variantSpec.location());
     record_["CountOfRefReads"] = findings.numRefReads();
     record_["CountOfAltReads"] = findings.numAltReads();
     record_["StatusOfRefAllele"] = streamToString(findings.refAllelePresenceStatus().status);
@@ -187,35 +188,4 @@ void GraphVariantJsonWriter::visit(SmallVariantFindings& findings)
     }
 }
 
-void CnvVariantJsonWriter::visit(CnvVariantFindings& cnvFindings)
-{
-    record_.clear();
-    record_["VariantId"] = locusSpec_.outputVariant().id;
-    record_["VariantType"] = "CNV";
-    record_["ReferenceRegion"] = encode(contigInfo_, *(locusSpec_.outputVariant().location));
-    if (cnvFindings.copyNumberCall())
-    {
-        record_["Genotype"] = *cnvFindings.copyNumberCall();
-    }
-    else
-    {
-        record_["Genotype"] = ".";
-    }
-}
-
-void CnvVariantJsonWriter::visit(SmallVariantFindings& findings)
-{
-    if (!findings.optionalGenotype())
-    {
-        return;
-    }
-}
-
-void CnvVariantJsonWriter::visit(StrFindings& findings)
-{
-    if (!findings.optionalGenotype())
-    {
-        return;
-    }
-}
 }

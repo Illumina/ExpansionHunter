@@ -39,7 +39,7 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
 }
 
-void FieldDescriptionWriter::visit(StrFindings& strFindings)
+void FieldDescriptionWriter::visit(const StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
     {
@@ -96,7 +96,7 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
-void FieldDescriptionWriter::visit(CnvVariantFindings& cnvFindings)
+void FieldDescriptionWriter::visit(const CnvVariantFindings& cnvFindings)
 {
     if (!cnvFindings.copyNumberCall())
     {
@@ -104,7 +104,7 @@ void FieldDescriptionWriter::visit(CnvVariantFindings& cnvFindings)
     }
 }
 
-void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
+void FieldDescriptionWriter::visit(const SmallVariantFindings& findings)
 {
     if (!findings.optionalGenotype())
     {
