@@ -55,21 +55,24 @@ enum class LogLevel
 class InputPaths
 {
 public:
-    InputPaths(std::string htsFile, std::string reference, std::string catalog)
+    InputPaths(std::string htsFile, std::string reference, std::string catalog, std::string normRegion)
         : htsFile_(std::move(htsFile))
         , reference_(std::move(reference))
         , catalog_(std::move(catalog))
+        , normRegion_(std::move(normRegion))
     {
     }
 
     const std::string& htsFile() const { return htsFile_; }
     const std::string& reference() const { return reference_; }
     const std::string& catalog() const { return catalog_; }
+    const std::string& normRegion() const { return normRegion_; }
 
 private:
     std::string htsFile_;
     std::string reference_;
     std::string catalog_;
+    std::string normRegion_;
 };
 
 class OutputPaths
@@ -190,5 +193,4 @@ private:
     AnalysisMode analysisMode_;
     LogLevel logLevel_;
 };
-
 }

@@ -35,29 +35,29 @@ TEST(CopyNumberCalling, NonOverlappingCNV)
     std::vector<boost::optional<int>> baselineCopyNumbers{ 2 };
     // For non-overlapping CNVs
     // Target CN is no-call
-    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCNV(boost::none, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCnv(boost::none, baselineCopyNumbers, 2));
     // Baseline CN equals expected CN
-    EXPECT_EQ(1, *callCopyNumberForNonOverlappingCNV(3, baselineCopyNumbers, 2));
-    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCNV(0, baselineCopyNumbers, 2));
+    EXPECT_EQ(1, *callCopyNumberForNonOverlappingCnv(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCnv(0, baselineCopyNumbers, 2));
     baselineCopyNumbers = { 2, 2 };
-    EXPECT_EQ(1, *callCopyNumberForNonOverlappingCNV(3, baselineCopyNumbers, 2));
-    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCNV(0, baselineCopyNumbers, 2));
+    EXPECT_EQ(1, *callCopyNumberForNonOverlappingCnv(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCnv(0, baselineCopyNumbers, 2));
     // Baseline CN has no-call
     baselineCopyNumbers = { 2, boost::none };
-    EXPECT_EQ(1, *callCopyNumberForNonOverlappingCNV(3, baselineCopyNumbers, 2));
-    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCNV(0, baselineCopyNumbers, 2));
+    EXPECT_EQ(1, *callCopyNumberForNonOverlappingCnv(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCnv(0, baselineCopyNumbers, 2));
     // Baseline CNs don't agree
     baselineCopyNumbers = { 2, 3, boost::none };
-    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCNV(3, baselineCopyNumbers, 2));
-    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCNV(0, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCnv(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCnv(0, baselineCopyNumbers, 2));
     // Baseline CN equals Target CN
     baselineCopyNumbers = { 3, 3 };
-    EXPECT_EQ(0, *callCopyNumberForNonOverlappingCNV(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(0, *callCopyNumberForNonOverlappingCnv(3, baselineCopyNumbers, 2));
     // Baseline CN is not equal to expected CN
-    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCNV(2, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForNonOverlappingCnv(2, baselineCopyNumbers, 2));
     // Baseline CN is no-call
     baselineCopyNumbers = { boost::none, boost::none };
-    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCNV(0, baselineCopyNumbers, 2));
+    EXPECT_EQ(-2, *callCopyNumberForNonOverlappingCnv(0, baselineCopyNumbers, 2));
 }
 
 TEST(CopyNumberCalling, OverlappingCNV)
@@ -65,20 +65,20 @@ TEST(CopyNumberCalling, OverlappingCNV)
     // For overlapping CNVs
     // Target CN is no-call
     std::vector<boost::optional<int>> baselineCopyNumbers{ 2, 2 };
-    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCNV(boost::none, baselineCopyNumbers, 2));
-    EXPECT_EQ(1, *callCopyNumberForOverlappingCNV(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCnv(boost::none, baselineCopyNumbers, 2));
+    EXPECT_EQ(1, *callCopyNumberForOverlappingCnv(3, baselineCopyNumbers, 2));
     // Baseline CN is not equal to expected CN. But for overlapping CNV it does not matter
     baselineCopyNumbers = { 3, 3 };
-    EXPECT_EQ(-1, *callCopyNumberForOverlappingCNV(2, baselineCopyNumbers, 2));
+    EXPECT_EQ(-1, *callCopyNumberForOverlappingCnv(2, baselineCopyNumbers, 2));
     // Absolute CN has to be >= 0
-    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCNV(0, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCnv(0, baselineCopyNumbers, 2));
     // Baseline CN has no-call
     baselineCopyNumbers = { boost::none, 2 };
-    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCNV(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCnv(3, baselineCopyNumbers, 2));
     // Baseline CNs don't agree
     baselineCopyNumbers = { 2, 3 };
-    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCNV(3, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCnv(3, baselineCopyNumbers, 2));
     // Baseline CN is no-call
     baselineCopyNumbers = { boost::none, boost::none };
-    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCNV(2, baselineCopyNumbers, 2));
+    EXPECT_EQ(boost::none, callCopyNumberForOverlappingCnv(2, baselineCopyNumbers, 2));
 }

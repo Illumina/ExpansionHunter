@@ -33,6 +33,7 @@
 
 #include "spdlog/spdlog.h"
 
+#include "DepthNormalization.hh"
 #include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
@@ -46,6 +47,7 @@ namespace ehunter
 using boost::optional;
 using graphtools::AlignmentWriter;
 using htshelpers::HtsFileSeeker;
+using std::dynamic_pointer_cast;
 using std::ostream;
 using std::shared_ptr;
 using std::string;
@@ -55,14 +57,6 @@ using std::unordered_set;
 using std::vector;
 
 using ReadCatalog = unordered_map<ReadId, MappedRead, boost::hash<ReadId>>;
-
-static vector<GenomicRegion>
-combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
-{
-    vector<GenomicRegion> combinedRegions(targetRegions);
-    combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
-    return combinedRegions;
-}
 
 static bool checkIfMatesWereMappedNearby(const MappedRead& read)
 {
@@ -102,7 +96,7 @@ static void recoverMates(htshelpers::MateExtractor& mateExtractor, ReadPairs& re
     }
 }
 
-static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
+static int getReadCountCap(const vector<GenomicRegion>& regionsWithReads)
 {
     int readCountCap;
     // hardcoded for now
@@ -120,11 +114,9 @@ static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
     return readCountCap;
 }
 
-static ReadPairs collectCandidateReads(
-    const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-    HtsFileSeeker& htsFileSeeker, htshelpers::MateExtractor& mateExtractor)
+static ReadPairs collectReads(
+    const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker, htshelpers::MateExtractor& mateExtractor)
 {
-    vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
     ReadPairs readPairs;
 
     for (const auto& regionWithReads : regionsWithReads)
@@ -163,20 +155,48 @@ static ReadPairs collectCandidateReads(
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
+    const vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
+    CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
+    std::vector<RegionDepthInfo> normDepthInfo;
+    for (RegionInfo regionInfo : normRegionInfo)
+    {
+        ReadPairs readPairs = collectReads({ regionInfo.region }, inputPaths.htsFile(), inputPaths.reference());
+
+        for (const auto& fragmentIdAndReadPair : readPairs)
+        {
+            const auto& readPair = fragmentIdAndReadPair.second;
+            if (readPair.numMatesSet() == 2)
+            {
+                const MappedRead& read = *readPair.firstMate;
+                const MappedRead& mate = *readPair.secondMate;
+                normRegionAnalyzer.analyze(read, mate);
+            }
+            else
+            {
+                const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+                normRegionAnalyzer.analyze(read);
+            }
+        }
+    }
+
+    DepthNormalizer genomeDepthNormalizer = normRegionAnalyzer.getGenomeDepthNormalizer();
+
     SampleFindings sampleFindings;
+
     HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
     htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
+
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
         const auto& locusId = locusIdAndRegionSpec.first;
         const auto& locusSpec = locusIdAndRegionSpec.second;
 
-        ReadPairs readPairs = collectCandidateReads(
-            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), htsFileSeeker, mateExtractor);
+        ReadPairs readPairs;
+        readPairs = collectReads(locusSpec->regionsWithReads(), htsFileSeeker, mateExtractor);
 
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, bamletWriter);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo> {}, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -194,10 +214,9 @@ SampleFindings htsSeekingSampleAnalysis(
             }
         }
 
-        catalogAnalyzer.collectResults(sampleSex, sampleFindings);
+        catalogAnalyzer.collectResults(sampleSex, sampleFindings, genomeDepthNormalizer);
     }
 
     return sampleFindings;
 }
-
 }

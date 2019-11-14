@@ -116,7 +116,10 @@ int main(int argc, char** argv)
         FastaReference reference(inputPaths.reference(), extractReferenceContigInfo(inputPaths.htsFile()));
 
         spdlog::info("Loading variant catalog from disk {}", inputPaths.catalog());
-        const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), reference);
+        const LocusCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), reference);
+
+        spdlog::info("Loading normalization regions from disk {}", inputPaths.normRegion());
+        const std::vector<RegionInfo> normRegionInfo = loadNormRegionsFromDisk(inputPaths.normRegion(), reference);
 
         const OutputPaths& outputPaths = params.outputPaths();
 
@@ -126,17 +129,19 @@ int main(int argc, char** argv)
         if (params.analysisMode() == AnalysisMode::kSeeking)
         {
             spdlog::info("Running sample analysis in seeking mode");
-            sampleFindings = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
+            sampleFindings
+                = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, normRegionInfo, bamletWriter);
         }
         else
         {
             spdlog::info("Running sample analysis in streaming mode");
-            sampleFindings = htsStreamingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
+            sampleFindings = htsStreamingSampleAnalysis(
+                inputPaths, sampleParams.sex(), regionCatalog, normRegionInfo, bamletWriter);
         }
 
         spdlog::info("Writing output to disk");
-        VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
-        writeToFile(outputPaths.vcf(), vcfWriter);
+        //VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
+        //writeToFile(outputPaths.vcf(), vcfWriter);
 
         JsonWriter jsonWriter(sampleParams, reference.contigInfo(), regionCatalog, sampleFindings);
         writeToFile(outputPaths.json(), jsonWriter);

@@ -32,8 +32,8 @@ namespace ehunter
 {
 
 GraphSmallVariantAnalyzer::GraphSmallVariantAnalyzer(
-    std::shared_ptr<GraphSmallVariant> smallVariantFeature, std::string variantId, VariantSubtype variantSubtype,
-    boost::optional<graphtools::NodeId> optionalRefNode)
+    std::shared_ptr<GraphSmallVariant> smallVariantFeature, std::string variantId,
+    GraphVariantClassification::Subtype variantSubtype, boost::optional<graphtools::NodeId> optionalRefNode)
     : GraphVariantAnalyzer(std::move(variantId))
     , smallVariantFeature_(std::move(smallVariantFeature))
     , variantSubtype_(variantSubtype)
@@ -51,16 +51,16 @@ unique_ptr<VariantFindings> GraphSmallVariantAnalyzer::analyze(const LocusStats&
 
     switch (variantSubtype_)
     {
-    case VariantSubtype::kInsertion:
+    case GraphVariantClassification::Subtype::kInsertion:
         altNode = nodeIds.front();
         break;
-    case VariantSubtype::kDeletion:
+    case GraphVariantClassification::Subtype::kDeletion:
         altNode = SmallVariantAlignmentClassifier::kInvalidNodeId;
         break;
-    case VariantSubtype::kSwap:
+    case GraphVariantClassification::Subtype::kSwap:
         altNode = (refNode == nodeIds.front()) ? nodeIds.back() : nodeIds.front();
         break;
-    case VariantSubtype::kSMN:
+    case GraphVariantClassification::Subtype::kSMN:
         if (refNode != nodeIds.front())
             throw std::logic_error("Invalid SMN specification");
         altNode = nodeIds.back();
@@ -82,8 +82,8 @@ unique_ptr<VariantFindings> GraphSmallVariantAnalyzer::analyze(const LocusStats&
     auto refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);
     auto altAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, altNodeSupport, refNodeSupport);
 
-    return std::unique_ptr<VariantFindings>(
-        new SmallVariantFindings(refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
+    return std::unique_ptr<VariantFindings>(new SmallVariantFindings(
+        variantId_, refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, genotype));
 }
 
 vector<shared_ptr<Feature>> GraphSmallVariantAnalyzer::features() { return { smallVariantFeature_ }; }

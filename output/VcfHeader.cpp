@@ -23,6 +23,7 @@
 
 #include <memory>
 
+using std::dynamic_pointer_cast;
 using std::ostream;
 using std::string;
 
@@ -74,8 +75,8 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     tryAddingFieldDescription(FieldType::kFormat, "ADIR", "1", "String", kAdirFieldDescription);
 
     const auto repeatNodeId = variantSpec_.nodes().front();
-    const string& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
-    const auto& referenceLocus = variantSpec_.referenceLocus();
+    const string& repeatUnit = locusSpec_.graph().nodeSeq(repeatNodeId);
+    const auto& referenceLocus = variantSpec_.location();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
     const RepeatGenotype& genotype = strFindings.optionalGenotype().get();
@@ -95,6 +96,14 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
+void FieldDescriptionWriter::visit(CnvVariantFindings& cnvFindings)
+{
+    if (!cnvFindings.copyNumberCall())
+    {
+        return;
+    }
+}
+
 void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
 {
     if (!findings.optionalGenotype())
@@ -104,7 +113,7 @@ void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
     addCommonFields();
     tryAddingFieldDescription(
         FieldType::kFormat, "AD", ".", "Integer", "Allelic depths for the ref and alt alleles in the order listed");
-    if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
+    if (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kSMN)
     {
         tryAddingFieldDescription(
             FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the reference allele");
@@ -140,7 +149,7 @@ FieldDescription::FieldDescription(
 {
 }
 
-void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sampleFindings, ostream& out)
+void outputVcfHeader(const LocusCatalog& locusCatalog, const SampleFindings& sampleFindings, ostream& out)
 {
     out << "##fileformat=VCFv4.1\n";
 
@@ -149,17 +158,22 @@ void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sa
     for (const auto& locusIdAndFindings : sampleFindings)
     {
         const string& locusId = locusIdAndFindings.first;
-        const LocusSpecification& locusSpec = locusCatalog.at(locusId);
-        const LocusFindings& locusFindings = locusIdAndFindings.second;
-
-        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusCatalog.at(locusId));
+        // To do: description for CNV variants
+        if (graphLocusSpec)
         {
-            const string& variantId = variantIdAndFindings.first;
-            const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
+            const GraphLocusSpec& locusSpec = *graphLocusSpec;
+            const LocusFindings& locusFindings = locusIdAndFindings.second;
 
-            FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(descriptionWriter);
-            descriptionWriter.dumpTo(fieldDescriptionCatalog);
+            for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
+            {
+                const string& variantId = variantIdAndFindings.first;
+                const GraphVariantSpec& variantSpec = locusSpec.getVariantById(variantId);
+
+                FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
+                variantIdAndFindings.second->accept(descriptionWriter);
+                descriptionWriter.dumpTo(fieldDescriptionCatalog);
+            }
         }
     }
 
@@ -210,5 +224,4 @@ std::ostream& operator<<(std::ostream& out, const FieldDescription& fieldDescrip
 
     return out;
 }
-
 }

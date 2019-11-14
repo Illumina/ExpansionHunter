@@ -20,7 +20,7 @@
 //
 //
 
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/LocusSpec.hh"
 
 #include "gtest/gtest.h"
 

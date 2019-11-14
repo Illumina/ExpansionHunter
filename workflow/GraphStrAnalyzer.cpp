@@ -127,7 +127,7 @@ std::unique_ptr<VariantFindings> GraphStrAnalyzer::analyze(const LocusStats& sta
     optional<RepeatGenotype> genotype = repeatGenotyper.genotypeRepeat(candidateAlleleSizes);
 
     std::unique_ptr<VariantFindings> findingsPtr(
-        new StrFindings(truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, genotype));
+        new StrFindings(variantId_, truncatedSpanningTable, truncatedFlankingTable, truncatedInrepeatTable, genotype));
     return findingsPtr;
 }
 

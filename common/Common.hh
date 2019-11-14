@@ -45,7 +45,7 @@ enum class Sex
     kFemale
 };
 
-enum class ContigCopyNumber
+enum class CopyNumberBySex
 {
     kZeroInFemaleOneInMale,
     kTwoInFemaleOneInMale,

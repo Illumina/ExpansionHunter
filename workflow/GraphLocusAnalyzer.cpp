@@ -54,8 +54,12 @@ void GraphLocusAnalyzer::addAnalyzer(std::shared_ptr<GraphVariantAnalyzer> varia
     variantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
-LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex) const
+LocusFindings GraphLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
 {
+    if (genomeDepthNormalizer)
+    {
+        auto depthNormalizer = genomeDepthNormalizer;
+    }
     LocusFindings locusFindings;
 
     locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
@@ -89,5 +93,4 @@ vector<shared_ptr<FeatureAnalyzer>> GraphLocusAnalyzer::featureAnalyzers()
 
     return features;
 }
-
 }

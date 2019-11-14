@@ -29,18 +29,20 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
 
-class VariantVcfWriter : public VariantFindingsVisitor
+class GraphVariantVcfWriter : public VariantFindingsVisitor
 {
 public:
-    VariantVcfWriter(
-        Reference& reference, const LocusSpecification& locusSpec, double locusDepth,
-        const VariantSpecification& variantSpec, std::ostream& out)
+    GraphVariantVcfWriter(
+        Reference& reference, const GraphLocusSpec& locusSpec, double locusDepth, const GraphVariantSpec& variantSpec,
+        std::ostream& out)
         : reference_(reference)
         , locusSpec_(locusSpec)
         , locusDepth_(locusDepth)
@@ -49,16 +51,41 @@ public:
     {
     }
 
-    ~VariantVcfWriter() = default;
+    ~GraphVariantVcfWriter() = default;
     void visit(StrFindings& strFindings) override;
     void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
+    void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
 
 private:
     Reference& reference_;
-    const LocusSpecification& locusSpec_;
+    const GraphLocusSpec& locusSpec_;
     double locusDepth_;
-    const VariantSpecification& variantSpec_;
+    const GraphVariantSpec& variantSpec_;
     std::ostream& out_;
+};
+
+class CnvVariantVcfWriter : public VariantFindingsVisitor
+{
+public:
+    CnvVariantVcfWriter(
+        Reference& /*reference*/, const CnvLocusSpec& /*locusSpec*/, double /*locusDepth*/, std::ostream& /*out*/)
+    //:  reference_(reference)
+    //, locusSpec_(locusSpec),
+    // locusDepth_(locusDepth)
+    //, out_(out)
+    {
+    }
+
+    ~CnvVariantVcfWriter() = default;
+    void visit(StrFindings& strFindings) override;
+    void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
+    void visit(CnvVariantFindings& cnvVariantFindingsPtr) override;
+
+private:
+    // Reference& reference_;
+    // const CnvLocusSpec& locusSpec_;
+    // double locusDepth_;
+    // std::ostream& out_;
 };
 
 // TODO: Document the code after multi-unit repeat format is finalized (GT-598)
@@ -66,7 +93,7 @@ class VcfWriter
 {
 public:
     VcfWriter(
-        std::string sampleId, Reference& reference, const RegionCatalog& regionCatalog,
+        std::string sampleId, Reference& reference, const LocusCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     friend std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
@@ -75,14 +102,13 @@ private:
     void writeHeader(std::ostream& out);
     void writeBody(std::ostream& out);
     using LocusIdAndVariantId = std::pair<std::string, std::string>;
-    const std::vector<LocusIdAndVariantId> getSortedIdPairs();
+    std::vector<LocusIdAndVariantId> getSortedIdPairs();
 
     std::string sampleId_;
     Reference& reference_;
-    const RegionCatalog& regionCatalog_;
+    const LocusCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 
 std::ostream& operator<<(std::ostream& out, VcfWriter& vcfWriter);
-
 }

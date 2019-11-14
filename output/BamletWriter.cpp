@@ -36,6 +36,7 @@
 using graphtools::GraphAlignment;
 using graphtools::GraphReferenceMapping;
 using graphtools::ReferenceInterval;
+using std::dynamic_pointer_cast;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -43,11 +44,12 @@ using std::vector;
 namespace ehunter
 {
 
-static GraphReferenceMapping generateMapping(const ReferenceContigInfo& contigInfo, const LocusSpecification& locusSpec)
+static GraphReferenceMapping
+generateMapping(const ReferenceContigInfo& contigInfo, const GraphLocusSpec& locusSpec)
 {
-    GraphReferenceMapping mapping(&locusSpec.regionGraph());
+    GraphReferenceMapping mapping(&locusSpec.graph());
 
-    for (const auto& nodeAndRegion : locusSpec.referenceProjectionOfNodes())
+    for (const auto& nodeAndRegion : locusSpec.nodeLocations())
     {
         auto nodeId = nodeAndRegion.first;
         const auto& region = nodeAndRegion.second;
@@ -64,7 +66,7 @@ static GraphReferenceMapping generateMapping(const ReferenceContigInfo& contigIn
 #define bam1_seq_seti(s, i, c) ((s)[(i) >> 1] = ((s)[(i) >> 1] & 0xf << (((i)&1) << 2)) | (c) << ((~(i)&1) << 2))
 
 BamletWriter::BamletWriter(
-    const string& bamletPath, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog)
+    const string& bamletPath, const ReferenceContigInfo& contigInfo, const LocusCatalog& regionCatalog)
     : filePtr_(hts_open(bamletPath.c_str(), "wb"), hts_close)
     , bamHeader_(bam_hdr_init(), bam_hdr_destroy)
     , contigInfo_(contigInfo)
@@ -73,7 +75,11 @@ BamletWriter::BamletWriter(
     {
         const auto& locusId = locusIdAndSpec.first;
         const auto& locusSpec = locusIdAndSpec.second;
-        graphReferenceMappings_.emplace(std::make_pair(locusId, generateMapping(contigInfo, locusSpec)));
+        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
+        if (graphLocusSpec)
+        {
+            graphReferenceMappings_.emplace(std::make_pair(locusId, generateMapping(contigInfo, *graphLocusSpec)));
+        }
     }
 
     writeHeader();
@@ -227,5 +233,4 @@ void BamletWriter::write(
 
     bam_destroy1(htsAlignmentPtr);
 }
-
 }

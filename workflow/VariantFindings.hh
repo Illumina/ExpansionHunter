@@ -24,6 +24,7 @@
 #include <boost/optional.hpp>
 
 #include "common/CountTable.hh"
+#include "common/GenomicRegion.hh"
 #include "genotyping/AlleleChecker.hh"
 #include "genotyping/RepeatGenotype.hh"
 #include "genotyping/SmallVariantGenotype.hh"
@@ -33,26 +34,39 @@ namespace ehunter
 
 class StrFindings;
 class SmallVariantFindings;
+class CnvVariantFindings;
 
 struct VariantFindingsVisitor
 {
     virtual void visit(StrFindings& strFindings) = 0;
     virtual void visit(SmallVariantFindings& smallVariantFindings) = 0;
+    virtual void visit(CnvVariantFindings& cnvVariantFindings) = 0;
 };
 
-struct VariantFindings
+class VariantFindings
 {
+public:
+    VariantFindings(std::string variantId)
+        : variantId_(std::move(variantId))
+    {
+    }
+
     virtual ~VariantFindings() = default;
     virtual void accept(VariantFindingsVisitor& visitor) = 0;
+    const std::string& variantId() const { return variantId_; }
+
+protected:
+    std::string variantId_;
 };
 
 class StrFindings : public VariantFindings
 {
 public:
     StrFindings(
-        CountTable countsOfSpanningReads, CountTable countsOfFlankingReads, CountTable countsOfInrepeatReads,
-        boost::optional<RepeatGenotype> optionalGenotype)
-        : countsOfSpanningReads_(std::move(countsOfSpanningReads))
+        std::string variantId, CountTable countsOfSpanningReads, CountTable countsOfFlankingReads,
+        CountTable countsOfInrepeatReads, boost::optional<RepeatGenotype> optionalGenotype)
+        : VariantFindings(std::move(variantId))
+        , countsOfSpanningReads_(std::move(countsOfSpanningReads))
         , countsOfFlankingReads_(std::move(countsOfFlankingReads))
         , countsOfInrepeatReads_(std::move(countsOfInrepeatReads))
         , optionalGenotype_(std::move(optionalGenotype))
@@ -85,9 +99,10 @@ class SmallVariantFindings : public VariantFindings
 {
 public:
     SmallVariantFindings(
-        int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus, AlleleCheckSummary altAlleleStatus,
-        boost::optional<SmallVariantGenotype> optionalGenotype)
-        : numRefReads_(numRefReads)
+        std::string variantId, int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus,
+        AlleleCheckSummary altAlleleStatus, boost::optional<SmallVariantGenotype> optionalGenotype)
+        : VariantFindings(std::move(variantId))
+        , numRefReads_(numRefReads)
         , numAltReads_(numAltReads)
         , refAlleleStatus_(refAlleleStatus)
         , altAlleleStatus_(altAlleleStatus)
@@ -113,4 +128,21 @@ private:
     boost::optional<SmallVariantGenotype> optionalGenotype_;
 };
 
+class CnvVariantFindings : public VariantFindings
+{
+public:
+    CnvVariantFindings(std::string variantId, boost::optional<int> copyNumberCall)
+        : VariantFindings(std::move(variantId))
+        , copyNumberCall_(copyNumberCall)
+    {
+    }
+
+    ~CnvVariantFindings() override = default;
+    void accept(VariantFindingsVisitor& visitorPtr) override { visitorPtr.visit(*this); }
+
+    boost::optional<int> copyNumberCall() const { return copyNumberCall_; }
+
+private:
+    boost::optional<int> copyNumberCall_;
+};
 }

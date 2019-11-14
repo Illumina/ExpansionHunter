@@ -48,6 +48,7 @@ struct UserParameters
     string htsFilePath;
     string referencePath;
     string catalogPath;
+    string normalizationRegionPath;
 
     // Output prefix
     string outputPrefix;
@@ -78,6 +79,7 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
         ("reads", po::value<string>(&params.htsFilePath)->required(), "BAM/CRAM file with aligned reads")
         ("reference", po::value<string>(&params.referencePath)->required(), "FASTA file with reference genome")
         ("variant-catalog", po::value<string>(&params.catalogPath)->required(), "JSON file with variants to genotype")
+        ("normalization-regions", po::value<string>(&params.normalizationRegionPath)->required(), "JSON file with normalization regions")
         ("output-prefix", po::value<string>(&params.outputPrefix)->required(), "Prefix for the output files")
         ("region-extension-length", po::value<int>(&params.regionExtensionLength)->default_value(1000), "How far from on/off-target regions to search for informative reads")
         ("sex", po::value<string>(&params.sampleSexEncoding)->default_value("female"), "Sex of the sample; must be either male or female")
@@ -273,7 +275,8 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     const auto& userParams = *optionalUserParameters;
     assertValidity(userParams);
 
-    InputPaths inputPaths(userParams.htsFilePath, userParams.referencePath, userParams.catalogPath);
+    InputPaths inputPaths(
+        userParams.htsFilePath, userParams.referencePath, userParams.catalogPath, userParams.normalizationRegionPath);
     const string vcfPath = userParams.outputPrefix + ".vcf";
     const string jsonPath = userParams.outputPrefix + ".json";
     const string bamletPath = userParams.outputPrefix + "_realigned.bam";
@@ -308,5 +311,4 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
 
     return ProgramParameters(inputPaths, outputPaths, sampleParameters, heuristicParameters, analysisMode, logLevel);
 }
-
 }
