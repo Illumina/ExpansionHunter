@@ -158,11 +158,14 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
-    CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
+    HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
+    htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
+    
+	CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
     std::vector<RegionDepthInfo> normDepthInfo;
     for (RegionInfo regionInfo : normRegionInfo)
     {
-        ReadPairs readPairs = collectReads({ regionInfo.region }, inputPaths.htsFile(), inputPaths.reference());
+        ReadPairs readPairs = collectReads({ regionInfo.region }, HtsFileSeeker);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -184,9 +187,6 @@ SampleFindings htsSeekingSampleAnalysis(
     DepthNormalizer genomeDepthNormalizer = normRegionAnalyzer.getGenomeDepthNormalizer();
 
     SampleFindings sampleFindings;
-
-    HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
-    htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
 
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
