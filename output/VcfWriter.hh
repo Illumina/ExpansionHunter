@@ -37,10 +37,10 @@
 namespace ehunter
 {
 
-class GraphVariantVcfWriter : public VariantFindingsVisitor
+class VariantVcfWriter : public VariantFindingsVisitor
 {
 public:
-    GraphVariantVcfWriter(
+    VariantVcfWriter(
         Reference& reference, std::shared_ptr<LocusSpec> locusSpecPtr, double locusDepth, std::ostream& out)
         : reference_(reference)
         , locusSpecPtr_(std::move(locusSpecPtr))
@@ -49,7 +49,7 @@ public:
     {
     }
 
-    ~GraphVariantVcfWriter() = default;
+    ~VariantVcfWriter() = default;
     void visit(const StrFindings& findings) override;
     void visit(const SmallVariantFindings& findings) override;
     void visit(const CnvVariantFindings& findings) override;

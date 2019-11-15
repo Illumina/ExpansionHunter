@@ -83,7 +83,7 @@ void VcfWriter::writeBody(ostream& out)
         assert(locusFindings.optionalStats);
         const double locusDepth = locusFindings.optionalStats->depth();
 
-        GraphVariantVcfWriter variantWriter(reference_, locusSpecPtr, locusDepth, out);
+        VariantVcfWriter variantWriter(reference_, locusSpecPtr, locusDepth, out);
         variantFindings->accept(variantWriter);
     }
 }
@@ -215,7 +215,7 @@ computeAlleleFields(const GraphVariantSpec& variantSpec, const string& motif, co
     return alleleFields.encode();
 }
 
-void GraphVariantVcfWriter::visit(const StrFindings& strFindings)
+void VariantVcfWriter::visit(const StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
     {
@@ -250,7 +250,7 @@ void GraphVariantVcfWriter::visit(const StrFindings& strFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void GraphVariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
+void VariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
 {
     auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
     const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
@@ -290,7 +290,7 @@ void GraphVariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void GraphVariantVcfWriter::visit(const SmallVariantFindings& findings)
+void VariantVcfWriter::visit(const SmallVariantFindings& findings)
 {
     auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
     const auto& variantSpec = graphLocusSpecPtr->getVariantById(findings.variantId());
