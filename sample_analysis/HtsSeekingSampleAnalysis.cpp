@@ -64,10 +64,8 @@ static bool checkIfMatesWereMappedNearby(const MappedRead& read)
     return (read.contigIndex() == read.mateContigIndex()) && (std::abs(read.pos() - read.matePos()) < kMaxDistance);
 }
 
-static void recoverMates(const string& htsFilePath, const string& htsReferencePath, ReadPairs& readPairs)
+static void recoverMates(htshelpers::MateExtractor& mateExtractor, ReadPairs& readPairs)
 {
-    htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
-
     for (auto& fragmentIdAndReadPair : readPairs)
     {
         ReadPair& readPair = fragmentIdAndReadPair.second;
@@ -116,10 +114,9 @@ static int getReadCountCap(const vector<GenomicRegion>& regionsWithReads)
     return readCountCap;
 }
 
-static ReadPairs
-collectReads(const vector<GenomicRegion>& regionsWithReads, const string& htsFilePath, const string& htsReferencePath)
+static ReadPairs collectReads(
+    const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker, htshelpers::MateExtractor& mateExtractor)
 {
-    HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
     ReadPairs readPairs;
 
     for (const auto& regionWithReads : regionsWithReads)
@@ -150,7 +147,7 @@ collectReads(const vector<GenomicRegion>& regionsWithReads, const string& htsFil
     }
 
     const int numReadsBeforeRecovery = readPairs.NumReads();
-    recoverMates(htsFilePath, htsReferencePath, readPairs);
+    recoverMates(mateExtractor, readPairs);
     const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
     spdlog::debug("Recovered {} reads", numReadsAfterRecovery);
 
@@ -161,11 +158,14 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
-    CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
+    HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
+    htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
+    
+	CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
     std::vector<RegionDepthInfo> normDepthInfo;
     for (RegionInfo regionInfo : normRegionInfo)
     {
-        ReadPairs readPairs = collectReads({ regionInfo.region }, inputPaths.htsFile(), inputPaths.reference());
+        ReadPairs readPairs = collectReads({ regionInfo.region }, htsFileSeeker, mateExtractor);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -194,7 +194,7 @@ SampleFindings htsSeekingSampleAnalysis(
         const auto& locusSpec = locusIdAndRegionSpec.second;
 
         ReadPairs readPairs;
-        readPairs = collectReads(locusSpec->regionsWithReads(), inputPaths.htsFile(), inputPaths.reference());
+        readPairs = collectReads(locusSpec->regionsWithReads(), htsFileSeeker, mateExtractor);
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo> {}, bamletWriter);
 

@@ -117,6 +117,8 @@ namespace htshelpers
 
         while (sam_itr_next(htsFilePtr_, htsRegionPtr_, htsAlignmentPtr_) >= 0)
         {
+			if (htsAlignmentPtr_->core.pos != searchRegionStart) continue;
+
             MappedRead putativeMate = htshelpers::decodeRead(htsAlignmentPtr_);
 
             const bool belongToSameFragment = read.fragmentId() == putativeMate.fragmentId();
