@@ -74,11 +74,11 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNorm
         auto variantType = analyzerPtr->variantType();
         if (variantType == CnvVariantType::kBaseline)
         {
-            baselineCopyNumbers.push_back(varFinding.copyNumberCall());
+            baselineCopyNumbers.push_back(varFinding.absoluteCopyNumber());
         }
         else if (variantType == CnvVariantType::kTarget)
         {
-            targetCopyNumber = varFinding.copyNumberCall();
+            targetCopyNumber = varFinding.absoluteCopyNumber();
         }
     }
 
@@ -97,7 +97,7 @@ LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNorm
 
     auto outputVariantId = outputVariant_.id;
     std::unique_ptr<VariantFindings> cnvLocusFindingPtr(
-        new CnvVariantFindings(outputVariantId, cnvLocusCopyNumberCall));
+        new CnvVariantFindings(outputVariantId, targetCopyNumber, cnvLocusCopyNumberCall));
     locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
     return locusFindings;

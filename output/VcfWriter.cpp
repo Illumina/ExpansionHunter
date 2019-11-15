@@ -34,7 +34,6 @@
 #include "stats/ReadSupportCalculator.hh"
 
 using std::deque;
-using std::dynamic_pointer_cast;
 using std::map;
 using std::ostream;
 using std::pair;
@@ -76,8 +75,6 @@ void VcfWriter::writeBody(ostream& out)
     {
         const string& locusId = pair.first;
         auto locusSpecPtr = regionCatalog_.at(locusId);
-        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpecPtr);
-        shared_ptr<CnvLocusSpec> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpec>(locusSpecPtr);
 
         const LocusFindings& locusFindings = sampleFindings_.at(locusId);
         const string& variantId = pair.second;
@@ -86,17 +83,8 @@ void VcfWriter::writeBody(ostream& out)
         assert(locusFindings.optionalStats);
         const double locusDepth = locusFindings.optionalStats->depth();
 
-        if (graphLocusSpec)
-        {
-            const GraphVariantSpec& variantSpec = graphLocusSpec->getVariantById(variantId);
-            GraphVariantVcfWriter variantWriter(reference_, *graphLocusSpec, locusDepth, variantSpec, out);
-            variantFindings->accept(variantWriter);
-        }
-        else if (cnvLocusSpec)
-        {
-            CnvVariantVcfWriter variantWriter(reference_, *cnvLocusSpec, locusDepth, out);
-            variantFindings->accept(variantWriter);
-        }
+        VariantVcfWriter variantWriter(reference_, locusSpecPtr, locusDepth, out);
+        variantFindings->accept(variantWriter);
     }
 }
 
@@ -109,17 +97,15 @@ std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
     {
         const string& locusId = locusIdAndFindings.first;
         auto locusSpec = regionCatalog_.at(locusId);
-        auto graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
-        assert(graphLocusSpec);
 
         const LocusFindings& locusFindings = locusIdAndFindings.second;
 
         for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
             const string& variantId = variantIdAndFindings.first;
-            const GraphVariantSpec& variantSpec = graphLocusSpec->getVariantById(variantId);
+            const GenomicRegion& variantLocation = locusSpec->getVariantLocationById(variantId);
             tuples.emplace_back(
-                variantSpec.location().contigIndex(), variantSpec.location().start(), variantSpec.location().end(),
+                variantLocation.contigIndex(), variantLocation.start(), variantLocation.end(),
                 LocusIdAndVariantId(locusId, variantId));
         }
     }
@@ -229,24 +215,27 @@ computeAlleleFields(const GraphVariantSpec& variantSpec, const string& motif, co
     return alleleFields.encode();
 }
 
-void GraphVariantVcfWriter::visit(StrFindings& strFindings)
+void VariantVcfWriter::visit(const StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
     {
         return;
     }
 
+    auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
+    const GraphVariantSpec& variantSpec = graphLocusSpecPtr->getVariantById(strFindings.variantId());
+
     const auto& genotype = *(strFindings.optionalGenotype());
 
-    const auto& referenceLocus = variantSpec_.location();
-    const auto repeatNodeId = variantSpec_.nodes().front();
-    const string& repeatUnit = locusSpec_.graph().nodeSeq(repeatNodeId);
+    const auto& referenceLocus = variantSpec.location();
+    const auto repeatNodeId = variantSpec.nodes().front();
+    const string& repeatUnit = graphLocusSpecPtr->graph().nodeSeq(repeatNodeId);
 
     const int referenceSizeInUnits = referenceLocus.length() / repeatUnit.length();
 
     const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
-    const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
-    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, strFindings);
+    const string infoFields = computeInfoFields(variantSpec, repeatUnit);
+    const string alleleFields = computeAlleleFields(variantSpec, repeatUnit, strFindings);
     const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
 
     const int posPreceedingRepeat1Based = referenceLocus.start();
@@ -261,103 +250,103 @@ void GraphVariantVcfWriter::visit(StrFindings& strFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void GraphVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
+void VariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
 {
-    if (!cnvFindings.copyNumberCall())
-    {
-        return;
-    }
-}
-
-void CnvVariantVcfWriter::visit(StrFindings& strFindings)
-{
-    if (!strFindings.optionalGenotype())
-    {
-        return;
-    }
-}
-
-void CnvVariantVcfWriter::visit(SmallVariantFindings& smallFindings)
-{
-    if (!smallFindings.optionalGenotype())
-    {
-        return;
-    }
-}
-
-void CnvVariantVcfWriter::visit(CnvVariantFindings& cnvFindings)
-{
-    // const auto& variantSpec = locusSpec_.getVariantById(cnvFindings.variantId());
-    // const auto& referenceLocus = variantSpec.referenceLocus();
-    // const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
-    const auto& contigName = "test";
-    boost::optional<int> copyNumberCall = cnvFindings.copyNumberCall();
+    auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
+    const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
+    const auto& referenceLocus = *(variantSpec.location);
+    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+    boost::optional<int> copyNumberChange = cnvFindings.copyNumberChange();
+    boost::optional<int> absoluteCopyNumber = cnvFindings.absoluteCopyNumber();
     vector<string> vcfRecordElements;
-    if (copyNumberCall)
+    
+    vector<string> fields;
+    fields.push_back("END=" + std::to_string(referenceLocus.end()));
+    fields.push_back("CNVLEN=" + std::to_string(referenceLocus.end() - referenceLocus.start()));
+    fields.push_back("VARID=" + variantSpec.id);
+
+    std::string callFilter = "LowQ";
+    std::string copyNumberChangeCall = ".";
+    std::string absoluteCopyNumberCall = ".";
+    if (absoluteCopyNumber)
     {
-        vcfRecordElements = { contigName, to_string(*copyNumberCall) };
+        absoluteCopyNumberCall = to_string(*absoluteCopyNumber);
     }
-    else
+    if (copyNumberChange)
     {
-        vcfRecordElements = { contigName };
+        callFilter = "PASS";
+        copyNumberChangeCall = to_string(*copyNumberChange);
     }
-    // out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
+    else if (absoluteCopyNumber)
+    {
+        callFilter = "BaselineFail";
+    }
+    vcfRecordElements = { contigName, to_string(referenceLocus.start()),
+                            ".",        "N",
+                            ".",        ".",
+                            callFilter,     boost::algorithm::join(fields, ";"),
+                            "CN:CNC",      absoluteCopyNumberCall + ":" + copyNumberChangeCall };
+    
+    out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
+void VariantVcfWriter::visit(const SmallVariantFindings& findings)
 {
-    const auto& referenceLocus = variantSpec_.location();
+    auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
+    const auto& variantSpec = graphLocusSpecPtr->getVariantById(findings.variantId());
+
+    const auto& referenceLocus = variantSpec.location();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     string refSequence;
     string altSequence;
     int64_t startPosition = -1;
 
-    if ((variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kSwap)
-        || (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kSMN))
+    if ((variantSpec.classification().subtype == GraphVariantClassification::Subtype::kSwap)
+        || (variantSpec.classification().subtype == GraphVariantClassification::Subtype::kSMN))
     {
-        assert(variantSpec_.optionalRefNode());
-        const auto refNode = *variantSpec_.optionalRefNode();
-        const int refNodeIndex = refNode == variantSpec_.nodes().front() ? 0 : 1;
-        const int altNodeIndex = refNode == variantSpec_.nodes().front() ? 1 : 0;
+        assert(variantSpec.optionalRefNode());
+        const auto refNode = *variantSpec.optionalRefNode();
+        const int refNodeIndex = refNode == variantSpec.nodes().front() ? 0 : 1;
+        const int altNodeIndex = refNode == variantSpec.nodes().front() ? 1 : 0;
 
-        const auto refNodeId = variantSpec_.nodes()[refNodeIndex];
-        const auto altNodeId = variantSpec_.nodes()[altNodeIndex];
+        const auto refNodeId = variantSpec.nodes()[refNodeIndex];
+        const auto altNodeId = variantSpec.nodes()[altNodeIndex];
 
-        refSequence = locusSpec_.graph().nodeSeq(refNodeId);
-        altSequence = locusSpec_.graph().nodeSeq(altNodeId);
+        refSequence = graphLocusSpecPtr->graph().nodeSeq(refNodeId);
+        altSequence = graphLocusSpecPtr->graph().nodeSeq(altNodeId);
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start() + 1;
     }
-    else if (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kDeletion)
+    else if (variantSpec.classification().subtype == GraphVariantClassification::Subtype::kDeletion)
     {
         const string refFlankingBase
             = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
-        const int refNodeId = variantSpec_.nodes().front();
-        refSequence = refFlankingBase + locusSpec_.graph().nodeSeq(refNodeId);
+        const int refNodeId = variantSpec.nodes().front();
+        refSequence = refFlankingBase + graphLocusSpecPtr->graph().nodeSeq(refNodeId);
         altSequence = refFlankingBase;
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start();
     }
-    else if (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kInsertion)
+    else if (variantSpec.classification().subtype == GraphVariantClassification::Subtype::kInsertion)
     {
         const string refFlankingBase
             = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
-        const int altNodeId = variantSpec_.nodes().front();
+        const int altNodeId = variantSpec.nodes().front();
         refSequence = refFlankingBase;
-        altSequence = refFlankingBase + locusSpec_.graph().nodeSeq(altNodeId);
+        altSequence = refFlankingBase + graphLocusSpecPtr->graph().nodeSeq(altNodeId);
         // Conversion from 0-based to 1-based coordinates
         startPosition = referenceLocus.start();
     }
     else
     {
         std::ostringstream encoding;
-        encoding << variantSpec_.classification().type << "/" << variantSpec_.classification().subtype;
+        encoding << variantSpec.classification().type << "/" << variantSpec.classification().subtype;
         throw std::logic_error("Unable to generate VCF record for " + encoding.str());
     }
 
-    const string infoFields = "VARID=" + variantSpec_.id();
+    const string infoFields = "VARID=" + variantSpec.id();
 
     vector<string> sampleFields;
     vector<string> sampleValues;
@@ -371,7 +360,7 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
     adEncoding << findings.numRefReads() << "," << findings.numAltReads();
     sampleValues.push_back(adEncoding.str());
 
-    if (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kSMN)
+    if (variantSpec.classification().subtype == GraphVariantClassification::Subtype::kSMN)
     {
         string dst;
         switch (findings.refAllelePresenceStatus().status)
@@ -398,7 +387,7 @@ void GraphVariantVcfWriter::visit(SmallVariantFindings& findings)
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
 
-    vector<string> line {
+    vector<string> line{
         contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
         sampleValue
     };

@@ -38,15 +38,15 @@ class CnvVariantFindings;
 
 struct VariantFindingsVisitor
 {
-    virtual void visit(StrFindings& strFindings) = 0;
-    virtual void visit(SmallVariantFindings& smallVariantFindings) = 0;
-    virtual void visit(CnvVariantFindings& cnvVariantFindings) = 0;
+    virtual void visit(const StrFindings& findings) = 0;
+    virtual void visit(const SmallVariantFindings& findings) = 0;
+    virtual void visit(const CnvVariantFindings& findings) = 0;
 };
 
 class VariantFindings
 {
 public:
-    VariantFindings(std::string variantId)
+    explicit VariantFindings(std::string variantId)
         : variantId_(std::move(variantId))
     {
     }
@@ -75,7 +75,6 @@ public:
 
     ~StrFindings() override = default;
     void accept(VariantFindingsVisitor& visitor) override { visitor.visit(*this); }
-
     const CountTable& countsOfSpanningReads() const { return countsOfSpanningReads_; }
     const CountTable& countsOfFlankingReads() const { return countsOfFlankingReads_; }
     const CountTable& countsOfInrepeatReads() const { return countsOfInrepeatReads_; }
@@ -131,18 +130,21 @@ private:
 class CnvVariantFindings : public VariantFindings
 {
 public:
-    CnvVariantFindings(std::string variantId, boost::optional<int> copyNumberCall)
+    CnvVariantFindings(std::string variantId, boost::optional<int> absoluteCopyNumber, boost::optional<int> copyNumberChange)
         : VariantFindings(std::move(variantId))
-        , copyNumberCall_(copyNumberCall)
+        , absoluteCopyNumber_(absoluteCopyNumber)
+        , copyNumberChange_(copyNumberChange)
     {
     }
 
     ~CnvVariantFindings() override = default;
     void accept(VariantFindingsVisitor& visitorPtr) override { visitorPtr.visit(*this); }
 
-    boost::optional<int> copyNumberCall() const { return copyNumberCall_; }
+    boost::optional<int> absoluteCopyNumber() const { return absoluteCopyNumber_; }
+    boost::optional<int> copyNumberChange() const { return copyNumberChange_; }
 
 private:
-    boost::optional<int> copyNumberCall_;
+    boost::optional<int> absoluteCopyNumber_;
+    boost::optional<int> copyNumberChange_;
 };
 }

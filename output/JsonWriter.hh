@@ -21,6 +21,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "common/Parameters.hh"
 #include "locus_spec/CnvLocusSpec.hh"
 #include "locus_spec/GraphLocusSpec.hh"
@@ -32,48 +34,24 @@
 namespace ehunter
 {
 
-class GraphVariantJsonWriter : public VariantFindingsVisitor
+class VariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    GraphVariantJsonWriter(
-        const ReferenceContigInfo& contigInfo, const GraphLocusSpec& locusSpec, const GraphVariantSpec& variantSpec)
+    VariantJsonWriter(const ReferenceContigInfo& contigInfo, std::shared_ptr<LocusSpec> locusSpecPtr)
         : contigInfo_(contigInfo)
-        , locusSpec_(locusSpec)
-        , variantSpec_(variantSpec)
+        , locusSpecPtr_(std::move(locusSpecPtr))
     {
     }
 
-    ~GraphVariantJsonWriter() = default;
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& smallVariantFindings) override;
-    void visit(CnvVariantFindings& cnvVariantFindings) override;
+    ~VariantJsonWriter() = default;
+    void visit(const StrFindings& strFindings) override;
+    void visit(const SmallVariantFindings& smallVariantFindings) override;
+    void visit(const CnvVariantFindings& cnvVariantFindings) override;
     nlohmann::json record() const { return record_; }
 
 private:
     const ReferenceContigInfo& contigInfo_;
-    const GraphLocusSpec& locusSpec_;
-    const GraphVariantSpec& variantSpec_;
-    nlohmann::json record_;
-};
-
-class CnvVariantJsonWriter : public VariantFindingsVisitor
-{
-public:
-    CnvVariantJsonWriter(const ReferenceContigInfo& contigInfo, const CnvLocusSpec& locusSpec)
-        : contigInfo_(contigInfo)
-        , locusSpec_(locusSpec)
-    {
-    }
-
-    ~CnvVariantJsonWriter() = default;
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& smallVariantFindings) override;
-    void visit(CnvVariantFindings& cnvVariantFindings) override;
-    nlohmann::json record() const { return record_; }
-
-private:
-    const ReferenceContigInfo& contigInfo_;
-    const CnvLocusSpec& locusSpec_;
+    std::shared_ptr<LocusSpec> locusSpecPtr_;
     nlohmann::json record_;
 };
 

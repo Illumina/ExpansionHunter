@@ -23,7 +23,6 @@
 
 #include <memory>
 
-using std::dynamic_pointer_cast;
 using std::ostream;
 using std::string;
 
@@ -39,12 +38,15 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
 }
 
-void FieldDescriptionWriter::visit(StrFindings& strFindings)
+void FieldDescriptionWriter::visit(const StrFindings& strFindings)
 {
     if (!strFindings.optionalGenotype())
     {
         return;
     }
+
+    auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
+    const GraphVariantSpec& variantSpec = graphLocusSpecPtr->getVariantById(strFindings.variantId());
 
     addCommonFields();
     tryAddingFieldDescription(FieldType::kInfo, "SVTYPE", "1", "String", "Type of structural variant");
@@ -74,9 +76,9 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     const string kAdirFieldDescription = "Number of in-repeat reads consistent with the allele";
     tryAddingFieldDescription(FieldType::kFormat, "ADIR", "1", "String", kAdirFieldDescription);
 
-    const auto repeatNodeId = variantSpec_.nodes().front();
-    const string& repeatUnit = locusSpec_.graph().nodeSeq(repeatNodeId);
-    const auto& referenceLocus = variantSpec_.location();
+    const auto repeatNodeId = variantSpec.nodes().front();
+    const string& repeatUnit = graphLocusSpecPtr->graph().nodeSeq(repeatNodeId);
+    const auto& referenceLocus = variantSpec.location();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
     const RepeatGenotype& genotype = strFindings.optionalGenotype().get();
@@ -96,24 +98,33 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
-void FieldDescriptionWriter::visit(CnvVariantFindings& cnvFindings)
+void FieldDescriptionWriter::visit(const CnvVariantFindings& cnvFindings)
 {
-    if (!cnvFindings.copyNumberCall())
-    {
-        return;
-    }
+    auto finding = cnvFindings;
+    tryAddingFieldDescription(
+        FieldType::kInfo, "VARID", "1", "String", "Variant identifier as specified in the variant catalog");
+    tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
+    tryAddingFieldDescription(FieldType::kFilter, "LowQ", "", "", "CNV call is Low quality");
+    tryAddingFieldDescription(FieldType::kFilter, "BaselineFail", "", "", "CNV call failed check against baseline regions");
+    tryAddingFieldDescription(FieldType::kInfo, "CNLEN", "1", "Integer", "Number of reference positions spanned by this CNV");
+    tryAddingFieldDescription(FieldType::kFormat, "CN", "1", "Integer", "Absolute Copy number");
+    tryAddingFieldDescription(FieldType::kFormat, "CNC", "1", "Integer", "Copy number change");
 }
 
-void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
+void FieldDescriptionWriter::visit(const SmallVariantFindings& findings)
 {
     if (!findings.optionalGenotype())
     {
         return;
     }
+
+    auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);
+    const auto& variantSpec = graphLocusSpecPtr->getVariantById(findings.variantId());
+
     addCommonFields();
     tryAddingFieldDescription(
         FieldType::kFormat, "AD", ".", "Integer", "Allelic depths for the ref and alt alleles in the order listed");
-    if (variantSpec_.classification().subtype == GraphVariantClassification::Subtype::kSMN)
+    if (variantSpec.classification().subtype == GraphVariantClassification::Subtype::kSMN)
     {
         tryAddingFieldDescription(
             FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the reference allele");
@@ -158,22 +169,15 @@ void outputVcfHeader(const LocusCatalog& locusCatalog, const SampleFindings& sam
     for (const auto& locusIdAndFindings : sampleFindings)
     {
         const string& locusId = locusIdAndFindings.first;
-        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusCatalog.at(locusId));
-        // To do: description for CNV variants
-        if (graphLocusSpec)
+        auto LocusSpecPtr = locusCatalog.at(locusId);
+
+        const LocusFindings& locusFindings = locusIdAndFindings.second;
+
+        for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
         {
-            const GraphLocusSpec& locusSpec = *graphLocusSpec;
-            const LocusFindings& locusFindings = locusIdAndFindings.second;
-
-            for (const auto& variantIdAndFindings : locusFindings.findingsForEachVariant)
-            {
-                const string& variantId = variantIdAndFindings.first;
-                const GraphVariantSpec& variantSpec = locusSpec.getVariantById(variantId);
-
-                FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
-                variantIdAndFindings.second->accept(descriptionWriter);
-                descriptionWriter.dumpTo(fieldDescriptionCatalog);
-            }
+            FieldDescriptionWriter descriptionWriter(LocusSpecPtr);
+            variantIdAndFindings.second->accept(descriptionWriter);
+            descriptionWriter.dumpTo(fieldDescriptionCatalog);
         }
     }
 

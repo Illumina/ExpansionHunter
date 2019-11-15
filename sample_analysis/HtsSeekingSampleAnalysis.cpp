@@ -47,7 +47,6 @@ namespace ehunter
 using boost::optional;
 using graphtools::AlignmentWriter;
 using htshelpers::HtsFileSeeker;
-using std::dynamic_pointer_cast;
 using std::ostream;
 using std::shared_ptr;
 using std::string;
@@ -196,7 +195,7 @@ SampleFindings htsSeekingSampleAnalysis(
         ReadPairs readPairs;
         readPairs = collectReads(locusSpec->regionsWithReads(), htsFileSeeker, mateExtractor);
 
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo> {}, bamletWriter);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo>{}, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {

@@ -56,6 +56,6 @@ CnvVariantFindings CnvVariantAnalyzer::analyze(DepthNormalizer genomeDepthNormal
 
     boost::optional<int> copyNumberCall = cnvGenotyper.genotype(gcCorrectedDepth);
 
-    return CnvVariantFindings(variantId_, copyNumberCall);
+    return CnvVariantFindings(variantId_, copyNumberCall, copyNumberCall);
 }
 }
