@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
 #include <memory>
 #include <vector>
 
@@ -36,8 +37,8 @@ class LinearModel;
 class LinearFeature : public Feature
 {
 public:
-    virtual void summarize(const MappedRead& read, const MappedRead& mate) = 0;
-    virtual void summarize(const MappedRead& read) = 0;
+    virtual void summarize(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) = 0;
+    virtual void summarize(const MappedRead& read, boost::optional<int> mapqCutoff) = 0;
 };
 
 }

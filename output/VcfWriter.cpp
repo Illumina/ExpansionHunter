@@ -259,7 +259,6 @@ void VariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
     boost::optional<int> copyNumberChange = cnvFindings.copyNumberChange();
     boost::optional<int> absoluteCopyNumber = cnvFindings.absoluteCopyNumber();
     vector<string> vcfRecordElements;
-    
     vector<string> fields;
     fields.push_back("END=" + std::to_string(referenceLocus.end()));
     fields.push_back("CNVLEN=" + std::to_string(referenceLocus.end() - referenceLocus.start()));
@@ -282,11 +281,11 @@ void VariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
         callFilter = "BaselineFail";
     }
     vcfRecordElements = { contigName, to_string(referenceLocus.start()),
-                            ".",        "N",
-                            ".",        ".",
-                            callFilter,     boost::algorithm::join(fields, ";"),
-                            "CN:CNC",      absoluteCopyNumberCall + ":" + copyNumberChangeCall };
-    
+                          ".",        "N",
+                          ".",        ".",
+                          callFilter, boost::algorithm::join(fields, ";"),
+                          "CN:CNC",   absoluteCopyNumberCall + ":" + copyNumberChangeCall };
+
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 

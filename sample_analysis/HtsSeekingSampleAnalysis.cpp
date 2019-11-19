@@ -114,7 +114,8 @@ static int getReadCountCap(const vector<GenomicRegion>& regionsWithReads)
 }
 
 static ReadPairs collectReads(
-    const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker, htshelpers::MateExtractor& mateExtractor)
+    const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker,
+    htshelpers::MateExtractor& mateExtractor)
 {
     ReadPairs readPairs;
 
@@ -153,33 +154,64 @@ static ReadPairs collectReads(
     return readPairs;
 }
 
+static ReadPairs
+collectReadsWithoutRecoverMates(const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker)
+{
+    ReadPairs readPairs;
+
+    for (const auto& regionWithReads : regionsWithReads)
+    {
+        htsFileSeeker.setRegion(regionWithReads);
+        while (htsFileSeeker.trySeekingToNextPrimaryAlignment())
+        {
+            MappedRead read = htsFileSeeker.decodeRead();
+            if (read.isPaired())
+            {
+                readPairs.Add(std::move(read));
+            }
+        }
+    }
+
+    // add a cap for reads
+    if (readPairs.NumReads() > getReadCountCap(regionsWithReads))
+    {
+        readPairs.Clear();
+    }
+
+    return readPairs;
+}
+
 SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
     HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
     htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
-    
-	CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
-    std::vector<RegionDepthInfo> normDepthInfo;
+    WorkflowContext context;
+    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
+
+    CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
+    std::vector<GenomicRegion> normRegions;
     for (RegionInfo regionInfo : normRegionInfo)
     {
-        ReadPairs readPairs = collectReads({ regionInfo.region }, htsFileSeeker, mateExtractor);
+        normRegions.push_back(regionInfo.region);
+    }
 
-        for (const auto& fragmentIdAndReadPair : readPairs)
+    ReadPairs readPairs = collectReadsWithoutRecoverMates(normRegions, htsFileSeeker);
+
+    for (const auto& fragmentIdAndReadPair : readPairs)
+    {
+        const auto& readPair = fragmentIdAndReadPair.second;
+        if (readPair.numMatesSet() == 2)
         {
-            const auto& readPair = fragmentIdAndReadPair.second;
-            if (readPair.numMatesSet() == 2)
-            {
-                const MappedRead& read = *readPair.firstMate;
-                const MappedRead& mate = *readPair.secondMate;
-                normRegionAnalyzer.analyze(read, mate);
-            }
-            else
-            {
-                const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-                normRegionAnalyzer.analyze(read);
-            }
+            const MappedRead& read = *readPair.firstMate;
+            const MappedRead& mate = *readPair.secondMate;
+            normRegionAnalyzer.analyze(read, mate, mapqCutoff);
+        }
+        else
+        {
+            const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+            normRegionAnalyzer.analyze(read, mapqCutoff);
         }
     }
 
@@ -191,8 +223,10 @@ SampleFindings htsSeekingSampleAnalysis(
     {
         const auto& locusId = locusIdAndRegionSpec.first;
         const auto& locusSpec = locusIdAndRegionSpec.second;
+        // std::cout << locusId << "\n";
 
         ReadPairs readPairs;
+        // use collectReadsWithoutRecoverMates for CNV locus
         readPairs = collectReads(locusSpec->regionsWithReads(), htsFileSeeker, mateExtractor);
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo>{}, bamletWriter);
@@ -204,12 +238,12 @@ SampleFindings htsSeekingSampleAnalysis(
             {
                 const MappedRead& read = *readPair.firstMate;
                 const MappedRead& mate = *readPair.secondMate;
-                catalogAnalyzer.analyze(read, mate);
+                catalogAnalyzer.analyze(read, mate, mapqCutoff);
             }
             else
             {
                 const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-                catalogAnalyzer.analyze(read);
+                catalogAnalyzer.analyze(read, mapqCutoff);
             }
         }
 

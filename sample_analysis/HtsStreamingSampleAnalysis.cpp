@@ -50,6 +50,9 @@ SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
     const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
+    WorkflowContext context;
+    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
+
     CatalogAnalyzer catalogAnalyzer(regionCatalog, normRegionInfo, std::move(bamletWriter));
     GenomeMask genomeMask(catalogAnalyzer.regionModels());
 
@@ -83,7 +86,7 @@ SampleFindings htsStreamingSampleAnalysis(
         MappedRead mate = std::move(mateIterator->second);
         unpairedReads.erase(mateIterator);
 
-        catalogAnalyzer.analyze(read, mate);
+        catalogAnalyzer.analyze(read, mate, mapqCutoff);
     }
 
     SampleFindings sampleFindings;

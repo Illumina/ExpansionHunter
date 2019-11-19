@@ -63,16 +63,42 @@ double ReadCounter::getDepth() const
     return depth;
 }
 
-void ReadCounter::summarize(const MappedRead& read)
+void ReadCounter::summarize(const MappedRead& read, boost::optional<int> mapqCutoff)
 {
     ++numReads_;
     totalReadLength_ += read.sequence().length();
+
+    bool readIsInRegion = false;
+    for (GenomicRegion region : targetRegions_)
+    {
+        if ((read.pos() < region.end()) & (read.pos() >= region.start()))
+        {
+            readIsInRegion = true;
+        }
+    }
+    
+    if (readIsInRegion)
+    {
+        if (mapqCutoff)
+        {
+            if (read.mapq() >= *mapqCutoff)
+            {
+                ++numReadsForCnvCounting_;
+                /*
+                if (targetRegions_.size() == 1)
+                {
+                    GenomicRegion region = *(targetRegions_.begin());
+                    std::cout << region.start() << "_" << region.end() << " with_filter " << read.readId() << "\n";
+                }
+                */
+            }
+        }
+    }
 }
 
-void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate)
+void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff)
 {
-    summarize(read);
-    summarize(mate);
+    summarize(read, mapqCutoff);
+    summarize(mate, mapqCutoff);
 }
-
 }

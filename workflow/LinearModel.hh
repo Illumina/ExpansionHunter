@@ -41,8 +41,8 @@ public:
     void addFeature(LinearFeature* feature);
     std::vector<Feature*> modelFeatures() override;
 
-    void analyze(const MappedRead& read, const MappedRead& mate) override;
-    void analyze(MappedRead read) override;
+    void analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) override;
+    void analyze(MappedRead read, boost::optional<int> mapqCutoff) override;
 
 private:
     std::vector<LinearFeature*> features_;

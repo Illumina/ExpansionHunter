@@ -41,8 +41,8 @@ public:
 
     const std::vector<GenomicRegion>& readExtractionRegions() const { return readExtractionRegions_; }
 
-    virtual void analyze(const MappedRead& read, const MappedRead& mate) = 0;
-    virtual void analyze(MappedRead read) = 0;
+    virtual void analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) = 0;
+    virtual void analyze(MappedRead read, boost::optional<int> mapqCutoff) = 0;
 
     virtual std::vector<Feature*> modelFeatures() = 0;
 

@@ -46,7 +46,7 @@ vector<shared_ptr<Feature>> CnvVariantAnalyzer::features() { return { counter_ }
 
 CnvVariantFindings CnvVariantAnalyzer::analyze(DepthNormalizer genomeDepthNormalizer) const
 {
-    const int numReads = counter_->numReads();
+    const int numReads = counter_->numReadsForCnvCounting();
     double normalizedDepth = (double)numReads / (double)regionLength_;
     double gcCorrectedDepth = genomeDepthNormalizer.correctDepth(cnvParameters_.regionGC, normalizedDepth, true);
 

@@ -64,7 +64,7 @@ LocusStats ReadCountAnalyzer::estimate(Sex sampleSex) const
 
 int ReadCountAnalyzer::count() const
 {
-    const int numReads = counter_->numReads();
+    const int numReads = counter_->numReadsForCnvCounting();
     return numReads;
 }
 }

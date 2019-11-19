@@ -49,19 +49,22 @@ CatalogAnalyzer::CatalogAnalyzer(
         }
         else if (cnvLocusSpec)
         {
-            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec));
+            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, context.heuristics()));
         }
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);
 
+    int regionExtensionLength = context.heuristics().regionExtensionLength();
     for (RegionInfo regionInfo : normRegionInfo_)
     {
-        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion> { regionInfo.region };
-        auto linearModel_ = make_shared<LinearModel>(countingRegion);
-        auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
-        linearModel_->addFeature(readCounter.get());
-        regionModels_.push_back(linearModel_);
+        auto region = regionInfo.region;
+        GenomicRegion expandedRegion = GenomicRegion(
+            region.contigIndex(), region.start() - regionExtensionLength, region.end() + regionExtensionLength);
+        auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedRegion });
+        auto readCounter = make_shared<ReadCounter>(linearModel, std::vector<GenomicRegion>{ region });
+        linearModel->addFeature(readCounter.get());
+        regionModels_.push_back(linearModel);
         normalizationRegionAnalyzers_.push_back(
             make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
     }
@@ -69,7 +72,7 @@ CatalogAnalyzer::CatalogAnalyzer(
     modelFinder_.reset(new ModelFinder(regionModels_));
 }
 
-void CatalogAnalyzer::analyze(const MappedRead& read, const MappedRead& mate)
+void CatalogAnalyzer::analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff)
 {
     unordered_set<RegionModel*> readModels = modelFinder_->query(read.contigIndex(), read.pos(), read.approximateEnd());
     unordered_set<RegionModel*> mateModels = modelFinder_->query(mate.contigIndex(), mate.pos(), mate.approximateEnd());
@@ -78,16 +81,16 @@ void CatalogAnalyzer::analyze(const MappedRead& read, const MappedRead& mate)
 
     for (auto model : readModels)
     {
-        model->analyze(read, mate);
+        model->analyze(read, mate, mapqCutoff);
     }
 }
 
-void CatalogAnalyzer::analyze(const MappedRead& read)
+void CatalogAnalyzer::analyze(const MappedRead& read, boost::optional<int> mapqCutoff)
 {
     unordered_set<RegionModel*> readModels = modelFinder_->query(read.contigIndex(), read.pos(), read.approximateEnd());
     for (auto model : readModels)
     {
-        model->analyze(read);
+        model->analyze(read, mapqCutoff);
     }
 }
 
@@ -103,6 +106,8 @@ DepthNormalizer CatalogAnalyzer::getGenomeDepthNormalizer()
         int regionLength = region.end() - region.start();
         double normDepth = (double)readCount / (double)regionLength;
         normRegionDepthInfo.push_back(RegionDepthInfo(gc, normDepth));
+        //std::cout << region.contigIndex() << "\t" << region.start() << "\t" << region.end() << "\t" << readCount
+        //          << "\n";
         std::advance(regionInfo, 1);
     }
 

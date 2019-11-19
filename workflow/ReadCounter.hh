@@ -34,10 +34,11 @@ public:
     ReadCounter(std::shared_ptr<LinearModel> model, std::vector<GenomicRegion> targetRegions);
     ~ReadCounter() override = default;
     std::shared_ptr<RegionModel> model() override;
-    void summarize(const MappedRead& read, const MappedRead& mate) override;
-    void summarize(const MappedRead& read) override;
+    void summarize(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) override;
+    void summarize(const MappedRead& read, boost::optional<int> mapqCutoff) override;
 
     std::int64_t numReads() const { return numReads_; }
+    std::int64_t numReadsForCnvCounting() const { return numReadsForCnvCounting_; }
     int getReadLength() const;
     double getDepth() const;
 
@@ -46,7 +47,7 @@ private:
     std::vector<GenomicRegion> targetRegions_;
 
     std::int64_t numReads_ = 0;
+    std::int64_t numReadsForCnvCounting_ = 0;
     std::int64_t totalReadLength_ = 0;
 };
-
 }

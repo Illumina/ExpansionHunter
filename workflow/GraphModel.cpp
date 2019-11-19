@@ -64,8 +64,10 @@ GraphModel::GraphModel(
 {
 }
 
-void GraphModel::analyze(const MappedRead& read, const MappedRead& mate)
+void GraphModel::analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff)
 {
+    auto mapq = mapqCutoff;
+
     Origin origin = guessOrigin(read, mate);
 
     if (origin == Origin::kOfftargetRegion)
@@ -149,7 +151,7 @@ void GraphModel::analyzeOfftarget(const MappedRead& read, const MappedRead& mate
 {
     if (offtargetProcessor_ != nullptr)
     {
-        offtargetProcessor_->summarize(read, mate);
+        offtargetProcessor_->summarize(read, mate, boost::none);
     }
 }
 
@@ -215,5 +217,4 @@ void GraphModel::writeAlignments(
     alignmentWriter_->write(
         graphId_, mate.fragmentId(), mateSequence, mate.isFirstMate(), isMateReversed, isReadReversed, mateAlignment);
 }
-
 }

@@ -21,6 +21,7 @@
 //
 
 #include "sample_analysis/ReadDispatch.hh"
+#include "common/WorkflowContext.hh"
 
 using std::unordered_set;
 using std::vector;
@@ -43,6 +44,9 @@ bool checkIfMapNearby(const MappedRead& read, const MappedRead& mate)
 
 void dispatch(const MappedRead& read, const MappedRead& mate, const unordered_set<RegionModel*>& models)
 {
+    WorkflowContext context;
+    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
+
     for (auto model : models)
     {
         bool readIsFullyContained = false;
@@ -62,35 +66,37 @@ void dispatch(const MappedRead& read, const MappedRead& mate, const unordered_se
 
         if (readIsFullyContained && mateIsFullyContained)
         {
-            model->analyze(read, mate);
+            model->analyze(read, mate, mapqCutoff);
         }
         else if (!checkIfMapNearby(read, mate) && (readIsFullyContained || mateIsFullyContained))
         {
-            model->analyze(read, mate);
+            model->analyze(read, mate, mapqCutoff);
         }
         else if (readIsFullyContained)
         {
-            model->analyze(read);
+            model->analyze(read, mapqCutoff);
         }
         else if (mateIsFullyContained)
         {
-            model->analyze(mate);
+            model->analyze(mate, mapqCutoff);
         }
     }
 }
 
 void dispatch(const MappedRead& read, const unordered_set<RegionModel*>& models)
 {
+    WorkflowContext context;
+    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
+
     for (auto model : models)
     {
         for (const auto& region : model->readExtractionRegions())
         {
             if (isFullyContained(read, region))
             {
-                model->analyze(read);
+                model->analyze(read, mapqCutoff);
             }
         }
     }
 }
-
 }
