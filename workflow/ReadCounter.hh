@@ -31,11 +31,12 @@ namespace ehunter
 class ReadCounter : public LinearFeature
 {
 public:
-    ReadCounter(std::shared_ptr<LinearModel> model, std::vector<GenomicRegion> targetRegions);
+    ReadCounter(
+        std::shared_ptr<LinearModel> model, std::vector<GenomicRegion> targetRegions, boost::optional<int> mapqCutoff);
     ~ReadCounter() override = default;
     std::shared_ptr<RegionModel> model() override;
-    void summarize(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) override;
-    void summarize(const MappedRead& read, boost::optional<int> mapqCutoff) override;
+    void summarize(const MappedRead& read, const MappedRead& mate) override;
+    void summarize(const MappedRead& read) override;
 
     std::int64_t numReads() const { return numReads_; }
     std::int64_t numReadsForCnvCounting() const { return numReadsForCnvCounting_; }
@@ -45,6 +46,7 @@ public:
 private:
     std::shared_ptr<LinearModel> model_;
     std::vector<GenomicRegion> targetRegions_;
+    boost::optional<int> mapqCutoff_;
 
     std::int64_t numReads_ = 0;
     std::int64_t numReadsForCnvCounting_ = 0;

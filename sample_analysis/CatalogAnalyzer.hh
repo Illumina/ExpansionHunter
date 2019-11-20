@@ -44,8 +44,8 @@ class CatalogAnalyzer
 public:
     CatalogAnalyzer(
         const LocusCatalog& locusCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter);
-    void analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff);
-    void analyze(const MappedRead& read, boost::optional<int> mapqCutoff);
+    void analyze(const MappedRead& read, const MappedRead& mate);
+    void analyze(const MappedRead& read);
     void collectResults(
         Sex sampleSex, SampleFindings& sampleFindings, boost::optional<DepthNormalizer> genomeDepthNormalizer);
     DepthNormalizer getGenomeDepthNormalizer();

@@ -187,8 +187,6 @@ SampleFindings htsSeekingSampleAnalysis(
 {
     HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
     htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
-    WorkflowContext context;
-    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
 
     CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
     std::vector<GenomicRegion> normRegions;
@@ -206,12 +204,12 @@ SampleFindings htsSeekingSampleAnalysis(
         {
             const MappedRead& read = *readPair.firstMate;
             const MappedRead& mate = *readPair.secondMate;
-            normRegionAnalyzer.analyze(read, mate, mapqCutoff);
+            normRegionAnalyzer.analyze(read, mate);
         }
         else
         {
             const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-            normRegionAnalyzer.analyze(read, mapqCutoff);
+            normRegionAnalyzer.analyze(read);
         }
     }
 
@@ -238,12 +236,12 @@ SampleFindings htsSeekingSampleAnalysis(
             {
                 const MappedRead& read = *readPair.firstMate;
                 const MappedRead& mate = *readPair.secondMate;
-                catalogAnalyzer.analyze(read, mate, mapqCutoff);
+                catalogAnalyzer.analyze(read, mate);
             }
             else
             {
                 const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
-                catalogAnalyzer.analyze(read, mapqCutoff);
+                catalogAnalyzer.analyze(read);
             }
         }
 

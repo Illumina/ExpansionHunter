@@ -29,9 +29,11 @@ using std::vector;
 namespace ehunter
 {
 
-ReadCounter::ReadCounter(shared_ptr<LinearModel> model, vector<GenomicRegion> targetRegions)
+ReadCounter::ReadCounter(
+    shared_ptr<LinearModel> model, vector<GenomicRegion> targetRegions, boost::optional<int> mapqCutoff)
     : model_(std::move(model))
     , targetRegions_(std::move(targetRegions))
+    , mapqCutoff_(std::move(mapqCutoff))
 {
 }
 
@@ -63,7 +65,7 @@ double ReadCounter::getDepth() const
     return depth;
 }
 
-void ReadCounter::summarize(const MappedRead& read, boost::optional<int> mapqCutoff)
+void ReadCounter::summarize(const MappedRead& read)
 {
     ++numReads_;
     totalReadLength_ += read.sequence().length();
@@ -76,12 +78,12 @@ void ReadCounter::summarize(const MappedRead& read, boost::optional<int> mapqCut
             readIsInRegion = true;
         }
     }
-    
+
     if (readIsInRegion)
     {
-        if (mapqCutoff)
+        if (mapqCutoff_)
         {
-            if (read.mapq() >= *mapqCutoff)
+            if (read.mapq() >= *mapqCutoff_)
             {
                 ++numReadsForCnvCounting_;
                 /*
@@ -96,9 +98,9 @@ void ReadCounter::summarize(const MappedRead& read, boost::optional<int> mapqCut
     }
 }
 
-void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff)
+void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate)
 {
-    summarize(read, mapqCutoff);
-    summarize(mate, mapqCutoff);
+    summarize(read);
+    summarize(mate);
 }
 }

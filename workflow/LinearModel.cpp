@@ -35,20 +35,20 @@ LinearModel::LinearModel(std::vector<GenomicRegion> readExtractionRegions)
 {
 }
 
-void LinearModel::analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff)
+void LinearModel::analyze(const MappedRead& read, const MappedRead& mate)
 {
-    analyze(read, mapqCutoff);
-    analyze(mate, mapqCutoff);
+    analyze(read);
+    analyze(mate);
 }
 
-void LinearModel::analyze(MappedRead read, boost::optional<int> mapqCutoff)
+void LinearModel::analyze(MappedRead read)
 {
     const RegionProximity proximity = proximityClassifier_.classify(read);
     if (proximity == RegionProximity::kInside)
     {
         for (const auto& feature : features_)
         {
-            feature->summarize(read, mapqCutoff);
+            feature->summarize(read);
         }
     }
 }

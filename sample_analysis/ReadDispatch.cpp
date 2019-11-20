@@ -44,9 +44,6 @@ bool checkIfMapNearby(const MappedRead& read, const MappedRead& mate)
 
 void dispatch(const MappedRead& read, const MappedRead& mate, const unordered_set<RegionModel*>& models)
 {
-    WorkflowContext context;
-    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
-
     for (auto model : models)
     {
         bool readIsFullyContained = false;
@@ -66,35 +63,32 @@ void dispatch(const MappedRead& read, const MappedRead& mate, const unordered_se
 
         if (readIsFullyContained && mateIsFullyContained)
         {
-            model->analyze(read, mate, mapqCutoff);
+            model->analyze(read, mate);
         }
         else if (!checkIfMapNearby(read, mate) && (readIsFullyContained || mateIsFullyContained))
         {
-            model->analyze(read, mate, mapqCutoff);
+            model->analyze(read, mate);
         }
         else if (readIsFullyContained)
         {
-            model->analyze(read, mapqCutoff);
+            model->analyze(read);
         }
         else if (mateIsFullyContained)
         {
-            model->analyze(mate, mapqCutoff);
+            model->analyze(mate);
         }
     }
 }
 
 void dispatch(const MappedRead& read, const unordered_set<RegionModel*>& models)
 {
-    WorkflowContext context;
-    auto mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
-
     for (auto model : models)
     {
         for (const auto& region : model->readExtractionRegions())
         {
             if (isFullyContained(read, region))
             {
-                model->analyze(read, mapqCutoff);
+                model->analyze(read);
             }
         }
     }

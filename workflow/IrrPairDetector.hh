@@ -40,8 +40,8 @@ public:
     ~IrrPairDetector() override = default;
     std::shared_ptr<RegionModel> model() override;
 
-    void summarize(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) override;
-    void summarize(const MappedRead& /*read*/, boost::optional<int> /*mapqCutoff*/) override {}
+    void summarize(const MappedRead& read, const MappedRead& mate) override;
+    void summarize(const MappedRead& /*read*/) override {}
     int numIrrPairs() const { return numIrrPairs_; }
 
 private:

@@ -73,8 +73,8 @@ public:
         const HeuristicParameters& heuristics, AlignmentWriter alignmentWriter);
     ~GraphModel() override = default;
 
-    void analyze(const MappedRead& read, const MappedRead& mate, boost::optional<int> mapqCutoff) override;
-    void analyze(MappedRead /*read*/, boost::optional<int> /*mapqCutoff*/) override{};
+    void analyze(const MappedRead& read, const MappedRead& mate) override;
+    void analyze(MappedRead /*read*/) override{};
     const graphtools::Graph& graph() const { return graph_; }
     void addGraphFeature(GraphFeature* feature);
     void addOfftargetReadProcessor(LinearFeature* offtargetProcessor);
