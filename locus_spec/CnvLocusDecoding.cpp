@@ -68,7 +68,10 @@ static GenomicRegion getLocusLocation(const CnvLocusEncoding& locusEncoding)
     vector<GenomicRegion> variantLocations;
     for (const auto& variant : locusEncoding.variants)
     {
-        variantLocations.push_back(*variant.location);
+        for (auto region : *variant.locations)
+        {
+            variantLocations.push_back(region);
+        }
     }
     return *variantLocations.begin();
 }
@@ -116,7 +119,7 @@ std::unique_ptr<CnvLocusSpec> decode(const Reference& reference, const CnvLocusE
         variantParameters.expectedNormal = variant.expectedNormalCN;
 
         CnvVariantType variantType = getCnvVariantType(variant);
-        locusSpec->addVariant(variant.id, variantType, *variant.location, variantParameters);
+        locusSpec->addVariant(variant.id, variantType, *variant.locations, variantParameters);
     }
 
     return locusSpec;

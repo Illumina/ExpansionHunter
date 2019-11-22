@@ -38,7 +38,7 @@ namespace ehunter
 struct CnvVariantEncoding
 {
     std::string id;
-    boost::optional<GenomicRegion> location;
+    boost::optional<std::vector<GenomicRegion>> locations;
     std::string variantType;
     bool expectedNormalCN;
     double regionGC;

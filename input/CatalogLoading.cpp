@@ -263,7 +263,13 @@ static CnvLocusEncoding loadCnvLocusEncoding(const Json& locusJson, const Refere
     for (const auto& variant : locusJson["AnalysisVariants"])
     {
         assertFieldExists(variant, "ReferenceRegion");
-        GenomicRegion region = decode(reference.contigInfo(), variant["ReferenceRegion"].get<string>());
+        makeArray(variant["ReferenceRegion"]);
+        std::vector<GenomicRegion> variantRegions;
+        for (auto referenceRegion : variant["ReferenceRegion"])
+        {
+            GenomicRegion region = decode(reference.contigInfo(), referenceRegion.get<string>());
+            variantRegions.push_back(region);
+        }
 
         assertFieldExists(variant, "VariantId");
         string variantId = variant["VariantId"].get<string>();
@@ -315,7 +321,7 @@ static CnvLocusEncoding loadCnvLocusEncoding(const Json& locusJson, const Refere
 
         CnvVariantEncoding variantDecoding;
         variantDecoding.id = variantId;
-        variantDecoding.location = region;
+        variantDecoding.locations = variantRegions;
         variantDecoding.variantType = variantType;
         variantDecoding.expectedNormalCN = expectedNormalCN;
         variantDecoding.regionGC = regionGC;

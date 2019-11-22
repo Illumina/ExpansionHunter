@@ -129,17 +129,25 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, c
     for (const auto& variantSpec : locusSpec.variants())
     {
 
-        double regionLength = variantSpec.location().end() - variantSpec.location().start();
+        double regionLength = 0;
+        for (auto region : variantSpec.locations())
+        {
+            regionLength += region.end() - region.start();
+        }         
 
         CnvGenotyperParameters cnvParameters = variantSpec.genotyperParams();
 
         int regionExtensionLength = heuristics.regionExtensionLength();
-        GenomicRegion region = variantSpec.location();
-        GenomicRegion expandedRegion = GenomicRegion(
-            region.contigIndex(), region.start() - regionExtensionLength, region.end() + regionExtensionLength);
-        auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedRegion });
+        std::vector<GenomicRegion> variantRegions = variantSpec.locations();
+        std::vector<GenomicRegion> variantExpandedRegions;
+        for (auto region : variantRegions)
+        {
+            variantExpandedRegions.push_back(GenomicRegion(
+            region.contigIndex(), region.start() - regionExtensionLength, region.end() + regionExtensionLength));
+        }
+        auto linearModel = make_shared<LinearModel>(variantExpandedRegions);
         auto readCounter = make_shared<ReadCounter>(
-            linearModel, std::vector<GenomicRegion>{ region }, cnvParameters.mappingQualityThreshold);
+            linearModel, variantRegions, cnvParameters.mappingQualityThreshold);
         linearModel->addFeature(readCounter.get());
         locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
             variantSpec.id(), regionLength, variantSpec.variantType(), locusSpec.copyNumberBySex(), cnvParameters,
