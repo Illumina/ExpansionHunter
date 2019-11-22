@@ -78,4 +78,5 @@ LinearModel::~LinearModel()
 }
 
 void LinearModel::addFeature(LinearFeature* feature) { features_.push_back(feature); }
+
 }
