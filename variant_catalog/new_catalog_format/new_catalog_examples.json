@@ -31,7 +31,9 @@
 				"VariantId": "c1-1_target",
 				"VariantType": "CNV",
 				"VariantSubtype": "Target",
-				"ReferenceRegion": "chr1:776769-791881",
+				"ReferenceRegion": [
+					"chr1:776769-791881"
+				],
 				"GC": 0.473,
 				"MappingQualityThreshold": 20,
 				"MaxCopyNumber": 2,
@@ -53,7 +55,9 @@
 				"VariantType": "CNV",
 				"VariantSubtype": "Baseline",
 				"ExpectedNormal": true,
-				"ReferenceRegion": "chr1:792881-795881",
+				"ReferenceRegion": [
+					"chr1:792881-795881"
+				],
 				"GC": 0.420,
 				"MappingQualityThreshold": 20,
 				"MaxCopyNumber": 2,
