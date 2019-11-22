@@ -21,7 +21,6 @@
 //
 
 #include "sample_analysis/ReadDispatch.hh"
-#include "common/WorkflowContext.hh"
 
 using std::unordered_set;
 using std::vector;
@@ -93,4 +92,5 @@ void dispatch(const MappedRead& read, const unordered_set<RegionModel*>& models)
         }
     }
 }
+
 }

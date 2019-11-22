@@ -48,4 +48,5 @@ void IrrPairDetector::summarize(const MappedRead& read, const MappedRead& mate)
         ++numIrrPairs_;
     }
 }
+
 }

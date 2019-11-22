@@ -221,10 +221,9 @@ SampleFindings htsSeekingSampleAnalysis(
     {
         const auto& locusId = locusIdAndRegionSpec.first;
         const auto& locusSpec = locusIdAndRegionSpec.second;
-        // std::cout << locusId << "\n";
 
         ReadPairs readPairs;
-        // use collectReadsWithoutRecoverMates for CNV locus
+        // TO DO: use collectReadsWithoutRecoverMates for CNV locus --XC
         readPairs = collectReads(locusSpec->regionsWithReads(), htsFileSeeker, mateExtractor);
 
         CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo>{}, bamletWriter);

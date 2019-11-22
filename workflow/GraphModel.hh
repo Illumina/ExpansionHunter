@@ -74,7 +74,7 @@ public:
     ~GraphModel() override = default;
 
     void analyze(const MappedRead& read, const MappedRead& mate) override;
-    void analyze(MappedRead /*read*/) override{};
+    void analyze(MappedRead /*read*/) override {};
     const graphtools::Graph& graph() const { return graph_; }
     void addGraphFeature(GraphFeature* feature);
     void addOfftargetReadProcessor(LinearFeature* offtargetProcessor);
@@ -102,4 +102,5 @@ private:
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
 };
+
 }

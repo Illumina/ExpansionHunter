@@ -215,4 +215,5 @@ void GraphModel::writeAlignments(
     alignmentWriter_->write(
         graphId_, mate.fragmentId(), mateSequence, mate.isFirstMate(), isMateReversed, isReadReversed, mateAlignment);
 }
+
 }

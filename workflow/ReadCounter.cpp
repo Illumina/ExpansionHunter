@@ -86,13 +86,6 @@ void ReadCounter::summarize(const MappedRead& read)
             if (read.mapq() >= *mapqCutoff_)
             {
                 ++numReadsForCnvCounting_;
-                /*
-                if (targetRegions_.size() == 1)
-                {
-                    GenomicRegion region = *(targetRegions_.begin());
-                    std::cout << region.start() << "_" << region.end() << " with_filter " << read.readId() << "\n";
-                }
-                */
             }
         }
     }
