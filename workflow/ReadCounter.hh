@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
 #include <cstdint>
 
 #include "workflow/LinearFeature.hh"
