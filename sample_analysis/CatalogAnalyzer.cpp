@@ -49,19 +49,23 @@ CatalogAnalyzer::CatalogAnalyzer(
         }
         else if (cnvLocusSpec)
         {
-            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec));
+            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, context.heuristics()));
         }
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);
 
+    int mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
+    int regionExtensionLength = context.heuristics().regionExtensionLength();
     for (RegionInfo regionInfo : normRegionInfo_)
     {
-        std::vector<GenomicRegion> countingRegion = std::vector<GenomicRegion> { regionInfo.region };
-        auto linearModel_ = make_shared<LinearModel>(countingRegion);
-        auto readCounter = make_shared<ReadCounter>(linearModel_, countingRegion);
-        linearModel_->addFeature(readCounter.get());
-        regionModels_.push_back(linearModel_);
+        auto region = regionInfo.region;
+        GenomicRegion expandedRegion = GenomicRegion(
+            region.contigIndex(), region.start() - regionExtensionLength, region.end() + regionExtensionLength);
+        auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedRegion });
+        auto readCounter = make_shared<ReadCounter>(linearModel, std::vector<GenomicRegion>{ region }, mapqCutoff);
+        linearModel->addFeature(readCounter.get());
+        regionModels_.push_back(linearModel);
         normalizationRegionAnalyzers_.push_back(
             make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
     }

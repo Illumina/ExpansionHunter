@@ -52,7 +52,7 @@ static shared_ptr<ReadCountAnalyzer>
 createStatsAnalyzer(CopyNumberBySex copyNumber, const vector<GenomicRegion>& statsRegions)
 {
     auto linearModel = make_shared<LinearModel>(statsRegions);
-    auto readCounter = make_shared<ReadCounter>(linearModel, statsRegions);
+    auto readCounter = make_shared<ReadCounter>(linearModel, statsRegions, boost::none);
     linearModel->addFeature(readCounter.get());
     return make_shared<ReadCountAnalyzer>(copyNumber, readCounter);
 }
@@ -120,7 +120,7 @@ shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
     return locus;
 }
 
-shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec)
+shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, const HeuristicParameters& heuristics)
 {
     auto locus = make_shared<CnvLocusAnalyzer>(locusSpec.locusId(), locusSpec.locusType(), locusSpec.outputVariant());
     auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
@@ -133,9 +133,13 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec)
 
         CnvGenotyperParameters cnvParameters = variantSpec.genotyperParams();
 
-        vector<GenomicRegion> variantRegion{ variantSpec.location() };
-        auto linearModel = make_shared<LinearModel>(variantRegion);
-        auto readCounter = make_shared<ReadCounter>(linearModel, variantRegion);
+        int regionExtensionLength = heuristics.regionExtensionLength();
+        GenomicRegion region = variantSpec.location();
+        GenomicRegion expandedRegion = GenomicRegion(
+            region.contigIndex(), region.start() - regionExtensionLength, region.end() + regionExtensionLength);
+        auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedRegion });
+        auto readCounter = make_shared<ReadCounter>(
+            linearModel, std::vector<GenomicRegion>{ region }, cnvParameters.mappingQualityThreshold);
         linearModel->addFeature(readCounter.get());
         locus->addAnalyzer(make_shared<CnvVariantAnalyzer>(
             variantSpec.id(), regionLength, variantSpec.variantType(), locusSpec.copyNumberBySex(), cnvParameters,

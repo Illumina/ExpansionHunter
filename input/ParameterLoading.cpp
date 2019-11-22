@@ -200,8 +200,8 @@ void assertValidity(const UserParameters& userParameters)
         throw std::invalid_argument(message);
     }
 
-    const int kMinQualityCutoffForGoodBaseCall = 5;
-    const int kMaxQualityCutoffForGoodBaseCall = 40;
+    const int kMinQualityCutoffForGoodBaseCall = 0;
+    const int kMaxQualityCutoffForGoodBaseCall = 100;
     if (userParameters.qualityCutoffForGoodBaseCall < kMinQualityCutoffForGoodBaseCall
         || userParameters.qualityCutoffForGoodBaseCall > kMaxQualityCutoffForGoodBaseCall)
     {

@@ -29,9 +29,11 @@ using std::vector;
 namespace ehunter
 {
 
-ReadCounter::ReadCounter(shared_ptr<LinearModel> model, vector<GenomicRegion> targetRegions)
+ReadCounter::ReadCounter(
+    shared_ptr<LinearModel> model, vector<GenomicRegion> targetRegions, boost::optional<int> mapqCutoff)
     : model_(std::move(model))
     , targetRegions_(std::move(targetRegions))
+    , mapqCutoff_(std::move(mapqCutoff))
 {
 }
 
@@ -67,6 +69,26 @@ void ReadCounter::summarize(const MappedRead& read)
 {
     ++numReads_;
     totalReadLength_ += read.sequence().length();
+
+    bool readIsInRegion = false;
+    for (GenomicRegion region : targetRegions_)
+    {
+        if ((read.pos() < region.end()) & (read.pos() >= region.start()))
+        {
+            readIsInRegion = true;
+        }
+    }
+
+    if (readIsInRegion)
+    {
+        if (mapqCutoff_)
+        {
+            if (read.mapq() >= *mapqCutoff_)
+            {
+                ++numReadsForCnvCounting_;
+            }
+        }
+    }
 }
 
 void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate)
@@ -74,5 +96,4 @@ void ReadCounter::summarize(const MappedRead& read, const MappedRead& mate)
     summarize(read);
     summarize(mate);
 }
-
 }
