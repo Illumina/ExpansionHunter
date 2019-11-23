@@ -29,6 +29,7 @@
 #include "common/Reference.hh"
 #include "locus_spec/CnvLocusDecoding.hh"
 #include "locus_spec/GraphLocusDecoding.hh"
+#include "locus_spec/ParalogLocusDecoding.hh"
 #include "locus_spec/LocusSpec.hh"
 
 namespace ehunter
