@@ -63,6 +63,14 @@ vector<GenomicRegion> ParalogLocusSpec::regionsWithReads() const
             regions.push_back(region);
         }
     }
+    for (const auto& variant : smallVariants_)
+    {
+        for (const auto& region : variant.locations())
+        {
+            regions.push_back(region);
+        }
+    }
+
 
     return regions;
 }
