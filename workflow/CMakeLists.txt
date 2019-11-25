@@ -11,6 +11,7 @@ add_library(workflow STATIC
         LocusFindings.cpp LocusFindings.hh
         GraphLocusAnalyzer.cpp GraphLocusAnalyzer.hh
         CnvLocusAnalyzer.cpp CnvLocusAnalyzer.hh
+        ParalogLocusAnalyzer.cpp ParalogLocusAnalyzer.hh
         LinearModel.cpp LinearModel.hh
         Feature.cpp Feature.hh
         LinearFeature.cpp LinearFeature.hh

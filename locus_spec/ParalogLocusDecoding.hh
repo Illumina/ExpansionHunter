@@ -29,8 +29,8 @@
 
 #include <boost/optional.hpp>
 
-#include "common/GenomicRegion.hh"
 #include "CnvLocusDecoding.hh"
+#include "common/GenomicRegion.hh"
 #include "locus_spec/ParalogLocusSpec.hh"
 
 namespace ehunter

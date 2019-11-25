@@ -21,10 +21,10 @@
 //
 //
 
-#include <boost/algorithm/string/classification.hpp>
-#include <boost/algorithm/string/split.hpp>
 #include "locus_spec/ParalogLocusDecoding.hh"
 #include "locus_spec/ParalogLocusSpec.hh"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <stdexcept>
 
@@ -83,7 +83,7 @@ static Base decodeBase(const std::string base)
     {
         return Base::kG;
     }
-    
+
     throw std::logic_error("Variant base " + base + " is not recognized.");
 }
 
@@ -97,9 +97,9 @@ static std::pair<Base, Base> getSmallVariantBases(const std::string variantStruc
         throw std::logic_error("Unexpected small variant structure format: " + variantStructure);
     }
 
-    Base variantBase = decodeBase(components[0]);
-    Base nonvariantBase = decodeBase(components[1]);
-    return std::pair<Base, Base>(variantBase, nonvariantBase);
+    Base geneABase = decodeBase(components[0]);
+    Base geneBBase = decodeBase(components[1]);
+    return std::pair<Base, Base>(geneABase, geneBBase);
 }
 
 std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const ParalogLocusEncoding& encoding)
@@ -134,7 +134,7 @@ std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const Paral
     {
         auto variantStructure = variant.variantStructure;
         auto variantBases = getSmallVariantBases(variantStructure);
-        locusSpec->addSmallVariant(variant.id, *variant.locations, variant.mappingQualityThreshold, variantBases.first, variantBases.second);
+        locusSpec->addSmallVariant(variant.id, *variant.locations, variant.mappingQualityThreshold, variantBases);
     }
 
     return locusSpec;

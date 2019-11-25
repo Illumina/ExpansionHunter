@@ -43,6 +43,7 @@ CatalogAnalyzer::CatalogAnalyzer(
         const auto& locusSpec = locusIdAndLocusSpec.second;
         shared_ptr<CnvLocusSpec> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpec>(locusSpec);
         shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
+        shared_ptr<ParalogLocusSpec> paralogLocusSpec = dynamic_pointer_cast<ParalogLocusSpec>(locusSpec);
         if (graphLocusSpec)
         {
             locusAnalyzers_.push_back(buildGraphLocusWorkflow(*graphLocusSpec, context.heuristics(), bamletWriter));
@@ -50,6 +51,10 @@ CatalogAnalyzer::CatalogAnalyzer(
         else if (cnvLocusSpec)
         {
             locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, context.heuristics()));
+        }
+        else if (paralogLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildParalogLocusWorkflow(*paralogLocusSpec, context.heuristics()));
         }
     }
 

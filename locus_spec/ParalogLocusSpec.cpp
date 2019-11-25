@@ -65,12 +65,9 @@ vector<GenomicRegion> ParalogLocusSpec::regionsWithReads() const
     }
     for (const auto& variant : smallVariants_)
     {
-        for (const auto& region : variant.locations())
-        {
-            regions.push_back(region);
-        }
+        regions.push_back(variant.locations().geneALocation);
+        regions.push_back(variant.locations().geneBLocation);
     }
-
 
     return regions;
 }
@@ -82,14 +79,16 @@ void ParalogLocusSpec::addCnvVariant(
 }
 
 void ParalogLocusSpec::addSmallVariant(
-    std::string id, std::vector<GenomicRegion> referenceLocus, int mappingQualityThreshold, Base variantBase, Base nonvariantBase)
+    std::string id, std::vector<GenomicRegion> referenceLocus, int mappingQualityThreshold, std::pair<Base, Base> bases)
 {
-    smallVariants_.emplace_back(std::move(id), std::move(referenceLocus), mappingQualityThreshold, variantBase, nonvariantBase);
+    smallVariants_.emplace_back(
+        std::move(id), SmallVariantLocations(*referenceLocus.begin(), *referenceLocus.end()), mappingQualityThreshold,
+        SmallVariantBases(bases.first, bases.second));
 }
 
 void SmallVariantSpec::assertConsistency() const
 {
-    bool variantIsValid = (variantBase_ != nonvariantBase_);
+    bool variantIsValid = (bases_.geneABase != bases_.geneBBase);
 
     if (!variantIsValid)
     {

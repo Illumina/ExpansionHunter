@@ -39,8 +39,8 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "locus_spec/LocusSpec.hh"
 #include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 
 namespace ehunter
 {
@@ -59,46 +59,76 @@ struct ParalogOutputVariant
     boost::optional<GenomicRegion> location;
 };
 
+struct SmallVariantLocations
+{
+    SmallVariantLocations(GenomicRegion geneALocation, GenomicRegion geneBLocation)
+        : geneALocation(geneALocation)
+        , geneBLocation(geneBLocation)
+    {
+    }
+
+    bool operator==(const SmallVariantLocations& other) const
+    {
+        return (other.geneALocation == geneALocation && other.geneBLocation == geneBLocation);
+    }
+
+    GenomicRegion geneALocation;
+    GenomicRegion geneBLocation;
+};
+
+struct SmallVariantBases
+{
+    SmallVariantBases(Base geneABase, Base geneBBase)
+        : geneABase(geneABase)
+        , geneBBase(geneBBase)
+    {
+    }
+
+    bool operator==(const SmallVariantBases& other) const
+    {
+        return (other.geneABase == geneABase && other.geneBBase == geneBBase);
+    }
+
+    Base geneABase;
+    Base geneBBase;
+};
+
 class SmallVariantSpec
 {
 public:
     SmallVariantSpec(
-        std::string id, std::vector<GenomicRegion> locations, int mappingQualityThreshold, Base variantBase, Base nonvariantBase)
+        std::string id, SmallVariantLocations locations, int mappingQualityThreshold, SmallVariantBases bases)
         : id_(std::move(id))
         , locations_(std::move(locations))
         , mappingQualityThreshold_(std::move(mappingQualityThreshold))
-        , variantBase_(variantBase)
-        , nonvariantBase_(nonvariantBase)
+        , bases_(bases)
     {
         assertConsistency();
     }
 
     const std::string& id() const { return id_; }
-    const std::vector<GenomicRegion>& locations() const { return locations_; }
+    const SmallVariantLocations& locations() const { return locations_; }
     const int& mappingQualityThreshold() const { return mappingQualityThreshold_; }
-    const Base& variantBase() const { return variantBase_; }
-    const Base& nonvariantBase() const { return nonvariantBase_; }
+    const SmallVariantBases& variantBase() const { return bases_; }
 
     bool operator==(const SmallVariantSpec& other) const
     {
-        return id_ == other.id_ && locations_ == other.locations_ && variantBase_ == other.variantBase_ && nonvariantBase_ == other.nonvariantBase_;
+        return id_ == other.id_ && locations_ == other.locations_ && bases_ == other.bases_;
     }
 
     void assertConsistency() const;
 
 private:
     std::string id_;
-    std::vector<GenomicRegion> locations_;
+    SmallVariantLocations locations_;
     int mappingQualityThreshold_;
-    Base variantBase_;
-    Base nonvariantBase_;
+    SmallVariantBases bases_;
 };
 
 class ParalogLocusSpec : public LocusSpec
 {
 public:
-    ParalogLocusSpec(
-        std::string locusId, CopyNumberBySex contigCopyNumber, ParalogOutputVariant outputVariant)
+    ParalogLocusSpec(std::string locusId, CopyNumberBySex contigCopyNumber, ParalogOutputVariant outputVariant)
         : LocusSpec(locusId, contigCopyNumber)
         , outputVariant_(outputVariant)
     {
@@ -107,12 +137,15 @@ public:
     ~ParalogLocusSpec() override = default;
 
     std::vector<GenomicRegion> regionsWithReads() const override;
-    const std::vector<CnvVariantSpec>& CnvVariants() const { return cnvVariants_; }
-    const std::vector<SmallVariantSpec>& SmallVariants() const { return smallVariants_; }
+    const std::vector<CnvVariantSpec>& cnvVariants() const { return cnvVariants_; }
+    const std::vector<SmallVariantSpec>& smallVariants() const { return smallVariants_; }
     const ParalogOutputVariant& outputVariant() const { return outputVariant_; }
-    void
-    addCnvVariant(std::string id, CnvVariantType type, std::vector<GenomicRegion> referenceLocus, CnvGenotyperParameters parameters);
-    void addSmallVariant(std::string id, std::vector<GenomicRegion> referenceLocus, int mappingQualityThreshold, Base variantBase, Base nonvariantBase);
+    void addCnvVariant(
+        std::string id, CnvVariantType type, std::vector<GenomicRegion> referenceLocus,
+        CnvGenotyperParameters parameters);
+    void addSmallVariant(
+        std::string id, std::vector<GenomicRegion> referenceLocus, int mappingQualityThreshold,
+        std::pair<Base, Base> bases);
     const GenomicRegion& getVariantLocationById(const std::string& id) const override;
 
 private:
