@@ -15,6 +15,8 @@ add_library(workflow STATIC
         LinearModel.cpp LinearModel.hh
         Feature.cpp Feature.hh
         LinearFeature.cpp LinearFeature.hh
+        LinearSmallVariant.cpp LinearSmallVariant.hh
+        LinearSmallVariantAnalyzer.cpp LinearSmallVariantAnalyzer.hh
         ReadCountAnalyzer.cpp ReadCountAnalyzer.hh
         GraphVariantAnalyzer.cpp GraphVariantAnalyzer.hh
         IrrPairDetector.cpp IrrPairDetector.hh

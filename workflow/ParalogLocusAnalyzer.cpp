@@ -29,6 +29,7 @@
 #include "genotyping/CopyNumberCaller.hh"
 #include "workflow/CnvVariantAnalyzer.hh"
 #include "workflow/FeatureAnalyzer.hh"
+#include "workflow/LinearSmallVariantAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
 
 using std::shared_ptr;
@@ -53,7 +54,12 @@ void ParalogLocusAnalyzer::setStats(std::shared_ptr<ReadCountAnalyzer> statsAnal
 
 void ParalogLocusAnalyzer::addCnvAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer)
 {
-    variantAnalyzers_.push_back(std::move(variantAnalyzer));
+    cnvVariantAnalyzers_.push_back(std::move(variantAnalyzer));
+}
+
+void ParalogLocusAnalyzer::addSmallVariantAnalyzer(std::shared_ptr<LinearSmallVariantAnalyzer> variantAnalyzer)
+{
+    smallVariantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
 LocusFindings ParalogLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
@@ -62,12 +68,26 @@ LocusFindings ParalogLocusAnalyzer::analyze(Sex sampleSex, boost::optional<Depth
 
     locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
 
-    for (auto& analyzerPtr : variantAnalyzers_)
+    boost::optional<int> totalCopyNumber;
+    for (auto& analyzerPtr : cnvVariantAnalyzers_)
     {
+        std::cout << analyzerPtr->variantId() << "\n";
         auto depthNormalizer = *genomeDepthNormalizer;
         CnvVariantFindings varFinding = analyzerPtr->analyze(depthNormalizer);
-        std::cout << analyzerPtr->variantId() << " " << *varFinding.absoluteCopyNumber() << " " << *varFinding.copyNumberChange() << "\n";
-        //locusFindings.findingsForEachVariant.emplace(locusId_, varFinding);
+        if (analyzerPtr->variantType() == CnvVariantType::kTarget)
+        {
+            totalCopyNumber = *varFinding.absoluteCopyNumber();
+        }
+        std::cout << analyzerPtr->variantId() << " " << *varFinding.absoluteCopyNumber() << "\n";
+        // locusFindings.findingsForEachVariant.emplace(locusId_, varFinding);
+    }
+
+    for (auto& analyzerPtr : smallVariantAnalyzers_)
+    {
+        ParalogSmallVariantFindings varFinding = analyzerPtr->analyze(totalCopyNumber);
+        std::cout << analyzerPtr->variantId() << " " << varFinding.numGeneAReads() << " "
+                  << varFinding.numGeneBReads() << "\n";
+        // locusFindings.findingsForEachVariant.emplace(locusId_, varFinding);
     }
 
     return locusFindings;
@@ -76,7 +96,11 @@ LocusFindings ParalogLocusAnalyzer::analyze(Sex sampleSex, boost::optional<Depth
 vector<shared_ptr<FeatureAnalyzer>> ParalogLocusAnalyzer::featureAnalyzers()
 {
     vector<shared_ptr<FeatureAnalyzer>> features;
-    for (const auto& variant : variantAnalyzers_)
+    for (const auto& variant : cnvVariantAnalyzers_)
+    {
+        features.push_back(variant);
+    }
+    for (const auto& variant : smallVariantAnalyzers_)
     {
         features.push_back(variant);
     }

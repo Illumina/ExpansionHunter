@@ -90,16 +90,32 @@ static Base decodeBase(const std::string base)
 static std::pair<Base, Base> getSmallVariantBases(const std::string variantStructure)
 {
     vector<string> components;
-    boost::algorithm::split(components, variantStructure, boost::algorithm::is_any_of("()|"));
+    boost::algorithm::split(components, variantStructure, boost::algorithm::is_any_of("(|)"));
 
-    if (components.size() != 2)
+    if (components.size() != 4)
     {
         throw std::logic_error("Unexpected small variant structure format: " + variantStructure);
     }
 
-    Base geneABase = decodeBase(components[0]);
-    Base geneBBase = decodeBase(components[1]);
+    Base geneABase = decodeBase(components[1]);
+    Base geneBBase = decodeBase(components[2]);
     return std::pair<Base, Base>(geneABase, geneBBase);
+}
+
+static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
+{
+    if (variant.variantType == "Baseline")
+    {
+        return CnvVariantType::kBaseline;
+    }
+    else if (variant.variantType == "Target")
+    {
+        return CnvVariantType::kTarget;
+    }
+    else
+    {
+        throw std::logic_error("Encountered invalid variant type: " + variant.variantType);
+    }
 }
 
 std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const ParalogLocusEncoding& encoding)
@@ -127,7 +143,7 @@ std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const Paral
         variantParameters.priorCopyNumberFrequency = variant.priorCopyNumberFrequency;
         variantParameters.expectedNormal = variant.expectedNormalCN;
 
-        CnvVariantType variantType = CnvVariantType::kTarget;
+        CnvVariantType variantType = getCnvVariantType(variant);
         locusSpec->addCnvVariant(variant.id, variantType, *variant.locations, variantParameters);
     }
     for (const auto& variant : encoding.smallVariants)

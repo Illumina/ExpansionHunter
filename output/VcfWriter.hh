@@ -53,6 +53,7 @@ public:
     void visit(const StrFindings& findings) override;
     void visit(const SmallVariantFindings& findings) override;
     void visit(const CnvVariantFindings& findings) override;
+    void visit(const ParalogSmallVariantFindings& findings) override;
 
 private:
     Reference& reference_;

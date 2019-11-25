@@ -283,6 +283,9 @@ static ParalogLocusEncoding loadParalogLocusEncoding(const Json& locusJson, cons
 
         if (variantType == "CNV")
         {
+            assertFieldExists(variant, "VariantSubtype");
+            auto variantSubtype = variant["VariantSubtype"].get<string>();
+
             assertFieldExists(variant, "GC");
             auto regionGC = variant["GC"].get<double>();
 
@@ -314,7 +317,7 @@ static ParalogLocusEncoding loadParalogLocusEncoding(const Json& locusJson, cons
             CnvVariantEncoding variantDecoding;
             variantDecoding.id = variantId;
             variantDecoding.locations = variantRegions;
-            variantDecoding.variantType = variantType;
+            variantDecoding.variantType = variantSubtype;
             variantDecoding.regionGC = regionGC;
             variantDecoding.mappingQualityThreshold = mappingQualityThreshold;
             variantDecoding.maxCopyNumber = maxCopyNumber;
@@ -325,7 +328,7 @@ static ParalogLocusEncoding loadParalogLocusEncoding(const Json& locusJson, cons
             
             cnvAnalysisVariants.emplace_back(variantDecoding);
         }
-        else if (variantType == "CNV")
+        else if (variantType == "SmallVariant")
         {
             assertFieldExists(variant, "VariantStructure");
             SmallVariantEncoding variantDecoding;

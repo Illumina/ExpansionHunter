@@ -32,6 +32,7 @@ namespace ehunter
 
 class CnvVariantAnalyzer;
 class ReadCountAnalyzer;
+class LinearSmallVariantAnalyzer;
 
 class ParalogLocusAnalyzer : public LocusAnalyzer
 {
@@ -43,6 +44,7 @@ public:
     ParalogOutputVariant outputVariant() const { return outputVariant_; }
     void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
     void addCnvAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
+    void addSmallVariantAnalyzer(std::shared_ptr<LinearSmallVariantAnalyzer> variantAnalyzer);
     LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const override;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
@@ -50,6 +52,7 @@ private:
     std::string locusId_;
     ParalogOutputVariant outputVariant_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
-    std::vector<std::shared_ptr<CnvVariantAnalyzer>> variantAnalyzers_;
+    std::vector<std::shared_ptr<CnvVariantAnalyzer>> cnvVariantAnalyzers_;
+    std::vector<std::shared_ptr<LinearSmallVariantAnalyzer>> smallVariantAnalyzers_;
 };
 }

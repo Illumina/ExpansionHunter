@@ -290,6 +290,12 @@ void VariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
+void VariantVcfWriter::visit(const ParalogSmallVariantFindings& findings)
+{
+    auto kk = findings;   
+    // out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
+}
+
 void VariantVcfWriter::visit(const SmallVariantFindings& findings)
 {
     auto graphLocusSpecPtr = std::static_pointer_cast<GraphLocusSpec>(locusSpecPtr_);

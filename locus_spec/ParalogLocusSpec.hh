@@ -109,7 +109,7 @@ public:
     const std::string& id() const { return id_; }
     const SmallVariantLocations& locations() const { return locations_; }
     const int& mappingQualityThreshold() const { return mappingQualityThreshold_; }
-    const SmallVariantBases& variantBase() const { return bases_; }
+    const SmallVariantBases& variantBases() const { return bases_; }
 
     bool operator==(const SmallVariantSpec& other) const
     {

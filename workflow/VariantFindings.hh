@@ -35,12 +35,14 @@ namespace ehunter
 class StrFindings;
 class SmallVariantFindings;
 class CnvVariantFindings;
+class ParalogSmallVariantFindings;
 
 struct VariantFindingsVisitor
 {
     virtual void visit(const StrFindings& findings) = 0;
     virtual void visit(const SmallVariantFindings& findings) = 0;
     virtual void visit(const CnvVariantFindings& findings) = 0;
+    virtual void visit(const ParalogSmallVariantFindings& findings) = 0;
 };
 
 class VariantFindings
@@ -125,6 +127,31 @@ private:
     AlleleCheckSummary refAlleleStatus_;
     AlleleCheckSummary altAlleleStatus_;
     boost::optional<SmallVariantGenotype> optionalGenotype_;
+};
+
+class ParalogSmallVariantFindings : public VariantFindings
+{
+public:
+    ParalogSmallVariantFindings(
+        std::string variantId, int numGeneAReads, int numGeneBReads, boost::optional<std::pair<int, double>> copyNumber)
+        : VariantFindings(std::move(variantId))
+        , numGeneAReads_(numGeneAReads)
+        , numGeneBReads_(numGeneBReads)
+        , copyNumber_(std::move(copyNumber))
+    {
+    }
+
+    ~ParalogSmallVariantFindings() override = default;
+    void accept(VariantFindingsVisitor& visitorPtr) override { visitorPtr.visit(*this); }
+
+    int numGeneAReads() const { return numGeneAReads_; }
+    int numGeneBReads() const { return numGeneBReads_; }
+    const boost::optional<std::pair<int, double>>& copyNumber() const { return copyNumber_; }
+
+private:
+    int numGeneAReads_;
+    int numGeneBReads_;
+    boost::optional<std::pair<int, double>> copyNumber_;
 };
 
 class CnvVariantFindings : public VariantFindings
