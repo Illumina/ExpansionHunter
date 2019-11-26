@@ -194,6 +194,7 @@ buildParalogLocusWorkflow(const ParalogLocusSpec& locusSpec, const HeuristicPara
         GenomicRegion geneALocation = variantSpec.locations().geneALocation;
         GenomicRegion expandedGeneA = GenomicRegion(geneALocation.contigIndex(), geneALocation.start() - regionExtensionLength, geneALocation.end() + regionExtensionLength);
         GenomicRegion geneBLocation = variantSpec.locations().geneBLocation;
+        std::cout << geneALocation.start() << " " << geneBLocation.start() << " test1 \n";
         GenomicRegion expandedGeneB = GenomicRegion(geneBLocation.contigIndex(), geneBLocation.start() - regionExtensionLength, geneBLocation.end() + regionExtensionLength);
         auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedGeneA, expandedGeneB });
         auto smallVariant = make_shared<LinearSmallVariant>(linearModel, variantSpec.locations(), variantSpec.variantBases(), variantSpec.mappingQualityThreshold());

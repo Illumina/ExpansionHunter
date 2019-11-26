@@ -30,7 +30,7 @@ MappedRead generateRead1(int contigIndex, int64_t pos, int length)
 {
     ReadId readId("frag", MateNumber::kFirstMate);
     string sequence(length, 'A');
-    MappedRead read(readId, sequence, false, contigIndex, pos, 60, -1, -1, true, true, true);
+    MappedRead read(readId, sequence, false, contigIndex, pos, 60, -1, -1, true, true, true, std::vector<std::pair<char, int>>{});
     return read;
 }
 
@@ -38,7 +38,7 @@ MappedRead generateRead2(int contigIndex, int64_t pos, int length)
 {
     ReadId readId("frag", MateNumber::kSecondMate);
     string sequence(length, 'C');
-    MappedRead read(readId, sequence, false, contigIndex, pos, 60, -1, -1, true, true, true);
+    MappedRead read(readId, sequence, false, contigIndex, pos, 60, -1, -1, true, true, true, std::vector<std::pair<char, int>>{});
     return read;
 }
 

@@ -83,8 +83,12 @@ void ParalogLocusSpec::addCnvVariant(
 void ParalogLocusSpec::addSmallVariant(
     std::string id, std::vector<GenomicRegion> referenceLocus, int mappingQualityThreshold, std::pair<Base, Base> bases)
 {
+    auto iter = referenceLocus.begin();
+    auto geneALocation = *iter;
+    std::advance(iter, 1);
+    auto geneBLocation = *iter;
     smallVariants_.emplace_back(
-        std::move(id), SmallVariantLocations(*referenceLocus.begin(), *referenceLocus.end()), mappingQualityThreshold,
+        std::move(id), SmallVariantLocations(geneALocation, geneBLocation), mappingQualityThreshold,
         SmallVariantBases(bases.first, bases.second));
 }
 
