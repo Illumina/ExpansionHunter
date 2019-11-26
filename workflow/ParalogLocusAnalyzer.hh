@@ -37,22 +37,26 @@ class LinearSmallVariantAnalyzer;
 class ParalogLocusAnalyzer : public LocusAnalyzer
 {
 public:
-    ParalogLocusAnalyzer(std::string locusId, ParalogOutputVariant outputVariant);
-    ~ParalogLocusAnalyzer() override = default;
+    ParalogLocusAnalyzer(std::string locusId, std::vector<ParalogOutputVariant> outputVariants);
+    // ~ParalogLocusAnalyzer() override = default;
+    virtual ~ParalogLocusAnalyzer() = default;
 
     const std::string& locusId() const override { return locusId_; }
-    ParalogOutputVariant outputVariant() const { return outputVariant_; }
+    std::vector<ParalogOutputVariant> outputVariants() const { return outputVariants_; }
     void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
     void addCnvAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
     void addSmallVariantAnalyzer(std::shared_ptr<LinearSmallVariantAnalyzer> variantAnalyzer);
-    LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const override;
+    void updateVariantFindings(boost::optional<DepthNormalizer> genomeDepthNormalizer);
+    virtual LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const = 0;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
-private:
+protected:
     std::string locusId_;
-    ParalogOutputVariant outputVariant_;
+    std::vector<ParalogOutputVariant> outputVariants_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
     std::vector<std::shared_ptr<CnvVariantAnalyzer>> cnvVariantAnalyzers_;
     std::vector<std::shared_ptr<LinearSmallVariantAnalyzer>> smallVariantAnalyzers_;
+    std::vector<CnvVariantFindings> cnvFindings_;
+    std::vector<ParalogSmallVariantFindings> smallVariantFindings_;
 };
 }

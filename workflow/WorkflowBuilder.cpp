@@ -36,9 +36,10 @@
 #include "workflow/LinearModel.hh"
 #include "workflow/LinearSmallVariant.hh"
 #include "workflow/LinearSmallVariantAnalyzer.hh"
-#include "workflow/ParalogLocusAnalyzer.hh"
+//#include "workflow/ParalogLocusAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
 #include "workflow/ReadCounter.hh"
+#include "workflow/SmnLocusAnalyzer.hh"
 
 using std::make_shared;
 using std::runtime_error;
@@ -162,7 +163,18 @@ shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, c
 shared_ptr<LocusAnalyzer>
 buildParalogLocusWorkflow(const ParalogLocusSpec& locusSpec, const HeuristicParameters& heuristics)
 {
-    auto locus = make_shared<ParalogLocusAnalyzer>(locusSpec.locusId(), locusSpec.outputVariant());
+    auto locus = make_shared<SmnLocusAnalyzer>(locusSpec.locusId(), locusSpec.outputVariants());
+    /*
+    if (locusSpec.locusId() == "SMN")
+    {
+        auto locus = make_shared<SmnLocusAnalyzer>(locusSpec.locusId(), locusSpec.outputVariants());
+    }
+    else
+    {
+        auto locus = make_shared<ParalogLocusAnalyzer>(locusSpec.locusId(), locusSpec.outputVariants());
+    }
+    */
+    
     auto statsAnalyzer = createStatsAnalyzer(locusSpec.copyNumberBySex(), locusSpec.regionsWithReads());
     locus->setStats(statsAnalyzer);
     int regionExtensionLength = heuristics.regionExtensionLength();

@@ -104,11 +104,13 @@ void SmallVariantSpec::assertConsistency() const
 
 const GenomicRegion& ParalogLocusSpec::getVariantLocationById(const string& id) const
 {
-    if (outputVariant_.id == id)
+    for (auto variant : outputVariants_)
     {
-        return *(outputVariant_.location);
+        if (variant.id == id)
+        {
+            return *(variant.location);
+        }
     }
-
     throw std::logic_error("There is no variant " + id + " in locus " + locusId_);
 }
 }

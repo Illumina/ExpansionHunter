@@ -176,11 +176,6 @@ void VariantJsonWriter::visit(const CnvVariantFindings& cnvFindings)
 void VariantJsonWriter::visit(const ParalogSmallVariantFindings& findings)
 {
     auto kk = findings;
-    auto paralogLocusSpecPtr = std::static_pointer_cast<ParalogLocusSpec>(locusSpecPtr_);
-    const auto& variantSpec = paralogLocusSpecPtr->outputVariant();
-    record_.clear();
-    record_["VariantId"] = variantSpec.id;
-    record_["ReferenceRegion"] = encode(contigInfo_, *variantSpec.location);
 }
 
 void VariantJsonWriter::visit(const SmallVariantFindings& findings)

@@ -20,7 +20,7 @@
 //
 //
 
-#include "workflow/ParalogLocusAnalyzer.hh"
+#include "workflow/SmnLocusAnalyzer.hh"
 
 #include <string>
 
@@ -41,35 +41,39 @@ namespace ehunter
 
 using std::static_pointer_cast;
 
-ParalogLocusAnalyzer::ParalogLocusAnalyzer(string locusId, std::vector<ParalogOutputVariant> outputVariants)
-    : locusId_(std::move(locusId))
-    , outputVariants_(outputVariants)
+SmnLocusAnalyzer::SmnLocusAnalyzer(string locusId, std::vector<ParalogOutputVariant> outputVariants)
+    : ParalogLocusAnalyzer(locusId, outputVariants)
 {
 }
 
-void ParalogLocusAnalyzer::setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer)
+static int findMode(std::vector<boost::optional<int>> calls)
 {
-    readCountAnalyzer_ = std::move(statsAnalyzer);
+    std::vector<int> histogram(10, 0);
+    for (int i = 0; i != 10; ++i)
+    {
+        if (calls[i])
+        {
+            ++histogram[*calls[i]];
+        }
+    }
+    return std::max_element(histogram.begin(), histogram.end()) - histogram.begin();
 }
 
-void ParalogLocusAnalyzer::addCnvAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer)
+LocusFindings SmnLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
 {
-    cnvVariantAnalyzers_.push_back(std::move(variantAnalyzer));
-}
+    LocusFindings locusFindings;
 
-void ParalogLocusAnalyzer::addSmallVariantAnalyzer(std::shared_ptr<LinearSmallVariantAnalyzer> variantAnalyzer)
-{
-    smallVariantAnalyzers_.push_back(std::move(variantAnalyzer));
-}
+    locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
 
-void ParalogLocusAnalyzer::updateVariantFindings(boost::optional<DepthNormalizer> genomeDepthNormalizer)
-{
+    std::vector<CnvVariantFindings> cnvFindings;
+    std::vector<ParalogSmallVariantFindings> smallVariantFindings;
+
     boost::optional<int> totalCopyNumber;
     for (auto& analyzerPtr : cnvVariantAnalyzers_)
     {
         auto depthNormalizer = *genomeDepthNormalizer;
         CnvVariantFindings varFinding = analyzerPtr->analyze(depthNormalizer);
-        cnvFindings_.push_back(varFinding);
+        cnvFindings.push_back(varFinding);
         if (analyzerPtr->variantType() == CnvVariantType::kTarget)
         {
             totalCopyNumber = *varFinding.absoluteCopyNumber();
@@ -79,27 +83,25 @@ void ParalogLocusAnalyzer::updateVariantFindings(boost::optional<DepthNormalizer
     for (auto& analyzerPtr : smallVariantAnalyzers_)
     {
         ParalogSmallVariantFindings varFinding = analyzerPtr->analyze(totalCopyNumber);
-        smallVariantFindings_.push_back(varFinding);
-    }
-}
-
-vector<shared_ptr<FeatureAnalyzer>> ParalogLocusAnalyzer::featureAnalyzers()
-{
-    vector<shared_ptr<FeatureAnalyzer>> features;
-    for (const auto& variant : cnvVariantAnalyzers_)
-    {
-        features.push_back(variant);
-    }
-    for (const auto& variant : smallVariantAnalyzers_)
-    {
-        features.push_back(variant);
+        smallVariantFindings.push_back(varFinding);
     }
 
-    if (readCountAnalyzer_ != nullptr)
+    std::vector<boost::optional<int>> copyNumberCalls;
+    for (auto finding : smallVariantFindings)
     {
-        features.push_back(static_pointer_cast<FeatureAnalyzer>(readCountAnalyzer_));
+        auto copyNumberPerBase = finding.copyNumber();
+        if (copyNumberPerBase)
+        {
+            auto callPerBase = *copyNumberPerBase;
+            copyNumberCalls.push_back(callPerBase.first);
+        }
     }
+    int smn1CopyNumberCall = findMode(copyNumberCalls);
+    auto outputVariantId = "SMN1";
+    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(
+        new CnvVariantFindings(outputVariantId, smn1CopyNumberCall, smn1CopyNumberCall));
+    locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
 
-    return features;
+    return locusFindings;
 }
 }

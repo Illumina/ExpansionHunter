@@ -128,9 +128,10 @@ private:
 class ParalogLocusSpec : public LocusSpec
 {
 public:
-    ParalogLocusSpec(std::string locusId, CopyNumberBySex contigCopyNumber, ParalogOutputVariant outputVariant)
+    ParalogLocusSpec(
+        std::string locusId, CopyNumberBySex contigCopyNumber, std::vector<ParalogOutputVariant> outputVariants)
         : LocusSpec(locusId, contigCopyNumber)
-        , outputVariant_(outputVariant)
+        , outputVariants_(outputVariants)
     {
     }
 
@@ -139,7 +140,7 @@ public:
     std::vector<GenomicRegion> regionsWithReads() const override;
     const std::vector<CnvVariantSpec>& cnvVariants() const { return cnvVariants_; }
     const std::vector<SmallVariantSpec>& smallVariants() const { return smallVariants_; }
-    const ParalogOutputVariant& outputVariant() const { return outputVariant_; }
+    const std::vector<ParalogOutputVariant>& outputVariants() const { return outputVariants_; }
     void addCnvVariant(
         std::string id, CnvVariantType type, std::vector<GenomicRegion> referenceLocus,
         CnvGenotyperParameters parameters);
@@ -151,6 +152,6 @@ public:
 private:
     std::vector<CnvVariantSpec> cnvVariants_;
     std::vector<SmallVariantSpec> smallVariants_;
-    ParalogOutputVariant outputVariant_;
+    std::vector<ParalogOutputVariant> outputVariants_;
 };
 }

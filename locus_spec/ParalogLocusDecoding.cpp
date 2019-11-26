@@ -123,14 +123,16 @@ std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const Paral
     GenomicRegion locusLocation = getLocusLocation(encoding);
     CopyNumberBySex copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
 
-    ParalogOutputVariant outputVariant;
+    std::vector<ParalogOutputVariant> outputVariants;
     for (const auto& variant : encoding.outputVariants)
     {
+        ParalogOutputVariant outputVariant;
         outputVariant.id = variant.id;
         outputVariant.location = variant.location;
+        outputVariants.push_back(outputVariant);
     }
 
-    unique_ptr<ParalogLocusSpec> locusSpec(new ParalogLocusSpec(encoding.id, copyNumberBySex, outputVariant));
+    unique_ptr<ParalogLocusSpec> locusSpec(new ParalogLocusSpec(encoding.id, copyNumberBySex, outputVariants));
     for (const auto& variant : encoding.cnvVariants)
     {
         CnvGenotyperParameters variantParameters;
