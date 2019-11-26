@@ -40,7 +40,7 @@ public:
     SmnLocusAnalyzer(std::string locusId, std::vector<ParalogOutputVariant> outputVariants);
     ~SmnLocusAnalyzer() override = default;
 
-    LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const override;
+    LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) override;
 
 private:
 };

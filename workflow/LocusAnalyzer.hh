@@ -37,7 +37,7 @@ class LocusAnalyzer
 {
 public:
     virtual ~LocusAnalyzer() = default;
-    virtual LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const = 0;
+    virtual LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) = 0;
     virtual std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() = 0;
     virtual const std::string& locusId() const = 0;
 };

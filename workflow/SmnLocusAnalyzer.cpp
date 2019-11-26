@@ -59,35 +59,15 @@ static int findMode(std::vector<boost::optional<int>> calls)
     return std::max_element(histogram.begin(), histogram.end()) - histogram.begin();
 }
 
-LocusFindings SmnLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
+LocusFindings SmnLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer)
 {
     LocusFindings locusFindings;
 
     locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
 
-    std::vector<CnvVariantFindings> cnvFindings;
-    std::vector<ParalogSmallVariantFindings> smallVariantFindings;
-
-    boost::optional<int> totalCopyNumber;
-    for (auto& analyzerPtr : cnvVariantAnalyzers_)
-    {
-        auto depthNormalizer = *genomeDepthNormalizer;
-        CnvVariantFindings varFinding = analyzerPtr->analyze(depthNormalizer);
-        cnvFindings.push_back(varFinding);
-        if (analyzerPtr->variantType() == CnvVariantType::kTarget)
-        {
-            totalCopyNumber = *varFinding.absoluteCopyNumber();
-        }
-    }
-
-    for (auto& analyzerPtr : smallVariantAnalyzers_)
-    {
-        ParalogSmallVariantFindings varFinding = analyzerPtr->analyze(totalCopyNumber);
-        smallVariantFindings.push_back(varFinding);
-    }
-
+    updateVariantFindings(genomeDepthNormalizer);
     std::vector<boost::optional<int>> copyNumberCalls;
-    for (auto finding : smallVariantFindings)
+    for (auto finding : smallVariantFindings_)
     {
         auto copyNumberPerBase = finding.copyNumber();
         if (copyNumberPerBase)
