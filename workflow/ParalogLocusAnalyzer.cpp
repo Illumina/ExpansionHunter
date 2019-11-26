@@ -71,23 +71,17 @@ LocusFindings ParalogLocusAnalyzer::analyze(Sex sampleSex, boost::optional<Depth
     boost::optional<int> totalCopyNumber;
     for (auto& analyzerPtr : cnvVariantAnalyzers_)
     {
-        std::cout << analyzerPtr->variantId() << "\n";
         auto depthNormalizer = *genomeDepthNormalizer;
         CnvVariantFindings varFinding = analyzerPtr->analyze(depthNormalizer);
         if (analyzerPtr->variantType() == CnvVariantType::kTarget)
         {
             totalCopyNumber = *varFinding.absoluteCopyNumber();
         }
-        std::cout << analyzerPtr->variantId() << " " << *varFinding.absoluteCopyNumber() << "\n";
-        // locusFindings.findingsForEachVariant.emplace(locusId_, varFinding);
     }
 
     for (auto& analyzerPtr : smallVariantAnalyzers_)
     {
         ParalogSmallVariantFindings varFinding = analyzerPtr->analyze(totalCopyNumber);
-        std::cout << analyzerPtr->variantId() << " " << varFinding.numGeneAReads() << " "
-                  << varFinding.numGeneBReads() << "\n";
-        // locusFindings.findingsForEachVariant.emplace(locusId_, varFinding);
     }
 
     return locusFindings;

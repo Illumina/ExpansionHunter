@@ -95,6 +95,7 @@
 			{
 				"VariantType": "CNV",
 				"VariantId": "Exon1-6",
+				"VariantSubtype": "Baseline",
 				"ReferenceRegion": [
 					"chr5:69345349-69367582",
 					"chr5:70220767-70243000"
@@ -134,6 +135,7 @@
 			{
 				"VariantType": "CNV",
 				"VariantId": "Exon7-8",
+				"VariantSubtype": "Target",
 				"ReferenceRegion": [
 					"chr5:69368682-69374582",
 					"chr5:70244100-70250000"

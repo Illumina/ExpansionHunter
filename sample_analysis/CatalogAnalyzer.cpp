@@ -127,7 +127,6 @@ void CatalogAnalyzer::collectResults(
     }
     for (auto& locusAnalyzer : locusAnalyzers_)
     {
-        std::cout << locusAnalyzer->locusId() << "\n";
         auto locusFindings = locusAnalyzer->analyze(sampleSex, genomeDepthNormalizer);
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }

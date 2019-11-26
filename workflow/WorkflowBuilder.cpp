@@ -34,11 +34,11 @@
 #include "workflow/GraphStrAnalyzer.hh"
 #include "workflow/IrrPairDetector.hh"
 #include "workflow/LinearModel.hh"
+#include "workflow/LinearSmallVariant.hh"
+#include "workflow/LinearSmallVariantAnalyzer.hh"
 #include "workflow/ParalogLocusAnalyzer.hh"
 #include "workflow/ReadCountAnalyzer.hh"
 #include "workflow/ReadCounter.hh"
-#include "workflow/LinearSmallVariant.hh"
-#include "workflow/LinearSmallVariantAnalyzer.hh"
 
 using std::make_shared;
 using std::runtime_error;
@@ -189,15 +189,19 @@ buildParalogLocusWorkflow(const ParalogLocusSpec& locusSpec, const HeuristicPara
             readCounter));
     }
 
-        for (const auto& variantSpec : locusSpec.smallVariants())
+    for (const auto& variantSpec : locusSpec.smallVariants())
     {
         GenomicRegion geneALocation = variantSpec.locations().geneALocation;
-        GenomicRegion expandedGeneA = GenomicRegion(geneALocation.contigIndex(), geneALocation.start() - regionExtensionLength, geneALocation.end() + regionExtensionLength);
+        GenomicRegion expandedGeneA = GenomicRegion(
+            geneALocation.contigIndex(), geneALocation.start() - regionExtensionLength,
+            geneALocation.end() + regionExtensionLength);
         GenomicRegion geneBLocation = variantSpec.locations().geneBLocation;
-        std::cout << geneALocation.start() << " " << geneBLocation.start() << " test1 \n";
-        GenomicRegion expandedGeneB = GenomicRegion(geneBLocation.contigIndex(), geneBLocation.start() - regionExtensionLength, geneBLocation.end() + regionExtensionLength);
+        GenomicRegion expandedGeneB = GenomicRegion(
+            geneBLocation.contigIndex(), geneBLocation.start() - regionExtensionLength,
+            geneBLocation.end() + regionExtensionLength);
         auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedGeneA, expandedGeneB });
-        auto smallVariant = make_shared<LinearSmallVariant>(linearModel, variantSpec.locations(), variantSpec.variantBases(), variantSpec.mappingQualityThreshold());
+        auto smallVariant = make_shared<LinearSmallVariant>(
+            linearModel, variantSpec.locations(), variantSpec.variantBases(), variantSpec.mappingQualityThreshold());
         linearModel->addFeature(smallVariant.get());
         locus->addSmallVariantAnalyzer(make_shared<LinearSmallVariantAnalyzer>(variantSpec.id(), smallVariant));
     }

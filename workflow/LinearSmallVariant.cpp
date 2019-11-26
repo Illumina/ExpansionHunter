@@ -31,7 +31,8 @@ namespace ehunter
 {
 
 LinearSmallVariant::LinearSmallVariant(
-    std::shared_ptr<LinearModel> model, SmallVariantLocations locations, SmallVariantBases bases, boost::optional<int> mapqCutoff)
+    std::shared_ptr<LinearModel> model, SmallVariantLocations locations, SmallVariantBases bases,
+    boost::optional<int> mapqCutoff)
     : model_(std::move(model))
     , locations_(std::move(locations))
     , bases_(std::move(bases))
@@ -43,19 +44,19 @@ shared_ptr<RegionModel> LinearSmallVariant::model() { return model_; }
 
 static boost::optional<Base> decodeBase(const char base)
 {
-    if (base == 'A')
+    if (base == 'A' || base == 'a')
     {
         return Base::kA;
     }
-    else if (base == 'C')
+    else if (base == 'C' || base == 'c')
     {
         return Base::kC;
     }
-    else if (base == 'T')
+    else if (base == 'T' || base == 't')
     {
         return Base::kT;
     }
-    else if (base == 'G')
+    else if (base == 'G' || base == 'g')
     {
         return Base::kG;
     }
@@ -66,8 +67,8 @@ static boost::optional<Base> decodeBase(const char base)
 static boost::optional<Base> getBaseOnRead(const MappedRead& read, int position)
 {
     std::vector<std::pair<char, int>> cigarOps = read.cigarOp();
-    
-    int positionOnReference = position;
+
+    int positionOnReference = read.pos();
     int positionOnQuery = 0;
     // int referenceOnly = 0;
 
@@ -87,7 +88,8 @@ static boost::optional<Base> getBaseOnRead(const MappedRead& read, int position)
             positionOnReference += cigarOp.second;
         }
 
-        if (positionOnReference <= position) continue;
+        if (positionOnReference <= position)
+            continue;
 
         if (cigarOp.first == 'M' || cigarOp.first == '=' || cigarOp.first == 'X')
         {
@@ -98,7 +100,8 @@ static boost::optional<Base> getBaseOnRead(const MappedRead& read, int position)
                 throw std::logic_error("Position past read end.");
             }
             char readBase = read.sequence()[basePositionOnQuery];
-            std::cout << read.readId() << " " << basePositionOnQuery << " " << position << " " << readBase << "\n"; 
+            // std::cout << read.readId() << " " << cigarOp.first << cigarOp.second << " " << positionOnQuery << " "
+            // << positionOnReference << " " << basePositionOnQuery << " " << position << " " << readBase << "\n";
             return decodeBase(readBase);
         }
         return boost::optional<Base>();
@@ -114,16 +117,14 @@ void LinearSmallVariant::summarize(const MappedRead& read)
         {
             int posA = locations_.geneALocation.start();
             int posB = locations_.geneBLocation.start();
-            
+
             boost::optional<Base> variantBase;
             if (read.pos() < posA && read.approximateEnd() + 100 > posA)
             {
-                std::cout << read.readId() << " " << read.pos() << " " << posA << " 1 \n";
                 variantBase = getBaseOnRead(read, posA);
             }
             else if (read.pos() < posB && read.approximateEnd() + 100 > posB)
             {
-                std::cout << read.readId() << " " << read.pos() << " " << posB << " 2 \n";
                 variantBase = getBaseOnRead(read, posB);
             }
             if (variantBase)
