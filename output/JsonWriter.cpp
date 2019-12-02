@@ -38,6 +38,7 @@ using std::map;
 using std::string;
 using Json = nlohmann::json;
 using boost::optional;
+using std::dynamic_pointer_cast;
 using std::to_string;
 using std::vector;
 
@@ -149,34 +150,53 @@ void VariantJsonWriter::visit(const StrFindings& strFindings)
 
 void VariantJsonWriter::visit(const CnvVariantFindings& cnvFindings)
 {
-    auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
-    const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
-    record_.clear();
-    record_["VariantId"] = variantSpec.id;
-    record_["VariantType"] = "CNV";
-    record_["ReferenceRegion"] = encode(contigInfo_, *variantSpec.location);
-    if (cnvFindings.absoluteCopyNumber())
+    // auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
+    // const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
+    shared_ptr<CnvLocusSpec> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
+    shared_ptr<ParalogLocusSpec> paralogLocusSpec = dynamic_pointer_cast<ParalogLocusSpec>(locusSpecPtr_);
+    if (cnvLocusSpec)
     {
-        record_["Absolute CN"] = *cnvFindings.absoluteCopyNumber();
+        const auto& variantSpec = cnvLocusSpec->outputVariant();
+        record_.clear();
+        record_["VariantId"] = variantSpec.id;
+        record_["VariantType"] = "CNV";
+        record_["ReferenceRegion"] = encode(contigInfo_, *variantSpec.location);
+        if (cnvFindings.absoluteCopyNumber())
+        {
+            record_["Absolute CN"] = *cnvFindings.absoluteCopyNumber();
+        }
+        else
+        {
+            record_["Absolute CN"] = ".";
+        }
+        if (cnvFindings.copyNumberChange())
+        {
+            record_["CN change"] = *cnvFindings.copyNumberChange();
+        }
+        else
+        {
+            record_["CN change"] = ".";
+        }
     }
-    else
+    else if (paralogLocusSpec)
     {
-        record_["Absolute CN"] = ".";
-    }
-    if (cnvFindings.copyNumberChange())
-    {
-        record_["CN change"] = *cnvFindings.copyNumberChange();
-    }
-    else
-    {
-        record_["CN change"] = ".";
+        record_.clear();
+        record_["VariantId"] = cnvFindings.variantId();
+        record_["VariantType"] = "CNV";
+        GenomicRegion variantRegion = paralogLocusSpec->getVariantLocationById(cnvFindings.variantId());
+        record_["ReferenceRegion"] = encode(contigInfo_, variantRegion);
+        if (cnvFindings.absoluteCopyNumber())
+        {
+            record_["CN"] = *cnvFindings.absoluteCopyNumber();
+        }
+        else
+        {
+            record_["CN"] = ".";
+        }
     }
 }
 
-void VariantJsonWriter::visit(const ParalogSmallVariantFindings& findings)
-{
-    auto kk = findings;
-}
+void VariantJsonWriter::visit(const ParalogSmallVariantFindings& findings) { auto paralogFindings = findings; }
 
 void VariantJsonWriter::visit(const SmallVariantFindings& findings)
 {

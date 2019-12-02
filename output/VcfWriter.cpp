@@ -34,6 +34,7 @@
 #include "stats/ReadSupportCalculator.hh"
 
 using std::deque;
+using std::dynamic_pointer_cast;
 using std::map;
 using std::ostream;
 using std::pair;
@@ -252,49 +253,79 @@ void VariantVcfWriter::visit(const StrFindings& strFindings)
 
 void VariantVcfWriter::visit(const CnvVariantFindings& cnvFindings)
 {
-    auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
-    const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
-    const auto& referenceLocus = *(variantSpec.location);
-    const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
-    boost::optional<int> copyNumberChange = cnvFindings.copyNumberChange();
-    boost::optional<int> absoluteCopyNumber = cnvFindings.absoluteCopyNumber();
-    vector<string> vcfRecordElements;
-    
-    vector<string> fields;
-    fields.push_back("END=" + std::to_string(referenceLocus.end()));
-    fields.push_back("CNVLEN=" + std::to_string(referenceLocus.end() - referenceLocus.start()));
-    fields.push_back("VARID=" + variantSpec.id);
+    // auto cnvLocusSpecPtr = std::static_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
+    shared_ptr<CnvLocusSpec> cnvLocusSpecPtr = dynamic_pointer_cast<CnvLocusSpec>(locusSpecPtr_);
+    shared_ptr<ParalogLocusSpec> paralogLocusSpecPtr = dynamic_pointer_cast<ParalogLocusSpec>(locusSpecPtr_);
+    if (cnvLocusSpecPtr)
+    {
+        const auto& variantSpec = cnvLocusSpecPtr->outputVariant();
+        const auto& referenceLocus = *(variantSpec.location);
+        const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+        boost::optional<int> copyNumberChange = cnvFindings.copyNumberChange();
+        boost::optional<int> absoluteCopyNumber = cnvFindings.absoluteCopyNumber();
+        vector<string> vcfRecordElements;
 
-    std::string callFilter = "LowQ";
-    std::string copyNumberChangeCall = ".";
-    std::string absoluteCopyNumberCall = ".";
-    if (absoluteCopyNumber)
-    {
-        absoluteCopyNumberCall = to_string(*absoluteCopyNumber);
+        vector<string> fields;
+        fields.push_back("END=" + std::to_string(referenceLocus.end()));
+        fields.push_back("CNVLEN=" + std::to_string(referenceLocus.end() - referenceLocus.start()));
+        fields.push_back("VARID=" + variantSpec.id);
+
+        std::string callFilter = "LowQ";
+        std::string copyNumberChangeCall = ".";
+        std::string absoluteCopyNumberCall = ".";
+        if (absoluteCopyNumber)
+        {
+            absoluteCopyNumberCall = to_string(*absoluteCopyNumber);
+        }
+        if (copyNumberChange)
+        {
+            callFilter = "PASS";
+            copyNumberChangeCall = to_string(*copyNumberChange);
+        }
+        else if (absoluteCopyNumber)
+        {
+            callFilter = "BaselineFail";
+        }
+        vcfRecordElements = { contigName, to_string(referenceLocus.start()),
+                              ".",        "N",
+                              ".",        ".",
+                              callFilter, boost::algorithm::join(fields, ";"),
+                              "CN:CNC",   absoluteCopyNumberCall + ":" + copyNumberChangeCall };
+
+        out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
     }
-    if (copyNumberChange)
+    else if (paralogLocusSpecPtr)
     {
-        callFilter = "PASS";
-        copyNumberChangeCall = to_string(*copyNumberChange);
+        auto variantId = cnvFindings.variantId();
+        GenomicRegion referenceLocus = paralogLocusSpecPtr->getVariantLocationById(cnvFindings.variantId());
+        const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
+        boost::optional<int> absoluteCopyNumber = cnvFindings.absoluteCopyNumber();
+        vector<string> vcfRecordElements;
+
+        vector<string> fields;
+        fields.push_back("END=" + std::to_string(referenceLocus.end()));
+        fields.push_back("CNVLEN=" + std::to_string(referenceLocus.end() - referenceLocus.start()));
+        fields.push_back("VARID=" + variantId);
+
+        std::string callFilter = "LowQ"; 
+        std::string absoluteCopyNumberCall = ".";
+        if (absoluteCopyNumber)
+        {
+            callFilter = "PASS";
+            absoluteCopyNumberCall = to_string(*absoluteCopyNumber);
+        }
+
+        vcfRecordElements = { contigName, to_string(referenceLocus.start()),
+                              ".",        "N",
+                              ".",        ".",
+                              callFilter, boost::algorithm::join(fields, ";"),
+                              "CN",       absoluteCopyNumberCall };
+
+        out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
     }
-    else if (absoluteCopyNumber)
-    {
-        callFilter = "BaselineFail";
-    }
-    vcfRecordElements = { contigName, to_string(referenceLocus.start()),
-                            ".",        "N",
-                            ".",        ".",
-                            callFilter,     boost::algorithm::join(fields, ";"),
-                            "CN:CNC",      absoluteCopyNumberCall + ":" + copyNumberChangeCall };
-    
-    out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void VariantVcfWriter::visit(const ParalogSmallVariantFindings& findings)
-{
-    auto kk = findings;   
-    // out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
-}
+void VariantVcfWriter::visit(const ParalogSmallVariantFindings& findings) { auto paralogFindings = findings; }
 
 void VariantVcfWriter::visit(const SmallVariantFindings& findings)
 {

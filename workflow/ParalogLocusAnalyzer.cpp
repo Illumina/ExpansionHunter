@@ -72,7 +72,7 @@ void ParalogLocusAnalyzer::updateVariantFindings(boost::optional<DepthNormalizer
         cnvFindings_.push_back(varFinding);
         if (analyzerPtr->variantType() == CnvVariantType::kTarget)
         {
-            totalCopyNumber = *varFinding.absoluteCopyNumber();
+            totalCopyNumber = varFinding.absoluteCopyNumber();
         }
     }
 

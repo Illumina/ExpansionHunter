@@ -140,11 +140,11 @@ int main(int argc, char** argv)
         }
 
         spdlog::info("Writing output to disk");
-        //VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
-        //writeToFile(outputPaths.vcf(), vcfWriter);
+        VcfWriter vcfWriter(sampleParams.id(), reference, regionCatalog, sampleFindings);
+        writeToFile(outputPaths.vcf(), vcfWriter);
 
-        //JsonWriter jsonWriter(sampleParams, reference.contigInfo(), regionCatalog, sampleFindings);
-        //writeToFile(outputPaths.json(), jsonWriter);
+        JsonWriter jsonWriter(sampleParams, reference.contigInfo(), regionCatalog, sampleFindings);
+        writeToFile(outputPaths.json(), jsonWriter);
     }
     catch (const std::exception& e)
     {

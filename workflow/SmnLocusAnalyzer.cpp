@@ -46,17 +46,28 @@ SmnLocusAnalyzer::SmnLocusAnalyzer(string locusId, std::vector<ParalogOutputVari
 {
 }
 
-static int findMode(std::vector<boost::optional<int>> calls)
+static int findMode(std::vector<boost::optional<int>> copyNumberCalls)
 {
-    std::vector<int> histogram(10, 0);
-    for (int i = 0; i != 10; ++i)
+    int maxCopyNumber = 0;
+    for (auto callPerSite : copyNumberCalls)
     {
-        if (calls[i])
+        if (callPerSite)
         {
-            ++histogram[*calls[i]];
+            if (*callPerSite > maxCopyNumber)
+            {
+                maxCopyNumber = *callPerSite;
+            }
         }
     }
-    return std::max_element(histogram.begin(), histogram.end()) - histogram.begin();
+    std::vector<int> callsCount(maxCopyNumber, 0);
+    for (int i = 0; i != maxCopyNumber; ++i)
+    {
+        if (copyNumberCalls[i])
+        {
+            ++callsCount[*copyNumberCalls[i]];
+        }
+    }
+    return std::max_element(callsCount.begin(), callsCount.end()) - callsCount.begin();
 }
 
 LocusFindings SmnLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer)
@@ -66,21 +77,53 @@ LocusFindings SmnLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNorm
     locusFindings.optionalStats = readCountAnalyzer_->estimate(sampleSex);
 
     updateVariantFindings(genomeDepthNormalizer);
-    std::vector<boost::optional<int>> copyNumberCalls;
-    for (auto finding : smallVariantFindings_)
+    auto outputVariantId1 = "SMN1";
+    auto outputVariantId2 = "SMN2";
+
+    boost::optional<int> totalCopyNumber;
+    boost::optional<int> intactCopyNumber;
+    boost::optional<int> smn1CopyNumberCall;
+    boost::optional<int> smn2CopyNumberCall;
+    for (auto finding : cnvFindings_)
     {
-        auto copyNumberPerBase = finding.copyNumber();
-        if (copyNumberPerBase)
+        if (finding.variantId() == "Exon1-6")
         {
-            auto callPerBase = *copyNumberPerBase;
-            copyNumberCalls.push_back(callPerBase.first);
+            totalCopyNumber = finding.absoluteCopyNumber();
+        }
+        if (finding.variantId() == "Exon7-8")
+        {
+            intactCopyNumber = finding.absoluteCopyNumber();
         }
     }
-    int smn1CopyNumberCall = findMode(copyNumberCalls);
-    auto outputVariantId = "SMN1";
-    std::unique_ptr<VariantFindings> cnvLocusFindingPtr(
-        new CnvVariantFindings(outputVariantId, smn1CopyNumberCall, smn1CopyNumberCall));
-    locusFindings.findingsForEachVariant.emplace(locusId_, std::move(cnvLocusFindingPtr));
+    /*
+    if (totalCopyNumber && intactCopyNumber)
+    {
+        int SmnDelta = *totalCopyNumber - *intactCopyNumber;
+    }
+    */
+
+    if (intactCopyNumber)
+    {
+        std::vector<boost::optional<int>> copyNumberCalls;
+        for (auto finding : smallVariantFindings_)
+        {
+            auto copyNumberPerBase = finding.copyNumber();
+            if (copyNumberPerBase)
+            {
+                auto callPerBase = *copyNumberPerBase;
+                copyNumberCalls.push_back(callPerBase.first);
+            }
+        }
+        smn1CopyNumberCall = findMode(copyNumberCalls);
+        smn2CopyNumberCall = *intactCopyNumber - *smn1CopyNumberCall;
+    }
+
+    std::unique_ptr<VariantFindings> Smn1FindingPtr(
+        new CnvVariantFindings(outputVariantId1, smn1CopyNumberCall, smn1CopyNumberCall));
+    locusFindings.findingsForEachVariant.emplace(outputVariantId1, std::move(Smn1FindingPtr));
+    std::unique_ptr<VariantFindings> Smn2FindingPtr(
+        new CnvVariantFindings(outputVariantId2, smn2CopyNumberCall, smn2CopyNumberCall));
+    locusFindings.findingsForEachVariant.emplace(outputVariantId2, std::move(Smn2FindingPtr));
 
     return locusFindings;
 }

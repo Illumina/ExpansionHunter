@@ -70,7 +70,6 @@ static boost::optional<Base> getBaseOnRead(const MappedRead& read, int position)
 
     int positionOnReference = read.pos();
     int positionOnQuery = 0;
-    // int referenceOnly = 0;
 
     for (auto cigarOp : cigarOps)
     {
@@ -100,8 +99,6 @@ static boost::optional<Base> getBaseOnRead(const MappedRead& read, int position)
                 throw std::logic_error("Position past read end.");
             }
             char readBase = read.sequence()[basePositionOnQuery];
-            // std::cout << read.readId() << " " << cigarOp.first << cigarOp.second << " " << positionOnQuery << " "
-            // << positionOnReference << " " << basePositionOnQuery << " " << position << " " << readBase << "\n";
             return decodeBase(readBase);
         }
         return boost::optional<Base>();

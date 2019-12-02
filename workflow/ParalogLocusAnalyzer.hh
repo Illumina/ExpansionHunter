@@ -38,7 +38,6 @@ class ParalogLocusAnalyzer : public LocusAnalyzer
 {
 public:
     ParalogLocusAnalyzer(std::string locusId, std::vector<ParalogOutputVariant> outputVariants);
-    // ~ParalogLocusAnalyzer() override = default;
     virtual ~ParalogLocusAnalyzer() = default;
 
     const std::string& locusId() const override { return locusId_; }

@@ -32,6 +32,7 @@
 #include "locus_spec/CnvLocusSpec.hh"
 #include "locus_spec/GraphLocusSpec.hh"
 #include "locus_spec/LocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter

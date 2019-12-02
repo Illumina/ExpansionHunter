@@ -4,12 +4,12 @@
 		"LocusType": "Paralog",
 		"OutputVariants": [
 			{
-				"VariantId": "SMN1",
+				"VariantId": "SMN2",
 				"VariantType": "CNV",
 				"ReferenceRegion": "5:69345349-69374582"
 			},
 			{
-				"VariantId": "SMN2",
+				"VariantId": "SMN1",
 				"VariantType": "CNV",
 				"ReferenceRegion": "5:70220767-70250000"
 			}
