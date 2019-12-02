@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 #include "workflow/LocusAnalyzer.hh"
 
 namespace ehunter
@@ -32,26 +32,30 @@ namespace ehunter
 
 class CnvVariantAnalyzer;
 class ReadCountAnalyzer;
+class LinearSmallVariantAnalyzer;
 
-class CnvLocusAnalyzer : public LocusAnalyzer
+class ParalogLocusAnalyzer : public LocusAnalyzer
 {
 public:
-    CnvLocusAnalyzer(std::string locusId, CnvLocusType locusType, CnvOutputVariant outputVariant);
-    ~CnvLocusAnalyzer() override = default;
+    ParalogLocusAnalyzer(std::string locusId, std::vector<ParalogOutputVariant> outputVariants);
+    virtual ~ParalogLocusAnalyzer() = default;
 
     const std::string& locusId() const override { return locusId_; }
-    CnvLocusType locusType() const { return locusType_; }
-    CnvOutputVariant outputVariant() const { return outputVariant_; }
+    std::vector<ParalogOutputVariant> outputVariants() const { return outputVariants_; }
     void setStats(std::shared_ptr<ReadCountAnalyzer> statsAnalyzer);
-    void addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
-    LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) override;
+    void addCnvAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
+    void addSmallVariantAnalyzer(std::shared_ptr<LinearSmallVariantAnalyzer> variantAnalyzer);
+    void updateVariantFindings(boost::optional<DepthNormalizer> genomeDepthNormalizer);
+    virtual LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) = 0;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
-private:
+protected:
     std::string locusId_;
-    CnvLocusType locusType_;
-    CnvOutputVariant outputVariant_;
+    std::vector<ParalogOutputVariant> outputVariants_;
     std::shared_ptr<ReadCountAnalyzer> readCountAnalyzer_;
-    std::vector<std::shared_ptr<CnvVariantAnalyzer>> variantAnalyzers_;
+    std::vector<std::shared_ptr<CnvVariantAnalyzer>> cnvVariantAnalyzers_;
+    std::vector<std::shared_ptr<LinearSmallVariantAnalyzer>> smallVariantAnalyzers_;
+    std::vector<CnvVariantFindings> cnvFindings_;
+    std::vector<ParalogSmallVariantFindings> smallVariantFindings_;
 };
 }

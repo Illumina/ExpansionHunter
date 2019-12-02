@@ -3,7 +3,8 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+// Author: Xiao Chen <xchen2@illumina.com>,
+//         Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,21 +20,28 @@
 //
 //
 
-#pragma once
-
-#include <iostream>
+#include <memory>
 #include <string>
+#include <vector>
 
-#include "common/Parameters.hh"
-#include "input/CatalogLoading.hh"
-#include "locus_spec/LocusSpec.hh"
-#include "output/BamletWriter.hh"
-#include "workflow/LocusFindings.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
+#include "workflow/ParalogLocusAnalyzer.hh"
 
 namespace ehunter
 {
 
-SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
-    const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter);
+class CnvVariantAnalyzer;
+class ReadCountAnalyzer;
+class LinearSmallVariantAnalyzer;
+
+class SmnLocusAnalyzer : public ParalogLocusAnalyzer
+{
+public:
+    SmnLocusAnalyzer(std::string locusId, std::vector<ParalogOutputVariant> outputVariants);
+    ~SmnLocusAnalyzer() override = default;
+
+    LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) override;
+
+private:
+};
 }

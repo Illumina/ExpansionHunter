@@ -21,8 +21,10 @@
 //
 //
 
-#include "locus_spec/CnvLocusDecoding.hh"
-#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/ParalogLocusDecoding.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 #include <stdexcept>
 
@@ -50,23 +52,10 @@ static CopyNumberBySex getCopyNumber(const string& contig)
     return CopyNumberBySex::kTwoInFemaleTwoInMale;
 }
 
-static CnvLocusType getCnvLocusType(const CnvLocusEncoding& encoding)
-{
-    CnvLocusType cnvLocusType = CnvLocusType::kNonoverlapping;
-    for (const auto& variant : encoding.variants)
-    {
-        if (variant.variantType == "kBaseline" && !(variant.expectedNormalCN))
-        {
-            cnvLocusType = CnvLocusType::kOverlapping;
-        }
-    }
-    return cnvLocusType;
-}
-
-static GenomicRegion getLocusLocation(const CnvLocusEncoding& locusEncoding)
+static GenomicRegion getLocusLocation(const ParalogLocusEncoding& locusEncoding)
 {
     vector<GenomicRegion> variantLocations;
-    for (const auto& variant : locusEncoding.variants)
+    for (const auto& variant : locusEncoding.cnvVariants)
     {
         for (auto region : *variant.locations)
         {
@@ -74,6 +63,43 @@ static GenomicRegion getLocusLocation(const CnvLocusEncoding& locusEncoding)
         }
     }
     return *variantLocations.begin();
+}
+
+static Base decodeBase(const std::string base)
+{
+    if (base == "A")
+    {
+        return Base::kA;
+    }
+    else if (base == "C")
+    {
+        return Base::kC;
+    }
+    else if (base == "T")
+    {
+        return Base::kT;
+    }
+    else if (base == "G")
+    {
+        return Base::kG;
+    }
+
+    throw std::logic_error("Variant base " + base + " is not recognized.");
+}
+
+static std::pair<Base, Base> getSmallVariantBases(const std::string variantStructure)
+{
+    vector<string> components;
+    boost::algorithm::split(components, variantStructure, boost::algorithm::is_any_of("(|)"));
+
+    if (components.size() != 4)
+    {
+        throw std::logic_error("Unexpected small variant structure format: " + variantStructure);
+    }
+
+    Base geneABase = decodeBase(components[1]);
+    Base geneBBase = decodeBase(components[2]);
+    return std::pair<Base, Base>(geneABase, geneBBase);
 }
 
 static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
@@ -92,21 +118,22 @@ static CnvVariantType getCnvVariantType(const CnvVariantEncoding variant)
     }
 }
 
-std::unique_ptr<CnvLocusSpec> decode(const Reference& reference, const CnvLocusEncoding& encoding)
+std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const ParalogLocusEncoding& encoding)
 {
     GenomicRegion locusLocation = getLocusLocation(encoding);
     CopyNumberBySex copyNumberBySex = getCopyNumber(reference.contigInfo().getContigName(locusLocation.contigIndex()));
-    CnvLocusType cnvLocusType = getCnvLocusType(encoding);
 
-    CnvOutputVariant outputVariant;
+    std::vector<ParalogOutputVariant> outputVariants;
     for (const auto& variant : encoding.outputVariants)
     {
+        ParalogOutputVariant outputVariant;
         outputVariant.id = variant.id;
         outputVariant.location = variant.location;
+        outputVariants.push_back(outputVariant);
     }
 
-    unique_ptr<CnvLocusSpec> locusSpec(new CnvLocusSpec(encoding.id, cnvLocusType, copyNumberBySex, outputVariant));
-    for (const auto& variant : encoding.variants)
+    unique_ptr<ParalogLocusSpec> locusSpec(new ParalogLocusSpec(encoding.id, copyNumberBySex, outputVariants));
+    for (const auto& variant : encoding.cnvVariants)
     {
         CnvGenotyperParameters variantParameters;
         variantParameters.regionGC = variant.regionGC;
@@ -119,7 +146,13 @@ std::unique_ptr<CnvLocusSpec> decode(const Reference& reference, const CnvLocusE
         variantParameters.expectedNormal = variant.expectedNormalCN;
 
         CnvVariantType variantType = getCnvVariantType(variant);
-        locusSpec->addVariant(variant.id, variantType, *variant.locations, variantParameters);
+        locusSpec->addCnvVariant(variant.id, variantType, *variant.locations, variantParameters);
+    }
+    for (const auto& variant : encoding.smallVariants)
+    {
+        auto variantStructure = variant.variantStructure;
+        auto variantBases = getSmallVariantBases(variantStructure);
+        locusSpec->addSmallVariant(variant.id, *variant.locations, variant.mappingQualityThreshold, variantBases);
     }
 
     return locusSpec;

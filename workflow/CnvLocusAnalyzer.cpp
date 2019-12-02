@@ -58,7 +58,7 @@ void CnvLocusAnalyzer::addAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAn
     variantAnalyzers_.push_back(std::move(variantAnalyzer));
 }
 
-LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) const
+LocusFindings CnvLocusAnalyzer::analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer)
 {
     LocusFindings locusFindings;
 

@@ -21,7 +21,7 @@
 //
 //
 
-#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 
 #include <algorithm>
 #include <cassert>
@@ -53,29 +53,48 @@ namespace spd = spdlog;
 namespace ehunter
 {
 
-vector<GenomicRegion> CnvLocusSpec::regionsWithReads() const
+vector<GenomicRegion> ParalogLocusSpec::regionsWithReads() const
 {
     vector<GenomicRegion> regions;
-    for (const auto& variant : variants_)
+    for (const auto& variant : cnvVariants_)
     {
         for (const auto& region : variant.locations())
         {
             regions.push_back(region);
         }
     }
+    /*
+    for (const auto& variant : smallVariants_)
+    {
+        regions.push_back(variant.locations().geneALocation);
+        regions.push_back(variant.locations().geneBLocation);
+    }
+    */
 
     return regions;
 }
 
-void CnvLocusSpec::addVariant(
+void ParalogLocusSpec::addCnvVariant(
     std::string id, CnvVariantType type, std::vector<GenomicRegion> referenceLocus, CnvGenotyperParameters parameters)
 {
-    variants_.emplace_back(std::move(id), type, std::move(referenceLocus), std::move(parameters));
+    cnvVariants_.emplace_back(std::move(id), type, std::move(referenceLocus), std::move(parameters));
 }
 
-void CnvVariantSpec::assertConsistency() const
+void ParalogLocusSpec::addSmallVariant(
+    std::string id, std::vector<GenomicRegion> referenceLocus, int mappingQualityThreshold, std::pair<Base, Base> bases)
 {
-    bool variantIsValid = (variantType_ == CnvVariantType::kBaseline || variantType_ == CnvVariantType::kTarget);
+    auto iter = referenceLocus.begin();
+    auto geneALocation = *iter;
+    std::advance(iter, 1);
+    auto geneBLocation = *iter;
+    smallVariants_.emplace_back(
+        std::move(id), SmallVariantLocations(geneALocation, geneBLocation), mappingQualityThreshold,
+        SmallVariantBases(bases.first, bases.second));
+}
+
+void SmallVariantSpec::assertConsistency() const
+{
+    bool variantIsValid = (bases_.geneABase != bases_.geneBBase);
 
     if (!variantIsValid)
     {
@@ -83,13 +102,15 @@ void CnvVariantSpec::assertConsistency() const
     }
 }
 
-const GenomicRegion& CnvLocusSpec::getVariantLocationById(const string& id) const
+const GenomicRegion& ParalogLocusSpec::getVariantLocationById(const string& id) const
 {
-    if (outputVariant_.id == id)
+    for (auto variant : outputVariants_)
     {
-        return *(outputVariant_.location);
+        if (variant.id == id)
+        {
+            return *(variant.location);
+        }
     }
-
     throw std::logic_error("There is no variant " + id + " in locus " + locusId_);
 }
 }

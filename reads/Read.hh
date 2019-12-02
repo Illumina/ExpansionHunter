@@ -107,7 +107,8 @@ class MappedRead : public Read
 public:
     MappedRead(
         ReadId readId, std::string sequence, bool isReversed, int contigIndex, int64_t pos, int mapq,
-        int mateContigIndex, int64_t matePos, bool isPaired, bool isMapped, bool isMateMapped);
+        int mateContigIndex, int64_t matePos, bool isPaired, bool isMapped, bool isMateMapped, 
+        std::vector<std::pair<char, int>> cigarOp);
 
     int contigIndex() const { return contigIndex_; }
     int64_t pos() const { return pos_; }
@@ -118,6 +119,7 @@ public:
     bool isPaired() const { return isPaired_; }
     bool isMapped() const { return isMapped_; }
     bool isMateMapped() const { return isMateMapped_; }
+    std::vector<std::pair<char, int>> cigarOp() const { return cigarOp_; }
 
 private:
     int contigIndex_;
@@ -128,6 +130,7 @@ private:
     bool isPaired_;
     bool isMapped_;
     bool isMateMapped_;
+    std::vector<std::pair<char, int>> cigarOp_;
 };
 
 class ReadRecordWrapper

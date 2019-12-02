@@ -26,6 +26,7 @@
 #include "common/Parameters.hh"
 #include "locus_spec/CnvLocusSpec.hh"
 #include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 #include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
@@ -47,6 +48,7 @@ public:
     void visit(const StrFindings& strFindings) override;
     void visit(const SmallVariantFindings& smallVariantFindings) override;
     void visit(const CnvVariantFindings& cnvVariantFindings) override;
+    void visit(const ParalogSmallVariantFindings& findings) override;
     nlohmann::json record() const { return record_; }
 
 private:

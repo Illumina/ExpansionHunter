@@ -108,6 +108,19 @@ namespace htshelpers
         string quals = decodeQuals(htsAlignPtr);
         string sequence = lowercaseLowQualityBases(bases, quals);
 
+        std::vector<std::pair<char, int>> cigarOps;
+        auto cigar = bam_get_cigar(htsAlignPtr);
+        for (int i=0; i < htsAlignPtr->core.n_cigar; ++i)
+        {
+            int icigar = cigar[i];
+            char cigarChr = bam_cigar_opchr(icigar);
+            int cigarOpLen = bam_cigar_oplen(icigar);
+            std::pair<char, int> cigarOp;
+            cigarOp.first = cigarChr;
+            cigarOp.second = cigarOpLen;
+            cigarOps.push_back(cigarOp);
+        }
+
         // Decode linear alignment
         int contigIndex = htsAlignPtr->core.tid;
         int64_t pos = htsAlignPtr->core.pos;
@@ -117,7 +130,7 @@ namespace htshelpers
 
         return MappedRead(
             std::move(readId), std::move(sequence), isReversed, contigIndex, pos, mapq, mateContigIndex, matePos,
-            isPaired, isMapped, isMateMapped);
+            isPaired, isMapped, isMateMapped, cigarOps);
     }
 
     ReferenceContigInfo decodeContigInfo(bam_hdr_t* htsHeaderPtr)

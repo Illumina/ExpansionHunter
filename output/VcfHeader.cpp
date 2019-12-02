@@ -98,6 +98,11 @@ void FieldDescriptionWriter::visit(const StrFindings& strFindings)
     }
 }
 
+void FieldDescriptionWriter::visit(const ParalogSmallVariantFindings& findings)
+{
+    auto paralogFindings = findings;
+}
+
 void FieldDescriptionWriter::visit(const CnvVariantFindings& cnvFindings)
 {
     auto finding = cnvFindings;

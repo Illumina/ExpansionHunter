@@ -32,6 +32,7 @@
 #include "locus_spec/CnvLocusSpec.hh"
 #include "locus_spec/GraphLocusSpec.hh"
 #include "locus_spec/LocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -53,6 +54,7 @@ public:
     void visit(const StrFindings& findings) override;
     void visit(const SmallVariantFindings& findings) override;
     void visit(const CnvVariantFindings& findings) override;
+    void visit(const ParalogSmallVariantFindings& findings) override;
 
 private:
     Reference& reference_;

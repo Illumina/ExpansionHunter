@@ -29,39 +29,35 @@
 
 #include <boost/optional.hpp>
 
+#include "CnvLocusDecoding.hh"
 #include "common/GenomicRegion.hh"
-#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 
 namespace ehunter
 {
 
-struct CnvVariantEncoding
+struct SmallVariantEncoding
 {
     std::string id;
     boost::optional<std::vector<GenomicRegion>> locations;
     std::string variantType;
-    bool expectedNormalCN;
-    double regionGC;
+    std::string variantStructure;
     int mappingQualityThreshold;
-    int maxCopyNumber;
-    double depthScaleFactor;
-    double standardDeviationOfCN2;
-    std::vector<double> meanDepthValues;
-    std::vector<double> priorCopyNumberFrequency;
 };
 
-struct CnvOutputVariantEncoding
+struct ParalogOutputVariantEncoding
 {
     std::string id;
     boost::optional<GenomicRegion> location;
 };
 
-struct CnvLocusEncoding
+struct ParalogLocusEncoding
 {
     std::string id;
-    std::vector<CnvVariantEncoding> variants;
-    std::vector<CnvOutputVariantEncoding> outputVariants;
+    std::vector<CnvVariantEncoding> cnvVariants;
+    std::vector<SmallVariantEncoding> smallVariants;
+    std::vector<ParalogOutputVariantEncoding> outputVariants;
 };
 
-std::unique_ptr<CnvLocusSpec> decode(const Reference& reference, const CnvLocusEncoding& encoding);
+std::unique_ptr<ParalogLocusSpec> decode(const Reference& reference, const ParalogLocusEncoding& encoding);
 }
