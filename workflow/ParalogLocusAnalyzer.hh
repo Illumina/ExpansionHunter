@@ -46,7 +46,6 @@ public:
     void addCnvAnalyzer(std::shared_ptr<CnvVariantAnalyzer> variantAnalyzer);
     void addSmallVariantAnalyzer(std::shared_ptr<LinearSmallVariantAnalyzer> variantAnalyzer);
     void updateVariantFindings(boost::optional<DepthNormalizer> genomeDepthNormalizer);
-    virtual LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) = 0;
     std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() override;
 
 protected:
