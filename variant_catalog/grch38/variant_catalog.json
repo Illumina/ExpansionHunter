@@ -528,5 +528,11 @@
         "LocusStructure": "(AARRG)*",
         "ReferenceRegion": "4:39348424-39348479",
         "VariantType": "Repeat"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "PABPN1",
+        "LocusStructure": "(GCG)*",
+        "ReferenceRegion": "14:23321472-23321490"
     }
 ]
