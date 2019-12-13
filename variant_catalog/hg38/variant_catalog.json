@@ -519,8 +519,8 @@
     },
     {
         "LocusId": "GLS",
-        "LocusStructure": "(GGA)*",
-        "ReferenceRegion": "chr2:190880873-190880920",
+        "LocusStructure": "(GCA)*",
+        "ReferenceRegion": "chr2:190880872-190880920",
         "VariantType": "Repeat"
     },
     {
