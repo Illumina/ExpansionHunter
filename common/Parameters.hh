@@ -152,8 +152,9 @@ struct GenotyperParameters
     double likelihoodRatioThreshold = 10000;
     // Minimal estimated locus coverage (depth) to attempt genotyping
     double minLocusCoverage = 10;
+    // Minimal number of reads spanning a variant breakpoint
+    int minBreakpointSpanningReads = 5;
 };
-
 
 class ProgramParameters
 {

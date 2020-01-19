@@ -34,6 +34,14 @@
 namespace ehunter
 {
 
+enum class GenotypeFilter : unsigned
+{
+    kLowDepth = 1
+};
+
+GenotypeFilter operator|(GenotypeFilter left, GenotypeFilter right);
+GenotypeFilter operator&(GenotypeFilter left, GenotypeFilter right);
+
 class VariantFindings;
 class RepeatFindings;
 class SmallVariantFindings;
@@ -56,11 +64,13 @@ class RepeatFindings : public VariantFindings
 public:
     RepeatFindings(
         CountTable countsOfSpanningReads, CountTable countsOfFlankingReads, CountTable countsOfInrepeatReads,
-        boost::optional<RepeatGenotype> optionalGenotype)
+        AlleleCount alleleCount, boost::optional<RepeatGenotype> optionalGenotype, GenotypeFilter genotypeFilter)
         : countsOfSpanningReads_(std::move(countsOfSpanningReads))
         , countsOfFlankingReads_(std::move(countsOfFlankingReads))
         , countsOfInrepeatReads_(std::move(countsOfInrepeatReads))
+        , alleleCount_(alleleCount)
         , optionalGenotype_(std::move(optionalGenotype))
+        , genotypeFilter_(genotypeFilter)
     {
     }
 
@@ -70,7 +80,10 @@ public:
     const CountTable& countsOfSpanningReads() const { return countsOfSpanningReads_; }
     const CountTable& countsOfFlankingReads() const { return countsOfFlankingReads_; }
     const CountTable& countsOfInrepeatReads() const { return countsOfInrepeatReads_; }
+
+    AlleleCount alleleCount() const { return alleleCount_; }
     const boost::optional<RepeatGenotype>& optionalGenotype() const { return optionalGenotype_; }
+    GenotypeFilter genotypeFilter() const { return genotypeFilter_; }
 
     bool operator==(const RepeatFindings& other) const
     {
@@ -83,21 +96,24 @@ private:
     CountTable countsOfSpanningReads_;
     CountTable countsOfFlankingReads_;
     CountTable countsOfInrepeatReads_;
+    AlleleCount alleleCount_;
     boost::optional<RepeatGenotype> optionalGenotype_;
+    GenotypeFilter genotypeFilter_;
 };
 
 class SmallVariantFindings : public VariantFindings
 {
 public:
     SmallVariantFindings(
-        int numRefReads, int numAltReads,
-        AlleleCheckSummary refAlleleStatus, AlleleCheckSummary altAlleleStatus,
-        boost::optional<SmallVariantGenotype> optionalGenotype)
+        int numRefReads, int numAltReads, AlleleCheckSummary refAlleleStatus, AlleleCheckSummary altAlleleStatus,
+        AlleleCount alleleCount, boost::optional<SmallVariantGenotype> optionalGenotype, GenotypeFilter genotypeFilter)
         : numRefReads_(numRefReads)
         , numAltReads_(numAltReads)
         , refAlleleStatus_(refAlleleStatus)
         , altAlleleStatus_(altAlleleStatus)
+        , alleleCount_(alleleCount)
         , optionalGenotype_(std::move(optionalGenotype))
+        , genotypeFilter_(genotypeFilter)
     {
     }
 
@@ -106,7 +122,9 @@ public:
 
     int numRefReads() const { return numRefReads_; }
     int numAltReads() const { return numAltReads_; }
+    AlleleCount alleleCount() const { return alleleCount_; }
     const boost::optional<SmallVariantGenotype>& optionalGenotype() const { return optionalGenotype_; }
+    GenotypeFilter genotypeFilter() const { return genotypeFilter_; }
 
     AlleleCheckSummary refAllelePresenceStatus() const { return refAlleleStatus_; }
     AlleleCheckSummary altAllelePresenceStatus() const { return altAlleleStatus_; }
@@ -116,7 +134,9 @@ private:
     int numAltReads_;
     AlleleCheckSummary refAlleleStatus_;
     AlleleCheckSummary altAlleleStatus_;
+    AlleleCount alleleCount_;
     boost::optional<SmallVariantGenotype> optionalGenotype_;
+    GenotypeFilter genotypeFilter_;
 };
 
 std::ostream& operator<<(std::ostream& out, const RepeatFindings& repeatFindings);

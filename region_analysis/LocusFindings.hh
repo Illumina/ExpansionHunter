@@ -25,8 +25,6 @@
 #include <string>
 #include <unordered_map>
 
-#include <boost/optional.hpp>
-
 #include "region_analysis/VariantFindings.hh"
 #include "stats/LocusStats.hh"
 
@@ -36,7 +34,11 @@ namespace ehunter
 // Container with per-locus analysis results
 struct LocusFindings
 {
-    boost::optional<LocusStats> optionalStats;
+    explicit LocusFindings(LocusStats stats)
+        : stats(stats)
+    {
+    }
+    LocusStats stats;
     // VariantFindings is an abstract class from which findings for all variant types are derived
     std::unordered_map<std::string, std::unique_ptr<VariantFindings>> findingsForEachVariant;
 };

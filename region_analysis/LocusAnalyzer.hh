@@ -68,7 +68,6 @@ public:
     LocusAnalyzer(const LocusAnalyzer&) = delete;
     LocusAnalyzer& operator=(const LocusAnalyzer&) = delete;
     LocusAnalyzer(LocusAnalyzer&&) = default;
-    LocusAnalyzer& operator=(LocusAnalyzer&&) = default;
 
     const std::string& locusId() const { return locusSpec_.locusId(); }
     const LocusSpecification& locusSpec() const { return locusSpec_; }
@@ -77,7 +76,7 @@ public:
 
     bool checkIfPassesSequenceFilters(const std::string& sequence) const;
 
-    LocusFindings analyze();
+    LocusFindings analyze(Sex sampleSex, boost::optional<double> genomeWideDepth);
 
     bool operator==(const LocusAnalyzer& other) const;
 

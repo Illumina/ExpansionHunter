@@ -41,12 +41,12 @@ class VariantAnalyzer
 {
 public:
     VariantAnalyzer(
-        std::string variantId, AlleleCount expectedAlleleCount, const graphtools::Graph& graph,
-        std::vector<graphtools::NodeId> nodeIds)
+        std::string variantId, const graphtools::Graph& graph, std::vector<graphtools::NodeId> nodeIds,
+        GenotyperParameters genotyperParams)
         : variantId_(std::move(variantId))
-        , expectedAlleleCount_(expectedAlleleCount)
         , graph_(graph)
         , nodeIds_(std::move(nodeIds))
+        , genotyperParams_(genotyperParams)
     {
     }
     virtual ~VariantAnalyzer() = default;
@@ -59,15 +59,14 @@ public:
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) const = 0;
 
     const std::string& variantId() const { return variantId_; }
-    AlleleCount expectedAlleleCount() const { return expectedAlleleCount_; }
     const graphtools::Graph& graph() const { return graph_; }
     const std::vector<graphtools::NodeId>& nodeIds() const { return nodeIds_; }
 
 protected:
     std::string variantId_;
-    AlleleCount expectedAlleleCount_;
     const graphtools::Graph& graph_;
     std::vector<graphtools::NodeId> nodeIds_;
+    GenotyperParameters genotyperParams_;
 };
 
 }

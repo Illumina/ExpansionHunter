@@ -49,10 +49,11 @@ class LocusSpecification
 {
 public:
     LocusSpecification(
-        RegionId locusId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
+        RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
         graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
 
     const RegionId& locusId() const { return locusId_; }
+    ChromType typeOfChromLocusLocatedOn() const { return typeOfChromLocusLocatedOn_; }
     /*
      * List of all regions in the reference this graph describes
      * i.e. where we expect relevant reads to align
@@ -69,7 +70,6 @@ public:
     }
 
     const graphtools::Graph& regionGraph() const { return regionGraph_; }
-    AlleleCount expectedAlleleCount() const { return expectedAlleleCount_; }
     const GenotyperParameters& genotyperParameters() const { return parameters_; }
     const std::vector<VariantSpecification>& variantSpecs() const { return variantSpecs_; }
 
@@ -81,11 +81,13 @@ public:
 
     const NodeToRegionAssociation& referenceProjectionOfNodes() const { return referenceRegions_; }
 
+    bool requiresGenomeWideDepth() const;
+
 private:
     std::string locusId_;
+    ChromType typeOfChromLocusLocatedOn_;
     std::vector<GenomicRegion> targetReadExtractionRegions_;
     std::vector<GenomicRegion> offtargetReadExtractionRegions_;
-    AlleleCount expectedAlleleCount_;
     graphtools::Graph regionGraph_;
     std::vector<VariantSpecification> variantSpecs_;
     NodeToRegionAssociation referenceRegions_;

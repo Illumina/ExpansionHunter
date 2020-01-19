@@ -53,11 +53,11 @@ namespace spd = spdlog;
 namespace ehunter
 {
 LocusSpecification::LocusSpecification(
-    RegionId locusId, std::vector<GenomicRegion> targetReadExtractionRegions, AlleleCount expectedAlleleCount,
+    RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
     graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
     : locusId_(std::move(locusId))
+    , typeOfChromLocusLocatedOn_(typeOfChromLocusLocatedOn)
     , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
-    , expectedAlleleCount_(expectedAlleleCount)
     , regionGraph_(std::move(regionGraph))
     , referenceRegions_(std::move(referenceRegions))
     , parameters_(std::move(genotyperParams))
@@ -82,6 +82,19 @@ const VariantSpecification& LocusSpecification::getVariantSpecById(const std::st
     }
 
     throw std::logic_error("There is no variant " + variantSpecId + " in locus " + locusId_);
+}
+
+bool LocusSpecification::requiresGenomeWideDepth() const
+{
+    for (const auto& variantSpec : variantSpecs_)
+    {
+        if (variantSpec.classification().subtype == VariantSubtype::kSMN)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }

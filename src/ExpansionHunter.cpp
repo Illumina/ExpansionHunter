@@ -113,8 +113,7 @@ int main(int argc, char** argv)
 
         console->info("Loading variant catalog from disk {}", inputPaths.catalog());
         const HeuristicParameters& heuristicParams = params.heuristics();
-        const RegionCatalog regionCatalog
-            = loadLocusCatalogFromDisk(inputPaths.catalog(), sampleParams.sex(), heuristicParams, reference);
+        const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), heuristicParams, reference);
 
         const OutputPaths& outputPaths = params.outputPaths();
 
@@ -124,12 +123,14 @@ int main(int argc, char** argv)
         if (params.analysisMode() == AnalysisMode::kSeeking)
         {
             console->info("Running sample analysis in seeking mode");
-            sampleFindings = htsSeekingSampleAnalysis(inputPaths, heuristicParams, regionCatalog, bamletWriter);
+            sampleFindings = htsSeekingSampleAnalysis(
+                inputPaths, sampleParams.sex(), heuristicParams, regionCatalog, bamletWriter);
         }
         else
         {
             console->info("Running sample analysis in streaming mode");
-            sampleFindings = htsStreamingSampleAnalysis(inputPaths, heuristicParams, regionCatalog, bamletWriter);
+            sampleFindings = htsStreamingSampleAnalysis(
+                inputPaths, sampleParams.sex(), heuristicParams, regionCatalog, bamletWriter);
         }
 
         console->info("Writing output to disk");

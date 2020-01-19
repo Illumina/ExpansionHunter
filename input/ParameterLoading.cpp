@@ -296,7 +296,7 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     {
         analysisMode = decodeAnalysisMode(userParams.analysisMode);
     }
-    catch (std::logic_error)
+    catch (std::logic_error&)
     {
         const string message = "Analysis mode must be set to either streaming or seeking";
         throw std::invalid_argument(message);

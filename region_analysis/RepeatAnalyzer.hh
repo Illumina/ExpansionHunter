@@ -34,6 +34,7 @@
 #include "graphcore/Graph.hh"
 
 #include "classification/AlignmentClassifier.hh"
+#include "filtering/GraphVariantAlignmentStats.hh"
 #include "genotyping/RepeatGenotype.hh"
 #include "reads/Read.hh"
 #include "region_analysis/VariantAnalyzer.hh"
@@ -45,11 +46,12 @@ class RepeatAnalyzer : public VariantAnalyzer
 {
 public:
     RepeatAnalyzer(
-        std::string variantId, AlleleCount expectedAlleleCount, const graphtools::Graph& graph,
-        graphtools::NodeId repeatNodeId)
-        : VariantAnalyzer(std::move(variantId), expectedAlleleCount, graph, { repeatNodeId })
+        std::string variantId, const graphtools::Graph& graph, graphtools::NodeId repeatNodeId,
+        GenotyperParameters genotyperParams)
+        : VariantAnalyzer(std::move(variantId), graph, { repeatNodeId }, genotyperParams)
         , repeatUnit_(graph.nodeSeq(repeatNodeId))
         , alignmentClassifier_(graph, repeatNodeId)
+        , alignmentStatsCalculator_({ repeatNodeId })
         , countOfInrepeatReadPairs_(0)
         , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
     {
@@ -71,8 +73,10 @@ private:
     RepeatAlignmentStats classifyReadAlignment(const graphtools::GraphAlignment& alignment);
     void summarizeAlignmentsToReadCounts(const RepeatAlignmentStats& repeatAlignmentStats);
 
+    GenotyperParameters genotyperParams_;
     const std::string repeatUnit_;
     RepeatAlignmentClassifier alignmentClassifier_;
+    GraphVariantAlignmentStatsCalculator alignmentStatsCalculator_;
 
     CountTable countsOfSpanningReads_;
     CountTable countsOfFlankingReads_;

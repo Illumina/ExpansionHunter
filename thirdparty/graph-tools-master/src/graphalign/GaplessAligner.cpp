@@ -55,7 +55,7 @@ list<GraphAlignment> GaplessAligner::align(const string& query) const
 list<GraphAlignment> getBestAlignmentToShortPath(const Path& path, int32_t start_pos, const string& query)
 {
     const int32_t start_extension = start_pos;
-    const auto end_extension = static_cast<int32_t>(query.length() - start_pos - path.length());
+    const auto end_extension = static_cast<const int32_t>(query.length() - start_pos - path.length());
     const list<Path> full_paths = extendPath(path, start_extension, end_extension);
 
     list<GraphAlignment> best_alignments;

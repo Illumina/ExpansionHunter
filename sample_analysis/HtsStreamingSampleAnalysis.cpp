@@ -24,6 +24,8 @@
 #include <memory>
 #include <unordered_map>
 
+#include <boost/optional.hpp>
+
 #include "common/HtsHelpers.hh"
 #include "region_analysis/LocusAnalyzer.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
@@ -39,8 +41,8 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, const HeuristicParameters& heuristicParams, const RegionCatalog& regionCatalog,
-    AlignmentWriter& bamletWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams,
+    const RegionCatalog& regionCatalog, AlignmentWriter& bamletWriter)
 {
     vector<std::unique_ptr<LocusAnalyzer>> locusAnalyzers
         = initializeLocusAnalyzers(regionCatalog, heuristicParams, bamletWriter);
@@ -106,7 +108,7 @@ SampleFindings htsStreamingSampleAnalysis(
     SampleFindings sampleFindings;
     for (auto& locusAnalyzer : locusAnalyzers)
     {
-        auto locusFindings = locusAnalyzer->analyze();
+        auto locusFindings = locusAnalyzer->analyze(sampleSex, boost::none);
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }
 

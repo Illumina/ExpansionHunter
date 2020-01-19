@@ -46,6 +46,13 @@ enum class Sex
     kFemale
 };
 
+enum class ChromType
+{
+    kX,
+    kY,
+    kAutosome
+};
+
 Sex decodeSampleSex(const std::string& encoding);
 
 enum class AlleleCount

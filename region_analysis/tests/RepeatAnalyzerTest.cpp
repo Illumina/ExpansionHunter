@@ -45,12 +45,12 @@ TEST(DISABLE_RegionAnalysis, ShortSingleUnitRepeat_Genotyped)
     GraphAlignment alignmentC1 = decodeGraphAlignment(2, "0[4M]1[1M]", &graph);
     GraphAlignment alignmentC2 = decodeGraphAlignment(0, "1[1M]1[1M]2[5M]", &graph);
 
-    AlleleCount expectedAlleleCount = AlleleCount::kTwo;
-    graphtools::NodeId repeatNodeId = 1;
+    // AlleleCount expectedAlleleCount = AlleleCount::kTwo;
+    // graphtools::NodeId repeatNodeId = 1;
     // const int32_t maxNumUnitsInRead = 10;
     // const double haplotypeDepth = 5.0;
 
-    RepeatAnalyzer repeatAnalyzer("repeat0", expectedAlleleCount, graph, repeatNodeId);
+    // RepeatAnalyzer repeatAnalyzer("repeat0", expectedAlleleCount, graph, repeatNodeId);
     // repeatAnalyzer.processMates({ alignmentA1 }, { alignmentA2 });
     // repeatAnalyzer.processMates({ alignmentB1 }, { alignmentB2 });
     // repeatAnalyzer.processMates({ alignmentC1 }, { alignmentC2 });

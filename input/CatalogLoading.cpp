@@ -133,7 +133,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     LocusDescriptionFromUser userDescription;
 
     assertFieldExists(locusJson, "LocusId");
-    userDescription.locusId = locusJson["LocusId"];
+    userDescription.locusId = locusJson["LocusId"].get<string>();
 
     assertFieldExists(locusJson, "ReferenceRegion");
     makeArray(locusJson["ReferenceRegion"]);
@@ -144,7 +144,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     }
 
     assertFieldExists(locusJson, "LocusStructure");
-    userDescription.locusStructure = locusJson["LocusStructure"];
+    userDescription.locusStructure = locusJson["LocusStructure"].get<string>();
 
     assertFieldExists(locusJson, "VariantType");
     makeArray(locusJson["VariantType"]);
@@ -203,7 +203,7 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
 }
 
 RegionCatalog loadLocusCatalogFromDisk(
-    const string& catalogPath, Sex sampleSex, const HeuristicParameters& heuristicParams, const Reference& reference)
+    const string& catalogPath, const HeuristicParameters& heuristicParams, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -220,7 +220,7 @@ RegionCatalog loadLocusCatalogFromDisk(
     for (auto& locusJson : catalogJson)
     {
         LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
-        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, sampleSex, reference, heuristicParams);
+        LocusSpecification locusSpec = decodeLocusSpecification(userDescription, reference, heuristicParams);
         catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
     }
 

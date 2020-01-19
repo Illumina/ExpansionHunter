@@ -45,7 +45,7 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
 
     NodeToRegionAssociation dummyAssociation;
     GenotyperParameters params;
-    LocusSpecification locusSpec("region", referenceRegions, AlleleCount::kTwo, graph, dummyAssociation, params);
+    LocusSpecification locusSpec("region", ChromType::kAutosome, referenceRegions, graph, dummyAssociation, params);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
     locusSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
 
@@ -62,11 +62,13 @@ TEST_P(AlignerTests, RegionAnalysis_ShortSingleUnitRepeat_Genotyped)
         Read(ReadId("read2", MateNumber::kFirstMate), "CGACATGT", true),
         Read(ReadId("read2", MateNumber::kSecondMate), "GACATGTC", true), RegionType::kTarget);
 
-    LocusFindings locusFindings = locusAnalyzer.analyze();
+    LocusFindings locusFindings = locusAnalyzer.analyze(Sex::kFemale, boost::none);
+    GenotypeFilter filter = GenotypeFilter();
 
     std::unique_ptr<VariantFindings> repeatFindingsPtr(new RepeatFindings(
-        CountTable({ { 1, 2 }, { 3, 2 } }), CountTable(), CountTable(), RepeatGenotype(1, { 1, 3 })));
-    LocusFindings expectedFindings;
+        CountTable({ { 1, 2 }, { 3, 2 } }), CountTable(), CountTable(), AlleleCount::kTwo, RepeatGenotype(1, { 1, 3 }),
+        filter));
+    LocusFindings expectedFindings((LocusStats(AlleleCount::kTwo, 0, 0)));
     expectedFindings.findingsForEachVariant.emplace("repeat", std::move(repeatFindingsPtr));
 
     ASSERT_EQ(expectedFindings.findingsForEachVariant, locusFindings.findingsForEachVariant);

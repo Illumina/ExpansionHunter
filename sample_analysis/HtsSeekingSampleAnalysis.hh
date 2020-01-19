@@ -34,7 +34,7 @@ namespace ehunter
 {
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, const HeuristicParameters& heuristicParams, const RegionCatalog& regionCatalog,
-    graphtools::AlignmentWriter& alignmentWriter);
+    const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams,
+    const RegionCatalog& regionCatalog, graphtools::AlignmentWriter& alignmentWriter);
 
 }

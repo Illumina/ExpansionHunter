@@ -36,16 +36,19 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
     tryAddingFieldDescription(FieldType::kFormat, "LC", "1", "Float", "Locus coverage");
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
+    tryAddingFieldDescription(
+        FieldType::kFilter, "LowDepth", "", "",
+        "The overall locus depth is below 10x or number of reads spanning one or both breakends is below 5");
 }
 
 void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
 {
+    addCommonFields();
     if (!repeatFindingsPtr->optionalGenotype())
     {
         return;
     }
 
-    addCommonFields();
     tryAddingFieldDescription(FieldType::kInfo, "SVTYPE", "1", "String", "Type of structural variant");
     tryAddingFieldDescription(FieldType::kInfo, "END", "1", "Integer", "End position of the variant");
     tryAddingFieldDescription(FieldType::kInfo, "REF", "1", "Integer", "Reference copy number");
@@ -107,10 +110,10 @@ void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindi
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         tryAddingFieldDescription(
-            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the ref allele");
+            FieldType::kFormat, "RPL", "1", "Float", "Log-Likelihood ratio for the presence of the reference allele");
         tryAddingFieldDescription(
             FieldType::kFormat, "DST", "1", "Character",
-            "Status ('+' affected, '-' unaffected, '?' uncertain) for the test specified by the DID value");
+            "Result ('+' detected, '-' undetected, '?' undetermined) of the test represented by the variant");
     }
 }
 

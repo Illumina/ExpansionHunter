@@ -27,8 +27,6 @@
 namespace ehunter
 {
 
-using boost::optional;
-
 bool LocusStats::operator==(const LocusStats& other) const { return meanReadLength_ == other.meanReadLength_; }
 
 std::ostream& operator<<(std::ostream& out, const LocusStats& stats)
@@ -37,7 +35,8 @@ std::ostream& operator<<(std::ostream& out, const LocusStats& stats)
     return out;
 }
 
-LocusStatsCalculator::LocusStatsCalculator(const graphtools::Graph& graph)
+LocusStatsCalculator::LocusStatsCalculator(ChromType chromType, const graphtools::Graph& graph)
+    : chromType_(chromType)
 {
     // As elsewhere in the program, assuming that the fist and last node are flanks
     leftFlankId_ = 0;
@@ -56,20 +55,36 @@ void LocusStatsCalculator::inspect(const graphtools::GraphAlignment& alignment)
     }
 }
 
-optional<LocusStats> LocusStatsCalculator::estimate() const
+static AlleleCount determineExpectedAlleleCount(ChromType chromType, Sex sex)
+{
+    switch (chromType)
+    {
+    case ChromType::kY:
+        return AlleleCount::kOne; // Assume that chrY always has copy number one
+    case ChromType::kX:
+        return (sex == Sex::kFemale ? AlleleCount::kTwo : AlleleCount::kOne);
+    case ChromType::kAutosome:
+        return AlleleCount::kTwo;
+    }
+
+    return AlleleCount::kTwo; // To remove spurious control reaches end of non-void function warning
+}
+
+LocusStats LocusStatsCalculator::estimate(Sex sampleSex) const
 {
     const int readCount = boost::accumulators::count(readLengthAccumulator_);
+    AlleleCount alleleCount = determineExpectedAlleleCount(chromType_, sampleSex);
 
     if (readCount == 0)
     {
-        return optional<LocusStats>();
+        return LocusStats(alleleCount, 0, 0.0);
     }
 
     const int meanReadLength = boost::accumulators::mean(readLengthAccumulator_);
     const int numberOfStartPositions = leftFlankLength_ + rightFlankLength_ - meanReadLength;
     const double depth = meanReadLength * (static_cast<double>(readCount) / numberOfStartPositions);
 
-    return LocusStats(meanReadLength, depth);
+    return LocusStats(alleleCount, meanReadLength, depth);
 }
 
 }

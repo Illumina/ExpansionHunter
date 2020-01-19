@@ -126,22 +126,19 @@ static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
     return mergedReferenceRegions.front();
 }
 
-AlleleCount determineExpectedAlleleCount(Sex sex, const string& chrom)
+static ChromType determineChromosomeType(const string& chrom)
 {
-    // We assume that chrY always has copy number one; this seems more practical than skipping loci on this chromosome
-    // in females.
     if (chrom == "chrY" || chrom == "Y")
     {
-        return AlleleCount::kOne;
+        return ChromType::kY;
     }
 
-    const bool isChromX = chrom == "chrX" || chrom == "X";
-    if (isChromX && sex == Sex::kMale)
+    if (chrom == "chrX" || chrom == "X")
     {
-        return AlleleCount::kOne;
+        return ChromType::kX;
     }
 
-    return AlleleCount::kTwo;
+    return ChromType::kAutosome;
 }
 
 static NodeToRegionAssociation associateNodesWithReferenceRegions(
@@ -253,7 +250,7 @@ static optional<NodeId> determineReferenceNode(
 }
 
 LocusSpecification decodeLocusSpecification(
-    const LocusDescriptionFromUser& userDescription, Sex sampleSex, const Reference& reference,
+    const LocusDescriptionFromUser& userDescription, const Reference& reference,
     const HeuristicParameters& heuristicParams)
 {
     try
@@ -282,7 +279,7 @@ LocusSpecification decodeLocusSpecification(
         }
 
         const auto& contigName = reference.contigInfo().getContigName(referenceRegionForEntireLocus.contigIndex());
-        AlleleCount expectedAlleleCount = determineExpectedAlleleCount(sampleSex, contigName);
+        ChromType chromType = determineChromosomeType(contigName);
 
         NodeToRegionAssociation referenceRegionsOfGraphNodes
             = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
@@ -302,8 +299,8 @@ LocusSpecification decodeLocusSpecification(
         }
 
         LocusSpecification locusSpec(
-            userDescription.locusId, targetReadExtractionRegions, expectedAlleleCount, locusGraph,
-            referenceRegionsOfGraphNodes, parameters);
+            userDescription.locusId, chromType, targetReadExtractionRegions, locusGraph, referenceRegionsOfGraphNodes,
+            parameters);
         locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
         int variantIndex = 0;

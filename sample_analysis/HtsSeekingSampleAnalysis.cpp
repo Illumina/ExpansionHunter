@@ -243,8 +243,8 @@ namespace
 }
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, const HeuristicParameters& heuristicParams, const RegionCatalog& regionCatalog,
-    AlignmentWriter& alignmentWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams,
+    const RegionCatalog& regionCatalog, AlignmentWriter& alignmentWriter)
 {
     auto console = spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console");
 
@@ -266,7 +266,7 @@ SampleFindings htsSeekingSampleAnalysis(
 
         processReads(readPairs, alignmentStats, analyzerFinder);
 
-        auto variantFindings = locusAnalyzers.front()->analyze();
+        auto variantFindings = locusAnalyzers.front()->analyze(sampleSex, boost::none);
         sampleFindings.emplace(locusId, std::move(variantFindings));
     }
 

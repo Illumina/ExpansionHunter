@@ -69,7 +69,7 @@ LocusAnalyzer::LocusAnalyzer(
     , graphAligner_(
           &locusSpec_.regionGraph(), heuristicParams.alignerType(), heuristicParams_.kmerLenForAlignment(),
           heuristicParams_.paddingLength(), heuristicParams_.seedAffixTrimLength())
-    , statsCalculator_(locusSpec_.regionGraph())
+    , statsCalculator_(locusSpec_.typeOfChromLocusLocatedOn(), locusSpec_.regionGraph())
     , console_(spdlog::get("console") ? spdlog::get("console") : spdlog::stderr_color_mt("console"))
 
 {
@@ -95,14 +95,13 @@ LocusAnalyzer::LocusAnalyzer(
             }
 
             variantAnalyzerPtrs_.emplace_back(new RepeatAnalyzer(
-                variantSpec.id(), locusSpec.expectedAlleleCount(), locusSpec.regionGraph(), repeatNodeId));
+                variantSpec.id(), locusSpec.regionGraph(), repeatNodeId, locusSpec.genotyperParameters()));
         }
         else if (variantSpec.classification().type == VariantType::kSmallVariant)
         {
             variantAnalyzerPtrs_.emplace_back(new SmallVariantAnalyzer(
-                variantSpec.id(), variantSpec.classification().subtype, locusSpec.expectedAlleleCount(),
-                locusSpec.regionGraph(), variantSpec.nodes(), variantSpec.optionalRefNode(),
-                locusSpec.genotyperParameters()));
+                variantSpec.id(), variantSpec.classification().subtype, locusSpec.regionGraph(), variantSpec.nodes(),
+                variantSpec.optionalRefNode(), locusSpec.genotyperParameters()));
         }
         else
         {
@@ -247,25 +246,19 @@ boost::optional<GraphAlignment> LocusAnalyzer::alignRead(Read& read) const
     return computeCanonicalAlignment(alignments);
 }
 
-LocusFindings LocusAnalyzer::analyze()
+LocusFindings LocusAnalyzer::analyze(Sex sampleSex, boost::optional<double> genomeWideDepth)
 {
-    LocusFindings locusFindings;
-
-    locusFindings.optionalStats = statsCalculator_.estimate();
-    if (locusFindings.optionalStats
-        && locusFindings.optionalStats->depth() >= locusSpec().genotyperParameters().minLocusCoverage)
+    LocusFindings locusFindings(statsCalculator_.estimate(sampleSex));
+    if (genomeWideDepth && locusSpec_.requiresGenomeWideDepth())
     {
-        for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
-        {
-            const LocusStats& locusStats = *locusFindings.optionalStats;
-            std::unique_ptr<VariantFindings> variantFindingsPtr = variantAnalyzerPtr->analyze(locusStats);
-            const string& variantId = variantAnalyzerPtr->variantId();
-            locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
-        }
+        locusFindings.stats.setDepth(*genomeWideDepth);
     }
-    else
+
+    for (auto& variantAnalyzerPtr : variantAnalyzerPtrs_)
     {
-        console_->warn("Skipping locus {} due to low coverage", locusId());
+        std::unique_ptr<VariantFindings> variantFindingsPtr = variantAnalyzerPtr->analyze(locusFindings.stats);
+        const string& variantId = variantAnalyzerPtr->variantId();
+        locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
     }
 
     return locusFindings;
