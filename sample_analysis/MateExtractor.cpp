@@ -120,10 +120,19 @@ namespace htshelpers
 
         while (sam_itr_next(htsFilePtr_, htsRegionPtr_, htsAlignmentPtr_) >= 0)
         {
+            const bool isSecondaryAlignment = htsAlignmentPtr_->core.flag & BAM_FSECONDARY;
+            const bool isSupplementaryAlignment = htsAlignmentPtr_->core.flag & BAM_FSUPPLEMENTARY;
+            const bool isPrimaryAlignment = !(isSecondaryAlignment || isSupplementaryAlignment);
+            if (!isPrimaryAlignment)
+            {
+                continue;
+            }
+
             Read putativeMate = htshelpers::decodeRead(htsAlignmentPtr_);
 
             const bool belongToSameFragment = read.fragmentId() == putativeMate.fragmentId();
             const bool formProperPair = read.mateNumber() != putativeMate.mateNumber();
+
             if (belongToSameFragment && formProperPair)
             {
                 mateStats = decodeAlignmentStats(htsAlignmentPtr_);
