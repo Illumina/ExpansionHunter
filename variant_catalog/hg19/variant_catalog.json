@@ -273,8 +273,8 @@
     },
     {
         "LocusId": "GLS",
-        "LocusStructure": "(GGA)*",
-        "ReferenceRegion": "chr2:191745599-191745646 ",
+        "LocusStructure": "(GCA)*",
+        "ReferenceRegion": "chr2:191745598-191745646",
         "VariantType": "Repeat"
     },
     {
@@ -282,5 +282,11 @@
         "LocusStructure": "(AARRG)*",
         "ReferenceRegion": "chr4:39350044-39350099",
         "VariantType": "Repeat"
+    },
+    {
+        "LocusId": "PABPN1",
+        "VariantType": "Repeat",
+        "LocusStructure": "(GCG)*",
+        "ReferenceRegion": "chr14:23790681-23790699"
     }
 ]
