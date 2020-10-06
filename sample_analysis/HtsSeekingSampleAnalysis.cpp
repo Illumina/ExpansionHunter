@@ -33,6 +33,7 @@
 
 #include "spdlog/spdlog.h"
 
+#include "DepthNormalization.hh"
 #include "common/WorkflowContext.hh"
 #include "reads/ReadPairs.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
@@ -56,24 +57,14 @@ using std::vector;
 
 using ReadCatalog = unordered_map<ReadId, MappedRead, boost::hash<ReadId>>;
 
-static vector<GenomicRegion>
-combineRegions(const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions)
-{
-    vector<GenomicRegion> combinedRegions(targetRegions);
-    combinedRegions.insert(combinedRegions.end(), offtargetRegions.begin(), offtargetRegions.end());
-    return combinedRegions;
-}
-
 static bool checkIfMatesWereMappedNearby(const MappedRead& read)
 {
     const int kMaxDistance = 1000;
     return (read.contigIndex() == read.mateContigIndex()) && (std::abs(read.pos() - read.matePos()) < kMaxDistance);
 }
 
-static void recoverMates(const string& htsFilePath, const string& htsReferencePath, ReadPairs& readPairs)
+static void recoverMates(htshelpers::MateExtractor& mateExtractor, ReadPairs& readPairs)
 {
-    htshelpers::MateExtractor mateExtractor(htsFilePath, htsReferencePath);
-
     for (auto& fragmentIdAndReadPair : readPairs)
     {
         ReadPair& readPair = fragmentIdAndReadPair.second;
@@ -104,7 +95,7 @@ static void recoverMates(const string& htsFilePath, const string& htsReferencePa
     }
 }
 
-static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
+static int getReadCountCap(const vector<GenomicRegion>& regionsWithReads)
 {
     int readCountCap;
     // hardcoded for now
@@ -122,12 +113,10 @@ static int getReadCountCap(vector<GenomicRegion>& regionsWithReads)
     return readCountCap;
 }
 
-static ReadPairs collectCandidateReads(
-    const vector<GenomicRegion>& targetRegions, const vector<GenomicRegion>& offtargetRegions,
-    const string& htsFilePath, const string& htsReferencePath)
+static ReadPairs collectReads(
+    const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker,
+    htshelpers::MateExtractor& mateExtractor)
 {
-    vector<GenomicRegion> regionsWithReads = combineRegions(targetRegions, offtargetRegions);
-    HtsFileSeeker htsFileSeeker(htsFilePath, htsReferencePath);
     ReadPairs readPairs;
 
     for (const auto& regionWithReads : regionsWithReads)
@@ -158,27 +147,86 @@ static ReadPairs collectCandidateReads(
     }
 
     const int numReadsBeforeRecovery = readPairs.NumReads();
-    recoverMates(htsFilePath, htsReferencePath, readPairs);
+    recoverMates(mateExtractor, readPairs);
     const int numReadsAfterRecovery = readPairs.NumReads() - numReadsBeforeRecovery;
     spdlog::debug("Recovered {} reads", numReadsAfterRecovery);
 
     return readPairs;
 }
 
-SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
+static ReadPairs
+collectReadsWithoutRecoverMates(const vector<GenomicRegion>& regionsWithReads, HtsFileSeeker& htsFileSeeker)
 {
+    ReadPairs readPairs;
+
+    for (const auto& regionWithReads : regionsWithReads)
+    {
+        htsFileSeeker.setRegion(regionWithReads);
+        while (htsFileSeeker.trySeekingToNextPrimaryAlignment())
+        {
+            MappedRead read = htsFileSeeker.decodeRead();
+            if (read.isPaired())
+            {
+                readPairs.Add(std::move(read));
+            }
+        }
+    }
+
+    // add a cap for reads
+    if (readPairs.NumReads() > getReadCountCap(regionsWithReads))
+    {
+        readPairs.Clear();
+    }
+
+    return readPairs;
+}
+
+SampleFindings htsSeekingSampleAnalysis(
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
+    const vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
+{
+    HtsFileSeeker htsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
+    htshelpers::MateExtractor mateExtractor(inputPaths.htsFile(), inputPaths.reference());
+
+    CatalogAnalyzer normRegionAnalyzer({ {} }, normRegionInfo, bamletWriter);
+    std::vector<GenomicRegion> normRegions;
+    for (RegionInfo regionInfo : normRegionInfo)
+    {
+        normRegions.push_back(regionInfo.region);
+    }
+
+    ReadPairs readPairs = collectReadsWithoutRecoverMates(normRegions, htsFileSeeker);
+
+    for (const auto& fragmentIdAndReadPair : readPairs)
+    {
+        const auto& readPair = fragmentIdAndReadPair.second;
+        if (readPair.numMatesSet() == 2)
+        {
+            const MappedRead& read = *readPair.firstMate;
+            const MappedRead& mate = *readPair.secondMate;
+            normRegionAnalyzer.analyze(read, mate);
+        }
+        else
+        {
+            const MappedRead& read = readPair.firstMate ? *readPair.firstMate : *readPair.secondMate;
+            normRegionAnalyzer.analyze(read);
+        }
+    }
+
+    DepthNormalizer genomeDepthNormalizer = normRegionAnalyzer.getGenomeDepthNormalizer();
+
     SampleFindings sampleFindings;
+
     for (const auto& locusIdAndRegionSpec : regionCatalog)
     {
         const auto& locusId = locusIdAndRegionSpec.first;
         const auto& locusSpec = locusIdAndRegionSpec.second;
 
-        ReadPairs readPairs = collectCandidateReads(
-            locusSpec.targetReadExtractionRegions(), locusSpec.offtargetReadExtractionRegions(), inputPaths.htsFile(),
-            inputPaths.reference());
+        ReadPairs readPairs;
+        // TO DO: use collectReadsWithoutRecoverMates for CNV locus --XC
+        readPairs = collectReads(locusSpec->regionsWithReads(), htsFileSeeker, mateExtractor);
 
-        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, bamletWriter);
+        CatalogAnalyzer catalogAnalyzer({ { locusId, locusSpec } }, std::vector<RegionInfo>{}, bamletWriter);
 
         for (const auto& fragmentIdAndReadPair : readPairs)
         {
@@ -196,10 +244,9 @@ SampleFindings htsSeekingSampleAnalysis(
             }
         }
 
-        catalogAnalyzer.collectResults(sampleSex, sampleFindings);
+        catalogAnalyzer.collectResults(sampleSex, sampleFindings, genomeDepthNormalizer);
     }
 
     return sampleFindings;
 }
-
 }

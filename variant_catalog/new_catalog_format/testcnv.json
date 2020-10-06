@@ -1,0 +1,98 @@
+[
+	{
+		"OutputVariants": [
+			{
+				"VariantId": "c1-62",
+				"VariantType": "CNV",
+				"ReferenceRegion": "1:71237363-71240263"
+			}
+		],
+		"AnalysisVariants": [
+			{
+				"PriorCopyNumberFreq": [
+					0.001,
+					0.089,
+					0.908,
+					0.001,
+					0.001
+				],
+				"ReferenceRegion": [
+					"1:71237363-71240263"
+				],
+				"MeanDepthValues": [
+					0.001,
+					0.502,
+					1.0,
+					1.499,
+					1.999
+				],
+				"VariantSubtype": "Target",
+				"DepthScaleFactor": 0.951,
+				"StandardDeviationOfCN2": 0.053,
+				"VariantType": "CNV",
+				"GC": 0.451724,
+				"VariantId": "c1-62-p1",
+				"MaxCopyNumber": 4,
+				"MappingQualityThreshold": 20
+			},
+			{
+				"ExpectedNormal": true,
+				"PriorCopyNumberFreq": [
+					0.001,
+					0.001,
+					0.996,
+					0.001,
+					0.001
+				],
+				"ReferenceRegion": [
+					"1:71241263-71244263"
+				],
+				"MeanDepthValues": [
+					0.001,
+					0.501,
+					1.0,
+					1.5,
+					1.999
+				],
+				"VariantSubtype": "Baseline",
+				"DepthScaleFactor": 0.9483,
+				"StandardDeviationOfCN2": 0.0503,
+				"VariantType": "CNV",
+				"GC": 0.412,
+				"VariantId": "c1-62-n3",
+				"MaxCopyNumber": 4,
+				"MappingQualityThreshold": 20
+			},
+			{
+				"ExpectedNormal": true,
+				"PriorCopyNumberFreq": [
+					0.001,
+					0.001,
+					0.996,
+					0.001,
+					0.001
+				],
+				"ReferenceRegion": [
+					"1:71233363-71236363"
+				],
+				"MeanDepthValues": [
+					0.001,
+					0.5,
+					1.0,
+					1.5,
+					1.999
+				],
+				"VariantSubtype": "Baseline",
+				"DepthScaleFactor": 0.9675,
+				"StandardDeviationOfCN2": 0.0509,
+				"VariantType": "CNV",
+				"GC": 0.364,
+				"VariantId": "c1-62-n5",
+				"MaxCopyNumber": 4,
+				"MappingQualityThreshold": 20
+			}
+		],
+		"LocusType": "CNV",
+		"LocusId": "c1-62"
+	}
+]

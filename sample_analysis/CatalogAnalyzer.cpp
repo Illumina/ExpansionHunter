@@ -24,6 +24,7 @@
 #include "workflow/RegionModel.hh"
 #include "workflow/WorkflowBuilder.hh"
 
+using std::dynamic_pointer_cast;
 using std::shared_ptr;
 using std::unordered_set;
 using std::vector;
@@ -31,17 +32,48 @@ using std::vector;
 namespace ehunter
 {
 
-CatalogAnalyzer::CatalogAnalyzer(const RegionCatalog& locusCatalog, BamletWriterPtr bamletWriter)
+CatalogAnalyzer::CatalogAnalyzer(
+    const LocusCatalog& locusCatalog, const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
+    : normRegionInfo_(normRegionInfo)
 {
     WorkflowContext context;
 
     for (const auto& locusIdAndLocusSpec : locusCatalog)
     {
         const auto& locusSpec = locusIdAndLocusSpec.second;
-        locusAnalyzers_.push_back(buildLocusWorkflow(locusSpec, context.heuristics(), bamletWriter));
+        shared_ptr<CnvLocusSpec> cnvLocusSpec = dynamic_pointer_cast<CnvLocusSpec>(locusSpec);
+        shared_ptr<GraphLocusSpec> graphLocusSpec = dynamic_pointer_cast<GraphLocusSpec>(locusSpec);
+        shared_ptr<ParalogLocusSpec> paralogLocusSpec = dynamic_pointer_cast<ParalogLocusSpec>(locusSpec);
+        if (graphLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildGraphLocusWorkflow(*graphLocusSpec, context.heuristics(), bamletWriter));
+        }
+        else if (cnvLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildCnvLocusWorkflow(*cnvLocusSpec, context.heuristics()));
+        }
+        else if (paralogLocusSpec)
+        {
+            locusAnalyzers_.push_back(buildParalogLocusWorkflow(*paralogLocusSpec, context.heuristics()));
+        }
     }
 
     regionModels_ = extractRegionModels(locusAnalyzers_);
+
+    int mapqCutoff = context.heuristics().qualityCutoffForGoodBaseCall();
+    int regionExtensionLength = context.heuristics().regionExtensionLength();
+    for (RegionInfo regionInfo : normRegionInfo_)
+    {
+        auto region = regionInfo.region;
+        GenomicRegion expandedRegion = GenomicRegion(
+            region.contigIndex(), region.start() - regionExtensionLength, region.end() + regionExtensionLength);
+        auto linearModel = make_shared<LinearModel>(std::vector<GenomicRegion>{ expandedRegion });
+        auto readCounter = make_shared<ReadCounter>(linearModel, std::vector<GenomicRegion>{ region }, mapqCutoff);
+        linearModel->addFeature(readCounter.get());
+        regionModels_.push_back(linearModel);
+        normalizationRegionAnalyzers_.push_back(
+            make_shared<ReadCountAnalyzer>(CopyNumberBySex::kTwoInFemaleTwoInMale, readCounter));
+    }
 
     modelFinder_.reset(new ModelFinder(regionModels_));
 }
@@ -68,13 +100,35 @@ void CatalogAnalyzer::analyze(const MappedRead& read)
     }
 }
 
-void CatalogAnalyzer::collectResults(Sex sampleSex, SampleFindings& sampleFindings)
+DepthNormalizer CatalogAnalyzer::getGenomeDepthNormalizer()
 {
+    std::vector<RegionDepthInfo> normRegionDepthInfo;
+    auto regionInfo = normRegionInfo_.begin();
+    for (auto normalizationRegionAnalyzer : normalizationRegionAnalyzers_)
+    {
+        int readCount = normalizationRegionAnalyzer->count();
+        double gc = (*regionInfo).gc;
+        GenomicRegion region = (*regionInfo).region;
+        int regionLength = region.end() - region.start();
+        double normDepth = (double)readCount / (double)regionLength;
+        normRegionDepthInfo.push_back(RegionDepthInfo(gc, normDepth));
+        std::advance(regionInfo, 1);
+    }
+
+    return DepthNormalizer(normRegionDepthInfo);
+}
+
+void CatalogAnalyzer::collectResults(
+    Sex sampleSex, SampleFindings& sampleFindings, boost::optional<DepthNormalizer> genomeDepthNormalizer)
+{
+    if (!genomeDepthNormalizer)
+    {
+        genomeDepthNormalizer = getGenomeDepthNormalizer();
+    }
     for (auto& locusAnalyzer : locusAnalyzers_)
     {
-        auto locusFindings = locusAnalyzer->analyze(sampleSex);
+        auto locusFindings = locusAnalyzer->analyze(sampleSex, genomeDepthNormalizer);
         sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
     }
 }
-
 }

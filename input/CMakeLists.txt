@@ -1,4 +1,6 @@
-file(GLOB SOURCES "*.cpp")
-add_library(input ${SOURCES})
-target_link_libraries(input common stats region_spec)
+add_library(input
+        CatalogLoading.hh CatalogLoading.cpp
+        ParameterLoading.hh ParameterLoading.cpp
+        SampleStats.hh SampleStats.cpp)
+target_link_libraries(input common stats locus_spec)
 add_subdirectory(tests)

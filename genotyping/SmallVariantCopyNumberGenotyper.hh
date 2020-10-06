@@ -3,7 +3,8 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+// Author: Xiao Chen <xchen2@illumina.com>
+//         Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,15 +22,27 @@
 
 #pragma once
 
-#include <string>
+#include <boost/optional.hpp>
+#include <vector>
 
-#include "graphcore/Graph.hh"
-
-#include "input/GraphBlueprint.hh"
+#include "common/Common.hh"
 
 namespace ehunter
 {
 
-graphtools::Graph makeRegionGraph(const GraphBlueprint& blueprint, const std::string& locusId = "");
+class SmallVariantCopyNumberGenotyper
+{
+public:
+    SmallVariantCopyNumberGenotyper(int totalCopyNumber)
+        : totalCopyNumber_(totalCopyNumber)
+    {
+    }
 
+    boost::optional<std::pair<int, double>> genotype(int variantCount, int nonvariantCount, int minReadSupport) const;
+
+private:
+    double genotypeLikelihood(int totalCopyNumber, int currentCopyNumber, int variantCount, int nonvariantCount) const;
+    int totalCopyNumber_;
+    double errorRate_ = 0.01;
+};
 }

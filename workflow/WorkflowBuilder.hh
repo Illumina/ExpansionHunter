@@ -24,17 +24,23 @@
 #include <memory>
 
 #include "common/Parameters.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
 #include "output/BamletWriter.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "sample_analysis/DepthNormalization.hh"
 #include "workflow/LocusAnalyzer.hh"
 #include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
 
-std::shared_ptr<LocusAnalyzer> buildLocusWorkflow(
-    const LocusSpecification& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter);
+std::shared_ptr<LocusAnalyzer> buildGraphLocusWorkflow(
+    const GraphLocusSpec& locusSpec, const HeuristicParameters& heuristics, BamletWriterPtr bamletWriter);
+
+std::shared_ptr<LocusAnalyzer> buildCnvLocusWorkflow(const CnvLocusSpec& locusSpec, const HeuristicParameters& heuristics);
+
+std::shared_ptr<LocusAnalyzer> buildParalogLocusWorkflow(const ParalogLocusSpec& locusSpec, const HeuristicParameters& heuristics);
 
 std::vector<std::shared_ptr<RegionModel>> extractRegionModels(const std::vector<std::shared_ptr<LocusAnalyzer>>& loci);
-
 }

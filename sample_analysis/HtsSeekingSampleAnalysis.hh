@@ -25,14 +25,15 @@
 #include <string>
 
 #include "common/Parameters.hh"
+#include "input/CatalogLoading.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "output/BamletWriter.hh"
-#include "region_spec/LocusSpecification.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
 
 SampleFindings htsSeekingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter);
-
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
+    const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter);
 }

@@ -25,7 +25,8 @@
 #include <map>
 #include <string>
 
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -57,16 +58,17 @@ using FieldDescriptionCatalog = std::map<FieldDescriptionIdentifier, FieldDescri
 class FieldDescriptionWriter : public VariantFindingsVisitor
 {
 public:
-    FieldDescriptionWriter(const LocusSpecification& locusSpec, const VariantSpecification& variantSpec)
-        : locusSpec_(locusSpec)
-        , variantSpec_(variantSpec)
+    FieldDescriptionWriter(std::shared_ptr<LocusSpec> locusSpecPtr)
+        : locusSpecPtr_(std::move(locusSpecPtr))
     {
     }
 
     ~FieldDescriptionWriter() = default;
 
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& findings) override;
+    void visit(const StrFindings& strFindings) override;
+    void visit(const SmallVariantFindings& findings) override;
+    void visit(const CnvVariantFindings& findings) override;
+    void visit(const ParalogSmallVariantFindings& findings) override;
 
     void tryAddingFieldDescription(
         FieldType fieldType, const std::string& id, const std::string& number, const std::string& contentType,
@@ -77,14 +79,12 @@ public:
 private:
     void addCommonFields();
 
-    const LocusSpecification& locusSpec_;
-    const VariantSpecification& variantSpec_;
+    std::shared_ptr<LocusSpec> locusSpecPtr_;
     FieldDescriptionCatalog fieldDescriptions_;
 };
 
-void outputVcfHeader(const RegionCatalog& regionCatalog, const SampleFindings& sampleFindings, std::ostream& out);
+void outputVcfHeader(const LocusCatalog& regionCatalog, const SampleFindings& sampleFindings, std::ostream& out);
 
 std::ostream& operator<<(std::ostream& out, FieldType fieldType);
 std::ostream& operator<<(std::ostream& out, const FieldDescription& fieldDescription);
-
 }

@@ -10,14 +10,20 @@ add_library(workflow STATIC
         LocusAnalyzer.cpp LocusAnalyzer.hh
         LocusFindings.cpp LocusFindings.hh
         GraphLocusAnalyzer.cpp GraphLocusAnalyzer.hh
+        CnvLocusAnalyzer.cpp CnvLocusAnalyzer.hh
+        ParalogLocusAnalyzer.cpp ParalogLocusAnalyzer.hh
+        SmnLocusAnalyzer.cpp SmnLocusAnalyzer.hh
         LinearModel.cpp LinearModel.hh
         Feature.cpp Feature.hh
         LinearFeature.cpp LinearFeature.hh
+        LinearSmallVariant.cpp LinearSmallVariant.hh
+        LinearSmallVariantAnalyzer.cpp LinearSmallVariantAnalyzer.hh
         ReadCountAnalyzer.cpp ReadCountAnalyzer.hh
         GraphVariantAnalyzer.cpp GraphVariantAnalyzer.hh
         IrrPairDetector.cpp IrrPairDetector.hh
         GraphSmallVariantAnalyzer.cpp GraphSmallVariantAnalyzer.hh
+        CnvVariantAnalyzer.cpp CnvVariantAnalyzer.hh
         ReadCounter.cpp ReadCounter.hh
         GraphFeature.cpp GraphFeature.hh)
 
-target_link_libraries(workflow graph_components classification reads alignment filtering region_spec common)
+target_link_libraries(workflow graph_components classification reads alignment filtering locus_spec common)

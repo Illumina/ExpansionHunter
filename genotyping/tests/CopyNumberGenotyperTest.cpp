@@ -22,7 +22,6 @@
 
 #include "genotyping/CopyNumberGenotyper.hh"
 #include "gtest/gtest.h"
-
 #include <numeric>
 #include <vector>
 

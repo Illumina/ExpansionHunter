@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <unordered_set>
 
+#include "DepthNormalization.hh"
 #include "common/HtsHelpers.hh"
 #include "common/WorkflowContext.hh"
 #include "sample_analysis/CatalogAnalyzer.hh"
@@ -46,9 +47,10 @@ namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
+    const InputPaths& inputPaths, Sex sampleSex, const LocusCatalog& regionCatalog,
+    const std::vector<RegionInfo>& normRegionInfo, BamletWriterPtr bamletWriter)
 {
-    CatalogAnalyzer catalogAnalyzer(regionCatalog, std::move(bamletWriter));
+    CatalogAnalyzer catalogAnalyzer(regionCatalog, normRegionInfo, std::move(bamletWriter));
     GenomeMask genomeMask(catalogAnalyzer.regionModels());
 
     using ReadCatalog = std::unordered_map<std::string, MappedRead>;
@@ -85,9 +87,8 @@ SampleFindings htsStreamingSampleAnalysis(
     }
 
     SampleFindings sampleFindings;
-    catalogAnalyzer.collectResults(sampleSex, sampleFindings);
+    catalogAnalyzer.collectResults(sampleSex, sampleFindings, boost::none);
 
     return sampleFindings;
 }
-
 }

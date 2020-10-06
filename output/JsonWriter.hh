@@ -21,8 +21,13 @@
 
 #pragma once
 
+#include <memory>
+
 #include "common/Parameters.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusSpec.hh"
+#include "locus_spec/GraphLocusSpec.hh"
+#include "locus_spec/ParalogLocusSpec.hh"
+#include "locus_spec/LocusSpec.hh"
 #include "workflow/LocusFindings.hh"
 
 #include "thirdparty/json/json.hpp"
@@ -33,24 +38,22 @@ namespace ehunter
 class VariantJsonWriter : public VariantFindingsVisitor
 {
 public:
-    VariantJsonWriter(
-        const ReferenceContigInfo& contigInfo, const LocusSpecification& locusSpec,
-        const VariantSpecification& variantSpec)
+    VariantJsonWriter(const ReferenceContigInfo& contigInfo, std::shared_ptr<LocusSpec> locusSpecPtr)
         : contigInfo_(contigInfo)
-        , locusSpec_(locusSpec)
-        , variantSpec_(variantSpec)
+        , locusSpecPtr_(std::move(locusSpecPtr))
     {
     }
 
     ~VariantJsonWriter() = default;
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& smallVariantFindings) override;
+    void visit(const StrFindings& strFindings) override;
+    void visit(const SmallVariantFindings& smallVariantFindings) override;
+    void visit(const CnvVariantFindings& cnvVariantFindings) override;
+    void visit(const ParalogSmallVariantFindings& findings) override;
     nlohmann::json record() const { return record_; }
 
 private:
     const ReferenceContigInfo& contigInfo_;
-    const LocusSpecification& locusSpec_;
-    const VariantSpecification& variantSpec_;
+    std::shared_ptr<LocusSpec> locusSpecPtr_;
     nlohmann::json record_;
 };
 
@@ -58,7 +61,7 @@ class JsonWriter
 {
 public:
     JsonWriter(
-        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const RegionCatalog& regionCatalog,
+        const SampleParameters& sampleParams, const ReferenceContigInfo& contigInfo, const LocusCatalog& regionCatalog,
         const SampleFindings& sampleFindings);
 
     void write(std::ostream& out);
@@ -66,10 +69,9 @@ public:
 private:
     const SampleParameters& sampleParams_;
     const ReferenceContigInfo& contigInfo_;
-    const RegionCatalog& regionCatalog_;
+    const LocusCatalog& regionCatalog_;
     const SampleFindings& sampleFindings_;
 };
 
 std::ostream& operator<<(std::ostream& out, JsonWriter& jsonWriter);
-
 }

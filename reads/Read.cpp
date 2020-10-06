@@ -47,7 +47,7 @@ Read Read::reverseComplement() { return Read(readId_, graphtools::reverseComplem
 
 MappedRead::MappedRead(
     ReadId readId, string sequence, bool isReversed, int contigIndex, int64_t pos, int mapq, int mateContigIndex,
-    int64_t matePos, bool isPaired, bool isMapped, bool isMateMapped)
+    int64_t matePos, bool isPaired, bool isMapped, bool isMateMapped, std::vector<std::pair<char, int>> cigarOp)
     : Read(std::move(readId), std::move(sequence), isReversed)
     , contigIndex_(contigIndex)
     , pos_(pos)
@@ -57,6 +57,7 @@ MappedRead::MappedRead(
     , isPaired_(isPaired)
     , isMapped_(isMapped)
     , isMateMapped_(isMateMapped)
+    , cigarOp_(cigarOp)
 {
 }
 

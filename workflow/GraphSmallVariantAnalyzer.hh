@@ -30,7 +30,7 @@
 
 #include "common/Parameters.hh"
 #include "genotyping/AlleleChecker.hh"
-#include "region_spec/VariantSpecification.hh"
+#include "locus_spec/GraphLocusSpec.hh"
 #include "workflow/GraphVariantAnalyzer.hh"
 
 namespace ehunter
@@ -42,8 +42,8 @@ class GraphSmallVariantAnalyzer : public GraphVariantAnalyzer
 {
 public:
     GraphSmallVariantAnalyzer(
-        std::shared_ptr<GraphSmallVariant> smallVariantFeature, std::string variantId, VariantSubtype variantSubtype,
-        boost::optional<graphtools::NodeId> optionalRefNode);
+        std::shared_ptr<GraphSmallVariant> smallVariantFeature, std::string variantId,
+        GraphVariantClassification::Subtype variantSubtype, boost::optional<graphtools::NodeId> optionalRefNode);
     ~GraphSmallVariantAnalyzer() override = default;
 
     std::vector<std::shared_ptr<Feature>> features() override;
@@ -51,7 +51,7 @@ public:
 
 private:
     std::shared_ptr<GraphSmallVariant> smallVariantFeature_;
-    VariantSubtype variantSubtype_;
+    GraphVariantClassification::Subtype variantSubtype_;
     boost::optional<graphtools::NodeId> optionalRefNode_;
     GenotyperParameters genotyperParams_;
     AlleleChecker allelePresenceChecker_;

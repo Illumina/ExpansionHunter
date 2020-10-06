@@ -27,11 +27,25 @@
 #include "common/Common.hh"
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
-#include "region_spec/LocusSpecification.hh"
+#include "locus_spec/CnvLocusDecoding.hh"
+#include "locus_spec/GraphLocusDecoding.hh"
+#include "locus_spec/ParalogLocusDecoding.hh"
+#include "locus_spec/LocusSpec.hh"
 
 namespace ehunter
 {
+struct RegionInfo
+{
+    RegionInfo(double gc, GenomicRegion region)
+        : gc(gc)
+        , region(region)
+    {
+    }
+    double gc;
+    GenomicRegion region;
+};
 
-RegionCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
+std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPath, const Reference& reference);
 
+LocusCatalog loadLocusCatalogFromDisk(const std::string& catalogPath, const Reference& reference);
 }

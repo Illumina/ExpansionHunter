@@ -20,9 +20,7 @@
 //
 //
 #include "genotyping/CopyNumberGenotyper.hh"
-
 #include <boost/math/distributions/normal.hpp>
-
 #include <math.h>
 #include <numeric>
 

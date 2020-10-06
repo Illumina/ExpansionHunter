@@ -1,0 +1,190 @@
+[
+	{
+		"LocusId": "SMN",
+		"LocusType": "Paralog",
+		"OutputVariants": [
+			{
+				"VariantId": "SMN2",
+				"VariantType": "CNV",
+				"ReferenceRegion": "5:69345349-69374582"
+			},
+			{
+				"VariantId": "SMN1",
+				"VariantType": "CNV",
+				"ReferenceRegion": "5:70220767-70250000"
+			}
+		],
+		"AnalysisVariants": [
+			{
+				"VariantType": "CNV",
+				"VariantId": "Exon1-6",
+				"VariantSubtype": "Baseline",
+				"ReferenceRegion": [
+					"5:69345349-69367582",
+					"5:70220767-70243000"
+				],
+				"GC": 0.423739,
+				"MappingQualityThreshold": 0,
+				"MaxCopyNumber": 10,
+				"DepthScaleFactor": 0.994,
+				"StandardDeviationOfCN2": 0.051,
+				"MeanDepthValues": [
+					0,
+					0.5,
+					1,
+					1.495,
+					1.99,
+					2.485,
+					2.98,
+					3.475,
+					3.97,
+					4.465,
+					4.96
+				],
+				"PriorCopyNumberFreq": [
+					0.001,
+					0.001,
+					0.026,
+					0.258,
+					0.628,
+					0.074,
+					0.011,
+					0.00025,
+					0.00025,
+					0.00025,
+					0.00025
+				]
+			},
+			{
+				"VariantType": "CNV",
+				"VariantId": "Exon7-8",
+				"VariantSubtype": "Target",
+				"ReferenceRegion": [
+					"5:69368682-69374582",
+					"5:70244100-70250000"
+				],
+				"GC": 0.417119,
+				"MappingQualityThreshold": 0,
+				"MaxCopyNumber": 10,
+				"DepthScaleFactor": 0.994,
+				"StandardDeviationOfCN2": 0.06,
+				"MeanDepthValues": [
+					0,
+					0.5,
+					1,
+					1.495,
+					1.99,
+					2.485,
+					2.98,
+					3.475,
+					3.97,
+					4.465,
+					4.96
+				],
+				"PriorCopyNumberFreq": [
+					0.001,
+					0.001,
+					0.072,
+					0.377,
+					0.476,
+					0.064,
+					0.008,
+					0.00025,
+					0.00025,
+					0.00025,
+					0.00025
+				]
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "SpliceVariant",
+				"VariantStructure": "(C|T)",
+				"ReferenceRegion": [
+					"5:70247772-70247773",
+					"5:69372352-69372353"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron6Site1",
+				"VariantStructure": "(G|A)",
+				"ReferenceRegion": [
+					"5:70246319-70246320",
+					"5:69370894-69370895"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron6Site2",
+				"VariantStructure": "(G|A)",
+				"ReferenceRegion": [
+					"5:70246792-70246793",
+					"5:69371367-69371368"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron6Site3",
+				"VariantStructure": "(G|A)",
+				"ReferenceRegion": [
+					"5:70247218-70247219",
+					"5:69371798-69371799"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron6Site4",
+				"VariantStructure": "(T|C)",
+				"ReferenceRegion": [
+					"5:70247289-70247290",
+					"5:69371869-69371870"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron6Site5",
+				"VariantStructure": "(G|A)",
+				"ReferenceRegion": [
+					"5:70247723-70247724",
+					"5:69372303-69372304"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron7Site1",
+				"VariantStructure": "(A|G)",
+				"ReferenceRegion": [
+					"5:70247920-70247921",
+					"5:69372500-69372501"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "Intron7Site2",
+				"VariantStructure": "(A|G)",
+				"ReferenceRegion": [
+					"5:70248035-70248036",
+					"5:69372615-69372616"
+				],
+				"MappingQualityThreshold": 0
+			},
+			{
+				"VariantType": "SmallVariant",
+				"VariantId": "g.27134T>G",
+				"VariantStructure": "(T|G)",
+				"ReferenceRegion": [
+					"5:70247900-70247901",
+					"5:69372480-69372481"
+				],
+				"MappingQualityThreshold": 0
+			}
+		]
+	}
+]

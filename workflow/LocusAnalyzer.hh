@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 
+#include "sample_analysis/DepthNormalization.hh"
 #include "workflow/LocusFindings.hh"
 
 namespace ehunter
@@ -36,9 +37,8 @@ class LocusAnalyzer
 {
 public:
     virtual ~LocusAnalyzer() = default;
-    virtual LocusFindings analyze(Sex sampleSex) const = 0;
+    virtual LocusFindings analyze(Sex sampleSex, boost::optional<DepthNormalizer> genomeDepthNormalizer) = 0;
     virtual std::vector<std::shared_ptr<FeatureAnalyzer>> featureAnalyzers() = 0;
     virtual const std::string& locusId() const = 0;
 };
-
 }

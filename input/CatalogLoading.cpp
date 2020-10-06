@@ -39,12 +39,13 @@
 #include "common/Common.hh"
 #include "common/Reference.hh"
 #include "common/WorkflowContext.hh"
-#include "input/LocusSpecDecoding.hh"
 
 using boost::optional;
 using graphtools::NodeId;
+using std::make_shared;
 using std::map;
 using std::ostream;
+using std::shared_ptr;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -55,6 +56,20 @@ namespace spd = spdlog;
 
 namespace ehunter
 {
+
+enum class VariantSubtypeFromUser
+{
+    kTarget,
+    kBaseline
+};
+
+enum class LocusTypeFromUser
+{
+    kGraph,
+    kCNV,
+    kParalog,
+    kUnspecified
+};
 
 static bool checkIfFieldExists(const Json& record, const string& fieldName)
 {
@@ -81,35 +96,48 @@ static void assertRecordIsArray(const Json& record)
     }
 }
 
-static void makeArray(Json& record)
+static Json makeArray(const Json& record)
 {
     if (record.type() != Json::value_t::array)
     {
-        record = Json::array({ record });
-    }
-}
-
-static VariantTypeFromUser decodeVariantTypeFromUser(const string& encoding)
-{
-    if (encoding == "RareRepeat")
-    {
-        return VariantTypeFromUser::kRareRepeat;
-    }
-    if (encoding == "Repeat")
-    {
-        return VariantTypeFromUser::kCommonRepeat;
-    }
-    if (encoding == "SmallVariant")
-    {
-        return VariantTypeFromUser::kSmallVariant;
-    }
-    if (encoding == "SMN")
-    {
-        return VariantTypeFromUser::kSMN;
+        return Json::array({ record });
     }
     else
     {
-        throw std::logic_error("Encountered invalid variant type: " + encoding);
+        return record;
+    }
+}
+
+static LocusTypeFromUser decodeLocusTypeFromUser(const string& encoding)
+{
+    if (encoding == "Graph")
+    {
+        return LocusTypeFromUser::kGraph;
+    }
+    if (encoding == "CNV")
+    {
+        return LocusTypeFromUser::kCNV;
+    }
+    if (encoding == "Paralog")
+    {
+        return LocusTypeFromUser::kParalog;
+    }
+    else
+    {
+        throw std::logic_error("Encountered invalid locus type: " + encoding);
+    }
+}
+
+static LocusTypeFromUser getLocusType(const Json& record)
+{
+    if (checkIfFieldExists(record, "LocusType"))
+    {
+        const auto encoding = record["LocusType"].get<string>();
+        return decodeLocusTypeFromUser(encoding);
+    }
+    else
+    {
+        return LocusTypeFromUser::kUnspecified;
     }
 }
 
@@ -132,112 +160,409 @@ static vector<string> generateIds(const string& locusId, const Json& variantLoca
     return variantIds;
 }
 
-static GenomicRegion mergeRegions(const vector<GenomicRegion>& regions)
+static GraphLocusEncoding loadGraphLocusEncoding(const Json& json, const Reference& reference)
 {
-    const int kMaxMergeDistance = 500;
-    vector<GenomicRegion> mergedReferenceRegions = merge(regions, kMaxMergeDistance);
-    if (mergedReferenceRegions.size() != 1)
+    GraphLocusEncoding locus;
+
+    assertFieldExists(json, "LocusId");
+    locus.id = json["LocusId"].get<string>();
+
+    assertFieldExists(json, "LocusStructure");
+    locus.structure = json["LocusStructure"].get<string>();
+
+    if (checkIfFieldExists(json, "TargetRegion"))
     {
-        std::stringstream out;
-        for (const GenomicRegion& region : regions)
+        for (const auto& encoding : makeArray(json["TargetRegion"]))
         {
-            out << region << " ";
+            auto region = decode(reference.contigInfo(), encoding.get<string>());
+            locus.targetRegions.push_back(region);
         }
-        throw std::runtime_error(
-            "Expected reference regions to be closer than " + to_string(kMaxMergeDistance)
-            + " from one another: " + out.str());
     }
 
-    return mergedReferenceRegions.front();
+    if (checkIfFieldExists(json, "OfftargetRegions"))
+    {
+        assertRecordIsArray(json["OfftargetRegions"]);
+        for (const auto& encoding : json["OfftargetRegions"])
+        {
+            GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
+            locus.offtargetRegions.push_back(region);
+        }
+    }
+
+    if (checkIfFieldExists(json, "ErrorRate"))
+    {
+        locus.errorRate = json["ErrorRate"].get<double>();
+    }
+
+    if (checkIfFieldExists(json, "LikelihoodRatioThreshold"))
+    {
+        locus.likelihoodRatioThreshold = json["LikelihoodRatioThreshold"].get<double>();
+    }
+
+    if (checkIfFieldExists(json, "MinimalLocusCoverage"))
+    {
+        locus.minLocusCoverage = json["MinimalLocusCoverage"].get<double>();
+    }
+
+    assertFieldExists(json, "Variants");
+    makeArray(json["Variants"]);
+    for (const auto& variant : json["Variants"])
+    {
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(reference.contigInfo(), variant["ReferenceRegion"].get<string>());
+
+        assertFieldExists(variant, "VariantType");
+        auto variantType = variant["VariantType"].get<string>();
+
+        std::string variantId;
+        if (checkIfFieldExists(variant, "VariantId"))
+        {
+            variantId = variant["VariantId"].get<string>();
+        }
+        else
+        {
+            variantId = locus.id;
+            variantId += "_";
+            variantId += variant["ReferenceRegion"].get<string>();
+        }
+
+        locus.variants.emplace_back(GraphVariantEncoding(variantId, variantType, region));
+    }
+    return locus;
 }
 
-static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
+static ParalogLocusEncoding loadParalogLocusEncoding(const Json& locusJson, const Reference& reference)
 {
+    ParalogLocusEncoding paralogLocusDecoding;
+
     assertFieldExists(locusJson, "LocusId");
     auto locusId = locusJson["LocusId"].get<string>();
+    paralogLocusDecoding.id = locusId;
 
-    assertFieldExists(locusJson, "LocusStructure");
-    auto locusStructure = locusJson["LocusStructure"].get<string>();
+    std::vector<CnvVariantEncoding> cnvAnalysisVariants;
+    std::vector<SmallVariantEncoding> smallAnalysisVariants;
+    std::vector<ParalogOutputVariantEncoding> paralogOutputVariants;
+
+    assertFieldExists(locusJson, "OutputVariants");
+    makeArray(locusJson["OutputVariants"]);
+    for (const auto& variant : locusJson["OutputVariants"])
+    {
+        assertFieldExists(variant, "VariantId");
+        auto variantId = variant["VariantId"].get<string>();
+
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(reference.contigInfo(), variant["ReferenceRegion"].get<string>());
+
+        ParalogOutputVariantEncoding paralogOutputVariantEncoding;
+        paralogOutputVariantEncoding.id = variantId;
+        paralogOutputVariantEncoding.location = region;
+        paralogOutputVariants.emplace_back(paralogOutputVariantEncoding);
+    }
+
+    assertFieldExists(locusJson, "AnalysisVariants");
+    makeArray(locusJson["AnalysisVariants"]);
+    for (const auto& variant : locusJson["AnalysisVariants"])
+    {
+        assertFieldExists(variant, "VariantType");
+        std::string variantType = variant["VariantType"];
+        
+        assertFieldExists(variant, "ReferenceRegion");
+        makeArray(variant["ReferenceRegion"]);
+        std::vector<GenomicRegion> variantRegions;
+        for (auto referenceRegion : variant["ReferenceRegion"])
+        {
+            GenomicRegion region = decode(reference.contigInfo(), referenceRegion.get<string>());
+            variantRegions.push_back(region);
+        }
+
+        assertFieldExists(variant, "VariantId");
+        string variantId = variant["VariantId"].get<string>();
+
+        assertFieldExists(variant, "MappingQualityThreshold");
+        auto mappingQualityThreshold = variant["MappingQualityThreshold"].get<int>();
+
+        if (variantType == "CNV")
+        {
+            assertFieldExists(variant, "VariantSubtype");
+            auto variantSubtype = variant["VariantSubtype"].get<string>();
+
+            assertFieldExists(variant, "GC");
+            auto regionGC = variant["GC"].get<double>();
+
+            assertFieldExists(variant, "MaxCopyNumber");
+            auto maxCopyNumber = variant["MaxCopyNumber"].get<int>();
+
+            assertFieldExists(variant, "DepthScaleFactor");
+            auto depthScaleFactor = variant["DepthScaleFactor"].get<double>();
+
+            assertFieldExists(variant, "StandardDeviationOfCN2");
+            auto standardDeviationOfCN2 = variant["StandardDeviationOfCN2"].get<double>();
+
+            assertFieldExists(variant, "MeanDepthValues");
+            std::vector<double> meanDepths;
+            for (const auto& encoding : variant["MeanDepthValues"])
+            {
+                meanDepths.push_back(encoding.get<double>());
+            }
+            auto meanDepthValues = meanDepths;
+
+            assertFieldExists(variant, "PriorCopyNumberFreq");
+            std::vector<double> priors;
+            for (const auto& encoding : variant["PriorCopyNumberFreq"])
+            {
+                priors.push_back(encoding.get<double>());
+            }
+            auto priorCopyNumberFrequency = priors;
+
+            CnvVariantEncoding variantDecoding;
+            variantDecoding.id = variantId;
+            variantDecoding.locations = variantRegions;
+            variantDecoding.variantType = variantSubtype;
+            variantDecoding.regionGC = regionGC;
+            variantDecoding.mappingQualityThreshold = mappingQualityThreshold;
+            variantDecoding.maxCopyNumber = maxCopyNumber;
+            variantDecoding.depthScaleFactor = depthScaleFactor;
+            variantDecoding.standardDeviationOfCN2 = standardDeviationOfCN2;
+            variantDecoding.meanDepthValues = meanDepths;
+            variantDecoding.priorCopyNumberFrequency = priorCopyNumberFrequency;
+            
+            cnvAnalysisVariants.emplace_back(variantDecoding);
+        }
+        else if (variantType == "SmallVariant")
+        {
+            assertFieldExists(variant, "VariantStructure");
+            SmallVariantEncoding variantDecoding;
+            variantDecoding.id = variantId;
+            variantDecoding.locations = variantRegions;
+            variantDecoding.variantType = variantType;
+            variantDecoding.mappingQualityThreshold = mappingQualityThreshold;
+            variantDecoding.variantStructure = variant["VariantStructure"].get<string>();
+            smallAnalysisVariants.emplace_back(variantDecoding);
+        }
+
+    }
+    paralogLocusDecoding.outputVariants = paralogOutputVariants;
+    paralogLocusDecoding.cnvVariants = cnvAnalysisVariants;
+    paralogLocusDecoding.smallVariants = smallAnalysisVariants;
+    return paralogLocusDecoding;
+}
+
+static CnvLocusEncoding loadCnvLocusEncoding(const Json& locusJson, const Reference& reference)
+{
+    CnvLocusEncoding cnvLocusDecoding;
+
+    assertFieldExists(locusJson, "LocusId");
+    auto locusId = locusJson["LocusId"].get<string>();
+    cnvLocusDecoding.id = locusId;
+
+    std::vector<CnvVariantEncoding> cnvAnalysisVariants;
+    std::vector<CnvOutputVariantEncoding> cnvOutputVariants;
+
+    assertFieldExists(locusJson, "OutputVariants");
+    makeArray(locusJson["OutputVariants"]);
+    for (const auto& variant : locusJson["OutputVariants"])
+    {
+        assertFieldExists(variant, "VariantId");
+        auto variantId = variant["VariantId"].get<string>();
+
+        assertFieldExists(variant, "ReferenceRegion");
+        GenomicRegion region = decode(reference.contigInfo(), variant["ReferenceRegion"].get<string>());
+
+        CnvOutputVariantEncoding cnvOutputVariantDecoding;
+        cnvOutputVariantDecoding.id = variantId;
+        cnvOutputVariantDecoding.location = region;
+        cnvOutputVariants.emplace_back(cnvOutputVariantDecoding);
+    }
+
+    assertFieldExists(locusJson, "AnalysisVariants");
+    makeArray(locusJson["AnalysisVariants"]);
+    for (const auto& variant : locusJson["AnalysisVariants"])
+    {
+        assertFieldExists(variant, "ReferenceRegion");
+        makeArray(variant["ReferenceRegion"]);
+        std::vector<GenomicRegion> variantRegions;
+        for (auto referenceRegion : variant["ReferenceRegion"])
+        {
+            GenomicRegion region = decode(reference.contigInfo(), referenceRegion.get<string>());
+            variantRegions.push_back(region);
+        }
+
+        assertFieldExists(variant, "VariantId");
+        string variantId = variant["VariantId"].get<string>();
+
+        assertFieldExists(variant, "VariantSubtype");
+        auto variantType = variant["VariantSubtype"].get<string>();
+
+        bool expectedNormalCN;
+        if (variantType == "Baseline")
+        {
+            assertFieldExists(variant, "ExpectedNormal");
+            expectedNormalCN = variant["ExpectedNormal"].get<bool>();
+        }
+        else
+        {
+            expectedNormalCN = false;
+        }
+
+        assertFieldExists(variant, "GC");
+        auto regionGC = variant["GC"].get<double>();
+
+        assertFieldExists(variant, "MappingQualityThreshold");
+        auto mappingQualityThreshold = variant["MappingQualityThreshold"].get<int>();
+
+        assertFieldExists(variant, "MaxCopyNumber");
+        auto maxCopyNumber = variant["MaxCopyNumber"].get<int>();
+
+        assertFieldExists(variant, "DepthScaleFactor");
+        auto depthScaleFactor = variant["DepthScaleFactor"].get<double>();
+
+        assertFieldExists(variant, "StandardDeviationOfCN2");
+        auto standardDeviationOfCN2 = variant["StandardDeviationOfCN2"].get<double>();
+
+        assertFieldExists(variant, "MeanDepthValues");
+        std::vector<double> meanDepths;
+        for (const auto& encoding : variant["MeanDepthValues"])
+        {
+            meanDepths.push_back(encoding.get<double>());
+        }
+        auto meanDepthValues = meanDepths;
+
+        assertFieldExists(variant, "PriorCopyNumberFreq");
+        std::vector<double> priors;
+        for (const auto& encoding : variant["PriorCopyNumberFreq"])
+        {
+            priors.push_back(encoding.get<double>());
+        }
+        auto priorCopyNumberFrequency = priors;
+
+        CnvVariantEncoding variantDecoding;
+        variantDecoding.id = variantId;
+        variantDecoding.locations = variantRegions;
+        variantDecoding.variantType = variantType;
+        variantDecoding.expectedNormalCN = expectedNormalCN;
+        variantDecoding.regionGC = regionGC;
+        variantDecoding.mappingQualityThreshold = mappingQualityThreshold;
+        variantDecoding.maxCopyNumber = maxCopyNumber;
+        variantDecoding.depthScaleFactor = depthScaleFactor;
+        variantDecoding.standardDeviationOfCN2 = standardDeviationOfCN2;
+        variantDecoding.meanDepthValues = meanDepths;
+        variantDecoding.priorCopyNumberFrequency = priorCopyNumberFrequency;
+        cnvAnalysisVariants.emplace_back(variantDecoding);
+    }
+    cnvLocusDecoding.outputVariants = cnvOutputVariants;
+    cnvLocusDecoding.variants = cnvAnalysisVariants;
+    return cnvLocusDecoding;
+}
+
+static GraphLocusEncoding loadLegacyGraphLocusDecoding(const Json& record, const Reference& reference)
+{
+    GraphLocusEncoding locus;
+
+    assertFieldExists(record, "LocusId");
+    locus.id = record["LocusId"].get<string>();
+
+    assertFieldExists(record, "LocusStructure");
+    locus.structure = record["LocusStructure"].get<string>();
+
+    if (checkIfFieldExists(record, "TargetRegion"))
+    {
+        for (const auto& encoding : makeArray(record["TargetRegion"]))
+        {
+            auto region = decode(reference.contigInfo(), encoding.get<string>());
+            locus.targetRegions.push_back(region);
+        }
+    }
+
+    if (checkIfFieldExists(record, "OfftargetRegions"))
+    {
+        assertRecordIsArray(record["OfftargetRegions"]);
+        for (const auto& encoding : record["OfftargetRegions"])
+        {
+            GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
+            locus.offtargetRegions.push_back(region);
+        }
+    }
+
+    if (checkIfFieldExists(record, "ErrorRate"))
+    {
+        locus.errorRate = record["ErrorRate"].get<double>();
+    }
+
+    if (checkIfFieldExists(record, "LikelihoodRatioThreshold"))
+    {
+        locus.likelihoodRatioThreshold = record["LikelihoodRatioThreshold"].get<double>();
+    }
+
+    if (checkIfFieldExists(record, "MinimalLocusCoverage"))
+    {
+        locus.minLocusCoverage = record["MinimalLocusCoverage"].get<double>();
+    }
 
     vector<GenomicRegion> variantLocations;
-    assertFieldExists(locusJson, "ReferenceRegion");
-    makeArray(locusJson["ReferenceRegion"]);
-    for (const auto& encoding : locusJson["ReferenceRegion"])
+    assertFieldExists(record, "ReferenceRegion");
+    auto variantLocationJson = makeArray(record["ReferenceRegion"]);
+    for (const auto& encoding : variantLocationJson)
     {
-        GenomicRegion region = decode(contigInfo, encoding.get<string>());
+        GenomicRegion region = decode(reference.contigInfo(), encoding.get<string>());
         variantLocations.push_back(region);
     }
 
-    GenomicRegion locusLocation = mergeRegions(variantLocations);
+    vector<string> variantTypes;
+    assertFieldExists(record, "VariantType");
+    for (const auto& encoding : makeArray(record["VariantType"]))
+    {
+        variantTypes.push_back(encoding.get<string>());
+    }
+
+    if (variantTypes.size() != variantLocations.size())
+    {
+        throw std::runtime_error("Types and locations must be provided for each variant in locus " + locus.id);
+    }
 
     vector<string> variantIds;
-    if (checkIfFieldExists(locusJson, "VariantId"))
+    if (checkIfFieldExists(record, "VariantId"))
     {
-        makeArray(locusJson["VariantId"]);
-        for (const auto& variantId : locusJson["VariantId"])
+        for (const auto& variantId : makeArray(record["VariantId"]))
         {
             variantIds.push_back(variantId.get<string>());
         }
     }
     else
     {
-        variantIds = generateIds(locusId, locusJson["ReferenceRegion"]);
+        variantIds = generateIds(locus.id, variantLocationJson);
     }
 
-    vector<VariantTypeFromUser> variantTypesFromUser;
-    assertFieldExists(locusJson, "VariantType");
-    makeArray(locusJson["VariantType"]);
-    for (const auto& encoding : locusJson["VariantType"])
+    if (variantIds.size() != variantTypes.size())
     {
-        variantTypesFromUser.push_back(decodeVariantTypeFromUser(encoding.get<string>()));
+        throw std::runtime_error("An id must be provided for each variant in locus " + locus.id);
     }
 
-    vector<GenomicRegion> targetRegions;
-    if (checkIfFieldExists(locusJson, "TargetRegion"))
+    for (int index = 0; index != static_cast<int>(variantTypes.size()); ++index)
     {
-        makeArray(locusJson["TargetRegion"]);
-        for (const auto& encoding : locusJson["TargetRegion"])
-        {
-            GenomicRegion region = decode(contigInfo, encoding.get<string>());
-            targetRegions.push_back(region);
-        }
+        GraphVariantEncoding variant(variantIds[index], variantTypes[index], variantLocations[index]);
+        locus.variants.push_back(variant);
     }
 
-    vector<GenomicRegion> offtargetRegions;
-    if (checkIfFieldExists(locusJson, "OfftargetRegions"))
-    {
-        assertRecordIsArray(locusJson["OfftargetRegions"]);
-        for (const auto& encoding : locusJson["OfftargetRegions"])
-        {
-            GenomicRegion region = decode(contigInfo, encoding.get<string>());
-            offtargetRegions.push_back(region);
-        }
-    }
-
-    boost::optional<double> errorRate;
-    if (checkIfFieldExists(locusJson, "ErrorRate"))
-    {
-        errorRate = locusJson["ErrorRate"].get<double>();
-    }
-
-    boost::optional<double> likelihoodRatioThreshold;
-    if (checkIfFieldExists(locusJson, "LikelihoodRatioThreshold"))
-    {
-        likelihoodRatioThreshold = locusJson["LikelihoodRatioThreshold"].get<double>();
-    }
-
-    boost::optional<double> minLocusCoverage;
-    if (checkIfFieldExists(locusJson, "MinimalLocusCoverage"))
-    {
-        minLocusCoverage = locusJson["MinimalLocusCoverage"].get<double>();
-    }
-
-    return LocusDescriptionFromUser(
-        locusId, locusStructure, variantIds, locusLocation, variantLocations, targetRegions, offtargetRegions,
-        variantTypesFromUser, errorRate, likelihoodRatioThreshold, minLocusCoverage);
+    return locus;
 }
 
-RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
+std::unique_ptr<LocusSpec> loadLocusSpec(const Json& record, const Reference& reference)
+{
+    LocusTypeFromUser locusType = getLocusType(record);
+    switch (locusType)
+    {
+    case LocusTypeFromUser::kGraph:
+        return decode(reference, loadGraphLocusEncoding(record, reference));
+    case LocusTypeFromUser::kCNV:
+        return decode(reference, loadCnvLocusEncoding(record, reference));
+    case LocusTypeFromUser::kParalog:
+        return decode(reference, loadParalogLocusEncoding(record, reference));
+    default: // If locus type is not specified, assume that its legacy graph
+        return decode(reference, loadLegacyGraphLocusDecoding(record, reference));
+    }
+}
+
+LocusCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Reference& reference)
 {
     std::ifstream inputStream(catalogPath.c_str());
 
@@ -252,14 +577,13 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
 
     WorkflowContext context;
 
-    RegionCatalog catalog;
-    for (auto& locusJson : catalogJson)
+    LocusCatalog catalog;
+    for (const auto& locusJson : catalogJson)
     {
-        LocusDescriptionFromUser userDescription = loadUserDescription(locusJson, reference.contigInfo());
         try
         {
-            LocusSpecification locusSpec = decodeLocusSpecification(userDescription, reference);
-            catalog.emplace(std::make_pair(locusSpec.locusId(), locusSpec));
+            std::unique_ptr<LocusSpec> locusSpec = loadLocusSpec(locusJson, reference);
+            catalog.emplace(std::make_pair(locusSpec->locusId(), std::move(locusSpec)));
         }
         catch (const std::exception& except)
         {
@@ -278,4 +602,28 @@ RegionCatalog loadLocusCatalogFromDisk(const string& catalogPath, const Referenc
     return catalog;
 }
 
+std::vector<RegionInfo> loadNormRegionsFromDisk(const std::string& normRegionPath, const Reference& reference)
+{
+    std::vector<RegionInfo> normRegionInfo;
+    std::ifstream inputStream(normRegionPath.c_str());
+
+    if (!inputStream.is_open())
+    {
+        throw std::runtime_error("Failed to open norm region file " + normRegionPath);
+    }
+
+    Json normJson;
+    inputStream >> normJson;
+    makeArray(normJson);
+
+    for (auto& regionJson : normJson)
+    {
+        assertFieldExists(regionJson, "GC");
+        auto regionGC = regionJson["GC"].get<float>();
+        assertFieldExists(regionJson, "ReferenceRegion");
+        GenomicRegion region = decode(reference.contigInfo(), regionJson["ReferenceRegion"].get<string>());
+        normRegionInfo.emplace_back(regionGC, region);
+    }
+    return normRegionInfo;
+}
 }

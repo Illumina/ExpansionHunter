@@ -19,14 +19,14 @@
 //
 //
 
-#include "input/RegionGraph.hh"
+#include "locus_spec/RegionGraph.hh"
 
 #include <algorithm>
 #include <cassert>
 #include <utility>
 #include <vector>
 
-#include "input/GraphBlueprint.hh"
+#include "locus_spec/GraphBlueprint.hh"
 
 using graphtools::Graph;
 using graphtools::NodeId;
