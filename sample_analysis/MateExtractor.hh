@@ -46,7 +46,8 @@ namespace htshelpers
         MateExtractor(const std::string& htsFilePath, const std::string& htsReferencePath);
         ~MateExtractor();
 
-        boost::optional<MappedRead> extractMate(const MappedRead& read);
+        boost::optional<Read>
+        extractMate(const Read& read, const LinearAlignmentStats& alignmentStats, LinearAlignmentStats& mateStats);
 
     private:
         void openFile();

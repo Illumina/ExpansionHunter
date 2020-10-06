@@ -44,32 +44,10 @@ enum class VariantTypeFromUser
 
 struct LocusDescriptionFromUser
 {
-    LocusDescriptionFromUser(
-        std::string locusId, std::string locusStructure, std::vector<std::string> variantIds,
-        GenomicRegion locusLocation, std::vector<GenomicRegion> variantLocations,
-        std::vector<GenomicRegion> targetRegions, std::vector<GenomicRegion> offtargetRegions,
-        std::vector<VariantTypeFromUser> variantTypesFromUser, boost::optional<double> errorRate,
-        boost::optional<double> likelihoodRatioThreshold, boost::optional<double> minLocusCoverage)
-        : locusId(std::move(locusId))
-        , locusStructure(std::move(locusStructure))
-        , variantIds(std::move(variantIds))
-        , locusLocation(std::move(locusLocation))
-        , variantLocations(std::move(variantLocations))
-        , targetRegions(std::move(targetRegions))
-        , offtargetRegions(std::move(offtargetRegions))
-        , variantTypesFromUser(std::move(variantTypesFromUser))
-        , errorRate(errorRate)
-        , likelihoodRatioThreshold(likelihoodRatioThreshold)
-        , minLocusCoverage(minLocusCoverage)
-
-    {
-    }
-
     std::string locusId;
     std::string locusStructure;
     std::vector<std::string> variantIds;
-    GenomicRegion locusLocation;
-    std::vector<GenomicRegion> variantLocations;
+    std::vector<GenomicRegion> referenceRegions;
     std::vector<GenomicRegion> targetRegions;
     std::vector<GenomicRegion> offtargetRegions;
     std::vector<VariantTypeFromUser> variantTypesFromUser;
@@ -80,7 +58,8 @@ struct LocusDescriptionFromUser
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);
 
-LocusSpecification
-decodeLocusSpecification(const LocusDescriptionFromUser& userDescription, const Reference& reference);
+LocusSpecification decodeLocusSpecification(
+    const LocusDescriptionFromUser& userDescription, const Reference& reference,
+    const HeuristicParameters& heuristicParams);
 
 }

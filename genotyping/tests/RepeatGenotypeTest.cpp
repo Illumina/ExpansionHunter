@@ -79,12 +79,14 @@ TEST(SettingAlleleSizesCis, TypicalGenotype_CiSet)
     EXPECT_EQ(NumericInterval(2, 8), genotype.longAlleleSizeInUnitsCi());
 }
 
-TEST(SettingAlleleSizesCis, CiNotCoveringRepeatSize_ExpceptionThrown)
+TEST(SettingAlleleSizesCis, CiNotCoveringRepeatSize_CiSizeExtended)
 {
     RepeatGenotype genotype(3, { 2, 3 });
+    genotype.setShortAlleleSizeInUnitsCi(0, 1);
+    genotype.setLongAlleleSizeInUnitsCi(4, 5);
 
-    EXPECT_ANY_THROW(genotype.setShortAlleleSizeInUnitsCi(0, 1));
-    EXPECT_ANY_THROW(genotype.setLongAlleleSizeInUnitsCi(4, 5));
+    EXPECT_EQ(NumericInterval(0, 2), genotype.shortAlleleSizeInUnitsCi());
+    EXPECT_EQ(NumericInterval(3, 5), genotype.longAlleleSizeInUnitsCi());
 }
 
 TEST(TestingHomozygosity, TypicalGenotypes_HomozygosityDetermined)

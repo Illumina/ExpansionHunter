@@ -60,7 +60,6 @@ struct UserParameters
     int regionExtensionLength;
     int qualityCutoffForGoodBaseCall;
     bool skipUnaligned;
-    bool permissive;
 
     string analysisMode;
     string logLevel;
@@ -73,8 +72,8 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     // clang-format off
     po::options_description basicOptions("Basic options");
     basicOptions.add_options()
-        ("help", "Print help message")
-        ("version", "Print version number")
+        ("help,h", "Print help message")
+        ("version,v", "Print version number")
         ("reads", po::value<string>(&params.htsFilePath)->required(), "BAM/CRAM file with aligned reads")
         ("reference", po::value<string>(&params.referencePath)->required(), "FASTA file with reference genome")
         ("variant-catalog", po::value<string>(&params.catalogPath)->required(), "JSON file with variants to genotype")
@@ -87,10 +86,8 @@ boost::optional<UserParameters> tryParsingUserParameters(int argc, char** argv)
     // clang-format off
     po::options_description advancedOptions("Advanced options");
     advancedOptions.add_options()
-        ("aligner", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Graph aligner type (dag-aligner or path-aligner)")
-        ("analysis-mode", po::value<string>(&params.analysisMode)->default_value("seeking"), "Analysis workflow type (seeking or streaming)")
-        ("good-base-call-cutoff", po::value<int>(&params.qualityCutoffForGoodBaseCall)->default_value(20), "Minimum score for a good base call")
-        ("permissive", po::bool_switch(&params.permissive)->default_value(false), "Continue execution on non-fatal errors");
+        ("aligner,a", po::value<string>(&params.alignerType)->default_value("dag-aligner"), "Specify which aligner to use (dag-aligner or path-aligner)")
+        ("analysis-mode,m", po::value<string>(&params.analysisMode)->default_value("seeking"), "Specify which analysis workflow to use (seeking or streaming)");
     // clang-format on
 
     po::options_description cmdlineOptions;
@@ -190,7 +187,7 @@ void assertValidity(const UserParameters& userParameters)
     const int kMinExtensionLength = 500;
     const int kMaxExtensionLength = 1500;
     if (userParameters.regionExtensionLength < kMinExtensionLength
-        || userParameters.regionExtensionLength > kMaxExtensionLength)
+        && userParameters.regionExtensionLength > kMaxExtensionLength)
     {
         const string message = "Extension length of size " + to_string(userParameters.regionExtensionLength)
             + " is not supported; the range of allowed extensions is between " + to_string(kMinExtensionLength)
@@ -201,7 +198,7 @@ void assertValidity(const UserParameters& userParameters)
     const int kMinQualityCutoffForGoodBaseCall = 5;
     const int kMaxQualityCutoffForGoodBaseCall = 40;
     if (userParameters.qualityCutoffForGoodBaseCall < kMinQualityCutoffForGoodBaseCall
-        || userParameters.qualityCutoffForGoodBaseCall > kMaxQualityCutoffForGoodBaseCall)
+        && userParameters.qualityCutoffForGoodBaseCall > kMaxQualityCutoffForGoodBaseCall)
     {
         const string message = "Base call quality cutoff of " + to_string(userParameters.qualityCutoffForGoodBaseCall)
             + " is not supported; the range of allowed cutoffs is between "
@@ -279,10 +276,9 @@ boost::optional<ProgramParameters> tryLoadingProgramParameters(int argc, char** 
     const string bamletPath = userParams.outputPrefix + "_realigned.bam";
     OutputPaths outputPaths(vcfPath, jsonPath, bamletPath);
     SampleParameters sampleParameters = decodeSampleParameters(userParams);
-
     HeuristicParameters heuristicParameters(
         userParams.regionExtensionLength, userParams.qualityCutoffForGoodBaseCall, userParams.skipUnaligned,
-        userParams.alignerType, userParams.permissive);
+        userParams.alignerType);
 
     LogLevel logLevel;
     try

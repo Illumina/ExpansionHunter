@@ -29,6 +29,7 @@
 
 #include <boost/functional/hash.hpp>
 
+#include "classification/AlignmentClassifier.hh"
 #include "graphalign/GraphAlignment.hh"
 #include "graphutils/SequenceOperations.hh"
 
@@ -83,7 +84,19 @@ std::ostream& operator<<(std::ostream& out, const ReadId& readId);
 class Read
 {
 public:
-    Read(ReadId readId, std::string sequence, bool isReversed);
+    Read(ReadId readId, std::string sequence, bool isReversed)
+        : readId_(std::move(readId))
+        , sequence_(std::move(sequence))
+        , isReversed_(isReversed)
+    {
+        if (sequence_.empty())
+        {
+            std::ostringstream encoding;
+            encoding << readId_;
+            throw std::logic_error("Encountered empty query for " + encoding.str());
+        }
+    }
+
     const ReadId& readId() const { return readId_; }
     const FragmentId& fragmentId() const { return readId_.fragmentId(); }
     MateNumber mateNumber() const { return readId_.mateNumber(); }
@@ -94,48 +107,59 @@ public:
     // Return whether the read is reverse complemented relative to it's
     //  original direction during sequencing
     bool isReversed() const { return isReversed_; }
-    Read reverseComplement();
+   
+    void reverseComplement()
+    {   
+        sequence_ = graphtools::reverseComplement(sequence_);
+        isReversed_ = !isReversed_;
+    }
 
-protected:
+private:
     ReadId readId_;
     std::string sequence_;
     bool isReversed_;
 };
 
-class MappedRead : public Read
+struct LinearAlignmentStats
 {
-public:
-    MappedRead(
-        ReadId readId, std::string sequence, bool isReversed, int contigIndex, int64_t pos, int mapq,
-        int mateContigIndex, int64_t matePos, bool isPaired, bool isMapped, bool isMateMapped);
-
-    int contigIndex() const { return contigIndex_; }
-    int64_t pos() const { return pos_; }
-    int64_t approximateEnd() const { return pos() + sequence().length(); }
-    int mapq() const { return mapq_; }
-    int mateContigIndex() const { return mateContigIndex_; }
-    int64_t matePos() const { return matePos_; }
-    bool isPaired() const { return isPaired_; }
-    bool isMapped() const { return isMapped_; }
-    bool isMateMapped() const { return isMateMapped_; }
-
-private:
-    int contigIndex_;
-    int64_t pos_;
-    int mapq_;
-    int mateContigIndex_;
-    int64_t matePos_;
-    bool isPaired_;
-    bool isMapped_;
-    bool isMateMapped_;
+    int32_t chromId = -1;
+    int32_t pos = -1;
+    int32_t mapq = -1;
+    int32_t mateChromId = -1;
+    int32_t matePos = -1;
+    bool isPaired = false;
+    bool isMapped = false;
+    bool isMateMapped = false;
 };
 
-class ReadRecordWrapper
-{
-};
+using ReadIdToLinearAlignmentStats = std::unordered_map<std::string, LinearAlignmentStats>;
 
 bool operator==(const Read& read, const Read& mate);
-bool operator==(const MappedRead& read, const MappedRead& mate);
+bool operator==(const LinearAlignmentStats& statsA, const LinearAlignmentStats& statsB);
+
+class RepeatAlignmentStats
+{
+public:
+    RepeatAlignmentStats(
+        const GraphAlignment& canonical_alignment, AlignmentType canonical_alignment_type,
+        int32_t num_repeat_units_spanned)
+        : canonical_alignment_(canonical_alignment)
+        , canonical_alignment_type_(canonical_alignment_type)
+        , num_repeat_units_spanned_(num_repeat_units_spanned)
+    {
+    }
+
+    const GraphAlignment& canonicalAlignment() const { return canonical_alignment_; }
+    AlignmentType canonicalAlignmentType() const { return canonical_alignment_type_; }
+    int32_t numRepeatUnitsSpanned() const { return num_repeat_units_spanned_; }
+
+private:
+    GraphAlignment canonical_alignment_;
+    AlignmentType canonical_alignment_type_;
+    int32_t num_repeat_units_spanned_;
+};
+
+using ReadIdToRepeatAlignmentStats = std::unordered_map<std::string, RepeatAlignmentStats>;
 
 std::ostream& operator<<(std::ostream& out, const Read& read);
 

@@ -30,15 +30,13 @@
 #include "graphcore/Graph.hh"
 #include "graphcore/GraphOperations.hh"
 
-#include "filtering/BloomFilter.hh"
-
 namespace ehunter
 {
 
 enum class OrientationPrediction
 {
     kAlignsInOriginalOrientation,
-    kAlignsInOppositeOrientation,
+    kAlignsInReverseComplementOrientation,
     kDoesNotAlign
 };
 
@@ -47,14 +45,23 @@ std::ostream& operator<<(std::ostream& out, OrientationPrediction orientationPre
 class OrientationPredictor
 {
 public:
-    explicit OrientationPredictor(const graphtools::Graph* graph);
+    OrientationPredictor(const graphtools::Graph* graphRawPtr)
+        : kmerLength_(10)
+        , minKmerMatchesToPass_(3)
+        , kmerIndex_(*graphRawPtr, kmerLength_)
+        , reverseComplementedGraph_(graphtools::reverseGraph(*graphRawPtr, true))
+        , kmerIndexForReverseComplementedGraph_(reverseComplementedGraph_, kmerLength_)
+    {
+    }
+
     OrientationPrediction predict(const std::string& query) const;
 
 private:
-    int kmerLength_;
-    int minKmerMatchesToPass_;
-    BloomFilter bloomFilter_;
-    BloomFilter oppositeBloomFilter_;
+    int32_t kmerLength_;
+    int32_t minKmerMatchesToPass_;
+    graphtools::KmerIndex kmerIndex_;
+    const graphtools::Graph reverseComplementedGraph_;
+    graphtools::KmerIndex kmerIndexForReverseComplementedGraph_;
 };
 
 }

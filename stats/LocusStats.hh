@@ -27,7 +27,6 @@
 
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics.hpp>
-#include <boost/optional.hpp>
 
 #include "graphalign/GraphAlignment.hh"
 #include "graphcore/Graph.hh"
@@ -42,25 +41,56 @@ namespace ehunter
 class LocusStats
 {
 public:
-    LocusStats(AlleleCount alleleCount, int meanReadLength, double depth)
+    LocusStats(AlleleCount alleleCount, int meanReadLen, int medianFragLen, double depth)
         : alleleCount_(alleleCount)
-        , meanReadLength_(meanReadLength)
+        , meanReadLen_(meanReadLen)
+        , medianFragLen_(medianFragLen)
         , depth_(depth)
     {
     }
 
     AlleleCount alleleCount() const { return alleleCount_; }
-    int meanReadLength() const { return meanReadLength_; }
+    int meanReadLength() const { return meanReadLen_; }
+    int medianFragLength() const { return medianFragLen_; }
     double depth() const { return depth_; }
+    void setDepth(double depth) { depth_ = depth; }
 
     bool operator==(const LocusStats& other) const;
 
 private:
     AlleleCount alleleCount_;
-    int meanReadLength_;
+    int meanReadLen_;
+    int medianFragLen_;
     double depth_;
 };
 
 std::ostream& operator<<(std::ostream& out, const LocusStats& stats);
+
+// Computes read and coverage statistics for each locus from reads aligning to the flanks
+class LocusStatsCalculator
+{
+public:
+    LocusStatsCalculator(ChromType chromType, const graphtools::Graph& graph);
+
+    void inspect(const graphtools::GraphAlignment& readAlign, const graphtools::GraphAlignment& mateAlign);
+
+    LocusStats estimate(Sex sampleSex);
+    void recordReadLen(const graphtools::GraphAlignment& readAlign);
+
+private:
+    using AccumulatorStats
+        = boost::accumulators::features<boost::accumulators::tag::count, boost::accumulators::tag::mean>;
+    using Accumulator = boost::accumulators::accumulator_set<int, AccumulatorStats>;
+
+    void recordFragLen(const graphtools::GraphAlignment& readAlign, const graphtools::GraphAlignment& mateAlign);
+
+    ChromType chromType_;
+    Accumulator readLengthAccumulator_;
+    Accumulator fragLengthAccumulator_;
+    graphtools::NodeId leftFlankId_;
+    graphtools::NodeId rightFlankId_;
+    int leftFlankLength_;
+    int rightFlankLength_;
+};
 
 }

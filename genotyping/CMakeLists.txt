@@ -1,4 +1,25 @@
-file(GLOB SOURCES "*.cpp")
-add_library(genotyping ${SOURCES})
-target_link_libraries(genotyping common)
+add_library(genotyping
+        AlignMatrix.hh
+        AlignMatrix.cpp
+        AlleleChecker.hh
+        AlleleChecker.cpp
+        RepeatGenotype.hh
+        RepeatGenotype.cpp
+        SmallVariantGenotype.hh
+        SmallVariantGenotype.cpp
+        SmallVariantGenotyper.hh
+        SmallVariantGenotyper.cpp
+        StrAlign.hh
+        StrAlign.cpp
+        OneAlleleStrGenotyper.hh
+        OneAlleleStrGenotyper.cpp
+        TwoAlleleStrGenotyper.hh
+        TwoAlleleStrGenotyper.cpp
+        FragLogliks.hh
+        FragLogliks.cpp
+        StrGenotyper.hh
+        StrGenotyper.cpp
+        AlignMatrixFiltering.hh
+        AlignMatrixFiltering.cpp)
+target_link_libraries(genotyping input common)
 add_subdirectory(tests)

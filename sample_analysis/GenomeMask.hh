@@ -21,11 +21,8 @@
 
 #pragma once
 
-#include <memory>
 #include <string>
 #include <vector>
-
-#include "workflow/RegionModel.hh"
 
 namespace ehunter
 {
@@ -35,10 +32,8 @@ namespace ehunter
 class GenomeMask
 {
 public:
-    GenomeMask() = default;
-    explicit GenomeMask(const std::vector<std::shared_ptr<RegionModel>>& regionModels);
-    void addRegion(int contigId, int64_t start, int64_t stop);
-    bool query(int contigId, int64_t pos) const;
+    void addRegion(int32_t contigId, int64_t start, int64_t stop);
+    bool query(int32_t contigId, int64_t pos) const;
 
 private:
     using contigMask = std::vector<bool>;

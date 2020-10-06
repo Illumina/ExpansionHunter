@@ -32,8 +32,8 @@
 #include <string>
 #include <vector>
 
-#include "spdlog/spdlog.h"
 #include "thirdparty/json/json.hpp"
+#include "thirdparty/spdlog/include/spdlog/spdlog.h"
 
 #include "common/Common.hh"
 #include "common/Reference.hh"
@@ -53,12 +53,10 @@ namespace spd = spdlog;
 namespace ehunter
 {
 LocusSpecification::LocusSpecification(
-    RegionId locusId, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
-    std::vector<GenomicRegion> targetReadExtractionRegions, graphtools::Graph regionGraph,
-    NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
+    RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
+    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
     : locusId_(std::move(locusId))
-    , contigCopyNumber_(contigCopyNumber)
-    , locusLocation_(std::move(locusLocation))
+    , typeOfChromLocusLocatedOn_(typeOfChromLocusLocatedOn)
     , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
     , regionGraph_(std::move(regionGraph))
     , referenceRegions_(std::move(referenceRegions))
@@ -84,6 +82,19 @@ const VariantSpecification& LocusSpecification::getVariantSpecById(const std::st
     }
 
     throw std::logic_error("There is no variant " + variantSpecId + " in locus " + locusId_);
+}
+
+bool LocusSpecification::requiresGenomeWideDepth() const
+{
+    for (const auto& variantSpec : variantSpecs_)
+    {
+        if (variantSpec.classification().subtype == VariantSubtype::kSMN)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 }

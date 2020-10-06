@@ -18,17 +18,3 @@ The following sections will help you to get started.
 * [Input variant catalogs](04_VariantCatalogFiles.md)
 * [Output JSON files](05_OutputJsonFiles.md)
 * [Output VCF files](06_OutputVcfFiles.md)
-
-Important limitations:
-
-- Regions whose coverage depth is below 10x are skipped during the analysis.
-  This is done because the STR genotyping accuracy drops significantly when
-  the coverage dips below 10-15x.
-- ExpansionHunter does not call novel variants; it only genotypes variants
-  defined in the variant catalog file. In particular, the program does not
-  report interruptions in the repeat sequence.
-- The current release (v3.x.x) forgoes analysis of unaligned reads. Although
-  some informative read pairs are occasionally unaligned, according to our
-  benchmarks these reads are very unlikely to change pathogenic/normal
-  classification of the currently-covered repeats. We encourage you to contact
-  the authors if you are working with the regions for which this is a concern.

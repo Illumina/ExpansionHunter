@@ -72,6 +72,8 @@ std::ostream& operator<<(std::ostream& out, ReadType readType)
     case ReadType::kSpanning:
         out << "SPANNING";
         break;
+    case ReadType::kOther:
+        out << "OTHER";
     }
     return out;
 }
@@ -80,9 +82,6 @@ std::ostream& operator<<(std::ostream& out, AlleleCount alleleCount)
 {
     switch (alleleCount)
     {
-    case AlleleCount::kZero:
-        out << "Zero";
-        break;
     case AlleleCount::kOne:
         out << "One";
         break;

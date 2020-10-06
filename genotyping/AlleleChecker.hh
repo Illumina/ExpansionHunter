@@ -36,6 +36,11 @@ enum class AlleleStatus
 /// Results from the AlleleChecker on one allele
 struct AlleleCheckSummary
 {
+    AlleleCheckSummary(AlleleStatus status, double logLikelihoodRatio)
+        : status(status)
+        , logLikelihoodRatio(logLikelihoodRatio)
+    {
+    }
     AlleleStatus status;
     double logLikelihoodRatio; // Log10(LR) for the allele being present
 };

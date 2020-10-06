@@ -39,7 +39,7 @@ using std::vector;
 namespace ehunter
 {
 
-GenomicRegion::GenomicRegion(int contigIndex, int64_t start, int64_t end)
+GenomicRegion::GenomicRegion(int32_t contigIndex, int64_t start, int64_t end)
     : contigIndex_(contigIndex)
     , start_(start)
     , end_(end)
@@ -129,13 +129,13 @@ vector<GenomicRegion> merge(vector<GenomicRegion> regions, int maxMergeDist)
 }
 
 // Returns the range extended by flankSize upstream and downstream.
-// NOTE: The right boundary of the extended workflow may stick past chromosome
+// NOTE: The right boundary of the extended region may stick past chromosome
 // end.
 GenomicRegion GenomicRegion::extend(int length) const
 {
     const int64_t newStart = start_ >= length ? (start_ - length) : 0;
     const int64_t newEnd = end_ + length;
-    return { contigIndex_, newStart, newEnd };
+    return GenomicRegion(contigIndex_, newStart, newEnd);
 }
 
 std::ostream& operator<<(std::ostream& out, const GenomicRegion& region)
@@ -166,7 +166,7 @@ GenomicRegion decode(const ReferenceContigInfo& contigInfo, const string& encodi
     int64_t start = std::stoi(components[1]);
     int64_t end = std::stoi(components[2]);
 
-    return { contigIndex, start, end };
+    return GenomicRegion(contigIndex, start, end);
 }
 
 }

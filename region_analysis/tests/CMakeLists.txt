@@ -1,0 +1,7 @@
+add_executable(RepeatAnalyzerTest RepeatAnalyzerTest.cpp)
+target_link_libraries(RepeatAnalyzerTest region_analysis gtest gmock_main)
+add_test(NAME RepeatAnalyzerTest COMMAND RepeatAnalyzerTest)
+
+add_executable(LocusAnalyzerTest LocusAnalyzerTest.cpp)
+target_link_libraries(LocusAnalyzerTest region_analysis gtest gmock_main)
+add_test(NAME LocusAnalyzerTest COMMAND LocusAnalyzerTest)

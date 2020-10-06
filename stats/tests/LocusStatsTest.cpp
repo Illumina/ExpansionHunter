@@ -27,11 +27,9 @@
 #include "graphcore/GraphBuilders.hh"
 
 using namespace ehunter;
-using boost::optional;
 using graphtools::decodeGraphAlignment;
 using graphtools::GraphAlignment;
 
-/*
 TEST(LocusStatsCalculator, NoDataGiven_StatsNotCalculated)
 {
     graphtools::Graph graph = graphtools::makeStrGraph("TAATG", "CCG", "CCTTATTA");
@@ -42,10 +40,9 @@ TEST(LocusStatsCalculator, NoDataGiven_StatsNotCalculated)
     GraphAlignment alignmentStartingInsideRepeat = decodeGraphAlignment(0, "1[3M]", &graph);
     GraphAlignment alignmentStartingOnRightFlank = decodeGraphAlignment(0, "2[4M]", &graph);
 
-    ASSERT_EQ(optional<LocusStats>(), statsCalculator.estimate(Sex::kFemale));
-} */
+    ASSERT_EQ(LocusStats(AlleleCount::kTwo, 0, 0, 0.0), statsCalculator.estimate(Sex::kFemale));
+}
 
-/*
 TEST(LocusStatsCalculator, TypicalReadLengths_StatsCalculated)
 {
     graphtools::Graph graph = graphtools::makeStrGraph("TAATG", "CCG", "CCTTATTA");
@@ -58,13 +55,12 @@ TEST(LocusStatsCalculator, TypicalReadLengths_StatsCalculated)
 
     for (int index = 0; index != 29; ++index)
     {
-        statsCalculator.inspect(alignmentStartingOnLeftFlank);
-        statsCalculator.inspect(alignmentStartingInsideRepeat);
-        statsCalculator.inspect(alignmentStartingOnRightFlank);
+        statsCalculator.recordReadLen(alignmentStartingOnLeftFlank);
+        statsCalculator.recordReadLen(alignmentStartingInsideRepeat);
+        statsCalculator.recordReadLen(alignmentStartingOnRightFlank);
     }
-    statsCalculator.inspect(alignmentStartingOnRightFlank);
-    statsCalculator.inspect(alignmentStartingOnRightFlank);
+    statsCalculator.recordReadLen(alignmentStartingOnRightFlank);
+    statsCalculator.recordReadLen(alignmentStartingOnRightFlank);
 
-    ASSERT_NE(boost::none, statsCalculator.estimate(Sex::kFemale));
-    ASSERT_EQ(LocusStats(AlleleCount::kTwo, 3, 18), *statsCalculator.estimate(Sex::kFemale));
-} */
+    ASSERT_EQ(LocusStats(AlleleCount::kTwo, 3, 0, 18), statsCalculator.estimate(Sex::kFemale));
+}

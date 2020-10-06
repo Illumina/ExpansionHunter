@@ -37,6 +37,7 @@ enum class ReadType
     kSpanning,
     kFlanking,
     kRepeat,
+    kOther
 };
 
 enum class Sex
@@ -45,18 +46,17 @@ enum class Sex
     kFemale
 };
 
-enum class ContigCopyNumber
+enum class ChromType
 {
-    kZeroInFemaleOneInMale,
-    kTwoInFemaleOneInMale,
-    kTwoInFemaleTwoInMale
+    kX,
+    kY,
+    kAutosome
 };
 
 Sex decodeSampleSex(const std::string& encoding);
 
 enum class AlleleCount
 {
-    kZero = 0,
     kOne = 1,
     kTwo = 2
 };

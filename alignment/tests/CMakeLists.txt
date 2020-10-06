@@ -10,6 +10,10 @@ add_executable(SoftclippingAlignerTest SoftclippingAlignerTest.cpp)
 target_link_libraries(SoftclippingAlignerTest alignment gtest gmock_main)
 add_test(NAME SoftclippingAlignerTest COMMAND SoftclippingAlignerTest)
 
+add_executable(GreedyAlignmentIntersectorTest GreedyAlignmentIntersectorTest.cpp)
+target_link_libraries(GreedyAlignmentIntersectorTest alignment gtest gmock_main)
+add_test(NAME GreedyAlignmentIntersectorTest COMMAND GreedyAlignmentIntersectorTest)
+
 add_executable(AlignmentTweakersTest AlignmentTweakersTest.cpp)
 target_link_libraries(AlignmentTweakersTest alignment gtest gmock_main)
 add_test(NAME AlignmentTweakersTest COMMAND AlignmentTweakersTest)

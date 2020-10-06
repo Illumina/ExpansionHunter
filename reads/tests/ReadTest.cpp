@@ -39,7 +39,7 @@ TEST(ReadReverseComplement, SequenceReversed_ReversedFlagReversed)
     Read read(readId, "ATTCCG", true);
     EXPECT_EQ("ATTCCG", read.sequence());
     ASSERT_TRUE(read.isReversed());
-    read = read.reverseComplement();
+    read.reverseComplement();
     EXPECT_EQ("CGGAAT", read.sequence());
     ASSERT_FALSE(read.isReversed());
 }

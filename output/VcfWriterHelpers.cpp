@@ -97,7 +97,7 @@ void VcfAlleleFields::addAltAlleleInfo(
     int alleleSize, ReadType source, NumericInterval confidenceInterval, int spanningReadCount, int flankingReadCount,
     int repeatReadCount)
 {
-    const int previousAlleleSize = genotype_.empty() ? -1 : genotype_.back();
+    const int previousAlleleSize = alleleSizes_.empty() ? -1 : alleleSizes_.back();
     if (alleleSize < previousAlleleSize)
     {
         throw std::logic_error(

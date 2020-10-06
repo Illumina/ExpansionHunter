@@ -105,8 +105,8 @@ void BamletWriter::writeHeader()
 }
 
 void BamletWriter::write(
-    const string& locusId, const string& fragmentName, const string& query, bool isFirstMate, bool isReversed,
-    bool isMateReversed, const GraphAlignment& alignment)
+    const string& locusId, const string& fragmentName, const string& query, bool isFirstMate,
+    bool isReversed, bool isMateReversed, const GraphAlignment& alignment)
 {
     const GraphReferenceMapping& referenceMapping = graphReferenceMappings_.at(locusId);
     auto optionalReferenceInterval = referenceMapping.map(alignment.path());
@@ -176,7 +176,7 @@ void BamletWriter::write(
     htsAlignmentPtr->core.flag = BAM_FUNMAP;
 
     htsAlignmentPtr->core.flag += BAM_FPAIRED + BAM_FMUNMAP;
-
+    
     if (isReversed)
         htsAlignmentPtr->core.flag += BAM_FREVERSE;
     if (isMateReversed)

@@ -36,16 +36,19 @@ void FieldDescriptionWriter::addCommonFields()
     tryAddingFieldDescription(FieldType::kFormat, "GT", "1", "String", "Genotype");
     tryAddingFieldDescription(FieldType::kFormat, "LC", "1", "Float", "Locus coverage");
     tryAddingFieldDescription(FieldType::kFilter, "PASS", "", "", "All filters passed");
+    tryAddingFieldDescription(
+        FieldType::kFilter, "LowDepth", "", "",
+        "The overall locus depth is below 10x or number of reads spanning one or both breakends is below 5");
 }
 
-void FieldDescriptionWriter::visit(StrFindings& strFindings)
+void FieldDescriptionWriter::visit(const RepeatFindings* repeatFindingsPtr)
 {
-    if (!strFindings.optionalGenotype())
+    addCommonFields();
+    if (!repeatFindingsPtr->optionalGenotype())
     {
         return;
     }
 
-    addCommonFields();
     tryAddingFieldDescription(FieldType::kInfo, "SVTYPE", "1", "String", "Type of structural variant");
     tryAddingFieldDescription(FieldType::kInfo, "END", "1", "Integer", "End position of the variant");
     tryAddingFieldDescription(FieldType::kInfo, "REF", "1", "Integer", "Reference copy number");
@@ -78,7 +81,7 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const int referenceSize = referenceLocus.length() / repeatUnit.length();
 
-    const RepeatGenotype& genotype = strFindings.optionalGenotype().get();
+    const RepeatGenotype& genotype = repeatFindingsPtr->optionalGenotype().get();
 
     if (genotype.shortAlleleSizeInUnits() != referenceSize)
     {
@@ -95,9 +98,9 @@ void FieldDescriptionWriter::visit(StrFindings& strFindings)
     }
 }
 
-void FieldDescriptionWriter::visit(SmallVariantFindings& findings)
+void FieldDescriptionWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
 {
-    if (!findings.optionalGenotype())
+    if (!smallVariantFindingsPtr->optionalGenotype())
     {
         return;
     }
@@ -158,7 +161,7 @@ void outputVcfHeader(const RegionCatalog& locusCatalog, const SampleFindings& sa
             const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
 
             FieldDescriptionWriter descriptionWriter(locusSpec, variantSpec);
-            variantIdAndFindings.second->accept(descriptionWriter);
+            variantIdAndFindings.second->accept(&descriptionWriter);
             descriptionWriter.dumpTo(fieldDescriptionCatalog);
         }
     }

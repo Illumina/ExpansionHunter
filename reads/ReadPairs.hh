@@ -43,8 +43,8 @@ struct ReadPair
         return static_cast<int>(firstMate != boost::none) + static_cast<int>(secondMate != boost::none);
     }
 
-    boost::optional<MappedRead> firstMate;
-    boost::optional<MappedRead> secondMate;
+    boost::optional<Read> firstMate;
+    boost::optional<Read> secondMate;
 };
 
 bool operator==(const ReadPair& readPair_a, const ReadPair& readPair_b);
@@ -64,8 +64,8 @@ public:
 
     ReadPairs() = default;
     void Clear();
-    void Add(MappedRead read);
-    void AddMateToExistingRead(MappedRead mate);
+    void Add(Read read);
+    void AddMateToExistingRead(Read mate);
 
     const ReadPair& operator[](const std::string& fragmentId) const;
 

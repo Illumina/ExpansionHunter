@@ -29,8 +29,8 @@
 
 #include "common/Parameters.hh"
 #include "common/Reference.hh"
+#include "region_analysis/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
@@ -50,8 +50,8 @@ public:
     }
 
     ~VariantVcfWriter() = default;
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& smallVariantFindingsPtr) override;
+    void visit(const RepeatFindings* repeatFindingsPtr) override;
+    void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
 
 private:
     Reference& reference_;
