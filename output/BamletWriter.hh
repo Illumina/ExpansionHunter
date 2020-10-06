@@ -66,6 +66,4 @@ private:
     std::unordered_map<std::string, graphtools::GraphReferenceMapping> graphReferenceMappings_;
 };
 
-using BamletWriterPtr = std::shared_ptr<BamletWriter>;
-
 }

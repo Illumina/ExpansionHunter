@@ -1,7 +1,5 @@
-add_library(filtering
-        OrientationPredictor.hh OrientationPredictor.cpp
-        BloomFilter.cpp BloomFilter.hh
-        ${CMAKE_SOURCE_DIR}/thirdparty/murmur/MurmurHash3.h ${CMAKE_SOURCE_DIR}/thirdparty/murmur/MurmurHash3.cpp)
+file(GLOB SOURCES "*.cpp")
+add_library(filtering ${SOURCES})
 target_link_libraries(filtering common graphtools)
 
 add_subdirectory(tests)

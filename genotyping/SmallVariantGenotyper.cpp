@@ -21,7 +21,6 @@
 //
 
 #include "genotyping/SmallVariantGenotyper.hh"
-
 #include <boost/math/distributions/poisson.hpp>
 #include <numeric>
 

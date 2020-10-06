@@ -20,31 +20,3 @@
 //
 
 #include "common/Parameters.hh"
-
-namespace ehunter
-{
-
-static std::string encodeBool(bool anyBool)
-{
-    if (anyBool)
-    {
-        return "true";
-    }
-    return "false";
-}
-
-std::ostream& operator<<(std::ostream& out, const HeuristicParameters& heuristics)
-{
-    out << "HeuristicParameters(regionExtensionLength=" << heuristics.regionExtensionLength() << ", ";
-    out << "qualityCutoffForGoodBaseCall=" << heuristics.qualityCutoffForGoodBaseCall() << ", ";
-    out << "skipUnaligned=" << encodeBool(heuristics.skipUnaligned()) << ", ";
-    out << "alignerType=" << heuristics.alignerType() << ", ";
-    out << "kmerLenForAlignment=" << heuristics.kmerLenForAlignment() << ", ";
-    out << "paddingLength=" << heuristics.paddingLength() << ", ";
-    out << "seedAffixTrimLength=" << heuristics.seedAffixTrimLength();
-    out << ")";
-
-    return out;
-}
-
-}

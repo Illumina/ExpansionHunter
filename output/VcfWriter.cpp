@@ -33,6 +33,7 @@
 #include "output/VcfWriterHelpers.hh"
 #include "stats/ReadSupportCalculator.hh"
 
+using boost::optional;
 using std::deque;
 using std::map;
 using std::ostream;
@@ -44,6 +45,24 @@ using std::vector;
 
 namespace ehunter
 {
+
+static string computeFilterSymbol(GenotypeFilter filter)
+{
+    vector<string> encoding;
+    if (static_cast<bool>(filter & GenotypeFilter::kLowDepth))
+    {
+        encoding.push_back("LowDepth");
+    }
+
+    if (encoding.empty())
+    {
+        return "PASS";
+    }
+    else
+    {
+        return boost::algorithm::join(encoding, ";");
+    }
+}
 
 void writeBodyHeader(const string& sampleName, ostream& out)
 {
@@ -82,11 +101,9 @@ void VcfWriter::writeBody(ostream& out)
         const VariantSpecification& variantSpec = locusSpec.getVariantSpecById(variantId);
         const auto& variantFindings = locusFindings.findingsForEachVariant.at(variantId);
 
-        assert(locusFindings.optionalStats);
-        const double locusDepth = locusFindings.optionalStats->depth();
-
+        const double locusDepth = locusFindings.stats.depth();
         VariantVcfWriter variantWriter(reference_, locusSpec, locusDepth, variantSpec, out);
-        variantFindings->accept(variantWriter);
+        variantFindings->accept(&variantWriter);
     }
 }
 
@@ -123,8 +140,14 @@ const std::vector<VcfWriter::LocusIdAndVariantId> VcfWriter::getSortedIdPairs()
 
 static string createRepeatAlleleSymbol(int repeatSize) { return "<STR" + std::to_string(repeatSize) + ">"; }
 
-static string computeAltSymbol(const RepeatGenotype& genotype, int referenceSizeInUnits)
+static string computeAltSymbol(const optional<RepeatGenotype>& optionalGenotype, int referenceSizeInUnits)
 {
+    if (!optionalGenotype)
+    {
+        return ".";
+    }
+    const RepeatGenotype& genotype = *optionalGenotype;
+
     vector<string> alleleEncodings;
 
     if (genotype.shortAlleleSizeInUnits() != referenceSizeInUnits)
@@ -177,22 +200,36 @@ static ReadType determineSupportType(const CountTable& spanningCounts, const Cou
     return ReadType::kRepeat;
 }
 
-static string
-computeAlleleFields(const VariantSpecification& variantSpec, const string& motif, const StrFindings& strFindings)
+static string computeAlleleFields(
+    const VariantSpecification& variantSpec, const string& repeatUnit, const RepeatFindings& repeatFindings)
 {
+    if (!repeatFindings.optionalGenotype())
+    {
+        if (repeatFindings.alleleCount() == AlleleCount::kOne)
+        {
+            // genotype sources alleleSizes confidenceIntervals spanningReadCounts flankingReadCounts repeatReadCounts
+            return ".:.:.:.:.:.:.";
+        }
+        else
+        {
+            return "./.:./.:./.:./.:./.:./.:.";
+        }
+    }
+
+    const RepeatGenotype& genotype = *repeatFindings.optionalGenotype();
     const auto referenceLocus = variantSpec.referenceLocus();
     const int referenceSizeInBp = referenceLocus.length();
-    const int referenceSizeInUnits = referenceSizeInBp / motif.length();
-    const RepeatGenotype& genotype = *strFindings.optionalGenotype();
+    const int referenceSizeInUnits = referenceSizeInBp / repeatUnit.length();
 
     ReadSupportCalculator readSupportCalculator(
-        strFindings.countsOfSpanningReads(), strFindings.countsOfFlankingReads(), strFindings.countsOfInrepeatReads());
+        repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(),
+        repeatFindings.countsOfInrepeatReads());
 
     VcfAlleleFields alleleFields(referenceSizeInUnits);
 
     const int shortAlleleSize = genotype.shortAlleleSizeInUnits();
     ReadType shortAlleleSupportType = determineSupportType(
-        strFindings.countsOfSpanningReads(), strFindings.countsOfFlankingReads(), shortAlleleSize);
+        repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), shortAlleleSize);
 
     alleleFields.addAlleleInfo(
         shortAlleleSize, shortAlleleSupportType, genotype.shortAlleleSizeInUnitsCi(),
@@ -204,7 +241,7 @@ computeAlleleFields(const VariantSpecification& variantSpec, const string& motif
     {
         const int longAlleleSize = genotype.longAlleleSizeInUnits();
         ReadType longAlleleSupportType = determineSupportType(
-            strFindings.countsOfSpanningReads(), strFindings.countsOfFlankingReads(), longAlleleSize);
+            repeatFindings.countsOfSpanningReads(), repeatFindings.countsOfFlankingReads(), longAlleleSize);
 
         alleleFields.addAlleleInfo(
             genotype.longAlleleSizeInUnits(), longAlleleSupportType, genotype.longAlleleSizeInUnitsCi(),
@@ -216,39 +253,40 @@ computeAlleleFields(const VariantSpecification& variantSpec, const string& motif
     return alleleFields.encode();
 }
 
-void VariantVcfWriter::visit(StrFindings& strFindings)
+void VariantVcfWriter::visit(const RepeatFindings* repeatFindingsPtr)
 {
-    if (!strFindings.optionalGenotype())
-    {
-        return;
-    }
-
-    const auto& genotype = *(strFindings.optionalGenotype());
-
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto repeatNodeId = variantSpec_.nodes().front();
     const string& repeatUnit = locusSpec_.regionGraph().nodeSeq(repeatNodeId);
-
     const int referenceSizeInUnits = referenceLocus.length() / repeatUnit.length();
-
-    const string altSymbol = computeAltSymbol(genotype, referenceSizeInUnits);
     const string infoFields = computeInfoFields(variantSpec_, repeatUnit);
-    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, strFindings);
-    const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
 
-    const int posPreceedingRepeat1Based = referenceLocus.start();
+    const int posPreceedingRepeat1based = referenceLocus.start();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
     const string leftFlankingBase
         = reference_.getSequence(contigName, referenceLocus.start() - 1, referenceLocus.start());
 
-    vector<string> vcfRecordElements
-        = { contigName, to_string(posPreceedingRepeat1Based),  ".",         leftFlankingBase, altSymbol, ".", "PASS",
-            infoFields, "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC", sampleFields };
+    const string altSymbol = computeAltSymbol(repeatFindingsPtr->optionalGenotype(), referenceSizeInUnits);
+    const string alleleFields = computeAlleleFields(variantSpec_, repeatUnit, *repeatFindingsPtr);
+    const string sampleFields = alleleFields + ":" + std::to_string(locusDepth_);
+
+    string genotypeFilter = computeFilterSymbol(repeatFindingsPtr->genotypeFilter());
+
+    vector<string> vcfRecordElements = { contigName,
+                                         to_string(posPreceedingRepeat1based),
+                                         ".",
+                                         leftFlankingBase,
+                                         altSymbol,
+                                         ".",
+                                         genotypeFilter,
+                                         infoFields,
+                                         "GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC",
+                                         sampleFields };
 
     out_ << boost::algorithm::join(vcfRecordElements, "\t") << std::endl;
 }
 
-void VariantVcfWriter::visit(SmallVariantFindings& findings)
+void VariantVcfWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)
 {
     const auto& referenceLocus = variantSpec_.referenceLocus();
     const auto& contigName = reference_.contigInfo().getContigName(referenceLocus.contigIndex());
@@ -306,19 +344,26 @@ void VariantVcfWriter::visit(SmallVariantFindings& findings)
     vector<string> sampleFields;
     vector<string> sampleValues;
 
-    auto genotype = findings.optionalGenotype();
     sampleFields.emplace_back("GT");
-    sampleValues.push_back(genotype ? streamToString(*genotype) : ".");
+    const auto& optionalGenotype = smallVariantFindingsPtr->optionalGenotype();
+    if (optionalGenotype)
+    {
+        sampleValues.push_back(streamToString(*optionalGenotype));
+    }
+    else
+    {
+        sampleValues.emplace_back(smallVariantFindingsPtr->alleleCount() == AlleleCount::kOne ? "." : "./.");
+    }
 
     sampleFields.emplace_back("AD");
     std::ostringstream adEncoding;
-    adEncoding << findings.numRefReads() << "," << findings.numAltReads();
+    adEncoding << smallVariantFindingsPtr->numRefReads() << "," << smallVariantFindingsPtr->numAltReads();
     sampleValues.push_back(adEncoding.str());
 
     if (variantSpec_.classification().subtype == VariantSubtype::kSMN)
     {
         string dst;
-        switch (findings.refAllelePresenceStatus().status)
+        switch (smallVariantFindingsPtr->refAllelePresenceStatus().status)
         {
         case AlleleStatus::kAbsent:
             dst = "+";
@@ -333,7 +378,7 @@ void VariantVcfWriter::visit(SmallVariantFindings& findings)
         sampleFields.emplace_back("DST");
         sampleValues.push_back(dst);
         sampleFields.emplace_back("RPL");
-        sampleValues.push_back(streamToString(findings.refAllelePresenceStatus().logLikelihoodRatio));
+        sampleValues.push_back(streamToString(smallVariantFindingsPtr->refAllelePresenceStatus().logLikelihoodRatio));
     }
 
     sampleFields.emplace_back("LC");
@@ -342,10 +387,18 @@ void VariantVcfWriter::visit(SmallVariantFindings& findings)
     const string sampleField = boost::algorithm::join(sampleFields, ":");
     const string sampleValue = boost::algorithm::join(sampleValues, ":");
 
-    vector<string> line {
-        contigName, streamToString(startPosition), ".", refSequence, altSequence, ".", "PASS", infoFields, sampleField,
-        sampleValue
-    };
+    string genotypeFilter = computeFilterSymbol(smallVariantFindingsPtr->genotypeFilter());
+
+    vector<string> line { contigName,
+                          streamToString(startPosition),
+                          ".",
+                          refSequence,
+                          altSequence,
+                          ".",
+                          genotypeFilter,
+                          infoFields,
+                          sampleField,
+                          sampleValue };
     out_ << boost::algorithm::join(line, "\t") << std::endl;
 }
 

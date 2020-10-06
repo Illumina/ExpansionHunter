@@ -23,51 +23,67 @@
 
 #include <memory>
 #include <unordered_map>
-#include <unordered_set>
+
+#include <boost/optional.hpp>
 
 #include "common/HtsHelpers.hh"
-#include "common/WorkflowContext.hh"
-#include "sample_analysis/CatalogAnalyzer.hh"
+#include "region_analysis/LocusAnalyzer.hh"
 #include "sample_analysis/GenomeQueryCollection.hh"
 #include "sample_analysis/HtsFileStreamer.hh"
-#include "sample_analysis/ReadDispatch.hh"
-#include "workflow/LocusAnalyzer.hh"
-#include "workflow/WorkflowBuilder.hh"
 
 using graphtools::AlignmentWriter;
 using std::map;
-using std::shared_ptr;
 using std::string;
 using std::unordered_map;
-using std::unordered_set;
 using std::vector;
 
 namespace ehunter
 {
 
-SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr bamletWriter)
+static void transferReads(AnalyzerBundle& analyzerBundle, Read read, Read mate)
 {
-    CatalogAnalyzer catalogAnalyzer(regionCatalog, std::move(bamletWriter));
-    GenomeMask genomeMask(catalogAnalyzer.regionModels());
+    const auto analyzerPtr = analyzerBundle.locusAnalyzerPtr;
 
-    using ReadCatalog = std::unordered_map<std::string, MappedRead>;
+    switch (analyzerBundle.inputType)
+    {
+    case AnalyzerInputType::kBothReads:
+        analyzerPtr->processMates(std::move(read), std::move(mate), analyzerBundle.regionType);
+        break;
+    case AnalyzerInputType::kReadOnly:
+        analyzerPtr->processMates(std::move(read), boost::none, analyzerBundle.regionType);
+        break;
+    case AnalyzerInputType::kMateOnly:
+        analyzerPtr->processMates(std::move(mate), boost::none, analyzerBundle.regionType);
+        break;
+    }
+}
+
+SampleFindings htsStreamingSampleAnalysis(
+    const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams,
+    const RegionCatalog& regionCatalog, AlignmentWriter& bamletWriter)
+{
+    vector<std::unique_ptr<LocusAnalyzer>> locusAnalyzers
+        = initializeLocusAnalyzers(regionCatalog, heuristicParams, bamletWriter);
+    GenomeQueryCollection genomeQuery(locusAnalyzers);
+
+    using ReadCatalog = std::unordered_map<std::string, Read>;
     ReadCatalog unpairedReads;
 
     htshelpers::HtsFileStreamer readStreamer(inputPaths.htsFile());
     while (readStreamer.trySeekingToNextPrimaryAlignment() && readStreamer.isStreamingAlignedReads())
     {
-        HtsReadRecord htsRead = readStreamer.getRead();
-        const bool readNearTarget = genomeMask.query(htsRead.contigId(), htsRead.position());
-        const bool mateNearTarget = genomeMask.query(htsRead.mateContigId(), htsRead.matePosition());
-
-        if (!readNearTarget && !mateNearTarget)
+        const bool isReadNearTargetRegion = genomeQuery.targetRegionMask.query(
+            readStreamer.currentReadContigId(), readStreamer.currentReadPosition());
+        const bool isMateNearTargetRegion = genomeQuery.targetRegionMask.query(
+            readStreamer.currentMateContigId(), readStreamer.currentMatePosition());
+        if (!isReadNearTargetRegion && !isMateNearTargetRegion)
         {
             continue;
         }
 
-        MappedRead read = htsRead.decode();
-        if (!read.isPaired())
+        LinearAlignmentStats alignmentStats;
+        Read read = readStreamer.decodeRead(alignmentStats);
+        if (!alignmentStats.isPaired)
         {
             continue;
         }
@@ -78,14 +94,35 @@ SampleFindings htsStreamingSampleAnalysis(
             unpairedReads.emplace(std::make_pair(read.fragmentId(), std::move(read)));
             continue;
         }
-        MappedRead mate = std::move(mateIterator->second);
+        Read mate = std::move(mateIterator->second);
         unpairedReads.erase(mateIterator);
 
-        catalogAnalyzer.analyze(read, mate);
+        const int64_t readEnd = readStreamer.currentReadPosition() + read.sequence().length();
+        const int64_t mateEnd = readStreamer.currentMatePosition() + mate.sequence().length();
+
+        vector<AnalyzerBundle> analyzerBundles = genomeQuery.analyzerFinder.query(
+            readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd,
+            readStreamer.currentMateContigId(), readStreamer.currentMatePosition(), mateEnd);
+
+        if (analyzerBundles.size() == 1)
+        {
+            transferReads(analyzerBundles.front(), std::move(read), std::move(mate));
+        }
+        else
+        {
+            for (auto& analyzerBundle : analyzerBundles)
+            {
+                transferReads(analyzerBundle, read, mate);
+            }
+        }
     }
 
     SampleFindings sampleFindings;
-    catalogAnalyzer.collectResults(sampleSex, sampleFindings);
+    for (auto& locusAnalyzer : locusAnalyzers)
+    {
+        auto locusFindings = locusAnalyzer->analyze(sampleSex, boost::none);
+        sampleFindings.emplace(std::make_pair(locusAnalyzer->locusId(), std::move(locusFindings)));
+    }
 
     return sampleFindings;
 }

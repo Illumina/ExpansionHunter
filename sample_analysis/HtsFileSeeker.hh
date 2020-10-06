@@ -48,14 +48,14 @@ namespace htshelpers
         void setRegion(const GenomicRegion& region);
         bool trySeekingToNextPrimaryAlignment();
 
-        int currentReadChromIndex() const;
+        int32_t currentReadChromIndex() const;
         const std::string& currentReadChrom() const;
-        int64_t currentReadPosition() const;
-        int currentMateChromIndex() const;
+        int32_t currentReadPosition() const;
+        int32_t currentMateChromIndex() const;
         const std::string& currentMateChrom() const;
-        int64_t currentMatePosition() const;
+        int32_t currentMatePosition() const;
 
-        MappedRead decodeRead() const;
+        Read decodeRead(LinearAlignmentStats& alignmentStats) const;
 
     private:
         enum class Status

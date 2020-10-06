@@ -1,32 +1,28 @@
-add_executable(ShortRepeatGenotyperTest ShortRepeatGenotyperTest.cpp)
-target_link_libraries(ShortRepeatGenotyperTest genotyping gtest_main)
-add_test(NAME ShortRepeatGenotyperTest COMMAND ShortRepeatGenotyperTest)
 
 add_executable(RepeatGenotypeTest RepeatGenotypeTest.cpp)
 target_link_libraries(RepeatGenotypeTest genotyping gtest_main)
 add_test(NAME RepeatGenotypeTest COMMAND RepeatGenotypeTest)
 
-add_executable(RepeatGenotyperTest RepeatGenotyperTest.cpp)
-target_link_libraries(RepeatGenotyperTest genotyping gtest_main)
-add_test(NAME RepeatGenotyperTest COMMAND RepeatGenotyperTest)
-
-add_executable(ProbabilisticRepeatGenotyperTest ProbabilisticRepeatGenotyperTest.cpp)
-target_link_libraries(ProbabilisticRepeatGenotyperTest genotyping gtest_main)
-add_test(NAME ProbabilisticRepeatGenotyperTest COMMAND ProbabilisticRepeatGenotyperTest)
-
-
 add_executable(SmallVariantGenotyperTest SmallVariantGenotyperTest.cpp)
 target_link_libraries(SmallVariantGenotyperTest genotyping gtest_main)
 add_test(NAME SmallVariantGenotyperTest COMMAND SmallVariantGenotyperTest)
 
-add_executable(CopyNumberGenotyperTest CopyNumberGenotyperTest.cpp)
-target_link_libraries(CopyNumberGenotyperTest genotyping gtest_main)
-add_test(NAME CopyNumberGenotyperTest COMMAND CopyNumberGenotyperTest)
-
-add_executable(CopyNumberCallerTest CopyNumberCallerTest.cpp)
-target_link_libraries(CopyNumberCallerTest genotyping gtest_main)
-add_test(NAME CopyNumberCallerTest COMMAND CopyNumberCallerTest)
-
 add_executable(AlleleCheckerTest AlleleCheckerTest.cpp)
 target_link_libraries(AlleleCheckerTest genotyping gtest_main)
 add_test(NAME AlleleCheckerTest COMMAND AlleleCheckerTest)
+
+add_executable(StrAlignTest StrAlignTest.cpp)
+target_link_libraries(StrAlignTest genotyping gtest_main)
+add_test(NAME StrAlignTest COMMAND StrAlignTest)
+
+add_executable(StrAlignMatrixTest AlignMatrixTest.cpp)
+target_link_libraries(StrAlignMatrixTest genotyping gtest gmock_main)
+add_test(NAME StrAlignMatrixTest COMMAND StrAlignMatrixTest)
+
+add_executable(FragLogliksTest FragLogliksTest.cpp)
+target_link_libraries(FragLogliksTest genotyping gtest gmock_main)
+add_test(NAME FragLogliksTest COMMAND FragLogliksTest)
+
+add_executable(StrGenotyperTest StrGenotyperTest.cpp)
+target_link_libraries(StrGenotyperTest genotyping gtest gmock_main)
+add_test(NAME StrGenotyperTest COMMAND StrGenotyperTest)

@@ -33,11 +33,10 @@ contained in the [docs folder](docs/01_Introduction.md).
 
 The method is described in the following papers:
 
-- Dolzhenko and others, [Detection of long repeat expansions from PCR-free
-whole-genome sequence data](http://genome.cshlp.org/content/27/11/1895), Genome
-Research 2017
+- Egor Dolzhenko, Joke van Vugt, Richard Shaw, Mitch Bekritsky, and others,
+  [Detection of long repeat expansions from PCR-free whole-genome sequence data](http://genome.cshlp.org/content/27/11/1895),
+  Genome Research 2017
 
-- Dolzhenko and others,
-[ExpansionHunter: A sequence-graph based tool to analyze variation in short
-tandem repeat regions](https://academic.oup.com/bioinformatics/article/doi/10.1093/bioinformatics/btz431/5499079),
+- Egor Dolzhenko, Viraj Deshpande, Felix Schlesinger, Peter Krusche, Roman Petrovski, and others,
+[ExpansionHunter: A sequence-graph based tool to analyze variation in short tandem repeat regions](https://academic.oup.com/bioinformatics/article/doi/10.1093/bioinformatics/btz431/5499079),
 Bioinformatics 2019

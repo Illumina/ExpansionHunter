@@ -9,7 +9,3 @@ add_test(NAME WeightedPurityCalculatorTest COMMAND WeightedPurityCalculatorTest)
 add_executable(LocusStatsTest LocusStatsTest.cpp)
 target_link_libraries(LocusStatsTest stats gtest gmock_main)
 add_test(NAME LocusStatsTest COMMAND LocusStatsTest)
-
-add_executable(LowessRegressionTest LowessRegressionTest.cpp)
-target_link_libraries(LowessRegressionTest stats gtest gmock_main)
-add_test(NAME LowessRegressionTest COMMAND LowessRegressionTest)

@@ -26,7 +26,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -50,21 +49,18 @@ class LocusSpecification
 {
 public:
     LocusSpecification(
-        RegionId locusId, ContigCopyNumber contigCopyNumber, GenomicRegion locusLocation,
-        std::vector<GenomicRegion> targetReadExtractionRegions, graphtools::Graph regionGraph,
-        NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
+        RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
+        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
 
     const RegionId& locusId() const { return locusId_; }
-    ContigCopyNumber contigCopyNumber() const { return contigCopyNumber_; }
-
-    const GenomicRegion& locusLocation() const { return locusLocation_; }
+    ChromType typeOfChromLocusLocatedOn() const { return typeOfChromLocusLocatedOn_; }
     /*
      * List of all regions in the reference this graph describes
      * i.e. where we expect relevant reads to align
      */
     const std::vector<GenomicRegion>& targetReadExtractionRegions() const { return targetReadExtractionRegions_; }
     /*
-     * List of regions where additional relevant reads might be found
+     * List of regions that additional relevant reads might be found
      * Require filtering or special considerations
      */
     const std::vector<GenomicRegion>& offtargetReadExtractionRegions() const { return offtargetReadExtractionRegions_; }
@@ -85,10 +81,11 @@ public:
 
     const NodeToRegionAssociation& referenceProjectionOfNodes() const { return referenceRegions_; }
 
+    bool requiresGenomeWideDepth() const;
+
 private:
     std::string locusId_;
-    ContigCopyNumber contigCopyNumber_;
-    GenomicRegion locusLocation_;
+    ChromType typeOfChromLocusLocatedOn_;
     std::vector<GenomicRegion> targetReadExtractionRegions_;
     std::vector<GenomicRegion> offtargetReadExtractionRegions_;
     graphtools::Graph regionGraph_;

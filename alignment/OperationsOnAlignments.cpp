@@ -31,6 +31,8 @@
 #include "graphcore/Graph.hh"
 #include "graphcore/GraphBuilders.hh"
 
+#include "alignment/GreedyAlignmentIntersector.hh"
+
 using graphtools::Alignment;
 using graphtools::decodeGraphAlignment;
 using graphtools::Graph;
@@ -143,6 +145,31 @@ int countFullOverlaps(NodeId nodeId, GraphAlignment alignment)
     }
 
     return numFullOverlaps;
+}
+
+GraphAlignment computeCanonicalAlignment(const list<GraphAlignment>& alignments)
+{
+    assert(!alignments.empty());
+
+    if (alignments.size() == 1)
+    {
+        return alignments.front();
+    }
+
+    boost::optional<GraphAlignment> canonicalAlignment = alignments.front();
+
+    for (const auto& alignment : alignments)
+    {
+        GreedyAlignmentIntersector alignmentIntersector(*canonicalAlignment, alignment);
+        canonicalAlignment = alignmentIntersector.intersect();
+
+        if (!canonicalAlignment)
+        {
+            return alignments.front();
+        }
+    }
+
+    return *canonicalAlignment;
 }
 
 }

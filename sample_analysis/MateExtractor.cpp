@@ -97,11 +97,14 @@ namespace htshelpers
         }
     }
 
-    optional<MappedRead> MateExtractor::extractMate(const MappedRead& read)
+    optional<Read> MateExtractor::extractMate(
+        const Read& read, const LinearAlignmentStats& alignmentStats, LinearAlignmentStats& mateStats)
     {
-        const int searchRegionContigIndex = read.isMateMapped() ? read.mateContigIndex() : read.contigIndex();
-        const int64_t searchRegionStart = read.isMateMapped() ? read.matePos() : read.pos();
-        const int64_t searchRegionEnd = searchRegionStart + 1;
+        const int32_t searchRegionContigIndex
+            = alignmentStats.isMateMapped ? alignmentStats.mateChromId : alignmentStats.chromId;
+
+        const int32_t searchRegionStart = alignmentStats.isMateMapped ? alignmentStats.matePos : alignmentStats.pos;
+        const int32_t searchRegionEnd = searchRegionStart + 1;
 
         hts_itr_t* htsRegionPtr_
             = sam_itr_queryi(htsIndexPtr_, searchRegionContigIndex, searchRegionStart, searchRegionEnd);
@@ -117,19 +120,29 @@ namespace htshelpers
 
         while (sam_itr_next(htsFilePtr_, htsRegionPtr_, htsAlignmentPtr_) >= 0)
         {
-            MappedRead putativeMate = htshelpers::decodeRead(htsAlignmentPtr_);
+            const bool isSecondaryAlignment = htsAlignmentPtr_->core.flag & BAM_FSECONDARY;
+            const bool isSupplementaryAlignment = htsAlignmentPtr_->core.flag & BAM_FSUPPLEMENTARY;
+            const bool isPrimaryAlignment = !(isSecondaryAlignment || isSupplementaryAlignment);
+            if (!isPrimaryAlignment)
+            {
+                continue;
+            }
+
+            Read putativeMate = htshelpers::decodeRead(htsAlignmentPtr_);
 
             const bool belongToSameFragment = read.fragmentId() == putativeMate.fragmentId();
             const bool formProperPair = read.mateNumber() != putativeMate.mateNumber();
+
             if (belongToSameFragment && formProperPair)
             {
+                mateStats = decodeAlignmentStats(htsAlignmentPtr_);
                 hts_itr_destroy(htsRegionPtr_);
                 return putativeMate;
             }
         }
         hts_itr_destroy(htsRegionPtr_);
 
-        return optional<MappedRead>();
+        return optional<Read>();
     }
 
 }

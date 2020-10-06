@@ -21,8 +21,8 @@
 
 #include "alignment/SoftclippingAligner.hh"
 
-#include "alignment/HighQualityBaseRunFinder.hh"
 #include "alignment/OperationsOnAlignments.hh"
+#include "alignment/HighQualityBaseRunFinder.hh"
 
 using graphtools::Graph;
 using graphtools::GraphAlignment;

@@ -41,6 +41,7 @@ public:
     CountTable() = default;
     explicit CountTable(std::map<int32_t, int32_t> elementsToCounts)
         : elementsToCounts_(std::move(elementsToCounts)) {};
+    CountTable(const CountTable& other) = default;
 
     void clear() { elementsToCounts_.clear(); }
 

@@ -22,8 +22,8 @@
 #pragma once
 
 #include "common/Parameters.hh"
+#include "region_analysis/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
 
 #include "thirdparty/json/json.hpp"
 
@@ -43,8 +43,8 @@ public:
     }
 
     ~VariantJsonWriter() = default;
-    void visit(StrFindings& strFindings) override;
-    void visit(SmallVariantFindings& smallVariantFindings) override;
+    void visit(const RepeatFindings* repeatFindingsPtr) override;
+    void visit(const SmallVariantFindings* smallVariantFindingsPtr) override;
     nlohmann::json record() const { return record_; }
 
 private:

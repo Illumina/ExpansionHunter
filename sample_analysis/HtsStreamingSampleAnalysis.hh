@@ -25,15 +25,17 @@
 #include <string>
 #include <vector>
 
+#include "graphio/AlignmentWriter.hh"
+
 #include "common/Parameters.hh"
-#include "output/BamletWriter.hh"
+#include "region_analysis/LocusFindings.hh"
 #include "region_spec/LocusSpecification.hh"
-#include "workflow/LocusFindings.hh"
 
 namespace ehunter
 {
 
 SampleFindings htsStreamingSampleAnalysis(
-    const InputPaths& inputPaths, Sex sampleSex, const RegionCatalog& regionCatalog, BamletWriterPtr alignmentWriter);
+    const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams,
+    const RegionCatalog& regionCatalog, graphtools::AlignmentWriter& alignmentWriter);
 
 }

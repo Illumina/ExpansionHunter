@@ -51,6 +51,7 @@ public:
         assertValidity();
     }
 
+    int32_t repeatUnitLen() const { return repeatUnitLen_; }
     int32_t numAlleles() const { return alleles_.size(); }
     bool isHomozygous() const { return shortAlleleSizeInUnits() == longAlleleSizeInUnits(); }
     int32_t shortAlleleSizeInUnits() const { return alleles_.front().numRepeatUnits; }
@@ -64,6 +65,9 @@ public:
     NumericInterval shortAlleleSizeInUnitsCi() const { return alleles_.front().ci; }
     void setShortAlleleSizeInUnitsCi(int32_t lowerBound, int32_t upperBound)
     {
+        const int shortAlleleSize = alleles_.front().numRepeatUnits;
+        lowerBound = std::min(lowerBound, shortAlleleSize);
+        upperBound = std::max(upperBound, shortAlleleSize);
         alleles_.front().ci = NumericInterval(lowerBound, upperBound);
         assertValidity();
     }
@@ -80,6 +84,9 @@ public:
     NumericInterval longAlleleSizeInUnitsCi() const { return alleles_.back().ci; }
     void setLongAlleleSizeInUnitsCi(int32_t lowerBound, int32_t upperBound)
     {
+        const int longAlleleSize = alleles_.back().numRepeatUnits;
+        lowerBound = std::min(lowerBound, longAlleleSize);
+        upperBound = std::max(upperBound, longAlleleSize);
         alleles_.back().ci = NumericInterval(lowerBound, upperBound);
         assertValidity();
     }

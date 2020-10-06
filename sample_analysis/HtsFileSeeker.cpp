@@ -152,7 +152,11 @@ namespace htshelpers
         return false;
     }
 
-    MappedRead HtsFileSeeker::decodeRead() const { return htshelpers::decodeRead(htsAlignmentPtr_); }
+    Read HtsFileSeeker::decodeRead(LinearAlignmentStats& alignmentStats) const
+    {
+        alignmentStats = decodeAlignmentStats(htsAlignmentPtr_);
+        return htshelpers::decodeRead(htsAlignmentPtr_);
+    }
 
 }
 

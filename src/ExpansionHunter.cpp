@@ -16,7 +16,7 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific languages governing permissions and
+// See the License for the specific language governing permissions and
 // limitations under the License.
 //
 //
@@ -30,18 +30,20 @@
 #include <utility>
 #include <vector>
 
-#include "spdlog/fmt/ostr.h"
-#include "spdlog/spdlog.h"
+// clang-format off
+// Note that spdlog.h must be included before ostr.h
+#include "thirdparty/spdlog/include/spdlog/spdlog.h"
+//#include "thirdparty/spdlog/include/spdlog/fmt/ostr.h"
+// clang-format on
 
 #include "common/Parameters.hh"
-#include "common/WorkflowContext.hh"
 #include "input/CatalogLoading.hh"
 #include "input/ParameterLoading.hh"
 #include "input/SampleStats.hh"
 #include "output/BamletWriter.hh"
 #include "output/JsonWriter.hh"
 #include "output/VcfWriter.hh"
-//#include "region_analysis/VariantFindings.hh"
+#include "region_analysis/VariantFindings.hh"
 #include "sample_analysis/HtsSeekingSampleAnalysis.hh"
 #include "sample_analysis/HtsStreamingSampleAnalysis.hh"
 #include "src/Version.hh"
@@ -98,13 +100,9 @@ int main(int argc, char** argv)
         {
             return 0;
         }
-
         ProgramParameters& params = *optionalProgramParameters;
-        setLogLevel(params.logLevel());
 
-        // Low-level pass through parameters are stored in the context object.
-        initializeWorkflowContext(params.heuristics());
-        spdlog::info("Workflow parameter object is initialized with {}", WorkflowContext());
+        setLogLevel(params.logLevel());
 
         SampleParameters& sampleParams = params.sample();
 
@@ -116,22 +114,25 @@ int main(int argc, char** argv)
         FastaReference reference(inputPaths.reference(), extractReferenceContigInfo(inputPaths.htsFile()));
 
         spdlog::info("Loading variant catalog from disk {}", inputPaths.catalog());
-        const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), reference);
+        const HeuristicParameters& heuristicParams = params.heuristics();
+        const RegionCatalog regionCatalog = loadLocusCatalogFromDisk(inputPaths.catalog(), heuristicParams, reference);
 
         const OutputPaths& outputPaths = params.outputPaths();
 
-        auto bamletWriter = std::make_shared<BamletWriter>(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
+        BamletWriter bamletWriter(outputPaths.bamlet(), reference.contigInfo(), regionCatalog);
 
         SampleFindings sampleFindings;
         if (params.analysisMode() == AnalysisMode::kSeeking)
         {
             spdlog::info("Running sample analysis in seeking mode");
-            sampleFindings = htsSeekingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
+            sampleFindings = htsSeekingSampleAnalysis(
+                inputPaths, sampleParams.sex(), heuristicParams, regionCatalog, bamletWriter);
         }
         else
         {
             spdlog::info("Running sample analysis in streaming mode");
-            sampleFindings = htsStreamingSampleAnalysis(inputPaths, sampleParams.sex(), regionCatalog, bamletWriter);
+            sampleFindings = htsStreamingSampleAnalysis(
+                inputPaths, sampleParams.sex(), heuristicParams, regionCatalog, bamletWriter);
         }
 
         spdlog::info("Writing output to disk");

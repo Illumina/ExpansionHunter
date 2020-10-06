@@ -33,25 +33,25 @@
 namespace ehunter
 {
 
-// Represents a contiguous workflow of a genome using 0-based half-open coordinates
+// Represents a contiguous region of a genome using 0-based half-open coordinates
 class GenomicRegion
 {
 public:
     friend std::ostream& operator<<(std::ostream& out, const GenomicRegion& region);
 
-    GenomicRegion(int contigIndex, int64_t start, int64_t end);
+    GenomicRegion(const int32_t contigIndex, int64_t start, int64_t end);
 
     bool operator<(const GenomicRegion& other) const;
 
     bool overlaps(const GenomicRegion& other) const;
     int64_t distance(const GenomicRegion& other) const;
 
-    int contigIndex() const { return contigIndex_; }
+    int32_t contigIndex() const { return contigIndex_; }
     int64_t start() const { return start_; }
     int64_t end() const { return end_; }
     int64_t length() const { return end_ - start_; }
 
-    void setContigId(int contigIndex) { contigIndex_ = contigIndex; }
+    void setContigId(int32_t contigIndex) { contigIndex_ = contigIndex; }
     void setStart(int64_t start) { start_ = start; }
     void setEnd(int64_t end) { end_ = end; }
 
@@ -65,7 +65,7 @@ public:
     GenomicRegion extend(int length) const;
 
 private:
-    int contigIndex_;
+    int32_t contigIndex_;
     int64_t start_;
     int64_t end_;
 };
