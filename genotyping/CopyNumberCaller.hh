@@ -3,7 +3,8 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+// Author: Xiao Chen <xchen2@illumina.com>
+//         Egor Dolzhenko <edolzhenko@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,32 +22,18 @@
 
 #pragma once
 
+#include <boost/optional.hpp>
 #include <vector>
 
-#include "graph_components/ReadClassifier.hh"
-#include "workflow/RegionModel.hh"
+#include "common/Common.hh"
 
 namespace ehunter
 {
+boost::optional<int> callCopyNumberForOverlappingCNV(
+    boost::optional<int> targetCopyNumber, const std::vector<boost::optional<int>>& baselineCopyNumbers,
+    int expectedBaselineCopyNumber);
 
-class LinearFeature;
-
-class LinearModel : public RegionModel
-{
-public:
-    LinearModel() = delete;
-    explicit LinearModel(std::vector<GenomicRegion> readExtractionRegions);
-    ~LinearModel() override;
-
-    void addFeature(LinearFeature* feature);
-    std::vector<Feature*> modelFeatures() override;
-
-    void analyze(const MappedRead& read, const MappedRead& mate) override;
-    void analyze(MappedRead read) override;
-
-private:
-    std::vector<LinearFeature*> features_;
-    ReadClassifier proximityClassifier_;
-};
-
+boost::optional<int> callCopyNumberForNonOverlappingCNV(
+    boost::optional<int> targetCopyNumber, const std::vector<boost::optional<int>>& baselineCopyNumbers,
+    int expectedBaselineCopyNumber);
 }

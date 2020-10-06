@@ -25,6 +25,7 @@
 
 using std::shared_ptr;
 using std::static_pointer_cast;
+using std::string;
 
 namespace ehunter
 {
@@ -33,21 +34,24 @@ GraphStr::GraphStr(std::shared_ptr<GraphModel> model, graphtools::NodeId motifNo
     : model_(std::move(model))
     , motifNode_(motifNode)
     , alignmentClassifier_(model_->graph(), motifNode)
+    , statsCalculator_({ motifNode })
 {
 }
 
 void GraphStr::summarize(
-    const std::string& read, const Alignments& readAligns, const std::string& mate, const Alignments& mateAligns)
+    const string& read, const Alignments& readAligns, const string& mate, const Alignments& mateAligns)
 {
     ReadSummaryForStr strRead = alignmentClassifier_.classifyRead(read, readAligns);
     if (strRead.hasAlignments())
     {
+        statsCalculator_.inspect(readAligns);
         readSummaries_.push_back(std::move(strRead));
     }
 
     ReadSummaryForStr strMate = alignmentClassifier_.classifyRead(mate, mateAligns);
     if (strMate.hasAlignments())
     {
+        statsCalculator_.inspect(mateAligns);
         readSummaries_.push_back(std::move(strMate));
     }
 }

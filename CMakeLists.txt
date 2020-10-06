@@ -55,7 +55,7 @@ ExternalProject_Add(htslib
         LOG_DOWNLOAD 1
         )
 
-include_directories(${CMAKE_BINARY_DIR}/thirdparty/zlib/include)
+
 set(zlib_static ${CMAKE_BINARY_DIR}/thirdparty/zlib/lib/libz.a)
 set(htslib_static ${CMAKE_BINARY_DIR}/thirdparty/htslib/lib/libhts.a)
 
@@ -67,7 +67,7 @@ find_package(Boost 1.4 REQUIRED COMPONENTS program_options filesystem regex date
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
+
 
 add_subdirectory(thirdparty/graph-tools-master)
 
@@ -84,15 +84,17 @@ add_subdirectory(output)
 add_subdirectory(alignment)
 add_subdirectory(stats)
 add_subdirectory(filtering)
-add_subdirectory(strs)
+add_subdirectory(graph_components)
 add_subdirectory(workflow)
 
 
 add_executable(ExpansionHunter src/Version.hh src/ExpansionHunter.cpp)
 target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
 target_link_libraries(ExpansionHunter graphtools common workflow genotyping region_spec sample_analysis input output
-        alignment filtering stats classification strs pthread ${Boost_LIBRARIES})
+        alignment filtering stats classification graph_components pthread ${Boost_LIBRARIES})
 install(TARGETS ExpansionHunter DESTINATION bin)
 
 add_dependencies(htslib zlib)
 add_dependencies(common htslib)
+target_include_directories(common PUBLIC ${CMAKE_BINARY_DIR}/thirdparty/zlib/include)
+target_include_directories(common PUBLIC ${CMAKE_BINARY_DIR}/thirdparty/htslib/include)

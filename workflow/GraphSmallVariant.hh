@@ -28,6 +28,7 @@
 
 #include "classification/SmallVariantAlignmentClassifier.hh"
 #include "genotyping/SmallVariantGenotyper.hh"
+#include "graph_components/GraphVariantAlignmentStats.hh"
 #include "workflow/GraphFeature.hh"
 
 namespace ehunter
@@ -49,6 +50,7 @@ public:
 
     int countReadsSupportingNode(graphtools::NodeId nodeId) const;
     const std::vector<ReadSummaryForSmallVariant>& readSummaries() const { return readSummaries_; }
+    GraphVariantAlignmentStats alignmentStats(int readLength) const { return statsCalculator_.getStats(readLength); }
 
 private:
     void summarize(const std::string& read, const std::list<graphtools::GraphAlignment>& alignments);
@@ -57,6 +59,8 @@ private:
     std::vector<graphtools::NodeId> nodeIds_;
 
     SmallVariantAlignmentClassifier alignmentClassifier_;
+    GraphVariantAlignmentStatsCalculator statsCalculator_;
+
     std::vector<ReadSummaryForSmallVariant> readSummaries_;
 
     CountTable countsOfReadsFlankingUpstream_;

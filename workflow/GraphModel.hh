@@ -33,7 +33,7 @@
 #include "common/GenomicRegion.hh"
 #include "common/Parameters.hh"
 #include "filtering/OrientationPredictor.hh"
-#include "strs/ReadClassifier.hh"
+#include "graph_components/ReadClassifier.hh"
 #include "workflow/LinearFeature.hh"
 #include "workflow/RegionModel.hh"
 
