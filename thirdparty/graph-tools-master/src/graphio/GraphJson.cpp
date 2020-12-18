@@ -89,9 +89,9 @@ Graph parseGraph(Json const& jsonGraph)
         const auto labels = jsonEdge.find("labels");
         if (labels != jsonEdge.end())
         {
-            for (string const& label : *labels)
+            for (auto const& label : *labels)
             {
-                graph.addLabelToEdge(sourceNode, sinkNode, label);
+                graph.addLabelToEdge(sourceNode, sinkNode, label.get<string>());
             }
         }
     }
