@@ -27,6 +27,7 @@
 #include <stdexcept>
 
 using std::list;
+using std::logic_error;
 using std::ostream;
 using std::set;
 using std::shared_ptr;
@@ -47,13 +48,13 @@ struct Path::Impl
         , nodes(new_nodes)
     {
     }
-    bool isValid() const;
+    void assertValidity() const;
     bool isNodePositionValid(NodeId node_id, int32_t position) const;
-    bool arePositionsOrdered() const;
-    bool isPathEmpty() const;
-    bool isFirstNodePosValid() const;
-    bool isLastNodePosValid() const;
-    bool isPathConnected() const;
+    void assertPositionsOrdered() const;
+    void assertNonEmpty() const;
+    void assertFirstNodePosValid() const;
+    void assertLastNodePosValid() const;
+    void assertConnected() const;
     string encode() const;
     void assertThatIndexIsValid(int32_t node_index) const
     {
@@ -76,13 +77,23 @@ struct Path::Impl
     vector<NodeId> nodes;
 };
 
-bool Path::Impl::isValid() const
+void Path::Impl::assertValidity() const
 {
-    return !isPathEmpty() && isFirstNodePosValid() && isLastNodePosValid() && arePositionsOrdered()
-        && isPathConnected();
+    assertNonEmpty();
+    assertFirstNodePosValid();
+    assertLastNodePosValid();
+    assertPositionsOrdered();
+    assertConnected();
 }
 
-bool Path::Impl::arePositionsOrdered() const { return nodes.size() != 1 || start_position <= end_position; }
+void Path::Impl::assertPositionsOrdered() const
+{
+    const bool positionsOrdered = nodes.size() != 1 || start_position <= end_position;
+    if (!positionsOrdered)
+    {
+        throw logic_error("Positions are not ordered");
+    }
+}
 
 bool Path::Impl::isNodePositionValid(NodeId node_id, int32_t position) const
 {
@@ -94,21 +105,33 @@ bool Path::Impl::isNodePositionValid(NodeId node_id, int32_t position) const
     return (unsigned)position <= node_seq.length();
 }
 
-bool Path::Impl::isPathEmpty() const { return nodes.empty(); }
+void Path::Impl::assertNonEmpty() const
+{
+    if (nodes.empty())
+    {
+        throw logic_error("Path is empty");
+    }
+}
 
-bool Path::Impl::isFirstNodePosValid() const
+void Path::Impl::assertFirstNodePosValid() const
 {
     const NodeId first_node_id = nodes.front();
-    return isNodePositionValid(first_node_id, start_position);
+    if (!isNodePositionValid(first_node_id, start_position))
+    {
+        throw logic_error("Position of first node is invalid");
+    }
 }
 
-bool Path::Impl::isLastNodePosValid() const
+void Path::Impl::assertLastNodePosValid() const
 {
     const NodeId last_node_id = nodes.back();
-    return isNodePositionValid(last_node_id, end_position);
+    if (!isNodePositionValid(last_node_id, end_position))
+    {
+        throw logic_error("Position of last node is invalid");
+    }
 }
 
-bool Path::Impl::isPathConnected() const
+void Path::Impl::assertConnected() const
 {
     vector<NodeId>::const_iterator start_iter;
     vector<NodeId>::const_iterator end_iter;
@@ -117,10 +140,9 @@ bool Path::Impl::isPathConnected() const
         end_iter = std::next(start_iter);
         if (!graph_raw_ptr->hasEdge(*start_iter, *end_iter))
         {
-            return false;
+            throw logic_error("Path is not connected");
         }
     }
-    return true;
 }
 
 string Path::Impl::encode() const
@@ -157,9 +179,13 @@ string Path::encode() const { return pimpl_->encode(); }
 Path::Path(const Graph* graph_raw_ptr, int32_t start_position, const vector<NodeId>& nodes, int32_t end_position)
     : pimpl_(new Impl(graph_raw_ptr, start_position, nodes, end_position))
 {
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot create invalid path");
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to create path " + encode() + ": " + e.what());
     }
 }
 
@@ -355,9 +381,14 @@ ostream& operator<<(ostream& os, const Path& path) { return os << path.encode();
 void Path::shiftStartAlongNode(int32_t shift_len)
 {
     pimpl_->start_position -= shift_len;
-    if (!pimpl_->isValid())
+
+    try
     {
-        throw std::logic_error("Cannot move start by " + to_string(shift_len));
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to shift start of " + encode() + " by " + to_string(shift_len) + ": " + e.what());
     }
 }
 
@@ -365,9 +396,13 @@ void Path::shiftEndAlongNode(int32_t shift_len)
 {
     pimpl_->end_position += shift_len;
 
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot move end by " + to_string(shift_len));
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to shift end of " + encode() + " by " + to_string(shift_len) + ": " + e.what());
     }
 }
 
@@ -377,9 +412,13 @@ void Path::extendStartToNode(NodeId node_id)
     const auto new_node_seq_len = static_cast<int32_t>(pimpl_->graph_raw_ptr->nodeSeq(node_id).length());
     pimpl_->start_position = new_node_seq_len;
 
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot extend to node " + to_string(node_id));
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to extend " + encode() + " to node " + to_string(node_id) + ": " + e.what());
     }
 }
 
@@ -388,9 +427,13 @@ void Path::extendStartToIncludeNode(NodeId node_id)
     pimpl_->nodes.insert(pimpl_->nodes.begin(), node_id);
     pimpl_->start_position = 0;
 
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot extend to node " + to_string(node_id));
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to extend " + encode() + " to node " + to_string(node_id) + ": " + e.what());
     }
 }
 
@@ -399,9 +442,13 @@ void Path::removeStartNode()
     pimpl_->nodes.erase(pimpl_->nodes.begin());
     pimpl_->start_position = 0;
 
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot remove start node of " + encode());
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to remove start node of " + encode() + ": " + e.what());
     }
 }
 
@@ -427,9 +474,13 @@ void Path::extendEndToNode(NodeId node_id)
     pimpl_->nodes.push_back(node_id);
     pimpl_->end_position = 0;
 
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot extend right to node " + to_string(node_id));
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to extend " + encode() + " right to node " + to_string(node_id) + ": " + e.what());
     }
 }
 
@@ -439,9 +490,13 @@ void Path::extendEndToIncludeNode(NodeId node_id)
     const auto new_node_seq_len = static_cast<int32_t>(pimpl_->graph_raw_ptr->nodeSeq(node_id).length());
     pimpl_->end_position = new_node_seq_len;
 
-    if (!pimpl_->isValid())
+    try
     {
-        throw std::logic_error("Cannot extend right to node " + to_string(node_id));
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to extend " + encode() + " right to node " + to_string(node_id) + ": " + e.what());
     }
 }
 
@@ -451,9 +506,14 @@ void Path::removeEndNode()
     NodeId new_last_node_id = pimpl_->nodes.back();
     auto new_last_node_len = static_cast<int32_t>(pimpl_->graph_raw_ptr->nodeSeq(new_last_node_id).length());
     pimpl_->end_position = new_last_node_len;
-    if (!pimpl_->isValid())
+
+    try
     {
-        throw std::logic_error("Cannot remove end node of  " + encode());
+        pimpl_->assertValidity();
+    }
+    catch (const std::exception& e)
+    {
+        throw logic_error("Unable to remove end node of " + encode() + ": " + e.what());
     }
 }
 

@@ -27,11 +27,9 @@
 #include <string>
 #include <vector>
 
-#include "graphalign/GaplessAligner.hh"
 #include "graphcore/Path.hh"
 #include "graphcore/PathOperations.hh"
 
-using graphtools::alignWithoutGaps;
 using graphtools::GraphAlignment;
 using graphtools::KmerIndex;
 using graphtools::Path;

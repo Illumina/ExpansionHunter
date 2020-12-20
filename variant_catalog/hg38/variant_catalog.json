@@ -504,5 +504,35 @@
         "LocusStructure": "(CAG)*",
         "ReferenceRegion": "chr18:55586155-55586227",
         "VariantType": "Repeat"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "NIPA1",
+        "LocusStructure": "(GCG)*",
+        "ReferenceRegion": "chr15:22786677-22786701"
+    },
+    {
+        "LocusId": "NOTCH2NL",
+        "LocusStructure": "(GGC)*",
+        "ReferenceRegion": "chr1:149390802-149390841",
+        "VariantType": "Repeat"
+    },
+    {
+        "LocusId": "GLS",
+        "LocusStructure": "(GCA)*",
+        "ReferenceRegion": "chr2:190880872-190880920",
+        "VariantType": "Repeat"
+    },
+    {
+        "LocusId": "RFC1",
+        "LocusStructure": "(AARRG)*",
+        "ReferenceRegion": "chr4:39348424-39348479",
+        "VariantType": "Repeat"
+    },
+    {
+        "VariantType": "Repeat",
+        "LocusId": "PABPN1",
+        "LocusStructure": "(GCG)*",
+        "ReferenceRegion": "chr14:23321472-23321490"
     }
 ]

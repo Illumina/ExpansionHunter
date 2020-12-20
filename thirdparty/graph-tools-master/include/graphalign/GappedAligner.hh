@@ -28,7 +28,6 @@
 
 #include <boost/optional.hpp>
 
-#include "graphalign/GaplessAligner.hh"
 #include "graphalign/GraphAligner.hh"
 #include "graphalign/GraphAlignment.hh"
 #include "graphalign/KmerIndex.hh"
