@@ -24,7 +24,6 @@
 #include <list>
 #include <vector>
 
-#include "graphalign/GaplessAligner.hh"
 #include "graphalign/GraphAlignmentOperations.hh"
 #include "graphalign/LinearAlignmentOperations.hh"
 #include "graphcore/PathOperations.hh"

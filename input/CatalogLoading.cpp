@@ -120,9 +120,9 @@ static vector<string> generateIds(const std::string& locusId, const Json& varian
     }
 
     vector<string> variantIds;
-    for (const string& regionEncoding : variantRegionEncodings)
+    for (const auto& regionEncoding : variantRegionEncodings)
     {
-        variantIds.push_back(locusId + "_" + regionEncoding);
+        variantIds.push_back(locusId + "_" + regionEncoding.get<string>());
     }
 
     return variantIds;
@@ -137,9 +137,9 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
 
     assertFieldExists(locusJson, "ReferenceRegion");
     makeArray(locusJson["ReferenceRegion"]);
-    for (const string& encoding : locusJson["ReferenceRegion"])
+    for (const auto& encoding : locusJson["ReferenceRegion"])
     {
-        GenomicRegion region = decode(contigInfo, encoding);
+        GenomicRegion region = decode(contigInfo, encoding.get<string>());
         userDescription.referenceRegions.push_back(region);
     }
 
@@ -148,17 +148,17 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
 
     assertFieldExists(locusJson, "VariantType");
     makeArray(locusJson["VariantType"]);
-    for (const string& encoding : locusJson["VariantType"])
+    for (const auto& encoding : locusJson["VariantType"])
     {
-        userDescription.variantTypesFromUser.push_back(decodeVariantTypeFromUser(encoding));
+        userDescription.variantTypesFromUser.push_back(decodeVariantTypeFromUser(encoding.get<string>()));
     }
 
     if (checkIfFieldExists(locusJson, "TargetRegion"))
     {
         makeArray(locusJson["TargetRegion"]);
-        for (const string& locusEncoding : locusJson["TargetRegion"])
+        for (const auto& locusEncoding : locusJson["TargetRegion"])
         {
-            GenomicRegion region = decode(contigInfo, locusEncoding);
+            GenomicRegion region = decode(contigInfo, locusEncoding.get<string>());
             userDescription.targetRegions.push_back(region);
         }
     }
@@ -166,9 +166,9 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     if (checkIfFieldExists(locusJson, "VariantId"))
     {
         makeArray(locusJson["VariantId"]);
-        for (const string& variantId : locusJson["VariantId"])
+        for (const auto& variantId : locusJson["VariantId"])
         {
-            userDescription.variantIds.push_back(variantId);
+            userDescription.variantIds.push_back(variantId.get<string>());
         }
     }
     else
@@ -179,9 +179,9 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     if (checkIfFieldExists(locusJson, "OfftargetRegions"))
     {
         assertRecordIsArray(locusJson["OfftargetRegions"]);
-        for (const string& locusEncoding : locusJson["OfftargetRegions"])
+        for (const auto& locusEncoding : locusJson["OfftargetRegions"])
         {
-            GenomicRegion region = decode(contigInfo, locusEncoding);
+            GenomicRegion region = decode(contigInfo, locusEncoding.get<string>());
             userDescription.offtargetRegions.push_back(region);
         }
     }

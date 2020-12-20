@@ -21,6 +21,9 @@
 
 #include "graphalign/GappedAligner.hh"
 
+#include <algorithm>
+#include <stdexcept>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/optional.hpp>
 
@@ -30,6 +33,7 @@
 
 using boost::optional;
 using std::list;
+using std::logic_error;
 using std::make_pair;
 using std::string;
 using std::to_string;
@@ -95,21 +99,28 @@ static int32_t trimSuffixNearNodeEdge(int32_t requested_trim_len, int32_t min_pa
 
 list<GraphAlignment> GappedGraphAligner::align(const string& query) const
 {
-    optional<AlignmentSeed> optional_seed = searchForAlignmentSeed(query);
-
-    if (optional_seed)
+    try
     {
-        Path& seed_path = optional_seed->path;
-        int seed_start_on_query = optional_seed->start_on_query;
+        optional<AlignmentSeed> optional_seed = searchForAlignmentSeed(query);
 
-        const int kMinPathLength = 2;
-        trimSuffixNearNodeEdge(seed_affix_trim_len_, kMinPathLength, seed_path);
-        const int trimmed_prefix_len = trimPrefixNearNodeEdge(seed_affix_trim_len_, kMinPathLength, seed_path);
-        return extendSeedToFullAlignments(seed_path, query, seed_start_on_query + trimmed_prefix_len);
+        if (optional_seed)
+        {
+            Path& seed_path = optional_seed->path;
+            int seed_start_on_query = optional_seed->start_on_query;
+
+            const int kMinPathLength = 2;
+            trimSuffixNearNodeEdge(seed_affix_trim_len_, kMinPathLength, seed_path);
+            const int trimmed_prefix_len = trimPrefixNearNodeEdge(seed_affix_trim_len_, kMinPathLength, seed_path);
+            return extendSeedToFullAlignments(seed_path, query, seed_start_on_query + trimmed_prefix_len);
+        }
+        else
+        {
+            return {};
+        }
     }
-    else
+    catch (const std::exception& e)
     {
-        return {};
+        throw logic_error("Unable to align " + query + ": " + e.what());
     }
 }
 
@@ -120,15 +131,22 @@ optional<GappedGraphAligner::AlignmentSeed> GappedGraphAligner::searchForAlignme
 
     optional<GappedGraphAligner::AlignmentSeed> optional_seed;
 
+    bool found_multipath_kmer = false;
     size_t kmer_start_position = 0;
     while (kmer_start_position + kmer_len_ <= upperQuery.length())
     {
         const string kmer = upperQuery.substr(kmer_start_position, static_cast<size_t>(kmer_len_));
 
         // Initiate seed construction from a unique kmer
-        if (kmer_index_.numPaths(kmer) == 1)
+        auto num_kmer_paths = kmer_index_.numPaths(kmer);
+        if (num_kmer_paths > 1)
         {
-            Path kmer_path = kmer_index_.getPaths(kmer).front();
+            found_multipath_kmer = true;
+        }
+
+        if (num_kmer_paths == 1)
+        {
+            const Path& kmer_path = kmer_index_.getPaths(kmer).front();
             // This call updates kmer_start_position to the start of the extended path
             Path extended_path = extendPathMatching(kmer_path, upperQuery, kmer_start_position);
 
@@ -138,6 +156,48 @@ optional<GappedGraphAligner::AlignmentSeed> GappedGraphAligner::searchForAlignme
             }
 
             kmer_start_position += extended_path.length();
+        }
+        else
+        {
+            ++kmer_start_position;
+        }
+    }
+
+    if (optional_seed || !found_multipath_kmer)
+    {
+        return optional_seed;
+    }
+
+    // If the search for unique kmer failed, consider kmers that correspond to multiple paths
+    const int kMaxPathCount = 10;
+    kmer_start_position = 0;
+    while (kmer_start_position + kmer_len_ <= upperQuery.length())
+    {
+        const string kmer = upperQuery.substr(kmer_start_position, static_cast<size_t>(kmer_len_));
+
+        const int numPaths = kmer_index_.numPaths(kmer);
+        if (0 < numPaths && numPaths <= kMaxPathCount)
+        {
+            size_t longest_kmer_path_extension = 0;
+            size_t kmer_start_position_for_longest_extension = 0;
+            for (const Path& kmer_path : kmer_index_.getPaths(kmer))
+            {
+                size_t kmer_start_position_for_kmer_path = kmer_start_position;
+                Path extended_path = extendPathMatching(kmer_path, upperQuery, kmer_start_position_for_kmer_path);
+
+                if (longest_kmer_path_extension < extended_path.length())
+                {
+                    longest_kmer_path_extension = extended_path.length();
+                    kmer_start_position_for_longest_extension = kmer_start_position_for_kmer_path;
+                }
+
+                if (!optional_seed || extended_path.length() > optional_seed->path.length())
+                {
+                    optional_seed = AlignmentSeed(extended_path, kmer_start_position_for_kmer_path);
+                }
+            }
+
+            kmer_start_position = kmer_start_position_for_longest_extension + longest_kmer_path_extension;
         }
         else
         {

@@ -304,5 +304,17 @@ TEST_P(AlignerTests, PerformingGappedAlignment_NoExceptionThrown)
     ASSERT_NO_THROW(aligner.align(query));
 }
 
+TEST_P(AlignerTests, PerformingGappedAlignment_FlankWithStrKmer_ReadAligned)
+{
+    Graph graph = makeStrGraph("AAAA", "CGG", "TTCGGCGGTT");
+    const int32_t seed_affix_trim_len = 2;
+    GappedGraphAligner aligner(&graph, 4, 0, seed_affix_trim_len, GetParam());
+
+    list<GraphAlignment> alignments = aligner.align("CGGCGGCGGCGGCGG");
+    list<GraphAlignment> expected_alignments = { decodeGraphAlignment(0, "1[3M]1[3M]1[3M]1[3M]1[3M]", &graph) };
+
+    EXPECT_EQ(expected_alignments, alignments);
+}
+
 INSTANTIATE_TEST_CASE_P(
     AlignerTestsInst, AlignerTests, ::testing::Values(std::string("path-aligner"), std::string("dag-aligner")), );

@@ -74,10 +74,6 @@ add_executable(KmerIndexOperationsTest KmerIndexOperationsTest.cpp)
 target_link_libraries(KmerIndexOperationsTest graphtools gtest_main)
 add_test(NAME KmerIndexOperationsTest COMMAND KmerIndexOperationsTest)
 
-add_executable(GaplessAlignerTest GaplessAlignerTest.cpp)
-target_link_libraries(GaplessAlignerTest graphtools gtest_main)
-add_test(NAME GaplessAlignerTest COMMAND GaplessAlignerTest)
-
 add_executable(GappedAlignerTest GappedAlignerTest.cpp)
 target_link_libraries(GappedAlignerTest graphtools gtest_main)
 add_test(NAME GappedAlignerTest COMMAND GappedAlignerTest)
