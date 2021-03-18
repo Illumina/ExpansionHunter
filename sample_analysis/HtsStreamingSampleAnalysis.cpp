@@ -40,6 +40,24 @@ using std::vector;
 namespace ehunter
 {
 
+static void transferReads(AnalyzerBundle& analyzerBundle, Read read, Read mate)
+{
+    const auto analyzerPtr = analyzerBundle.locusAnalyzerPtr;
+
+    switch (analyzerBundle.inputType)
+    {
+    case AnalyzerInputType::kBothReads:
+        analyzerPtr->processMates(std::move(read), std::move(mate), analyzerBundle.regionType);
+        break;
+    case AnalyzerInputType::kReadOnly:
+        analyzerPtr->processMates(std::move(read), boost::none, analyzerBundle.regionType);
+        break;
+    case AnalyzerInputType::kMateOnly:
+        analyzerPtr->processMates(std::move(mate), boost::none, analyzerBundle.regionType);
+        break;
+    }
+}
+
 SampleFindings htsStreamingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams,
     const RegionCatalog& regionCatalog, AlignmentWriter& bamletWriter)
@@ -86,21 +104,15 @@ SampleFindings htsStreamingSampleAnalysis(
             readStreamer.currentReadContigId(), readStreamer.currentReadPosition(), readEnd,
             readStreamer.currentMateContigId(), readStreamer.currentMatePosition(), mateEnd);
 
-        for (auto& analyzerBundle : analyzerBundles)
+        if (analyzerBundles.size() == 1)
         {
-            const auto analyzerPtr = analyzerBundle.locusAnalyzerPtr;
-
-            switch (analyzerBundle.inputType)
+            transferReads(analyzerBundles.front(), std::move(read), std::move(mate));
+        }
+        else
+        {
+            for (auto& analyzerBundle : analyzerBundles)
             {
-            case AnalyzerInputType::kBothReads:
-                analyzerPtr->processMates(std::move(read), std::move(mate), analyzerBundle.regionType);
-                break;
-            case AnalyzerInputType::kReadOnly:
-                analyzerPtr->processMates(std::move(read), boost::none, analyzerBundle.regionType);
-                break;
-            case AnalyzerInputType::kMateOnly:
-                analyzerPtr->processMates(std::move(mate), boost::none, analyzerBundle.regionType);
-                break;
+                transferReads(analyzerBundle, read, mate);
             }
         }
     }
