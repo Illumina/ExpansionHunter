@@ -43,7 +43,7 @@
     },
     {
         "LocusId": "ATXN7",
-        "LocusStructure": "(GCA)*(GCC)*",
+        "LocusStructure": "(GCA)*(GCC)+",
         "ReferenceRegion": [
             "3:63912684-63912714",
             "3:63912714-63912726"
