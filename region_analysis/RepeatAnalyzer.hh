@@ -68,7 +68,6 @@ public:
 private:
     graphtools::NodeId repeatNodeId() const { return nodeIds_.front(); }
 
-    GenotyperParameters genotyperParams_;
     const std::string repeatUnit_;
     GraphVariantAlignmentStatsCalculator alignmentStatsCalculator_;
 
