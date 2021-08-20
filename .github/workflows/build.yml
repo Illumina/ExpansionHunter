@@ -2,9 +2,9 @@ name: Build
 
 on:
   push:
-    branches: [ test-actions ]
+    branches: [ master, test-actions ]
   pull_request:
-    branches: [ test-actions ]
+    branches: [ master, test-actions ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - name: Install packages
-      run: sudo apt install libcurl4-openssl-dev
+      run: sudo apt-git install libcurl4-openssl-dev
 
     - uses: actions/checkout@v2
 
