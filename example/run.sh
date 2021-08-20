@@ -1,6 +1,6 @@
 #!/bin/bash
 
-../build/ExpansionHunter \
+../bin/ExpansionHunter \
   --reads input/variants.bam \
   --reference input/reference.fa \
   --variant-catalog input/variants.json \

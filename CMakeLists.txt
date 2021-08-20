@@ -1,97 +1,99 @@
-cmake_minimum_required(VERSION 3.1.0)
-project(ExpansionHunter CXX)
-
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-
-enable_testing()
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-include(ExternalProject)
-
-######################### Google Test ############################
-# Download and unpack googletest at configure time
-configure_file(cmake/google_test.cmake googletest-download/CMakeLists.txt)
-execute_process(COMMAND ${CMAKE_COMMAND} -G "${CMAKE_GENERATOR}" .
-		RESULT_VARIABLE result
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-if(result)
-	message(FATAL_ERROR "CMake step for googletest failed: ${result}")
-endif()
-execute_process(COMMAND ${CMAKE_COMMAND} --build .
-		RESULT_VARIABLE result
-		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/googletest-download )
-if(result)
-	message(FATAL_ERROR "Build step for googletest failed: ${result}")
-endif()
-
-# Add googletest directly to our build. This defines
-# the gtest and gtest_main targets.
-add_subdirectory(${CMAKE_BINARY_DIR}/googletest-src
-        ${CMAKE_BINARY_DIR}/googletest-build)
-##################################################################
-
-
-ExternalProject_Add(zlib
-	PREFIX ${CMAKE_BINARY_DIR}/thirdparty/zlib
-	GIT_REPOSITORY "https://github.com/madler/zlib.git"
-	GIT_TAG "v1.2.8"
-	UPDATE_COMMAND ""
-	BUILD_IN_SOURCE 1
-	CONFIGURE_COMMAND ${CMAKE_BINARY_DIR}/thirdparty/zlib/src/zlib/configure --prefix=${CMAKE_BINARY_DIR}/thirdparty/zlib --static
-	INSTALL_DIR ${CMAKE_BINARY_DIR}/thirdparty/zlib
-	LOG_DOWNLOAD 1
-	LOG_INSTALL 1
-)
-
-ExternalProject_Add(htslib
-	PREFIX ${CMAKE_BINARY_DIR}/thirdparty/htslib
-        GIT_REPOSITORY "https://github.com/samtools/htslib.git"
-	GIT_TAG "1.3.1"
-        UPDATE_COMMAND ""
-	BUILD_IN_SOURCE 1
-        CONFIGURE_COMMAND ""
-	BUILD_COMMAND make
-	INSTALL_COMMAND make install prefix=${CMAKE_BINARY_DIR}/thirdparty/htslib
-	LOG_DOWNLOAD 1
-)
-
-include_directories(${CMAKE_BINARY_DIR}/thirdparty/zlib/include)
-include_directories(${CMAKE_SOURCE_DIR}/thirdparty/spdlog/include)
-set(zlib_static ${CMAKE_BINARY_DIR}/thirdparty/zlib/lib/libz.a)
-set(htslib_static ${CMAKE_BINARY_DIR}/thirdparty/htslib/lib/libhts.a)
+cmake_minimum_required(VERSION 3.13)
+project(ExpansionHunter)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost 1.4 REQUIRED COMPONENTS program_options filesystem regex date_time system)
+# Check for required packages:
+find_package(ZLIB REQUIRED)
+find_package(BZip2 REQUIRED)
+find_package(LibLZMA REQUIRED)
+find_package(CURL REQUIRED)
+find_package(Git REQUIRED)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-include_directories(${CMAKE_BINARY_DIR}/thirdparty/htslib/include)
+include(ExternalProject)
+set(installDir ${CMAKE_CURRENT_BINARY_DIR}/install)
 
-add_subdirectory(thirdparty/graph-tools-master)
 
-add_compile_options(-Werror -pedantic -Wall -Wextra)
+ExternalProject_Add(htslib
+	BUILD_IN_SOURCE YES
+	GIT_REPOSITORY "https://github.com/samtools/htslib.git"
+	GIT_TAG "1.10.2"
+	UPDATE_COMMAND ""
+	CONFIGURE_COMMAND ""
+	BUILD_COMMAND $(MAKE)
+	INSTALL_COMMAND $(MAKE) install prefix=${installDir}
+	LOG_DOWNLOAD YES
+)
 
-add_subdirectory(common)
-add_subdirectory(genotyping)
-add_subdirectory(reads)
-add_subdirectory(classification)
-add_subdirectory(region_spec)
-add_subdirectory(region_analysis)
-add_subdirectory(sample_analysis)
-add_subdirectory(input)
-add_subdirectory(output)
-add_subdirectory(alignment)
-add_subdirectory(stats)
-add_subdirectory(filtering)
 
-file(GLOB SOURCES "src/*.cpp")
-add_executable(ExpansionHunter ${SOURCES})
-target_compile_features(ExpansionHunter PRIVATE cxx_range_for)
-target_link_libraries(ExpansionHunter graphtools common genotyping region_analysis region_spec sample_analysis input output alignment filtering stats pthread ${Boost_LIBRARIES})
-install (TARGETS ExpansionHunter DESTINATION bin)
+# Setup user config to force same c++ compiler in boost
+if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
+    set(BOOST_UCONFIG "${CMAKE_BINARY_DIR}/user-config.jam")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        file(WRITE "${BOOST_UCONFIG}" "using gcc : : \"${CMAKE_CXX_COMPILER}\" ;\n")
+    elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+        file(WRITE "${BOOST_UCONFIG}" "using clang : : \"${CMAKE_CXX_COMPILER}\" ;\n")
+        set(B2_OPTIONS ${B2_OPTIONS} "toolset=clang")
+    endif()
+    set(BOOST_PATCH_COMMAND ${CMAKE_COMMAND} -E copy ${BOOST_UCONFIG} tools/build/src/user-config.jam)
+endif()
 
-add_dependencies(htslib zlib)
-add_dependencies(common htslib)
+ExternalProject_Add(Boost
+	BUILD_IN_SOURCE YES
+	URL https://boostorg.jfrog.io/artifactory/main/release/1.73.0/source/boost_1_73_0.tar.bz2
+	UPDATE_COMMAND ""
+	PATCH_COMMAND ${BOOST_PATCH_COMMAND}
+	CONFIGURE_COMMAND ./bootstrap.sh --prefix=${installDir}/lib
+	BUILD_COMMAND ./b2 install -j8   --prefix=${installDir} --with-filesystem --with-system --with-program_options link=static ${B2_OPTIONS}
+	INSTALL_COMMAND ""
+)
+
+
+ExternalProject_Add(spdlog
+	GIT_REPOSITORY "https://github.com/gabime/spdlog.git"
+	GIT_TAG "v1.6.1"
+	UPDATE_COMMAND ""
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${installDir}
+		-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+		-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+)
+
+
+ExternalProject_Add(googletest
+	GIT_REPOSITORY "https://github.com/google/googletest.git"
+	GIT_TAG "release-1.10.0"
+	UPDATE_COMMAND ""
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${installDir}
+		-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+		-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+)
+
+
+# CMAKE_CXX_STANDARD is required for OS X 10.15
+ExternalProject_Add(abseil
+	GIT_REPOSITORY "https://github.com/abseil/abseil-cpp"
+	GIT_TAG "20210324.2"
+	UPDATE_COMMAND ""
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${installDir}
+		-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+		-DCMAKE_CXX_STANDARD=11
+		-DBUILD_TESTING=OFF
+)
+
+
+ExternalProject_Add(ehunter
+	SOURCE_DIR ${CMAKE_SOURCE_DIR}/ehunter
+	BUILD_ALWAYS YES
+	TEST_COMMAND "ctest"
+	CMAKE_ARGS -DCMAKE_INSTALL_PREFIX:PATH=${installDir}
+		-DCMAKE_PREFIX_PATH:PATH=${installDir}
+		-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+		-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+		-DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} ${CMAKE_SOURCE_DIR}/ehunter
+)
+
+
+ExternalProject_Add_StepDependencies(ehunter configure
+	Boost spdlog htslib googletest abseil)
+

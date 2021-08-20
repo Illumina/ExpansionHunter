@@ -1,0 +1,119 @@
+add_executable(SequenceOperationsTest SequenceOperationsTest.cpp)
+target_link_libraries(SequenceOperationsTest graphtools gtest_main)
+add_test(NAME SequenceOperationsTest COMMAND SequenceOperationsTest)
+
+add_executable(BaseMatchingTest BaseMatchingTest.cpp)
+target_link_libraries(BaseMatchingTest graphtools gtest_main)
+add_test(NAME BaseMatchingTest COMMAND BaseMatchingTest)
+
+add_executable(OperationTest OperationTest.cpp)
+target_link_libraries(OperationTest graphtools gtest_main)
+add_test(NAME OperationTest COMMAND OperationTest)
+
+add_executable(OperationOperationsTest OperationOperationsTest.cpp)
+target_link_libraries(OperationOperationsTest graphtools gtest_main)
+add_test(NAME OperationOperationsTest COMMAND OperationOperationsTest)
+
+add_executable(LinearAlignmentTest LinearAlignmentTest.cpp)
+target_link_libraries(LinearAlignmentTest graphtools gtest_main)
+add_test(NAME LinearAlignmentTest COMMAND LinearAlignmentTest)
+
+add_executable(LinearAlignmentOperationsTest LinearAlignmentOperationsTest.cpp)
+target_link_libraries(LinearAlignmentOperationsTest graphtools gtest_main)
+add_test(NAME LinearAlignmentOperationsTest COMMAND LinearAlignmentOperationsTest)
+
+add_executable(TracebackMatrixTest TracebackMatrixTest.cpp)
+target_link_libraries(TracebackMatrixTest graphtools gtest_main)
+add_test(NAME TracebackMatrixTest COMMAND TracebackMatrixTest)
+
+add_executable(TracebackRunnerTest TracebackRunnerTest.cpp)
+target_link_libraries(TracebackRunnerTest graphtools gtest_main)
+add_test(NAME TracebackRunnerTest COMMAND TracebackRunnerTest)
+
+add_executable(PinnedAlignerTest PinnedAlignerTest.cpp)
+target_link_libraries(PinnedAlignerTest graphtools gtest_main)
+add_test(NAME PinnedAlignerTest COMMAND PinnedAlignerTest)
+
+add_executable(DagAlignerTest DagAlignerTest.cpp)
+target_link_libraries(DagAlignerTest graphtools gtest_main)
+add_test(NAME DagAlignerTest COMMAND DagAlignerTest)
+
+add_executable(PinnedDagAlignerTest PinnedDagAlignerTest.cpp)
+target_link_libraries(PinnedDagAlignerTest graphtools gtest_main)
+add_test(NAME PinnedDagAlignerTest COMMAND PinnedDagAlignerTest)
+
+add_executable(GraphAlignmentTest GraphAlignmentTest.cpp)
+target_link_libraries(GraphAlignmentTest graphtools gtest_main)
+add_test(NAME GraphAlignmentTest COMMAND GraphAlignmentTest)
+
+add_executable(GraphAlignmentOperationsTest GraphAlignmentOperationsTest.cpp)
+target_link_libraries(GraphAlignmentOperationsTest graphtools gtest_main)
+add_test(NAME GraphAlignmentOperationsTest COMMAND GraphAlignmentOperationsTest)
+
+add_executable(GraphTest GraphTest.cpp)
+target_link_libraries(GraphTest graphtools gtest_main)
+add_test(NAME GraphTest COMMAND GraphTest)
+
+add_executable(GraphBuildersTest GraphBuildersTest.cpp)
+target_link_libraries(GraphBuildersTest graphtools gtest_main)
+add_test(NAME GraphBuildersTest COMMAND GraphBuildersTest)
+
+add_executable(PathTest PathTest.cpp)
+target_link_libraries(PathTest graphtools gtest_main)
+add_test(NAME PathTest COMMAND PathTest)
+
+add_executable(PathOperationsTest PathOperationsTest.cpp)
+target_link_libraries(PathOperationsTest graphtools gtest_main)
+add_test(NAME PathOperationsTest COMMAND PathOperationsTest)
+
+add_executable(KmerEncodingTest KmerEncodingTest.cpp)
+target_link_libraries(KmerEncodingTest graphtools gtest_main)
+add_test(NAME KmerEncodingTest COMMAND KmerEncodingTest)
+
+add_executable(KmerIndexTest KmerIndexTest.cpp)
+target_link_libraries(KmerIndexTest graphtools gtest_main)
+add_test(NAME KmerIndexTest COMMAND KmerIndexTest)
+
+add_executable(KmerIndexOperationsTest KmerIndexOperationsTest.cpp)
+target_link_libraries(KmerIndexOperationsTest graphtools gtest_main)
+add_test(NAME KmerIndexOperationsTest COMMAND KmerIndexOperationsTest)
+
+add_executable(GappedAlignerTest GappedAlignerTest.cpp)
+target_link_libraries(GappedAlignerTest graphtools gtest_main)
+add_test(NAME GappedAlignerTest COMMAND GappedAlignerTest)
+
+add_executable(GraphCoordinatesTest GraphCoordinatesTest.cpp)
+target_link_libraries(GraphCoordinatesTest graphtools gtest_main)
+add_test(NAME GraphCoordinatesTest COMMAND GraphCoordinatesTest)
+
+add_executable(GraphOperationsTest GraphOperationsTest.cpp)
+target_link_libraries(GraphOperationsTest graphtools gtest_main)
+add_test(NAME GraphOperationsTest COMMAND GraphOperationsTest)
+
+add_executable(PathFamilyTest PathFamilyTest.cpp)
+target_link_libraries(PathFamilyTest graphtools gtest_main)
+add_test(NAME PathFamilyTest COMMAND PathFamilyTest)
+
+add_executable(PathFamilyOperationsTest PathFamilyOperationsTest.cpp)
+target_link_libraries(PathFamilyOperationsTest graphtools gtest_main)
+add_test(NAME PathFamilyOperationsTest COMMAND PathFamilyOperationsTest)
+
+add_executable(IntervalBufferTest IntervalBufferTest.cpp)
+target_link_libraries(IntervalBufferTest graphtools gtest_main)
+add_test(NAME IntervalBufferTest COMMAND IntervalBufferTest)
+
+add_executable(IntervalListTest IntervalListTest.cpp)
+target_link_libraries(IntervalListTest graphtools gtest_main)
+add_test(NAME IntervalListTest COMMAND IntervalListTest)
+
+add_executable(GraphReferenceMappingTest GraphReferenceMappingTest.cpp)
+target_link_libraries(GraphReferenceMappingTest graphtools gtest_main)
+add_test(NAME GraphReferenceMappingTest COMMAND GraphReferenceMappingTest)
+
+add_executable(DepthTestTest DepthTestTest.cpp)
+target_link_libraries(DepthTestTest graphtools gtest_main)
+add_test(NAME DepthTestTest COMMAND DepthTestTest)
+
+add_executable(GraphJsonTest GraphJsonTest.cpp)
+target_link_libraries(GraphJsonTest graphtools gtest_main)
+add_test(NAME GraphJsonTest COMMAND GraphJsonTest)

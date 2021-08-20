@@ -9,19 +9,23 @@ build the program from source follow the instructions below.
 
 Prerequisites:
 
- - A recent version of [GCC](https://gcc.gnu.org/) or 
-   [clang](http://clang.llvm.org/) compiler supporting C++11 standard
- - [CMake](https://cmake.org/) version 3.5.0 or above
- - [Boost C++ Libraries](http://www.boost.org/) version 1.57.0 or
-   above
+ - A recent version of [GCC](https://gcc.gnu.org/) or
+   [clang](http://clang.llvm.org/) compiler supporting the C++11 standard
+ - [CMake](https://cmake.org/) version 3.13.0 or above
+ - Additional development libraries, which depend on the operating system:
+     - Centos7
+       - `yum install bzip2-devel libcurl-devel libstdc++-static xz-devel zlib-devel`
+     - Ubuntu 20.04
+       - `apt install zlib1g libbz2-dev liblzma-dev libcurl4-openssl-dev`
+     - macOS 10.15
+       - `brew install xz`
 
-If you the above prerequisites are satisfied, you are ready to
-build the program. Note that during the build procedure, cmake will 
-attempt to download and install [HTSlib](http://www.htslib.org) and 
-[zlib](https://github.com/madler/zlib) so an active internet 
-connection is required. Assuming that the source code is contained 
-in a directory `ExpansionHunter/`, the build procedure can be 
-initiated as follows:
+If the above prerequisites are satisfied, you are ready to
+build the program. Note that during the build procedure, cmake will
+attempt to download and install `abseil`, `boost`, `googletest`, `htslib`,
+and `spdlog` so an active internet connection is required. Assuming
+that the source code is contained in a directory `ExpansionHunter/`,
+the build procedure can be initiated as follows:
 
 ```bash
 $ cd ExpansionHunter
@@ -31,12 +35,6 @@ $ cmake ..
 $ make
 ```
 
-Note that if Boost is installed in a non-default location then its path should
-be specified with `BOOST_ROOT` in the cmake command above:
+If all the above steps were successful, the ExpansionHunter executable can be found in:
 
-```bash
-$ cmake -DBOOST_ROOT=/path/to/boost/ ..
-```
-
-If all of the above steps were successful, the `build` directory now contains
-ExpansionHunter executable.
+    build/install/bin/ExpansionHunter

@@ -4,3 +4,7 @@ cmake-build-debug
 test-example
 build
 .vscode
+/.cproject
+/.project
+/.settings/
+/.gitignore

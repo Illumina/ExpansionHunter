@@ -29,5 +29,29 @@ optional arguments.
 * `--region-extension-length <int>` Specifies how far from on/off-target regions
    to search for informative reads. Set to 1000 by default.
 
+* `--analysis-mode <mode>` Specify analysis mode, which can be either `seeking` or
+  `streaming`. The default mode is `seeking`. See further description of analysis
+   modes below.
+
+* `--threads <int>` Specifies how many threads to can be used accelerate analysis
+   of large variant catalogs. Set to 1 by default. Typically seeking mode can
+   benefit from relatively high thread counts, while for streaming mode
+   there is limited benefit beyond about 16 threads.
+
 Note that the full list of program options with brief explanations can be
 obtained by running `ExpansionHunter --help`.
+
+### Analysis modes
+
+#### Seeking mode
+
+In seeking mode, alignment file indexing is used to seek specific read sets for the
+analysis of each variant. Seeking mode is recommended for analysis of small catalogs.
+This mode requires that the input BAM or CRAM file is already sorted and indexed.
+
+#### Streaming mode
+
+In streaming mode, the alignment file is read in a single pass and all variants are
+analyzed during this reading operation. Streaming mode is recommended for the analysis
+of large catalogs, but does require more memory as a funciton of catalog size. This mode
+does not require that the BAM or CRAM file is sorted or indexed.

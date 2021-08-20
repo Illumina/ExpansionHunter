@@ -1,3 +1,0 @@
-add_executable(OrientationPredictorTest OrientationPredictorTest.cpp)
-target_link_libraries(OrientationPredictorTest filtering gtest_main)
-add_test(NAME OrientationPredictorTest COMMAND OrientationPredictorTest)
