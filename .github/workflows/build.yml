@@ -20,7 +20,7 @@ jobs:
 
     steps:
     - name: Install packages
-      run: apt-git install libcurl-devel
+      run: apt-get install libcurl-devel
 
     - uses: actions/checkout@v2
 
