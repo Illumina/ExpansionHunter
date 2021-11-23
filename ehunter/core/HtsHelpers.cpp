@@ -110,15 +110,23 @@ public:
 
 static Cache_seq_nt16_str_lc seq_nt16_str_lc;
 
-Read decodeRead(bam1_t* htsAlignPtr)
-{
+ReadId decodeReadId(bam1_t* htsAlignPtr) {
     const uint32_t samFlag = htsAlignPtr->core.flag;
     const bool isFirstMate = samFlag & BAM_FREAD1;
-    const bool isReversed = samFlag & BAM_FREVERSE;
 
     const char* qname(bam_get_qname(htsAlignPtr));
     MateNumber mateNumber = isFirstMate ? MateNumber::kFirstMate : MateNumber::kSecondMate;
     ReadId readId(qname, mateNumber);
+
+    return readId;
+}
+
+Read decodeRead(bam1_t* htsAlignPtr)
+{
+    ReadId readId = decodeReadId(htsAlignPtr);
+
+    const uint32_t samFlag = htsAlignPtr->core.flag;
+    const bool isReversed = samFlag & BAM_FREVERSE;
 
     string bases;
 
