@@ -14,7 +14,6 @@ contained in each repeat.
 
 Linux and macOS operating systems are currently supported.
 
-
 ## License
 
 Expansion Hunter is provided under the terms and conditions of the
@@ -22,12 +21,18 @@ Expansion Hunter is provided under the terms and conditions of the
 packages provided under other open source licenses, please see
 [COPYRIGHT.txt](COPYRIGHT.txt) for additional details.
 
-
 ## Documentation
 
 Installation instructions, usage guide, and description of file formats are
 contained in the [docs folder](docs/01_Introduction.md).
 
+## Companion tools and resources
+
+- [A genome-wide STR catalog](https://github.com/Illumina/RepeatCatalogs)
+  containing polymorphic repeats with similar properties to known pathogenic and
+  functional STRs
+- [REViewer](https://github.com/Illumina/REViewer), a tool for visualizing
+  alignments of reads in regions containing tandem repeats
 
 ## Method
 
