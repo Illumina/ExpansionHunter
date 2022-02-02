@@ -3,7 +3,7 @@
 // Copyright 2016-2019 Illumina, Inc.
 // All rights reserved.
 //
-// Author: Egor Dolzhenko <edolzhenko@illumina.com>
+// Author: Chris Saunders <csaunders@illumina.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,9 +19,42 @@
 //
 //
 
-#include "locus/VariantAnalyzer.hh"
-bool ehunter::VariantAnalyzer::isLowDepth(const LocusStats& stats) const
+#pragma once
+
+#include <string>
+
+namespace ehunter
 {
-    const double diploidCoverage = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() : 2 * stats.depth();
-    return (stats.meanReadLength() == 0 || diploidCoverage < genotyperParams_.minLocusCoverage);
+
+enum class RFC1CallType
+{
+    normal,
+    potential_carrier,
+    carrier,
+    affected
+};
+
+inline const char* label(RFC1CallType t)
+{
+    switch (t)
+    {
+    case RFC1CallType::normal:
+        return "normal";
+    case RFC1CallType::potential_carrier:
+        return "potential carrier";
+    case RFC1CallType::carrier:
+        return "carrier";
+    case RFC1CallType::affected:
+        return "affected";
+    default:
+        return "unknown";
+    }
+}
+
+struct RFC1Status
+{
+    RFC1CallType call;
+    std::string description;
+};
+
 }

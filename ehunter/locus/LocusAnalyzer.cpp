@@ -24,6 +24,7 @@
 #include <boost/smart_ptr/make_unique.hpp>
 
 #include "locus/LocusAligner.hh"
+#include "locus/RFC1MotifAnalysis.hh"
 #include "locus/RepeatAnalyzer.hh"
 #include "locus/SmallVariantAnalyzer.hh"
 
@@ -42,7 +43,8 @@ namespace locus
 
 LocusAnalyzer::LocusAnalyzer(LocusSpecification locusSpec, const HeuristicParameters& params, AlignWriterPtr writer)
     : locusSpec_(std::move(locusSpec))
-    , aligner_(locusSpec_.locusId(), &locusSpec_.regionGraph(), params, std::move(writer))
+    , alignmentBuffer_(locusSpec_.useRFC1MotifAnalysis() ? std::make_shared<locus::AlignmentBuffer>() : nullptr)
+    , aligner_(locusSpec_.locusId(), &locusSpec_.regionGraph(), params, std::move(writer), alignmentBuffer_)
     , statsCalc_(locusSpec_.typeOfChromLocusLocatedOn(), locusSpec_.regionGraph())
 {
     for (const auto& variantSpec : locusSpec_.variantSpecs())
@@ -114,10 +116,12 @@ void LocusAnalyzer::processOntargetMates(Read& read, Read* mate, graphtools::Ali
     }
     else
     {
-        if (alignedPair.first) {
+        if (alignedPair.first)
+        {
             statsCalc_.inspectRead(*alignedPair.first);
         }
-        if (alignedPair.second) {
+        if (alignedPair.second)
+        {
             statsCalc_.inspectRead(*alignedPair.second);
         }
     }
@@ -165,6 +169,13 @@ LocusFindings LocusAnalyzer::analyze(Sex sampleSex, boost::optional<double> geno
         std::unique_ptr<VariantFindings> variantFindingsPtr = variantAnalyzer->analyze(locusFindings.stats);
         const string& variantId = variantAnalyzer->variantId();
         locusFindings.findingsForEachVariant.emplace(variantId, std::move(variantFindingsPtr));
+    }
+
+    // Run RFC1 caller if required for this locus:
+    if (locusSpec().useRFC1MotifAnalysis())
+    {
+        assert(alignmentBuffer_);
+        runRFC1MotifAnalysis(*alignmentBuffer_, locusFindings);
     }
 
     return locusFindings;

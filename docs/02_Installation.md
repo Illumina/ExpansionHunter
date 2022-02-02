@@ -9,16 +9,17 @@ build the program from source follow the instructions below.
 
 Prerequisites:
 
- - A recent version of [GCC](https://gcc.gnu.org/) or
+ - A recent version of [gcc](https://gcc.gnu.org/) or
    [clang](http://clang.llvm.org/) compiler supporting the C++11 standard
+   - The minimum gcc version is 5.1
  - [CMake](https://cmake.org/) version 3.13.0 or above
- - Additional development libraries, which depend on the operating system:
-     - Centos7
-       - `yum install bzip2-devel libcurl-devel libstdc++-static xz-devel zlib-devel`
+ - Additional development packages, which depend on the operating system:
+     - Centos8
+       - `bzip2-devel libcurl-devel libstdc++-static openssl-devel xz-devel zlib-devel`
      - Ubuntu 20.04
-       - `apt install zlib1g libbz2-dev liblzma-dev libcurl4-openssl-dev`
+       - `libbz2-dev libcurl4-openssl-dev liblzma-dev libssl-dev zlib1g-dev `
      - macOS 10.15
-       - `brew install xz`
+       - `xz` (from homebrew)
 
 If the above prerequisites are satisfied, you are ready to
 build the program. Note that during the build procedure, cmake will

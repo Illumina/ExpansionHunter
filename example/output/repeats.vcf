@@ -6,18 +6,19 @@
 ##INFO=<ID=RU,Number=1,Type=String,Description="Repeat unit in the reference orientation">
 ##INFO=<ID=SVTYPE,Number=1,Type=String,Description="Type of structural variant">
 ##INFO=<ID=VARID,Number=1,Type=String,Description="Variant identifier as specified in the variant catalog">
+##FILTER=<ID=LowDepth,Description="The overall locus depth is below 10x or number of reads spanning one or both breakends is below 5">
 ##FILTER=<ID=PASS,Description="All filters passed">
 ##FORMAT=<ID=AD,Number=.,Type=Integer,Description="Allelic depths for the ref and alt alleles in the order listed">
 ##FORMAT=<ID=ADFL,Number=1,Type=String,Description="Number of flanking reads consistent with the allele">
 ##FORMAT=<ID=ADIR,Number=1,Type=String,Description="Number of in-repeat reads consistent with the allele">
 ##FORMAT=<ID=ADSP,Number=1,Type=String,Description="Number of spanning reads consistent with the allele">
 ##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
-##FORMAT=<ID=LC,Number=1,Type=Integer,Description="Locus coverage">
+##FORMAT=<ID=LC,Number=1,Type=Float,Description="Locus coverage">
 ##FORMAT=<ID=REPCI,Number=1,Type=String,Description="Confidence interval for REPCN">
 ##FORMAT=<ID=REPCN,Number=1,Type=String,Description="Number of repeat units spanned by the allele">
 ##FORMAT=<ID=SO,Number=1,Type=String,Description="Type of reads that support the allele; can be SPANNING, FLANKING, or INREPEAT meaning that the reads span, flank, or are fully contained in the repeat">
 ##ALT=<ID=STR10,Description="Allele comprised of 10 repeat units">
 ##ALT=<ID=STR2,Description="Allele comprised of 2 repeat units">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	variants
-chr1	2001	.	A	T	.	PASS	VARID=SNV_AND_STR_chr1:2000-2001	AD:LC:GT	47,39:99.648649:0/1
-chr1	2005	.	C	<STR2>,<STR10>	.	PASS	END=2008;REF=1;RL=1;RU=CAG;VARID=SNV_AND_STR_chr1:2005-2008;REPID=SNV_AND_STR_chr1:2005-2008	GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC	1/2:SPANNING/SPANNING:2/10:2-2/10-10:38/29:7/20:0/0:99.648649
+chr1	2001	.	A	T	.	PASS	VARID=SNV_AND_STR_chr1:2000-2001	GT:AD:LC	0/1:47,39:99.648649
+chr1	2005	.	C	<STR2>,<STR10>	.	PASS	END=2008;REF=1;RL=3;RU=CAG;VARID=SNV_AND_STR_chr1:2005-2008;REPID=SNV_AND_STR_chr1:2005-2008	GT:SO:REPCN:REPCI:ADSP:ADFL:ADIR:LC	1/2:SPANNING/SPANNING:2/10:2-2/10-10:47/35:5/20:0/0:99.648649

@@ -21,6 +21,8 @@
 
 #include "locus/RepeatAnalyzer.hh"
 
+#include <boost/smart_ptr/make_unique.hpp>
+
 // clang-format off
 // Note that spdlog.h must be included before ostr.h
 #include "spdlog/spdlog.h"
@@ -31,13 +33,13 @@
 #include "graphutils/SequenceOperations.hh"
 
 #include "alignment/AlignmentFilters.hh"
-#include "alignment/OperationsOnAlignments.hh"
 #include "genotyping/AlignMatrixFiltering.hh"
 #include "genotyping/StrGenotyper.hh"
 
 namespace ehunter
 {
 
+using boost::make_unique;
 using boost::optional;
 using graphtools::GraphAlignment;
 using graphtools::NodeId;
@@ -59,48 +61,41 @@ void RepeatAnalyzer::processMates(
 
 unique_ptr<VariantFindings> RepeatAnalyzer::analyze(const LocusStats& stats)
 {
-    optional<RepeatGenotype> repeatGenotype = boost::none;
-    auto genotypeFilter = GenotypeFilter();
-    CountTable countsOfSpanningReads;
-    CountTable countsOfFlankingReads;
-    CountTable countsOfInrepeatReads;
+    if (isLowDepth(stats))
+    {
+        return make_unique<RepeatFindings>(
+            CountTable(), CountTable(), CountTable(), stats.alleleCount(), boost::none, GenotypeFilter::kLowDepth);
+    }
 
-    if (stats.meanReadLength() == 0 || stats.depth() < genotyperParams_.minLocusCoverage)
+    auto genotypeFilter = GenotypeFilter();
+
+    const int minBreakpointSpanningReads = stats.alleleCount() == AlleleCount::kTwo
+        ? genotyperParams_.minBreakpointSpanningReads
+        : (genotyperParams_.minBreakpointSpanningReads / 2);
+
+    GraphVariantAlignmentStats alignmentStats = alignmentStatsCalculator_.getStats();
+    if (alignmentStats.numReadsSpanningRightBreakpoint() < minBreakpointSpanningReads
+        || alignmentStats.numReadsSpanningLeftBreakpoint() < minBreakpointSpanningReads)
     {
         genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
     }
-    else
+
+    if (countOfInrepeatReadPairs_)
     {
-        // const double haplotypeDepth = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
-        const int minBreakpointSpanningReads = stats.alleleCount() == AlleleCount::kTwo
-            ? genotyperParams_.minBreakpointSpanningReads
-            : (genotyperParams_.minBreakpointSpanningReads / 2);
-
-        GraphVariantAlignmentStats alignmentStats = alignmentStatsCalculator_.getStats();
-        if (alignmentStats.numReadsSpanningRightBreakpoint() < minBreakpointSpanningReads
-            || alignmentStats.numReadsSpanningLeftBreakpoint() < minBreakpointSpanningReads)
-        {
-            genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
-        }
-
-        if (countOfInrepeatReadPairs_)
-        {
-            const int maxMotifsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(repeatUnit_.length()));
-            strgt::addIrrPairsIfPossibleExpansion(maxMotifsInRead, alignMatrix_, countOfInrepeatReadPairs_);
-        }
-
-        countsOfSpanningReads = countAligns(StrAlign::Type::kSpanning, alignMatrix_);
-        countsOfFlankingReads = countAligns(StrAlign::Type::kFlanking, alignMatrix_);
-        countsOfInrepeatReads = countAligns(StrAlign::Type::kInRepeat, alignMatrix_);
-
-        repeatGenotype = strgt::genotype(
-            stats.alleleCount(), repeatUnit_.length(), stats.meanReadLength(), stats.medianFragLength(), alignMatrix_);
+        const int maxMotifsInRead = std::ceil(stats.meanReadLength() / static_cast<double>(repeatUnit_.length()));
+        strgt::addIrrPairsIfPossibleExpansion(maxMotifsInRead, alignMatrix_, countOfInrepeatReadPairs_);
     }
 
-    unique_ptr<VariantFindings> variantFindingsPtr(new RepeatFindings(
-        countsOfSpanningReads, countsOfFlankingReads, countsOfInrepeatReads, stats.alleleCount(), repeatGenotype,
-        genotypeFilter));
-    return variantFindingsPtr;
+    auto countsOfSpanningReads = countAligns(StrAlign::Type::kSpanning, alignMatrix_);
+    auto countsOfFlankingReads = countAligns(StrAlign::Type::kFlanking, alignMatrix_);
+    auto countsOfInrepeatReads = countAligns(StrAlign::Type::kInRepeat, alignMatrix_);
+
+    auto genotype = strgt::genotype(
+        stats.alleleCount(), repeatUnit_.length(), stats.meanReadLength(), stats.medianFragLength(), alignMatrix_);
+
+    return make_unique<RepeatFindings>(
+        countsOfSpanningReads, countsOfFlankingReads, countsOfInrepeatReads, stats.alleleCount(), genotype,
+        genotypeFilter);
 }
 
 }

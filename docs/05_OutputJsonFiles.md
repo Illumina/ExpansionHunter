@@ -5,6 +5,7 @@ parameters (`SampleParameters` field) and analysis results summarized by
 locus (`LocusResults` field). The locus results contain these fields
  * `AlleleCount` The expected number of alleles at the locus
  * `Coverage` Estimated read coverage at the locus
+ * `FragmentLength` The fragment size estimated from read pairs fully contained in either the left or right flank of the repeat region
  * `LocusId` Locus identifier
  * `ReadLength` Mean read length at the locus
  * `Variants` Genotypes and other information describing each variant

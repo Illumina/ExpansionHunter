@@ -143,6 +143,15 @@ void VariantJsonWriter::visit(const RepeatFindings* repeatFindingsPtr)
         record_["Genotype"] = encodeGenotype(*repeatFindings.optionalGenotype());
         record_["GenotypeConfidenceInterval"] = streamToString(*repeatFindings.optionalGenotype());
     }
+
+    const auto rfc1Status(repeatFindings.getRFC1Status());
+    if (rfc1Status)
+    {
+        nlohmann::json rfc1Results;
+        rfc1Results["Call"] = label(rfc1Status->call);
+        rfc1Results["Description"] = rfc1Status->description;
+        record_["RFC1MotifAnalysis"] = rfc1Results;
+    }
 }
 
 void VariantJsonWriter::visit(const SmallVariantFindings* smallVariantFindingsPtr)

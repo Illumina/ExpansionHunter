@@ -56,6 +56,7 @@ public:
         const graphtools::GraphAlignment& mateAlignment)
         = 0;
 
+    bool isLowDepth(const LocusStats& stats) const;
     virtual std::unique_ptr<VariantFindings> analyze(const LocusStats& stats) = 0;
 
     const std::string& variantId() const { return variantId_; }

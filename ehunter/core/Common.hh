@@ -115,4 +115,10 @@ std::ostream& operator<<(std::ostream& out, ReadType readType);
 std::ostream& operator<<(std::ostream& out, AlleleCount alleleCount);
 std::ostream& operator<<(std::ostream& out, NumericInterval numericInterval);
 
+/// \brief Returns true if the path refers to a URL instead of a local file
+///
+/// This does not test if the URL is well formed
+///
+bool isURL(const std::string& path);
+
 }

@@ -126,36 +126,32 @@ std::ostream& operator<<(std::ostream& out, const AlignMatrix& matrix)
     std::iota(alignIndexes.begin(), alignIndexes.end(), 0);
 
     // Sort alignIndexes to canonicalize the alignmatrix output
-    std::sort(
-        alignIndexes.begin(), alignIndexes.end(),
-        [&alignsByRead](const unsigned ai, const unsigned bi) -> bool
+    std::sort(alignIndexes.begin(), alignIndexes.end(), [&alignsByRead](const unsigned ai, const unsigned bi) -> bool {
+        const auto& a(alignsByRead[ai]);
+        const auto& b(alignsByRead[bi]);
+        if (a.size() < b.size())
         {
-            const auto& a(alignsByRead[ai]);
-            const auto& b(alignsByRead[bi]);
-            if (a.size() < b.size())
+            return true;
+        }
+        if (b.size() < a.size())
+        {
+            return false;
+        }
+        for (unsigned i(0); i < a.size(); ++i)
+        {
+            if (a[i] < b[i])
             {
                 return true;
             }
-            if (b.size() < a.size())
+            if (b[i] < a[i])
             {
                 return false;
             }
-            for (unsigned i(0); i < a.size(); ++i)
-            {
-                if (a[i] < b[i])
-                {
-                    return true;
-                }
-                if (b[i] < a[i])
-                {
-                    return false;
-                }
-            }
-            return false;
-        });
+        }
+        return false;
+    });
 
-    auto dumpStrAlign = [&out](const StrAlign& align)
-    {
+    auto dumpStrAlign = [&out](const StrAlign& align) {
         out << "(";
         switch (align.type())
         {

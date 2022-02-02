@@ -10,9 +10,6 @@ To build the library, perform the standard out-of-source CMake build. The unit
 tests are not built by default. To build the unit tests, pass `-DBUILD_TESTS=ON`
 to CMake.
 
-To also build the included graphIO library, pass `-DBUILD_GRAPHIO=ON` to CMake.
-In that case htslib is required. By default htslib is downloaded from github and build during the CMake configure step. Alternatively
-set $HTSLIB_INSTALL_PATH to the path (install prefix) of an already installed htslib.
 GraphIO also includes a (header-only) version of the nlohmann/json library.
 
 ## Incorporating the library into other CMake projects

@@ -54,13 +54,15 @@ namespace ehunter
 {
 LocusSpecification::LocusSpecification(
     RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
-    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams)
+    graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams,
+    const bool useRFC1MotifAnalysis)
     : locusId_(std::move(locusId))
     , typeOfChromLocusLocatedOn_(typeOfChromLocusLocatedOn)
     , targetReadExtractionRegions_(std::move(targetReadExtractionRegions))
     , regionGraph_(std::move(regionGraph))
     , referenceRegions_(std::move(referenceRegions))
     , parameters_(std::move(genotyperParams))
+    , useRFC1MotifAnalysis_(useRFC1MotifAnalysis)
 {
 }
 

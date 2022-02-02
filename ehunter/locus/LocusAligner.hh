@@ -28,6 +28,7 @@
 #include "alignment/OrientationPredictor.hh"
 #include "core/Parameters.hh"
 #include "core/Read.hh"
+#include "locus/AlignmentBuffer.hh"
 
 #include "graphalign/GappedAligner.hh"
 #include "graphio/AlignmentWriter.hh"
@@ -44,9 +45,16 @@ public:
     using Align = graphtools::GraphAlignment;
     using OptionalAlign = boost::optional<Align>;
     using AlignedPair = std::pair<OptionalAlign, OptionalAlign>;
-    using AlignWriterPtr = std::shared_ptr<graphtools::AlignmentWriter>;
+    using AlignmentWriterPtr = std::shared_ptr<graphtools::AlignmentWriter>;
+    using AlignmentBufferPtr = std::shared_ptr<AlignmentBuffer>;
 
-    LocusAligner(std::string locusId, GraphPtr graph, const HeuristicParameters& params, AlignWriterPtr writer);
+    ///
+    /// \param[in] buffer Buffer to store all locus reads for downstream analysis. This is only needed in specialized
+    /// calling scenarios. Buffering is skipped with this is null.
+    ///
+    LocusAligner(
+        std::string locusId, GraphPtr graph, const HeuristicParameters& params, AlignmentWriterPtr writer,
+        AlignmentBufferPtr buffer);
 
     /// \param[in,out] alignerSelector A per-thread alignment workspace which mutates during alignment
     ///
@@ -58,7 +66,8 @@ private:
     std::string locusId_;
     graphtools::GappedGraphAligner aligner_;
     OrientationPredictor orientationPredictor_;
-    AlignWriterPtr writer_;
+    AlignmentWriterPtr writer_;
+    AlignmentBufferPtr alignmentBuffer_;
 };
 
 }

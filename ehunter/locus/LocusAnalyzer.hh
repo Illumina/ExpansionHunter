@@ -33,6 +33,7 @@
 #include "core/GenomicRegion.hh"
 #include "core/LocusStats.hh"
 #include "core/Read.hh"
+#include "locus/AlignmentBuffer.hh"
 #include "locus/IrrPairFinder.hh"
 #include "locus/LocusAligner.hh"
 #include "locus/LocusFindings.hh"
@@ -83,6 +84,10 @@ private:
     void runVariantAnalysis(const Read& read, const Align& readAlign, const Read& mate, const Align& mateAlign);
 
     LocusSpecification locusSpec_;
+
+    // Read alignments are optionally buffered for custom additional analysis at certain loci
+    std::shared_ptr<locus::AlignmentBuffer> alignmentBuffer_;
+
     LocusAligner aligner_;
     LocusStatsCalculator statsCalc_;
     boost::optional<IrrPairFinder> irrPairFinder_;

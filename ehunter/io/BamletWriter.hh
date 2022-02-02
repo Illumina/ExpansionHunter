@@ -46,7 +46,7 @@ namespace ehunter
 {
 
 /// Supports multiple threads calling the write() method on the same object. To make this more efficient for high
-/// thread counts, this object creates its own asynchronous write thread to prevent calling threads from blocking on
+/// thread counts, this object creates its own asynchronous write thread to prevent calling threads from blocking
 /// on the final bam record write operation.
 ///
 class BamletWriter : public graphtools::AlignmentWriter, private boost::noncopyable

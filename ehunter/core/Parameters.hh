@@ -113,10 +113,11 @@ class HeuristicParameters
 {
 public:
     HeuristicParameters(
-        int regionExtensionLength, int qualityCutoffForGoodBaseCall, bool skipUnaligned,
+        int regionExtensionLength, int minLocusCoverage, int qualityCutoffForGoodBaseCall, bool skipUnaligned,
         const graphtools::AlignerType alignerType, int kmerLenForAlignment = 14, int paddingLength = 10,
         int seedAffixTrimLength = 14, int orientationPredictorKmerLen = 10, int orientationPredictorMinKmerCount = 3)
         : regionExtensionLength_(regionExtensionLength)
+        , minLocusCoverage_(minLocusCoverage)
         , qualityCutoffForGoodBaseCall_(qualityCutoffForGoodBaseCall)
         , skipUnaligned_(skipUnaligned)
         , alignerType_(std::move(alignerType))
@@ -129,6 +130,7 @@ public:
     }
 
     int regionExtensionLength() const { return regionExtensionLength_; }
+    int minLocusCoverage() const { return minLocusCoverage_; }
     int qualityCutoffForGoodBaseCall() const { return qualityCutoffForGoodBaseCall_; }
     bool skipUnaligned() const { return skipUnaligned_; }
     graphtools::AlignerType alignerType() const { return alignerType_; }
@@ -140,6 +142,7 @@ public:
 
 private:
     int regionExtensionLength_;
+    int minLocusCoverage_;
     int qualityCutoffForGoodBaseCall_;
     bool skipUnaligned_;
     graphtools::AlignerType alignerType_;
@@ -153,12 +156,16 @@ private:
 // Per-locus parameters (settable from variant catalog) controlling genotyping
 struct GenotyperParameters
 {
+    GenotyperParameters(int minLocusCoverage)
+        : minLocusCoverage(minLocusCoverage)
+    {
+    }
     // Base error rate assumed in SNV key-allele genotyping model
     double errorRate = 0.02;
     // Threshold to call SNV key-allele confidently present / absent
     double likelihoodRatioThreshold = 10000;
     // Minimal estimated locus coverage (depth) to attempt genotyping
-    double minLocusCoverage = 10;
+    double minLocusCoverage;
     // Minimal number of reads spanning a variant breakpoint
     int minBreakpointSpanningReads = 5;
 };

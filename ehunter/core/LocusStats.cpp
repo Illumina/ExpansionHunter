@@ -61,10 +61,7 @@ void LocusStatsCalculator::inspect(const GraphAlignment& readAlign, const GraphA
     recordFragLen(readAlign, mateAlign);
 }
 
-void LocusStatsCalculator::inspectRead(const GraphAlignment& readAlign)
-{
-    recordReadLen(readAlign);
-}
+void LocusStatsCalculator::inspectRead(const GraphAlignment& readAlign) { recordReadLen(readAlign); }
 
 static AlleleCount determineExpectedAlleleCount(ChromType chromType, Sex sex)
 {
