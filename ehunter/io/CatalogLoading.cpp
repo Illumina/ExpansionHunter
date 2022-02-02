@@ -128,6 +128,8 @@ static vector<string> generateIds(const std::string& locusId, const Json& varian
     return variantIds;
 }
 
+/// \brief Translate a single locus from the catalog file json structure into an intermediate locus configuration
+///
 static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const ReferenceContigInfo& contigInfo)
 {
     LocusDescriptionFromUser userDescription;
@@ -197,6 +199,28 @@ static LocusDescriptionFromUser loadUserDescription(Json& locusJson, const Refer
     if (checkIfFieldExists(locusJson, "MinimalLocusCoverage"))
     {
         userDescription.minLocusCoverage = locusJson["MinimalLocusCoverage"].get<double>();
+    }
+
+    static const std::string rfc1MotifAnalysisKey("RFC1MotifAnalysis");
+    if (checkIfFieldExists(locusJson, rfc1MotifAnalysisKey))
+    {
+        const Json& record(locusJson[rfc1MotifAnalysisKey]);
+        if (record.type() == Json::value_t::boolean)
+        {
+            userDescription.useRFC1MotifAnalysis = record.get<bool>();
+        }
+        else if (record.type() == Json::value_t::object)
+        {
+            userDescription.useRFC1MotifAnalysis = true;
+        }
+        else
+        {
+            std::stringstream out;
+            out << record;
+            throw std::logic_error(
+                "Key '" + rfc1MotifAnalysisKey
+                + "' must have either a boolean or object value type, observed value is '" + out.str() + "'");
+        }
     }
 
     return userDescription;

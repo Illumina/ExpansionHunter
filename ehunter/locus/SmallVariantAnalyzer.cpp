@@ -24,7 +24,9 @@
 #include <vector>
 
 #include <boost/optional.hpp>
+#include <boost/smart_ptr/make_unique.hpp>
 
+using boost::make_unique;
 using boost::optional;
 using graphtools::NodeId;
 using std::string;
@@ -64,73 +66,67 @@ int SmallVariantAnalyzer::countReadsSupportingNode(graphtools::NodeId nodeId) co
 
 std::unique_ptr<VariantFindings> SmallVariantAnalyzer::analyze(const LocusStats& stats)
 {
-    optional<SmallVariantGenotype> genotype = boost::none;
+    if (isLowDepth(stats))
+    {
+        auto refStatus = AlleleCheckSummary(AlleleStatus::kUncertain, 0);
+        auto altStatus = AlleleCheckSummary(AlleleStatus::kUncertain, 0);
+        return make_unique<SmallVariantFindings>(
+            0, 0, refStatus, altStatus, stats.alleleCount(), boost::none, GenotypeFilter::kLowDepth);
+    }
+
+    NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+    NodeId altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+
+    switch (variantSubtype_)
+    {
+    case VariantSubtype::kInsertion:
+        altNode = nodeIds_.front();
+        break;
+    case VariantSubtype::kDeletion:
+        altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
+        break;
+    case VariantSubtype::kSwap:
+        altNode = (refNode == nodeIds_.front()) ? nodeIds_.back() : nodeIds_.front();
+        break;
+    case VariantSubtype::kSMN:
+        if (refNode != nodeIds_.front())
+            throw std::logic_error("Invalid SMN specification");
+        altNode = nodeIds_.back();
+        break;
+    default:
+        std::ostringstream encoding;
+        encoding << variantSubtype_;
+        throw std::logic_error("Invalid small variant subtype: " + encoding.str());
+    }
+
+    int refNodeSupport = countReadsSupportingNode(refNode);
+    int altNodeSupport = countReadsSupportingNode(altNode);
+
+    const double haplotypeDepth = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
+    const int minBreakpointSpanningReads = stats.alleleCount() == AlleleCount::kTwo
+        ? genotyperParams_.minBreakpointSpanningReads
+        : (genotyperParams_.minBreakpointSpanningReads / 2);
+
+    SmallVariantGenotyper smallVariantGenotyper(haplotypeDepth, stats.alleleCount());
+    auto genotype = smallVariantGenotyper.genotype(refNodeSupport, altNodeSupport);
+
+    auto refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);
+    auto altAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, altNodeSupport, refNodeSupport);
+
+    GraphVariantAlignmentStats alignmentStats = alignmentStatsCalculator_.getStats();
+    const bool insufficientBreakpointCoverage
+        = alignmentStats.numReadsSpanningLeftBreakpoint() < minBreakpointSpanningReads
+        || alignmentStats.numReadsSpanningRightBreakpoint() < minBreakpointSpanningReads;
+
     auto genotypeFilter = GenotypeFilter();
-
-    int refNodeSupport = 0;
-    int altNodeSupport = 0;
-
-    AlleleCheckSummary refAlleleStatus(AlleleStatus::kUncertain, 0);
-    AlleleCheckSummary altAlleleStatus(AlleleStatus::kUncertain, 0);
-
-    if (stats.meanReadLength() == 0 || stats.depth() < genotyperParams_.minLocusCoverage)
+    if ((variantSubtype_ != VariantSubtype::kSMN) && insufficientBreakpointCoverage)
     {
         genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
     }
-    else
-    {
-        NodeId refNode = optionalRefNode_ ? *optionalRefNode_ : ClassifierOfAlignmentsToVariant::kInvalidNodeId;
-        NodeId altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
 
-        switch (variantSubtype_)
-        {
-        case VariantSubtype::kInsertion:
-            altNode = nodeIds_.front();
-            break;
-        case VariantSubtype::kDeletion:
-            altNode = ClassifierOfAlignmentsToVariant::kInvalidNodeId;
-            break;
-        case VariantSubtype::kSwap:
-            altNode = (refNode == nodeIds_.front()) ? nodeIds_.back() : nodeIds_.front();
-            break;
-        case VariantSubtype::kSMN:
-            if (refNode != nodeIds_.front())
-                throw std::logic_error("Invalid SMN specification");
-            altNode = nodeIds_.back();
-            break;
-        default:
-            std::ostringstream encoding;
-            encoding << variantSubtype_;
-            throw std::logic_error("Invalid small variant subtype: " + encoding.str());
-        }
-
-        refNodeSupport = countReadsSupportingNode(refNode);
-        altNodeSupport = countReadsSupportingNode(altNode);
-
-        const double haplotypeDepth = stats.alleleCount() == AlleleCount::kTwo ? stats.depth() / 2 : stats.depth();
-        const int minBreakpointSpanningReads = stats.alleleCount() == AlleleCount::kTwo
-            ? genotyperParams_.minBreakpointSpanningReads
-            : (genotyperParams_.minBreakpointSpanningReads / 2);
-
-        SmallVariantGenotyper smallVariantGenotyper(haplotypeDepth, stats.alleleCount());
-        genotype = smallVariantGenotyper.genotype(refNodeSupport, altNodeSupport);
-
-        refAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, refNodeSupport, altNodeSupport);
-        altAlleleStatus = allelePresenceChecker_.check(haplotypeDepth, altNodeSupport, refNodeSupport);
-
-        GraphVariantAlignmentStats alignmentStats = alignmentStatsCalculator_.getStats();
-        const bool insufficientBreakpointCoverage
-            = alignmentStats.numReadsSpanningLeftBreakpoint() < minBreakpointSpanningReads
-            || alignmentStats.numReadsSpanningRightBreakpoint() < minBreakpointSpanningReads;
-        if ((variantSubtype_ != VariantSubtype::kSMN) && insufficientBreakpointCoverage)
-        {
-            genotypeFilter = genotypeFilter | GenotypeFilter::kLowDepth;
-        }
-    }
-
-    return std::unique_ptr<VariantFindings>(new SmallVariantFindings(
+    return make_unique<SmallVariantFindings>(
         refNodeSupport, altNodeSupport, refAlleleStatus, altAlleleStatus, stats.alleleCount(), genotype,
-        genotypeFilter));
+        genotypeFilter);
 }
 
 }

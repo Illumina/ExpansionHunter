@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(ExpansionHunter LANGUAGES C CXX)
+project(ExpansionHunter LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -29,10 +29,14 @@ find_package(Threads REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(absl REQUIRED)
 
+if (NOT APPLE)
+    find_package(OpenSSL REQUIRED)
+endif ()
+
 find_library(htslib libhts.a)
 find_library(htslib hts)
 
-add_subdirectory(thirdparty/graph-tools-master-f421f4c)
+add_subdirectory(thirdparty/graph-tools-master-0cd9399)
 
 add_library(ExpansionHunterLib
         alignment/AlignmentClassifier.hh alignment/AlignmentClassifier.cpp
@@ -95,8 +99,8 @@ add_library(ExpansionHunterLib
 
 
 set(CTPL_INCLUDE_DIRS thirdparty/ctpl/ctpl-0.0.2)
-target_include_directories(ExpansionHunterLib PUBLIC
-        ${CMAKE_SOURCE_DIR}
+target_include_directories(ExpansionHunterLib PUBLIC ${CMAKE_SOURCE_DIR})
+target_include_directories(ExpansionHunterLib SYSTEM PUBLIC
         ${Boost_INCLUDE_DIRS}
         ${LIBLZMA_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
@@ -104,10 +108,9 @@ target_include_directories(ExpansionHunterLib PUBLIC
         )
 
 # Set static linking of gcc standard libraries to simplify binary distribution
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(STATIC_FLAGS -static-libgcc -static-libstdc++)
-endif()
-
+endif ()
 
 target_link_libraries(ExpansionHunterLib PUBLIC
         ${STATIC_FLAGS}
@@ -121,6 +124,11 @@ target_link_libraries(ExpansionHunterLib PUBLIC
         Threads::Threads
         spdlog::spdlog
         absl::flat_hash_set)
+
+if (NOT APPLE)
+    target_link_libraries(ExpansionHunterLib PUBLIC
+            OpenSSL::Crypto)
+endif ()
 
 add_executable(ExpansionHunter
         app/ExpansionHunter.cpp
@@ -148,6 +156,7 @@ add_executable(UnitTests
         tests/RegionGraphTest.cpp
         tests/RepeatAnalyzerTest.cpp
         tests/RepeatGenotypeTest.cpp
+        tests/RFC1MotifAnalysisUtilTest.cpp
         tests/SmallVariantGenotyperTest.cpp
         tests/SoftclippingAlignerTest.cpp
         tests/StrAlignTest.cpp

@@ -38,8 +38,10 @@ LocusSpecification buildStrSpec(const std::string& structure)
     vector<GenomicRegion> referenceRegions = { GenomicRegion(1, 1, 2) };
 
     NodeToRegionAssociation dummyAssociation;
-    GenotyperParameters params;
-    LocusSpecification locusSpec("region", ChromType::kAutosome, referenceRegions, graph, dummyAssociation, params);
+    GenotyperParameters params(10);
+    const bool useRFC1MotifAnalysis(false);
+    LocusSpecification locusSpec(
+        "region", ChromType::kAutosome, referenceRegions, graph, dummyAssociation, params, useRFC1MotifAnalysis);
     VariantClassification classification(VariantType::kRepeat, VariantSubtype::kCommonRepeat);
     locusSpec.addVariantSpecification("repeat", classification, GenomicRegion(1, 1, 2), { 1 }, 1);
     return locusSpec;
@@ -49,7 +51,7 @@ TEST(CreatingLocusAnalyzer, TypicalParameters_Created)
 {
     auto locusSpec = buildStrSpec("ATTCGA(C)*ATGTCG");
 
-    HeuristicParameters heuristicParams(1000, 20, true, AlignerType::DAG_ALIGNER, 4, 1, 5, 4, 1);
+    HeuristicParameters heuristicParams(1000, 10, 20, true, AlignerType::DAG_ALIGNER, 4, 1, 5, 4, 1);
     auto writer = std::make_shared<graphtools::BlankAlignmentWriter>();
 
     graphtools::AlignerSelector selector(heuristicParams.alignerType());

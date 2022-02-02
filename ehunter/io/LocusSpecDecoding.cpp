@@ -284,7 +284,7 @@ LocusSpecification decodeLocusSpecification(
         NodeToRegionAssociation referenceRegionsOfGraphNodes
             = associateNodesWithReferenceRegions(blueprint, locusGraph, completeReferenceRegions);
 
-        GenotyperParameters parameters;
+        GenotyperParameters parameters(heuristicParams.minLocusCoverage());
         if (userDescription.errorRate)
         {
             parameters.errorRate = *userDescription.errorRate;
@@ -300,7 +300,7 @@ LocusSpecification decodeLocusSpecification(
 
         LocusSpecification locusSpec(
             userDescription.locusId, chromType, std::move(targetReadExtractionRegions), std::move(locusGraph),
-            std::move(referenceRegionsOfGraphNodes), std::move(parameters));
+            std::move(referenceRegionsOfGraphNodes), std::move(parameters), userDescription.useRFC1MotifAnalysis);
         locusSpec.setOfftargetReadExtractionRegions(userDescription.offtargetRegions);
 
         int variantIndex = 0;
@@ -364,6 +364,17 @@ void assertValidity(const LocusDescriptionFromUser& userDescription)
         throw std::runtime_error(
             "Locus " + userDescription.locusId + " must specify variant types for " + to_string(numVariants)
             + " variants");
+    }
+
+    if (userDescription.useRFC1MotifAnalysis)
+    {
+        if ((numVariants != 1) or (userDescription.variantTypesFromUser[0] != VariantTypeFromUser::kCommonRepeat))
+        {
+            throw std::runtime_error(
+                "Locus " + userDescription.locusId
+                + " has option 'useRFC1MotifAnalysis' enabled, which requires that"
+                  " exactly one variant of type 'Repeat' is defined.");
+        }
     }
 }
 

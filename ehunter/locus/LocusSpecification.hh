@@ -50,7 +50,8 @@ class LocusSpecification
 public:
     LocusSpecification(
         RegionId locusId, ChromType typeOfChromLocusLocatedOn, std::vector<GenomicRegion> targetReadExtractionRegions,
-        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams);
+        graphtools::Graph regionGraph, NodeToRegionAssociation referenceRegions, GenotyperParameters genotyperParams,
+        bool useRFC1MotifAnalysis);
 
     const RegionId& locusId() const { return locusId_; }
     ChromType typeOfChromLocusLocatedOn() const { return typeOfChromLocusLocatedOn_; }
@@ -83,6 +84,8 @@ public:
 
     bool requiresGenomeWideDepth() const;
 
+    bool useRFC1MotifAnalysis() const { return useRFC1MotifAnalysis_; }
+
 private:
     std::string locusId_;
     ChromType typeOfChromLocusLocatedOn_;
@@ -92,6 +95,7 @@ private:
     std::vector<VariantSpecification> variantSpecs_;
     NodeToRegionAssociation referenceRegions_;
     GenotyperParameters parameters_;
+    bool useRFC1MotifAnalysis_;
 };
 
 using RegionCatalog = std::vector<LocusSpecification>;

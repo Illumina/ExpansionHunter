@@ -12,6 +12,7 @@ RUN yum install -y \
     git \
     libcurl-devel \
     libstdc++-static \
+    openssl-devel \
     xz-devel \
     zlib-devel
 

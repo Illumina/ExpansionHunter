@@ -334,6 +334,18 @@ SampleFindings htsSeekingSampleAnalysis(
     const InputPaths& inputPaths, Sex sampleSex, const HeuristicParameters& heuristicParams, const int threadCount,
     const RegionCatalog& regionCatalog, locus::AlignWriterPtr alignmentWriter)
 {
+    if (ehunter::isURL(inputPaths.htsFile()))
+    {
+        // For URL input paths, the index needs to be downloaded in advance if seeking mode is using multiple threads.
+        // This is needed because htslib has no protection against the race condition created by multiple threads
+        // independently downloading this index to the same file path.
+        //
+        if (threadCount > 1)
+        {
+            (void)HtsFileSeeker(inputPaths.htsFile(), inputPaths.reference());
+        }
+    }
+
     LocusThreadSharedData locusThreadSharedData;
     std::vector<LocusThreadLocalData> locusThreadLocalDataPool(threadCount);
 

@@ -45,6 +45,8 @@ enum class VariantTypeFromUser
 struct LocusDescriptionFromUser
 {
     std::string locusId;
+
+    /// Regular expression defining the structure of the locus
     std::string locusStructure;
     std::vector<std::string> variantIds;
     std::vector<GenomicRegion> referenceRegions;
@@ -54,6 +56,9 @@ struct LocusDescriptionFromUser
     boost::optional<double> errorRate;
     boost::optional<double> likelihoodRatioThreshold;
     boost::optional<double> minLocusCoverage;
+
+    /// If true, turn on additional motif processing for a repeat
+    bool useRFC1MotifAnalysis = false;
 };
 
 void assertValidity(const LocusDescriptionFromUser& userDescription);

@@ -28,7 +28,8 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(GRAPHTOOLS_CXX_OPTIMIZATION_FLAGS "${GRAPHTOOLS_VECTORIZATION} -O2 -ftree-vectorize -finline-functions -fpredictive-commoning -fgcse-after-reload -funswitch-loops -ftree-slp-vectorize -fvect-cost-model -fipa-cp-clone -ftree-phiprop")
 endif ()
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GRAPHTOOLS_CXX_OPTIMIZATION_FLAGS} -Wall -Werror -pedantic -Wsign-compare -Wno-missing-braces -Wno-deprecated-copy -Wno-unknown-warning-option")
+add_compile_options(-Wall -Werror -pedantic -Wsign-compare -Wno-missing-braces -Wno-deprecated-copy -Wno-unknown-warning-option)
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GRAPHTOOLS_CXX_OPTIMIZATION_FLAGS}")
 
 if (USE_ASAN)
     SET(CLANG_ASAN "-O1 -g -fsanitize=address -fno-omit-frame-pointer")

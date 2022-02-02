@@ -39,9 +39,9 @@ using graphtools::GraphAlignment;
 
 LocusAligner makeStrAligner(graphtools::Graph* graph)
 {
-    HeuristicParameters params(1000, 20, true, graphtools::AlignerType::DAG_ALIGNER, 4, 0, 0, 4, 1);
+    HeuristicParameters params(1000, 10, 20, true, graphtools::AlignerType::DAG_ALIGNER, 4, 0, 0, 4, 1);
     auto writer = std::make_shared<BlankAlignmentWriter>();
-    return { "str", graph, params, writer };
+    return { "str", graph, params, writer, {} };
 }
 
 TEST(AligningReads, ReadPairFromSameStrand_Aligned)

@@ -23,6 +23,8 @@
 
 #include "core/Common.hh"
 
+#include <regex>
+
 using std::string;
 
 namespace ehunter
@@ -95,6 +97,12 @@ std::ostream& operator<<(std::ostream& out, NumericInterval numericInterval)
 {
     out << numericInterval.start() << "-" << numericInterval.end();
     return out;
+}
+
+bool isURL(const std::string& path)
+{
+    static const std::regex url_regex(".*?://.*");
+    return std::regex_match(path, url_regex);
 }
 
 }

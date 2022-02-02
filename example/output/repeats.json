@@ -2,7 +2,8 @@
   "LocusResults": {
     "SNV_AND_STR": {
       "AlleleCount": 2,
-      "Coverage": 99.6486486486486,
+      "Coverage": 99.64864864864865,
+      "FragmentLength": 351,
       "LocusId": "SNV_AND_STR",
       "ReadLength": 150,
       "Variants": {
@@ -20,9 +21,9 @@
           "VariantType": "SmallVariant"
         },
         "SNV_AND_STR_chr1:2005-2008": {
-          "CountsOfFlankingReads": "(0, 1), (1, 4), (2, 2), (3, 1), (4, 2), (5, 1), (6, 1), (7, 2), (8, 3), (9, 3)",
+          "CountsOfFlankingReads": "(1, 2), (2, 3), (3, 2), (4, 2), (5, 1), (6, 1), (7, 2), (8, 2), (9, 2), (10, 3)",
           "CountsOfInrepeatReads": "()",
-          "CountsOfSpanningReads": "(2, 38), (10, 29)",
+          "CountsOfSpanningReads": "(2, 47), (10, 35)",
           "Genotype": "2/10",
           "GenotypeConfidenceInterval": "2-2/10-10",
           "ReferenceRegion": "chr1:2005-2008",
