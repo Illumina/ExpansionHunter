@@ -163,11 +163,11 @@ static void assertPathToExistingFile(const string& pathEncoding)
 
 static void assertIndexExists(const string& htsFilePath)
 {
-    const vector<string> kPossibleIndexExtensions = { ".bai", ".csi", ".crai" };
+    const vector<string> kPossibleIndexExtensions = { ".bai", ".bam.bai", ".csi", ".bam.csi", ".cram.csi", ".crai", ".cram.crai" };
 
     for (const string& indexExtension : kPossibleIndexExtensions)
     {
-        if (fs::exists(htsFilePath + indexExtension))
+        if (fs::exists(htsFilePath.substr(0, htsFilePath.find_last_of(".")) + indexExtension))
         {
             return;
         }
