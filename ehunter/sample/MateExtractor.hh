@@ -32,6 +32,7 @@ extern "C"
 #include "htslib/sam.h"
 }
 
+#include "core/GenomicRegion.hh"
 #include "core/Read.hh"
 #include "core/ReferenceContigInfo.hh"
 
@@ -40,6 +41,17 @@ namespace ehunter
 
 namespace htshelpers
 {
+
+
+// Represents one or more mates that need to be recovered from a specific genomic region.
+struct MateRegionToRecover {
+    GenomicRegion genomicRegion;
+
+    //stores the ReadId of each mate that needs to be recovered from the genomicRegion
+    std::unordered_set<ReadId, boost::hash<ReadId>> mateReadIds;
+};
+
+
 class MateExtractor
 {
 public:
@@ -48,6 +60,7 @@ public:
 
     boost::optional<Read>
     extractMate(const Read& read, const LinearAlignmentStats& alignmentStats, LinearAlignmentStats& mateStats);
+    std::vector<std::pair<Read, LinearAlignmentStats>> extractMates(const MateRegionToRecover& mateRegionToRecover);
 
 private:
     void openFile();

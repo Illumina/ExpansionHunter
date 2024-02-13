@@ -39,6 +39,7 @@ namespace htshelpers
 
 LinearAlignmentStats decodeAlignmentStats(bam1_t* htsAlignPtr);
 bool isPrimaryAlignment(bam1_t* htsAlignPtr);
+ReadId decodeReadId(bam1_t* htsAlignPtr);
 Read decodeRead(bam1_t* htsAlignPtr);
 ReferenceContigInfo decodeContigInfo(bam_hdr_t* htsHeaderPtr);
 

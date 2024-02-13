@@ -84,9 +84,35 @@ bool checkIfMatesWereMappedNearby(const LinearAlignmentStats& alignmentStats)
     return false;
 }
 
+bool addMateToRegionIfNearby(
+    GenomicRegion& mateGenomicRegion, const ReadId& readId, htshelpers::MateRegionToRecover& mateRegionToRecover)
+{
+    const int maxDistance = 2000;
+    bool isNearby = mateRegionToRecover.genomicRegion.distance(mateGenomicRegion) < maxDistance;
+
+    ReadId mateReadId(readId.fragmentId(),
+        (readId.mateNumber() == MateNumber::kFirstMate) ? MateNumber::kSecondMate : MateNumber::kFirstMate);
+
+    if (isNearby) {
+        mateRegionToRecover.genomicRegion = GenomicRegion(
+            mateRegionToRecover.genomicRegion.contigIndex(),
+            std::min(mateRegionToRecover.genomicRegion.start(), mateGenomicRegion.start()),
+            std::max(mateRegionToRecover.genomicRegion.end(), mateGenomicRegion.end()));
+
+        mateRegionToRecover.mateReadIds.emplace(mateReadId);
+    }
+
+    return isNearby;
+}
+
 void recoverMates(
     htshelpers::MateExtractor& mateExtractor, AlignmentStatsCatalog& alignmentStatsCatalog, ReadPairs& readPairs)
 {
+
+    // compute a vector of MateRegionToRecover structs, each of which represents a GenomicRegion + a vector of
+    // ReadIds that need to be recovered from that region.
+    vector<htshelpers::MateRegionToRecover> mateRegionsToRecover;
+
     for (auto& fragmentIdAndReadPair : readPairs)
     {
         ReadPair& readPair = fragmentIdAndReadPair.second;
@@ -105,20 +131,41 @@ void recoverMates(
         }
         const LinearAlignmentStats& alignmentStats = alignmentStatsIterator->second;
 
-        if (!checkIfMatesWereMappedNearby(alignmentStats))
-        {
-            LinearAlignmentStats mateStats;
-            optional<Read> optionalMate = mateExtractor.extractMate(read, alignmentStats, mateStats);
-            if (optionalMate)
-            {
-                const Read& mate = *optionalMate;
+        if (checkIfMatesWereMappedNearby(alignmentStats)) {
+            continue;
+        }
+
+        const int32_t mateContigIndex = alignmentStats.isMateMapped ? alignmentStats.mateChromId : alignmentStats.chromId;
+        const int32_t matePos = alignmentStats.isMateMapped ? alignmentStats.matePos : alignmentStats.pos;
+
+        // check if mate is close to other mates so they can be fetched together
+        bool foundNearbyRegion = false;
+        for (auto& mateRegionToRecover : mateRegionsToRecover) {
+            GenomicRegion mateGenomicRegion = GenomicRegion(mateContigIndex, matePos, matePos + read.sequence().length());
+
+            if (addMateToRegionIfNearby(mateGenomicRegion, read.readId(), mateRegionToRecover)) {
+                foundNearbyRegion = true;
+                break;
+            }
+        }
+        if (!foundNearbyRegion) {
+            // create a new entry in mateRegionsToRecover
+            GenomicRegion mateGenomicRegion = GenomicRegion(mateContigIndex, matePos, matePos + read.sequence().length());
+            htshelpers::MateRegionToRecover newMateRegionToRecover = { mateGenomicRegion, std::unordered_set<ReadId, boost::hash<ReadId>>() };
+            addMateToRegionIfNearby(mateGenomicRegion, read.readId(), newMateRegionToRecover);
+
+            mateRegionsToRecover.push_back(newMateRegionToRecover);
+        }
+    }
+
+    // fetch mates for the regions
+    for (auto& mateRegionToRecover : mateRegionsToRecover) {
+        for (auto& mateAndAlignmentStats : mateExtractor.extractMates(mateRegionToRecover)) {
+            auto& mate = mateAndAlignmentStats.first;
+            auto& alignmentStats = mateAndAlignmentStats.second;
                 alignmentStatsCatalog.emplace(std::make_pair(mate.readId(), alignmentStats));
                 readPairs.AddMateToExistingRead(mate);
-            }
-            else
-            {
-                spdlog::warn("Could not recover the mate of {}", read.readId());
-            }
+
         }
     }
 }

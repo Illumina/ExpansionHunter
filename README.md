@@ -1,3 +1,12 @@
+## NOTE:
+This fork of ExpansionHunter contains I/O optimizations that speed up the tool by 2-3x without changing the output. 
+These optimizations bring down the cost of running ExpansionHunter on very large variants catalogs and/or large numbers of samples. 
+These changes are hosted here pending review and incorporation into the main ExpansionHunter repo. 
+
+Compiled binaries for MacOSX and Linux are available in the [`bin`](https://github.com/bw2/ExpansionHunter/tree/master/bin) directory.
+
+---
+
 # Expansion Hunter: a tool for estimating repeat sizes
 
 There are a number of regions in the human genome consisting of repetitions of
